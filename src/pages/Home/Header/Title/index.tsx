@@ -3,6 +3,8 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import DropdownButton from './DropdownButton'
 import KlerosLogo from 'tsx:svgs/header/kleros-pnk-logo.svg'
+import { Link } from "react-router-dom"
+
 
 const StyledKlerosLogo = styled(KlerosLogo)`
   height: 48px;
@@ -31,7 +33,7 @@ const Container = styled.div`
 const Title: React.FC = () => {
   return (
     <Container>
-      <StyledKlerosLogo />
+      <Link to =""><StyledKlerosLogo /></Link>
       <StyledText>Kleros Scout</StyledText>
       <DropdownButton />
     </Container>

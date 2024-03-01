@@ -83,7 +83,7 @@ const RemovableFilter = styled.div`
   margin-bottom: 2px;
   margin-left: 2px;
   margin-right: 2px;
-  max-height: 28px;
+  max-height:40px;
   cursor: pointer;
   &:hover {
     background: linear-gradient(145deg, #7e57c2, #482c85);

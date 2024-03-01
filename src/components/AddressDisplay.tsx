@@ -39,7 +39,7 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
 
   return (
     <Container>
-      <StyledSpan bgColor={bgColor}>{reference?.label}</StyledSpan>
+      <StyledSpan style={{textShadow: "1px 1px black"}} bgColor={bgColor}>{reference?.label}</StyledSpan>
       <StyledAddressA
         target="_blank"
         href={`https://${reference?.explorer}/address/${parts[2]}`}

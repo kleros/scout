@@ -97,9 +97,9 @@ const RegistryDetailsModal: React.FC = () => {
     <ModalOverlay>
       {registry && (
         <ModalContainer ref={containerRef}>
-          <StyledLabel>Title: {registry.metadata.tcrTitle}</StyledLabel>
+          <StyledLabel>Registry Title:<br></br>{registry.metadata.tcrTitle}</StyledLabel>
           <StyledLabel>
-            Address:{' '}
+            Contract Address:{' '}
             <StyledA
               href={`https://gnosisscan.io/address/${registry.metadata.address}`}
               target="_blank"
