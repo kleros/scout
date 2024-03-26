@@ -13,6 +13,7 @@ import { fetchArbitrationCost } from 'utils/fetchArbitrationCost'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { revRegistryMap } from 'utils/fetchItems'
 import { fetchItemDetails } from 'utils/itemDetails'
+import { formatTimestamp } from 'utils/formatTimestamp'
 import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
@@ -345,7 +346,7 @@ const DetailsModal: React.FC = () => {
                         </StyledReactMarkdown>
                       </EvidenceDescription>
                       <EvidenceField>
-                        <strong>Time:</strong> {evidence.timestamp}
+                        <strong>Time:</strong> {formatTimestamp(evidence.timestamp)}
                       </EvidenceField>
                       <EvidenceField>
                         <strong>Party:</strong> {evidence.party}
