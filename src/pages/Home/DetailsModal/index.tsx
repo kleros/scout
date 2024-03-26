@@ -35,16 +35,15 @@ const ModalContainer = styled.div`
   background-color: #5a2393;
   border-radius: 12px;
   width: 84vw;
+  flex-direction: column;
   max-height: 85vh;
   overflow-y: auto;
   color: #fff;
-  flex-direction: column;
   flex-wrap: wrap;
-  position: relative;
 
   ${landscapeStyle(
     () => css`
-      width: 75%;
+      width: 52%;
     `
   )}
 `
@@ -153,23 +152,29 @@ const Evidence = styled.div`
   margin-bottom: 16px;
 `
 
-const EvidenceTitle = styled.div`
+const EvidenceField = styled.div`
   margin-bottom: 8px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex-direction: row;
+  word-break: break-all;
 `
 
-const EvidenceDescription = styled.div`
-  margin-bottom: 8px;
+const EvidenceDescription = styled(EvidenceField)`
+  flex-direction: column;
+  word-break: break-word;
 `
-
-const EvidenceTime = styled.div`
-  margin-bottom: 8px;
-`
-
-const EvidenceParty = styled.div``
 
 const NoEvidenceText = styled.div`
   color: #a0aec0;
   font-style: italic;
+`
+
+const StyledReactMarkdown = styled(ReactMarkdown)`
+  p {
+    margin: 4px 0;
+  }
 `
 
 const DetailsModal: React.FC = () => {
@@ -330,21 +335,21 @@ const DetailsModal: React.FC = () => {
                 {evidences.length > 0 ? (
                   evidences.map((evidence, idx) => (
                     <Evidence key={idx}>
-                      <EvidenceTitle>
+                      <EvidenceField>
                         <strong>Title:</strong> {evidence.title}
-                      </EvidenceTitle>
+                      </EvidenceField>
                       <EvidenceDescription>
                         <strong>Description:</strong>
-                        <ReactMarkdown>
+                        <StyledReactMarkdown>
                           {evidence.description || ''}
-                        </ReactMarkdown>
+                        </StyledReactMarkdown>
                       </EvidenceDescription>
-                      <EvidenceTime>
+                      <EvidenceField>
                         <strong>Time:</strong> {evidence.timestamp}
-                      </EvidenceTime>
-                      <EvidenceParty>
+                      </EvidenceField>
+                      <EvidenceField>
                         <strong>Party:</strong> {evidence.party}
-                      </EvidenceParty>
+                      </EvidenceField>
                     </Evidence>
                   ))
                 ) : (
