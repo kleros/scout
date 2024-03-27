@@ -1,9 +1,9 @@
 import React, { SetStateAction, Dispatch } from 'react'
-import Select from 'react-select'
 import styled, { css } from 'styled-components'
-import { StyledWholeField } from '.'
-import { landscapeStyle } from '~src/styles/landscapeStyle'
+import { landscapeStyle } from 'styles/landscapeStyle'
+import Select from 'react-select'
 import { relevantNetworks } from 'utils/fetchItems'
+import { StyledWholeField } from './index'
 
 const StyledAddressDiv = styled.div`
   display: flex;

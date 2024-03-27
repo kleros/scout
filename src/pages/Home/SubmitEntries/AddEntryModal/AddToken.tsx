@@ -1,13 +1,14 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
-import ImageUpload from './ImageUpload'
 import ipfsPublish from 'utils/ipfsPublish'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { formatEther } from 'ethers'
+import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import ImageUpload from './ImageUpload'
+import { ClosedButtonContainer } from 'pages/Home'
 import {
   AddContainer,
   AddHeader,
@@ -18,8 +19,7 @@ import {
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
-} from '.'
-import { ClosedButtonContainer } from '../..'
+} from './index'
 
 const columns = [
   {
@@ -166,12 +166,12 @@ const AddToken: React.FC = () => {
       <ImageUpload path={path} setPath={setPath} />
       <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
         Submit -{' '}
-        {countsData &&
-          formatEther(
-            countsData.Tokens.deposits.arbitrationCost +
-              countsData.Tokens.deposits.submissionBaseDeposit
-          )}{' '}
-        xDAI
+        {countsData?.Tokens?.deposits
+          ? formatEther(
+              countsData.Tokens.deposits.arbitrationCost +
+                countsData.Tokens.deposits.submissionBaseDeposit
+            ) + ' xDAI'
+          : null}
       </SubmitButton>
     </AddContainer>
   )

@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { formatEther } from 'ethers'
+import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import { ClosedButtonContainer } from 'pages/Home'
 import {
   AddContainer,
   AddHeader,
@@ -17,8 +18,7 @@ import {
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
-} from '.'
-import { ClosedButtonContainer } from '../..'
+} from './index'
 
 const columns = [
   {
@@ -173,12 +173,12 @@ const AddAddressTag: React.FC = () => {
       />
       <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
         Submit -{' '}
-        {countsData &&
-          formatEther(
-            countsData.Tags.deposits.arbitrationCost +
-              countsData.Tags.deposits.submissionBaseDeposit
-          )}{' '}
-        xDAI
+        {countsData?.Tags?.deposits
+          ? formatEther(
+              countsData.Tags.deposits.arbitrationCost +
+                countsData.Tags.deposits.submissionBaseDeposit
+            ) + ' xDAI'
+          : null}
       </SubmitButton>
     </AddContainer>
   )

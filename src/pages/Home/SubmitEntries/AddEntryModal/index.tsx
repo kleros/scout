@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom'
 import AddAddressTag from './AddTag'
 import AddToken from './AddToken'
 import AddCDN from './AddCDN'
-import { StyledCloseButton } from '../..'
+import { StyledCloseButton } from 'pages/Home'
 
 const ModalOverlay = styled.div`
   position: fixed;

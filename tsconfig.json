@@ -17,10 +17,8 @@
       "styles*": ["./src/styles*"],
       "svgs*": ["./src/assets/svgs*"]
     },
-    "target": "es2020",
-    "module": "commonjs",
     "moduleResolution": "node",
-    "outDir": "build/dist",
+    "strict": true,
     "esModuleInterop": true,
     "declaration": true,
     "sourceMap": true,
@@ -29,17 +27,26 @@
     "noImplicitAny": false,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
+    "jsx": "react",
+    "lib": [
+      "es6",
+      "dom",
+      "esnext.asynciterable",
+      "es2017"
+    ],
+    "module": "ESNext",
+    "target": "es2020",
     "rootDir": "src",
+    "outDir": "build/dist",
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "removeComments": true,
-    "isolatedModules": true,
-    "jsx": "react",
-    "lib": ["es6", "dom", "esnext.asynciterable", "es2017"]
+    "isolatedModules": true
   },
   "exclude": [
     "node_modules",

@@ -1,10 +1,10 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import AddressDisplay from 'components/AddressDisplay'
-import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
 import { useSearchParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
+import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
+import AddressDisplay from 'components/AddressDisplay'
 
 const Card = styled.div`
   background-color: #380C65;

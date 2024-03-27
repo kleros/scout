@@ -2,11 +2,11 @@ import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
-import { ModalOverlay } from '.'
 import { performEvidenceBasedRequest } from 'utils/performEvidenceBasedRequest'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
-import { StyledCloseButton, ClosedButtonContainer } from '..'
+import { StyledCloseButton, ClosedButtonContainer } from 'pages/Home'
+import { ModalOverlay } from './index'
 
 const Container = styled.div`
   position: fixed;
