@@ -125,8 +125,7 @@ const EntryDetailsContainer = styled.div`
   flex-wrap: wrap;
 
   img {
-    width: 150px !important;
-    height: 150px !important;
+    width: 100px !important;
   }
 `
 
@@ -140,7 +139,7 @@ const EvidenceSectionHeader = styled.div`
 `
 
 const EvidenceHeader = styled.h2`
-  font-size: 1.25rem; // 20px
+  font-size: 20px;
   margin: 0;
 `
 
@@ -188,11 +187,7 @@ const DetailsModal: React.FC = () => {
     [searchParams]
   )
 
-  const {
-    isLoading: detailsLoading,
-    error: detailsError,
-    data: detailsData,
-  } = useQuery({
+  const { isLoading: detailsLoading, data: detailsData } = useQuery({
     queryKey: ['details', itemDetailsId || ''],
     queryFn: () => fetchItemDetails(itemDetailsId || ''),
     staleTime: Infinity,
@@ -203,11 +198,7 @@ const DetailsModal: React.FC = () => {
     ? itemDetailsId.split('@')[1]
     : ''
 
-  const {
-    isLoading: countsLoading,
-    error: countsError,
-    data: countsData,
-  } = useQuery({
+  const { data: countsData } = useQuery({
     queryKey: ['counts'],
     queryFn: () => fetchItemCounts(),
     staleTime: Infinity,
@@ -219,11 +210,7 @@ const DetailsModal: React.FC = () => {
   }, [countsData, registryParsedFromItemId])
 
   // get arbitrationCost, keyed by arbitrator and arbitratorExtraData
-  const {
-    isLoading: arbitrationCostLoading,
-    error: arbitrationCostError,
-    data: arbitrationCostData,
-  } = useQuery({
+  const { data: arbitrationCostData } = useQuery({
     queryKey: [
       'arbitrationCost',
       detailsData?.requests?.[0].arbitrator || '',
@@ -346,7 +333,7 @@ const DetailsModal: React.FC = () => {
                         </StyledReactMarkdown>
                       </EvidenceDescription>
                       <EvidenceField>
-                        <strong>Time:</strong> {formatTimestamp(evidence.timestamp)}
+                      <strong>Time:</strong> {formatTimestamp(evidence.timestamp)}
                       </EvidenceField>
                       <EvidenceField>
                         <strong>Party:</strong> {evidence.party}

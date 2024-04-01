@@ -66,7 +66,6 @@ const CardContent = styled.div`
 `
 
 const Image = styled.img<{ isFullWidth: boolean }>`
-  width: 100px;
   height: 100px;
   ${({ isFullWidth }) => isFullWidth && 'width: 100%; height: 100%;'}
 `

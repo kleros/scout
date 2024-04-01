@@ -89,7 +89,7 @@ const AddToken: React.FC = () => {
       Address: `${network.value}:${address}`,
       Name: name,
       Symbol: symbol,
-      Decimals: Number(decimals),
+      Decimals: decimals,
       Logo: path,
     }
     const item = {

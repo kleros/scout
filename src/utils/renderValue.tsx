@@ -15,7 +15,9 @@ export const renderValue = (key: any, value: any) => {
       ['Address', 'Contract Address', 'Contract address'].includes(key)
     ) {
       return <AddressDisplay address={value} />
+    } else if (key === 'Decimals') {
+      return String(parseInt(value))
     }
   }
-  return value // default case
+  return value
 }
