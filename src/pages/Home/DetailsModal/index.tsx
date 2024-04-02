@@ -83,14 +83,15 @@ const StatusButton = styled.button<{ status: string }>`
 
   ${landscapeStyle(
     () => css`
-      padding: 12px 48px;
+      padding: 12px 20px;
     `
   )}
 `
 
 const DetailsContent = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: ${responsiveSize(16, 24)};
-  flex-grow: 1;
 `
 
 const EvidenceSection = styled.div`
@@ -99,26 +100,28 @@ const EvidenceSection = styled.div`
 
 const StatusSpan = styled.span<{ status: string }>`
   display: flex;
-  width: 180px;
-  padding: 4px 8px;
+  padding: 4px 12px;
+  font-size: 16px;
   color: white;
   border-radius: 4px;
   background-color: ${({ status }) => statusColorMap[status]};
+  height: 20px;
 `
 const Header = styled.div`
   display: flex;
   font-size: 20px;
   font-weight: 600;
-  margin: 0;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: ${responsiveSize(32, 16)};
 `
 
 const EntryDetailsContainer = styled.div`
   display: flex;
   padding: 20px 0;
-  flex-direction: column;
+  flex-direction: row;
   margin-bottom: 16px;
   border-bottom: 2px solid #edf2f7;
   gap: 16px;
@@ -175,6 +178,13 @@ const StyledReactMarkdown = styled(ReactMarkdown)`
   p {
     margin: 4px 0;
   }
+`
+
+const LabelAndValue = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
 `
 
 const DetailsModal: React.FC = () => {
@@ -280,6 +290,9 @@ const DetailsModal: React.FC = () => {
             <DetailsContent>
               <Header>
                 <EntryDetailsHeader>Entry details</EntryDetailsHeader>
+                <StatusSpan status={detailsData.status}>
+                  {detailsData.status}
+                </StatusSpan>
                 <StatusButton
                   onClick={() => {
                     setIsConfirmationOpen(true)
@@ -296,14 +309,11 @@ const DetailsModal: React.FC = () => {
                 </StatusButton>
               </Header>
               <EntryDetailsContainer>
-                <StatusSpan status={detailsData.status}>
-                  {detailsData.status}
-                </StatusSpan>
                 {detailsData.props &&
                   detailsData.props.map(({ label, value }) => (
-                    <div key={label}>
+                    <LabelAndValue key={label}>
                       <strong>{label}:</strong> {renderValue(label, value)}
-                    </div>
+                    </LabelAndValue>
                   ))}
               </EntryDetailsContainer>
               {/* EVIDENCES */}
