@@ -1,13 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import AddressDisplay from 'components/AddressDisplay'
-import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
+import Skeleton from 'react-loading-skeleton'
 import { useSearchParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
+import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
+import AddressDisplay from 'components/AddressDisplay'
 
 const Card = styled.div`
-  background-color: #380C65;
+  background-color: #380c65;
   border-radius: 12px;
   color: white;
   font-family: 'Oxanium', sans-serif;
@@ -65,8 +66,13 @@ const CardContent = styled.div`
   padding-bottom: 16px;
 `
 
+const ImageWrapper = styled.div`
+  display: flex;
+  height: 108px;
+  justify-content: center;
+`
+
 const Image = styled.img<{ isFullWidth: boolean }>`
-  width: 100px;
   height: 100px;
   ${({ isFullWidth }) => isFullWidth && 'width: 100%; height: 100%;'}
 `
@@ -115,6 +121,7 @@ const Status: React.FC<IStatus> = ({ status, disputed, bounty }) => {
 }
 
 const Entry: React.FC<IEntry> = ({ item }) => {
+  const [imgLoaded, setImgLoaded] = useState(false)
   const [, setSearchParams] = useSearchParams()
 
   const handleEntryClick = () => {
@@ -150,7 +157,8 @@ const Entry: React.FC<IEntry> = ({ item }) => {
         {item.registryAddress === registryMap['Tokens'] && (
           <>
             {item.props && item.props.find((prop) => prop.label === 'Logo') && (
-              <div>
+              <ImageWrapper>
+                {!imgLoaded && <Skeleton height={100} width={100} />}
                 <Image
                   src={`https://ipfs.kleros.io/${
                     (item.props.find((prop) => prop.label === 'Logo') as Prop)
@@ -158,8 +166,10 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                   }`}
                   alt="Logo"
                   isFullWidth={false}
+                  onLoad={() => setImgLoaded(true)}
+                  style={{ display: imgLoaded ? 'block' : 'none' }}
                 />
-              </div>
+              </ImageWrapper>
             )}
             <div>{item.key2}</div>
             <div>{item.key1}</div>

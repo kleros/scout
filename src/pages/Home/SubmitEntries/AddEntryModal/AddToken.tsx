@@ -1,25 +1,25 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
-import ImageUpload from './ImageUpload'
 import ipfsPublish from 'utils/ipfsPublish'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { formatEther } from 'ethers'
+import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import ImageUpload from './ImageUpload'
+import { ClosedButtonContainer } from 'pages/Home'
 import {
   AddContainer,
   AddHeader,
   AddSubtitle,
   AddTitle,
-  Buttons,
+  CloseButton,
   ErrorMessage,
-  ReturnButton,
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
-} from '.'
+} from './index'
 
 const columns = [
   {
@@ -89,7 +89,7 @@ const AddToken: React.FC = () => {
       Address: `${network.value}:${address}`,
       Name: name,
       Symbol: symbol,
-      Decimals: Number(decimals),
+      Decimals: decimals,
       Logo: path,
     }
     const item = {
@@ -118,16 +118,21 @@ const AddToken: React.FC = () => {
   return (
     <AddContainer>
       <AddHeader>
-        <AddTitle>Submit Token</AddTitle>
-        <AddSubtitle>
-          Want to suggest an entry without any deposit?{' '}
-          <StyledGoogleFormAnchor
-            target="_blank"
-            href="https://docs.google.com/forms/d/e/1FAIpQLSchZ5RBd1Y8RNpGCUGY9tZyQZSBgnN_4B9oLfKeKuer9oxGnA/viewform"
-          >
-            Click here
-          </StyledGoogleFormAnchor>
-        </AddSubtitle>
+        <div>
+          <AddTitle>Submit Token</AddTitle>
+          <AddSubtitle>
+            Want to suggest an entry without any deposit?{' '}
+            <StyledGoogleFormAnchor
+              target="_blank"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSchZ5RBd1Y8RNpGCUGY9tZyQZSBgnN_4B9oLfKeKuer9oxGnA/viewform"
+            >
+              Click here
+            </StyledGoogleFormAnchor>
+          </AddSubtitle>
+        </div>
+        <ClosedButtonContainer>
+          <CloseButton />
+        </ClosedButtonContainer>
       </AddHeader>
       <RichAddressForm
         networkOption={network}
@@ -159,18 +164,15 @@ const AddToken: React.FC = () => {
         onChange={(e) => setSymbol(e.target.value)}
       />
       <ImageUpload path={path} setPath={setPath} />
-      <Buttons>
-        <ReturnButton />
-        <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
-          Submit -{' '}
-          {countsData &&
-            formatEther(
+      <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
+        Submit -{' '}
+        {countsData?.Tokens?.deposits
+          ? formatEther(
               countsData.Tokens.deposits.arbitrationCost +
                 countsData.Tokens.deposits.submissionBaseDeposit
-            )}{' '}
-          xDAI
-        </SubmitButton>
-      </Buttons>
+            ) + ' xDAI'
+          : null}
+      </SubmitButton>
     </AddContainer>
   )
 }

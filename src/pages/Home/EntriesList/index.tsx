@@ -1,9 +1,9 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import Entry from './Entry'
-import { ITEMS_PER_PAGE } from '..'
 import { GraphItem } from 'utils/fetchItems'
+import Entry from './Entry'
+import { ITEMS_PER_PAGE } from 'pages/Home'
 
 const EntriesContainer = styled.div`
   width: 80%;

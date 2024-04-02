@@ -13,6 +13,7 @@ import { fetchArbitrationCost } from 'utils/fetchArbitrationCost'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { revRegistryMap } from 'utils/fetchItems'
 import { fetchItemDetails } from 'utils/itemDetails'
+import { formatTimestamp } from 'utils/formatTimestamp'
 import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
@@ -35,16 +36,15 @@ const ModalContainer = styled.div`
   background-color: #5a2393;
   border-radius: 12px;
   width: 84vw;
+  flex-direction: column;
   max-height: 85vh;
   overflow-y: auto;
   color: #fff;
-  flex-direction: column;
   flex-wrap: wrap;
-  position: relative;
 
   ${landscapeStyle(
     () => css`
-      width: 75%;
+      width: 52%;
     `
   )}
 `
@@ -83,14 +83,15 @@ const StatusButton = styled.button<{ status: string }>`
 
   ${landscapeStyle(
     () => css`
-      padding: 12px 48px;
+      padding: 12px 20px;
     `
   )}
 `
 
 const DetailsContent = styled.div`
+  display: flex;
+  flex-direction: column;
   padding: ${responsiveSize(16, 24)};
-  flex-grow: 1;
 `
 
 const EvidenceSection = styled.div`
@@ -99,34 +100,35 @@ const EvidenceSection = styled.div`
 
 const StatusSpan = styled.span<{ status: string }>`
   display: flex;
-  width: 180px;
-  padding: 4px 8px;
+  padding: 4px 12px;
+  font-size: 16px;
   color: white;
   border-radius: 4px;
   background-color: ${({ status }) => statusColorMap[status]};
+  height: 20px;
 `
 const Header = styled.div`
   display: flex;
   font-size: 20px;
   font-weight: 600;
-  margin: 0;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: ${responsiveSize(32, 16)};
 `
 
 const EntryDetailsContainer = styled.div`
   display: flex;
   padding: 20px 0;
-  flex-direction: column;
+  flex-direction: row;
   margin-bottom: 16px;
   border-bottom: 2px solid #edf2f7;
   gap: 16px;
   flex-wrap: wrap;
 
   img {
-    width: 150px !important;
-    height: 150px !important;
+    width: 100px !important;
   }
 `
 
@@ -140,7 +142,7 @@ const EvidenceSectionHeader = styled.div`
 `
 
 const EvidenceHeader = styled.h2`
-  font-size: 1.25rem; // 20px
+  font-size: 20px;
   margin: 0;
 `
 
@@ -153,23 +155,36 @@ const Evidence = styled.div`
   margin-bottom: 16px;
 `
 
-const EvidenceTitle = styled.div`
+const EvidenceField = styled.div`
   margin-bottom: 8px;
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  flex-direction: row;
+  word-break: break-all;
 `
 
-const EvidenceDescription = styled.div`
-  margin-bottom: 8px;
+const EvidenceDescription = styled(EvidenceField)`
+  flex-direction: column;
+  word-break: break-word;
 `
-
-const EvidenceTime = styled.div`
-  margin-bottom: 8px;
-`
-
-const EvidenceParty = styled.div``
 
 const NoEvidenceText = styled.div`
   color: #a0aec0;
   font-style: italic;
+`
+
+const StyledReactMarkdown = styled(ReactMarkdown)`
+  p {
+    margin: 4px 0;
+  }
+`
+
+const LabelAndValue = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
 `
 
 const DetailsModal: React.FC = () => {
@@ -182,11 +197,7 @@ const DetailsModal: React.FC = () => {
     [searchParams]
   )
 
-  const {
-    isLoading: detailsLoading,
-    error: detailsError,
-    data: detailsData,
-  } = useQuery({
+  const { isLoading: detailsLoading, data: detailsData } = useQuery({
     queryKey: ['details', itemDetailsId || ''],
     queryFn: () => fetchItemDetails(itemDetailsId || ''),
     staleTime: Infinity,
@@ -197,11 +208,7 @@ const DetailsModal: React.FC = () => {
     ? itemDetailsId.split('@')[1]
     : ''
 
-  const {
-    isLoading: countsLoading,
-    error: countsError,
-    data: countsData,
-  } = useQuery({
+  const { data: countsData } = useQuery({
     queryKey: ['counts'],
     queryFn: () => fetchItemCounts(),
     staleTime: Infinity,
@@ -213,11 +220,7 @@ const DetailsModal: React.FC = () => {
   }, [countsData, registryParsedFromItemId])
 
   // get arbitrationCost, keyed by arbitrator and arbitratorExtraData
-  const {
-    isLoading: arbitrationCostLoading,
-    error: arbitrationCostError,
-    data: arbitrationCostData,
-  } = useQuery({
+  const { data: arbitrationCostData } = useQuery({
     queryKey: [
       'arbitrationCost',
       detailsData?.requests?.[0].arbitrator || '',
@@ -287,6 +290,9 @@ const DetailsModal: React.FC = () => {
             <DetailsContent>
               <Header>
                 <EntryDetailsHeader>Entry details</EntryDetailsHeader>
+                <StatusSpan status={detailsData.status}>
+                  {detailsData.status}
+                </StatusSpan>
                 <StatusButton
                   onClick={() => {
                     setIsConfirmationOpen(true)
@@ -303,14 +309,11 @@ const DetailsModal: React.FC = () => {
                 </StatusButton>
               </Header>
               <EntryDetailsContainer>
-                <StatusSpan status={detailsData.status}>
-                  {detailsData.status}
-                </StatusSpan>
                 {detailsData.props &&
                   detailsData.props.map(({ label, value }) => (
-                    <div key={label}>
+                    <LabelAndValue key={label}>
                       <strong>{label}:</strong> {renderValue(label, value)}
-                    </div>
+                    </LabelAndValue>
                   ))}
               </EntryDetailsContainer>
               {/* EVIDENCES */}
@@ -330,21 +333,21 @@ const DetailsModal: React.FC = () => {
                 {evidences.length > 0 ? (
                   evidences.map((evidence, idx) => (
                     <Evidence key={idx}>
-                      <EvidenceTitle>
+                      <EvidenceField>
                         <strong>Title:</strong> {evidence.title}
-                      </EvidenceTitle>
+                      </EvidenceField>
                       <EvidenceDescription>
                         <strong>Description:</strong>
-                        <ReactMarkdown>
+                        <StyledReactMarkdown>
                           {evidence.description || ''}
-                        </ReactMarkdown>
+                        </StyledReactMarkdown>
                       </EvidenceDescription>
-                      <EvidenceTime>
-                        <strong>Time:</strong> {evidence.timestamp}
-                      </EvidenceTime>
-                      <EvidenceParty>
+                      <EvidenceField>
+                      <strong>Time:</strong> {formatTimestamp(evidence.timestamp)}
+                      </EvidenceField>
+                      <EvidenceField>
                         <strong>Party:</strong> {evidence.party}
-                      </EvidenceParty>
+                      </EvidenceField>
                     </Evidence>
                   ))
                 ) : (

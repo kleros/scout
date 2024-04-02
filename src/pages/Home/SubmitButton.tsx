@@ -1,7 +1,7 @@
 import React from 'react'
-import { useSearchParams } from 'react-router-dom'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
+import { useSearchParams } from 'react-router-dom'
 import Button from 'components/Button'
 
 const StyledButton = styled(Button)`

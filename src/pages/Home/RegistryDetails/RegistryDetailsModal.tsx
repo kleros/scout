@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react'
-import Skeleton from 'react-loading-skeleton'
-import 'react-loading-skeleton/dist/skeleton.css'
 import styled, { css } from 'styled-components'
+import Skeleton from 'react-loading-skeleton'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams } from 'react-router-dom'

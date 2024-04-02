@@ -18,7 +18,7 @@ export const references = [
     namespaceId: 'eip155',
     name: 'Gnosis Chain',
     label: 'Gnosis',
-    explorer: 'gnosisscan.com',
+    explorer: 'gnosisscan.io',
   },
   {
     id: '137',

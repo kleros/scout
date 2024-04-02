@@ -1,25 +1,25 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
-import ImageUpload from './ImageUpload'
 import ipfsPublish from 'utils/ipfsPublish'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { formatEther } from 'ethers'
+import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import ImageUpload from './ImageUpload'
+import { ClosedButtonContainer } from 'pages/Home'
 import {
   AddContainer,
   AddHeader,
   AddSubtitle,
   AddTitle,
-  Buttons,
+  CloseButton,
   ErrorMessage,
-  ReturnButton,
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
-} from '.'
+} from './index'
 
 const columns = [
   {
@@ -101,16 +101,21 @@ const AddCDN: React.FC = () => {
   return (
     <AddContainer>
       <AddHeader>
-        <AddTitle>Submit CDN</AddTitle>
-        <AddSubtitle>
-          Want to suggest an entry without any deposit?{' '}
-          <StyledGoogleFormAnchor
-            target="_blank"
-            href="https://docs.google.com/forms/d/e/1FAIpQLSeO32UBCpIYu3XIKGM-hLqWu51XcsSG1QRxtuycZPyS9mMtVg/viewform"
-          >
-            Click here
-          </StyledGoogleFormAnchor>
-        </AddSubtitle>
+        <div>
+          <AddTitle>Submit CDN</AddTitle>
+          <AddSubtitle>
+            Want to suggest an entry without any deposit?{' '}
+            <StyledGoogleFormAnchor
+              target="_blank"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSeO32UBCpIYu3XIKGM-hLqWu51XcsSG1QRxtuycZPyS9mMtVg/viewform"
+            >
+              Click here
+            </StyledGoogleFormAnchor>
+          </AddSubtitle>
+        </div>
+        <ClosedButtonContainer>
+          <CloseButton />
+        </ClosedButtonContainer>
       </AddHeader>
       <RichAddressForm
         networkOption={network}
@@ -130,18 +135,15 @@ const AddCDN: React.FC = () => {
         onChange={(e) => setDomain(e.target.value)}
       />
       <ImageUpload path={path} setPath={setPath} />
-      <Buttons>
-        <ReturnButton />
-        <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
-          Submit -{' '}
-          {countsData &&
-            formatEther(
+      <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
+        Submit -{' '}
+        {countsData?.CDN?.deposits
+          ? formatEther(
               countsData.CDN.deposits.arbitrationCost +
                 countsData.CDN.deposits.submissionBaseDeposit
-            )}{' '}
-          xDAI
-        </SubmitButton>
-      </Buttons>
+            ) + ' xDAI'
+          : null}
+      </SubmitButton>
     </AddContainer>
   )
 }

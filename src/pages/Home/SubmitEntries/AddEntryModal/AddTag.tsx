@@ -1,24 +1,24 @@
 import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { formatEther } from 'ethers'
+import RichAddressForm, { NetworkOption } from './RichAddressForm'
+import { ClosedButtonContainer } from 'pages/Home'
 import {
   AddContainer,
   AddHeader,
   AddSubtitle,
   AddTitle,
-  Buttons,
+  CloseButton,
   ErrorMessage,
-  ReturnButton,
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
-} from '.'
+} from './index'
 
 const columns = [
   {
@@ -120,16 +120,21 @@ const AddAddressTag: React.FC = () => {
   return (
     <AddContainer>
       <AddHeader>
-        <AddTitle>Submit Address Tag</AddTitle>
-        <AddSubtitle>
-          Want to suggest an entry without any deposit?{' '}
-          <StyledGoogleFormAnchor
-            target="_blank"
-            href="https://docs.google.com/forms/d/e/1FAIpQLSdTwlrcbbPOkSCMKuUj42d_koSAEkWjMLz5hhTc5lB6aGCO9w/viewform"
-          >
-            Click here
-          </StyledGoogleFormAnchor>
-        </AddSubtitle>
+        <div>
+          <AddTitle>Submit Address Tag</AddTitle>
+          <AddSubtitle>
+            Want to suggest an entry without any deposit?{' '}
+            <StyledGoogleFormAnchor
+              target="_blank"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSdTwlrcbbPOkSCMKuUj42d_koSAEkWjMLz5hhTc5lB6aGCO9w/viewform"
+            >
+              Click here
+            </StyledGoogleFormAnchor>
+          </AddSubtitle>
+        </div>
+        <ClosedButtonContainer>
+          <CloseButton />
+        </ClosedButtonContainer>
       </AddHeader>
       <RichAddressForm
         networkOption={network}
@@ -166,18 +171,15 @@ const AddAddressTag: React.FC = () => {
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
       />
-      <Buttons>
-        <ReturnButton />
-        <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
-          Submit -{' '}
-          {countsData &&
-            formatEther(
+      <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
+        Submit -{' '}
+        {countsData?.Tags?.deposits
+          ? formatEther(
               countsData.Tags.deposits.arbitrationCost +
                 countsData.Tags.deposits.submissionBaseDeposit
-            )}{' '}
-          xDAI
-        </SubmitButton>
-      </Buttons>
+            ) + ' xDAI'
+          : null}
+      </SubmitButton>
     </AddContainer>
   )
 }

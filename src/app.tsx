@@ -1,6 +1,7 @@
 import React, { useRef } from 'react'
 import styled from 'styled-components'
 import 'overlayscrollbars/styles/overlayscrollbars.css'
+import 'react-loading-skeleton/dist/skeleton.css'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { OverlayScrollContext } from 'context/OverlayScrollContext'
 import Home from 'pages/Home'
