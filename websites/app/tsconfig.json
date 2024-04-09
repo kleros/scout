@@ -1,0 +1,62 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "~*": ["./*"],
+      "src*": ["./src*"],
+      "utils*": ["./src/utils*"],
+      "assets*": ["./src/assets*"],
+      "components*": ["./src/components*"],
+      "connectors*": ["./src/connectors*"],
+      "context*": ["./src/context*"],
+      "layout*": ["./src/layout*"],
+      "consts*": ["./src/consts*"],
+      "hooks*": ["./src/hooks*"],
+      "queries*": ["./src/hooks/queries*"],
+      "pages*": ["./src/pages*"],
+      "styles*": ["./src/styles*"],
+      "svgs*": ["./src/assets/svgs*"]
+    },
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "sourceMap": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitAny": false,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "jsx": "react",
+    "lib": [
+      "es6",
+      "dom",
+      "esnext.asynciterable",
+      "es2017"
+    ],
+    "module": "ESNext",
+    "target": "es2020",
+    "rootDir": "src",
+    "outDir": "build/dist",
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "removeComments": true,
+    "isolatedModules": true
+  },
+  "exclude": [
+    "node_modules",
+    "build",
+    "scripts",
+    "acceptance-tests",
+    "webpack",
+    "jest",
+    "src/setupTests.ts",
+    "dist",
+    "commitlint.config.js"
+  ]
+}
