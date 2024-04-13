@@ -17,7 +17,8 @@
     "queries": "./src/hooks/queries",
     "pages": "./src/pages",
     "styles": "./src/styles",
-    "svgs": "./src/assets/svgs"
+    "svgs": "./src/assets/svgs",
+    "pngs": "./src/assets/pngs"
   },
   "scripts": {
     "start": "parcel",

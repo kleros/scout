@@ -2,11 +2,15 @@ import React, { useRef } from 'react'
 import styled from 'styled-components'
 import 'overlayscrollbars/styles/overlayscrollbars.css'
 import 'react-loading-skeleton/dist/skeleton.css'
+import { Route, Routes } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
 import { OverlayScrollContext } from 'context/OverlayScrollContext'
-import Home from 'pages/Home'
 import StyledComponentsProvider from 'context/StyledComponentsProvider'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import Layout from './layout'
+import Home from 'pages/Home'
+import ForUsers from './pages/ForUsers'
+import ForBuilders from './pages/ForBuilders'
 
 const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   height: 100vh;
@@ -25,7 +29,14 @@ const App: React.FC = () => {
       >
         <StyledComponentsProvider>
           <QueryClientProvider client={queryClient}>
-            <Home />
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="for-users/*" element={<ForUsers />} />
+                <Route path="for-builders/*" element={<ForBuilders />} />
+                <Route path="*" element={<h1>404 not found</h1>} />
+              </Route>
+            </Routes>
           </QueryClientProvider>
         </StyledComponentsProvider>
       </StyledOverlayScrollbarsComponent>
