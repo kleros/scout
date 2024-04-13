@@ -16,6 +16,7 @@ const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   height: 100vh;
   width: 100vw;
 `
+
 const queryClient = new QueryClient()
 
 const App: React.FC = () => {
@@ -34,7 +35,7 @@ const App: React.FC = () => {
                 <Route index element={<Home />} />
                 <Route path="for-users/*" element={<ForUsers />} />
                 <Route path="for-builders/*" element={<ForBuilders />} />
-                <Route path="*" element={<h1>404 not found</h1>} />
+                <Route path="*" element={<h1>404 Not Found</h1>} />
               </Route>
             </Routes>
           </QueryClientProvider>
