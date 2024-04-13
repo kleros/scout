@@ -1,7 +1,7 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { useNavigate } from 'react-router-dom'
 
 const Container = styled.div`
   display: flex;
@@ -30,16 +30,14 @@ const StyledItem = styled.div<{ isSelected: boolean }>`
 interface IItem {
   name: string
   isSelected: boolean
-  onClick: (event: React.MouseEvent) => void
+  onClick: () => void
 }
 
-const Item: React.FC<IItem> = ({ name, isSelected, onClick }) => {
-  return (
-    <StyledItem onClick={onClick} isSelected={isSelected}>
-      {name}
-    </StyledItem>
-  )
-}
+const Item: React.FC<IItem> = ({ name, isSelected, onClick }) => (
+  <StyledItem onClick={onClick} isSelected={isSelected}>
+    {name}
+  </StyledItem>
+)
 
 const ITEMS = [
   { name: 'Home', path: '/' },
@@ -49,19 +47,18 @@ const ITEMS = [
 
 const Sections: React.FC = () => {
   const navigate = useNavigate()
-
-  const handleItemClick = (path: string) => {
-    navigate(path)
-  }
+  const currentPath = window.location.hash.replace(/^#/, '') || '/'
 
   return (
     <Container>
-      {ITEMS.map((item) => (
+      {ITEMS.map(({ name, path }) => (
         <Item
-          key={item.name}
-          name={item.name}
-          isSelected={window.location.pathname === item.path}
-          onClick={() => handleItemClick(item.path)}
+          key={name}
+          name={name}
+          isSelected={
+            currentPath === path || (currentPath === '/' && path === '/')
+          }
+          onClick={() => navigate(path)}
         />
       ))}
     </Container>
