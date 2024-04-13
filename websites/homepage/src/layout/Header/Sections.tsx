@@ -1,7 +1,7 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const Container = styled.div`
   display: flex;
@@ -29,44 +29,40 @@ const StyledItem = styled.div<{ isSelected: boolean }>`
 
 interface IItem {
   name: string
+  isSelected: boolean
+  onClick: (event: React.MouseEvent) => void
 }
 
-const Item: React.FC<IItem> = ({ name }) => {
-  const navigate = useNavigate()
-  const location = useLocation()
-
-  const pathMap = {
-    Home: '/',
-    'For Users': '/for-users',
-    'For Builders': '/for-builders',
-  }
-
-  const routePath = pathMap[name]
-  const isSelected = location.pathname === routePath
-
-  const handleItemClick = (event: React.MouseEvent) => {
-    event.stopPropagation()
-    navigate(routePath)
-  }
-
+const Item: React.FC<IItem> = ({ name, isSelected, onClick }) => {
   return (
-    <StyledItem key={name} onClick={handleItemClick} isSelected={isSelected}>
+    <StyledItem onClick={onClick} isSelected={isSelected}>
       {name}
     </StyledItem>
   )
 }
 
 const ITEMS = [
-  { name: 'Home' },
-  { name: 'For Users' },
-  { name: 'For Builders' },
+  { name: 'Home', path: '/' },
+  { name: 'For Users', path: '/for-users' },
+  { name: 'For Builders', path: '/for-builders' },
 ]
 
 const Sections: React.FC = () => {
+  const navigate = useNavigate()
+
+  const handleItemClick = (path: string) => {
+    navigate(path)
+  }
+
   return (
     <Container>
       {ITEMS.map((item) => (
-        <Item key={item.name} name={item.name} />
+        <Item
+          key={item.name}
+          name={item.name}
+          isSelected={window.location.pathname === item.path}
+          onClick={() => handleItemClick(item.path)}
+        />
       ))}
     </Container>
   )
