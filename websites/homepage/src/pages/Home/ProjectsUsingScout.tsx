@@ -15,7 +15,7 @@ const Container = styled.div`
   gap: 32px;
   align-items: center;
   justify-content: center;
-  margin-top: ${responsiveSize(32, 100)};
+  margin-top: ${responsiveSize(48, 100)};
   width: 84vw;
 
   ${landscapeStyle(
@@ -33,6 +33,7 @@ const Logo = styled.img`
 const StyledText = styled.p`
   font-family: 'Oxanium', sans-serif;
   color: #fff;
+  margin: 0;
 `
 
 const LogosContainer = styled.div`
