@@ -13,8 +13,8 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   .react-loading-skeleton {
-    --base-color: #9277B1;
-    --highlight-color: #A98BC9;
-  }
+    --base-color: #6b6b6b;
+    --highlight-color: #838383;
+}
 
 `
