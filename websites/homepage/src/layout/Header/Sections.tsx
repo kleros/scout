@@ -22,6 +22,9 @@ const Container = styled.div`
 
 const StyledItem = styled.div<{ isSelected: boolean }>`
   text-decoration: ${({ isSelected }) => (isSelected ? 'underline' : 'none')};
+  text-decoration-color: ${({ isSelected }) =>
+    isSelected ? '#CD9DFF' : 'inherit'};
+  color: ${({ isSelected }) => (isSelected ? '#CD9DFF' : 'inherit')};
   font-weight: ${({ isSelected }) => (isSelected ? 600 : 400)};
   font-family: 'Oxanium', sans-serif;
   cursor: pointer;

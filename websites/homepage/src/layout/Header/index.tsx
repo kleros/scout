@@ -3,14 +3,14 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useNavigate } from 'react-router-dom'
 import Sections from './Sections'
-import { Button } from 'components/Button'
+import { Button, ButtonAnchor } from 'components/Button'
 import CurateLogo from 'tsx:svgs/header/curate-logo.svg'
 
 const Container = styled.div`
   display: flex;
   position: relative;
   flex-direction: column;
-  background: #3d106c;
+  background: #010002;
   align-items: center;
   justify-content: center;
   gap: 16px;
@@ -53,24 +53,6 @@ const Title = styled.div`
   )}
 `
 
-const StyledA = styled.a`
-  font-family: 'Oxanium', sans-serif;
-  text-decoration: none;
-  color: #000;
-
-  :hover {
-    text-decoration: underline;
-  }
-
-  ${landscapeStyle(
-    () => css`
-      display: flex;
-      position: relative;
-      padding-right: 64px;
-    `
-  )}
-`
-
 const Navbar: React.FC = () => {
   const navigate = useNavigate()
 
@@ -84,13 +66,13 @@ const Navbar: React.FC = () => {
         <StyledCurateLogo />
         <StyledText>Kleros Scout</StyledText>
       </Title>
-      <StyledA
+      <ButtonAnchor
         href="https://app.klerosscout.eth.limo"
         target="_blank"
         rel="noopener noreferrer"
       >
         <Button>Enter App</Button>
-      </StyledA>
+      </ButtonAnchor>
       <Sections />
     </Container>
   )

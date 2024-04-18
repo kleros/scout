@@ -3,8 +3,8 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import SecuredByKleros from 'svgs/footer/secured-by-kleros.svg'
-import AuditedByVeridise from 'svgs/hero/audited-by-veridise.svg'
 import EtherscanAndMetamaskImage from 'pngs/hero/etherscan-and-metamask.png'
+import { Button, ButtonAnchor } from 'components/Button'
 
 const Container = styled.div`
   display: flex;
@@ -14,9 +14,10 @@ const Container = styled.div`
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  gap: ${responsiveSize(76, 0)};
+  gap: ${responsiveSize(48, 0)};
   width: 84vw;
   margin: 0 auto;
+  margin-top: ${responsiveSize(36, 80)};
 
   ${landscapeStyle(
     () => css`
@@ -88,24 +89,34 @@ const CreditsContainer = styled.div`
   )}
 `
 
-const StyledAuditedByVeridise = styled(AuditedByVeridise)`
-  display: flex;
-  width: 179px;
-  height: 28px;
-  margin-bottom: 4px;
-  transition: height 0.25s;
-  &:hover {
-    height: 30px;
-  }
-`
-
 const RightSide = styled.div`
   display: flex;
+  flex-direction: column;
   flex-wrap: wrap;
+  gap: 32px;
+  align-items: center;
 `
 
 const StyledImg = styled.img`
-  height: ${responsiveSize(200, 380)};
+  height: ${responsiveSize(200, 340)};
+`
+
+const StyledButtonAnchor = styled(ButtonAnchor)`
+  ${landscapeStyle(
+    () => css`
+      padding-right: 0;
+    `
+  )}
+`
+
+const StyledSecuredByKleros = styled(SecuredByKleros)`
+  align-self: center;
+
+  ${landscapeStyle(
+    () => css`
+      align-self: flex-start;
+    `
+  )}
 `
 
 const Hero: React.FC = () => {
@@ -119,19 +130,17 @@ const Hero: React.FC = () => {
           registries to provide insights to the smart contract you are
           interacting with.
         </Description>
-        <CreditsContainer>
-          <SecuredByKleros />
-          <a
-            href="https://f8t2x8b2.rocketcdn.me/wp-content/uploads/2023/06/VAR-Kleros-Scout.pdf"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            <StyledAuditedByVeridise />
-          </a>
-        </CreditsContainer>
+        <StyledSecuredByKleros />
       </LeftSide>
       <RightSide>
         <StyledImg src={EtherscanAndMetamaskImage} />
+        <StyledButtonAnchor
+          href="https://app.klerosscout.eth.limo"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button>Submit & earn rewards!</Button>
+        </StyledButtonAnchor>
       </RightSide>
     </Container>
   )

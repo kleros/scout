@@ -13,6 +13,7 @@ const Container = styled.div`
   flex-direction: column;
   min-height: 100%;
   width: 100%;
+  overflow-x: hidden;
 `;
 
 const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
@@ -27,7 +28,7 @@ const StyledToastContainer = styled(ToastContainer)`
 
 const OutletContainer = styled.div`
   flex: 1;
-  background-color: #5a2393;
+  background-color: #08020E;
 `;
 
 const Layout: React.FC = () => {

@@ -1,5 +1,6 @@
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
+import { landscapeStyle } from 'styles/landscapeStyle'
 
 export const Button = styled.button`
   display: flex;
@@ -17,4 +18,22 @@ export const Button = styled.button`
     outline: none;
     border: none;
   }
+`
+
+export const ButtonAnchor = styled.a`
+  font-family: 'Oxanium', sans-serif;
+  text-decoration: none;
+  color: #000;
+
+  :hover {
+    text-decoration: underline;
+  }
+
+  ${landscapeStyle(
+    () => css`
+      display: flex;
+      position: relative;
+      padding-right: 64px;
+    `
+  )}
 `

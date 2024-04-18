@@ -1,25 +1,25 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { socialmedia } from 'consts/socialmedia'
+// import { socialmedia } from 'consts/socialmedia'
 import SecuredByKlerosLogo from 'svgs/footer/secured-by-kleros.svg'
+import Links from './Links'
 
 const Container = styled.div`
-  height: 122px;
-  background-color: #3d106c;
+  background-color: #08020e;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 0 32px 8px 32px;
+  padding: 0 32px 32px 32px;
   gap: 24px;
 
   ${landscapeStyle(
     () => css`
-      height: 64px;
       flex-direction: row;
       justify-content: space-between;
-      padding-bottom: 0;
+      padding-bottom: 32px;
+      align-items: flex-start;
     `
   )}
 
@@ -56,20 +56,21 @@ const SecuredByKleros: React.FC = () => (
   </a>
 )
 
-const SocialMedia = () => (
-  <div className="socialmedia">
-    {Object.values(socialmedia).map((site, i) => (
-      <a key={i} href={site.url} target="_blank" rel="noreferrer">
-        {site.icon}
-      </a>
-    ))}
-  </div>
-)
+// const SocialMedia = () => (
+//   <div className="socialmedia">
+//     {Object.values(socialmedia).map((site, i) => (
+//       <a key={i} href={site.url} target="_blank" rel="noreferrer">
+//         {site.icon}
+//       </a>
+//     ))}
+//   </div>
+// )
 
 const Footer: React.FC = () => (
   <Container>
     <SecuredByKleros />
-    <SocialMedia />
+    <Links />
+    {/* <SocialMedia /> */}
   </Container>
 )
 
