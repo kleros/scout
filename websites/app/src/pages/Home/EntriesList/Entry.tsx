@@ -8,7 +8,7 @@ import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
 import AddressDisplay from 'components/AddressDisplay'
 
 const Card = styled.div`
-  background-color: #380c65;
+  background-color: #3A2154;
   border-radius: 12px;
   color: white;
   font-family: 'Oxanium', sans-serif;
@@ -36,7 +36,7 @@ const CardStatus = styled.div<{ status: string }>`
   padding-top: 20px;
   padding-bottom: 15px;
   margin-bottom: 10px;
-  border-bottom: 3px solid #5a2393;
+  border-bottom: 3px solid #08020E;
 
   &:before {
     content: '';

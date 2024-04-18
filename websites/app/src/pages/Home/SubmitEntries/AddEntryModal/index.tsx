@@ -22,7 +22,7 @@ const ModalOverlay = styled.div`
 `
 
 const ModalContainer = styled.div`
-  background-color: #5a2393;
+  background-color: #3A2154;
   border-radius: 12px;
   width: 84vw;
   max-height: 85%;
@@ -77,7 +77,7 @@ export const StyledWholeField = styled.div`
 
 export const StyledTextInput = styled.input`
   display: flex;
-  background: #855caf;
+  background: #525252;
   padding: 8px 12px;
   outline: none;
   border: none;

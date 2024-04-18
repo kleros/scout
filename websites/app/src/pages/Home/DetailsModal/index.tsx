@@ -33,7 +33,7 @@ export const ModalOverlay = styled.div`
 
 const ModalContainer = styled.div`
   display: flex;
-  background-color: #5a2393;
+  background-color: #3A2154;
   border-radius: 12px;
   width: 84vw;
   flex-direction: column;

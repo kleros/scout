@@ -6,7 +6,7 @@ import Button from 'components/Button'
 const StyledButton = styled(Button)`
   align-items: center;
   font-family: 'Avenir', sans-serif;
-  background: #855caf;
+  background: #424242;
 `
 
 const RegistryDetailsButton: React.FC = () => {

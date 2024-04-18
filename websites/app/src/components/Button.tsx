@@ -14,12 +14,10 @@ const Button = styled.button`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
   &:hover {
-    background: #6c43ab;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
 
   &:active {
-    background: #6c43ab;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 `

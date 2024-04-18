@@ -14,7 +14,7 @@ const Container = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   width: 84vw;
-  background-color: #5a2393;
+  background-color: #3A2154;
   border-radius: 12px;
   color: #fff;
   display: flex;
@@ -50,7 +50,7 @@ const TextArea = styled.textarea`
   outline: none;
   overflow: auto;
   border-radius: 4px;
-  background: #855caf;
+  background: #525252;
   color: #fff;
 
   :active {

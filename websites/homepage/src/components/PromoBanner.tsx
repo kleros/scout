@@ -4,13 +4,14 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import MetamaskIcon from 'tsx:svgs/promo-banner/metamask.svg'
 import RightArrow from 'tsx:svgs/promo-banner/right-arrow.svg'
 
-const Container = styled.div`
+const Container = styled.a`
   display: flex;
   background-color: #1e003b;
   color: #cd9dff;
   width: 100%;
   font-size: 14px;
   align-items: center;
+  text-decoration: none;
   justify-content: center;
   font-family: 'Avenir', sans-serif;
   gap: 8px 0;
@@ -31,21 +32,25 @@ const StyledP = styled.p`
   )}
 `
 
-export const installSnap = async () => {
-  try {
-    await window.ethereum.request({
-      method: 'wallet_requestSnaps',
-      params: {
-        'npm:@kleros/scout-snap': { version: '1.1.0' },
-      },
-    })
-  } catch (error) {
-    console.error(error)
-  }
-}
+// export const installSnap = async () => {
+//   try {
+//     await window.ethereum.request({
+//       method: 'wallet_requestSnaps',
+//       params: {
+//         'npm:@kleros/scout-snap': { version: '1.1.0' },
+//       },
+//     })
+//   } catch (error) {
+//     console.error(error)
+//   }
+// }
 
 const PromoBanner: React.FC = () => (
-  <Container onClick={installSnap}>
+  <Container
+    href="https://snaps.metamask.io/snap/npm/kleros/scout-snap/"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
     <MetamaskIcon />
     <StyledP>
       Protect yourself by installing the Kleros Scout Snap on your MetaMask

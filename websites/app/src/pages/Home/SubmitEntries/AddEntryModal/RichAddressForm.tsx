@@ -18,18 +18,18 @@ const StyledNetworkSelect = styled(Select)`
   width: 200px;
 
   > div {
-    background-color: #855caf;
+    background-color: #525252;
     border: none;
     border-radius: 12px 12px 0 0;
 
     > input {
       color: #fff;
       padding: 12px;
-      background-color: #855caf;
+      background-color: #525252;
       border-radius: 12px;
 
       :hover {
-        background-color: #855caf;
+        background-color: #525252;
       }
     }
   }
@@ -42,7 +42,7 @@ const StyledNetworkSelect = styled(Select)`
 export const StyledAddressInput = styled.input`
   display: flex;
   width: 100%;
-  background: #855caf;
+  background: #525252;
   padding: 8px 12px;
   outline: none;
   border: none;

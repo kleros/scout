@@ -12,7 +12,7 @@ const Container = styled.div`
   width: 100%;
   height: 108px;
   flex-direction: column;
-  background: #3d106c;
+  background: #010002;
   align-items: center;
   justify-content: center;
   margin-bottom: ${responsiveSize(16, 24)};

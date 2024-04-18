@@ -9,7 +9,7 @@ import SearchIcon from 'tsx:svgs/icons/search.svg'
 const Container = styled.div`
   display: flex;
   align-items: center;
-  background: #855caf;
+  background: #424242;
   border-radius: 12px;
   padding-left: ${responsiveSize(12, 20)};
   width: 100%;

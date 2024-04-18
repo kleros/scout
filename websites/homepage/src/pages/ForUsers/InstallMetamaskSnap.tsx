@@ -5,8 +5,8 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import ScoutBackground from 'pngs/scout-background.png'
 import MetamaskPopupDarkMode from 'pngs/metamask-popup-dark-mode.png'
 import MetamaskLogo from 'tsx:svgs/promo-banner/metamask.svg'
-import { Button } from 'components/Button'
-import { installSnap } from 'components/PromoBanner'
+import { Button, ButtonAnchor } from 'components/Button'
+// import { installSnap } from 'components/PromoBanner'
 
 const Container = styled.div`
   display: flex;
@@ -61,6 +61,8 @@ const StyledDescription = styled.p`
   )}
 `
 
+const StyledButtonAnchor = styled(ButtonAnchor)``
+
 const StyledButton = styled(Button)`
   display: flex;
   gap: 10px;
@@ -87,9 +89,15 @@ const InstallMetamaskSnap = () => {
           Install the Kleros Scout Snap on your MetaMask wallet and learn
           crucial information about the smart-contracts you interact with.
         </StyledDescription>
-        <StyledButton onClick={installSnap}>
-          <MetamaskLogo /> Add Kleros Scout to MetaMask
-        </StyledButton>
+        <StyledButtonAnchor
+          href="https://snaps.metamask.io/snap/npm/kleros/scout-snap/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <StyledButton>
+            <MetamaskLogo /> Add Kleros Scout to MetaMask
+          </StyledButton>
+        </StyledButtonAnchor>
       </LeftContent>
       <MetamaskPopup src={MetamaskPopupDarkMode} alt="Metamask Popup" />
     </Container>

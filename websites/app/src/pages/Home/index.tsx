@@ -23,7 +23,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #5a2393;
+  background: #08020E;
   min-height: 100vh;
   color: white;
   padding-bottom: 48px;
@@ -34,7 +34,7 @@ const SearchAndRegistryDetailsAndSubmitContainer = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  background: #5a2393;
+  background: #08020E;
   color: white;
   width: 84vw;
   margin-bottom: ${responsiveSize(24, 24)};
