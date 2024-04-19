@@ -16,15 +16,9 @@ const Container = styled.div`
   background-size: cover;
   color: #fff;
   justify-content: center;
-  gap: 0;
+  gap: ${responsiveSize(0, 168)};
   flex-wrap: wrap;
   margin-top: ${responsiveSize(90, 80)};
-
-  ${landscapeStyle(
-    () => css`
-      gap: 12vw;
-    `
-  )}
 `
 
 const LeftContent = styled.div`

@@ -37,7 +37,7 @@ const InnerContent = styled.div`
       width: auto;
       max-width: 500px;
       align-items: flex-start;
-      margin-left: 10.15vw;
+      margin-left: 23vw;
     `
   )}
 `
