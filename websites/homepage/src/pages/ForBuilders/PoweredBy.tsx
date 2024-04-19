@@ -8,29 +8,36 @@ import { Button, ButtonAnchor } from 'components/Button'
 const Container = styled.div`
   display: flex;
   background: url(${CurateBackground}) no-repeat center center;
-  height: ${responsiveSize(520, 600)};
+  height: ${responsiveSize(640, 600)};
   width: 100%;
   background-size: cover;
   color: #fff;
   justify-content: center;
   gap: ${responsiveSize(0, 64)};
   flex-wrap: wrap;
-  margin-top: ${responsiveSize(90, 80)};
+  margin-top: ${responsiveSize(90, 120)};
+
+  ${landscapeStyle(
+    () => css`
+      justify-content: flex-start;
+    `
+  )}
 `
 
 const InnerContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${responsiveSize(16, 32)};
-  margin-top: ${responsiveSize(60, 160)};
   width: 84vw;
   align-items: center;
+  margin-top: 40px;
 
   ${landscapeStyle(
     () => css`
       width: auto;
-      max-width: 440px;
+      max-width: 500px;
       align-items: flex-start;
+      margin-left: 10.15vw;
     `
   )}
 `
@@ -57,6 +64,7 @@ const DescriptionsContainer = styled.div`
 const StyledDescription = styled.p`
   font-family: 'Oxanium', sans-serif;
   text-align: center;
+  margin: 0;
 
   ${landscapeStyle(
     () => css`
@@ -65,7 +73,9 @@ const StyledDescription = styled.p`
   )}
 `
 
-const StyledButtonAnchor = styled(ButtonAnchor)``
+const StyledButtonAnchor = styled(ButtonAnchor)`
+  margin-top: ${responsiveSize(20, 0)};
+`
 
 const PoweredBy = () => {
   return (

@@ -2,8 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 import Hero from './Hero'
-import ProjectsUsingScout from './ProjectsUsingScout'
-import PromoBanner from 'components/PromoBanner'
+import ProjectsUsingScout from 'components/ProjectsUsingScout'
 import HowToSubmit from 'components/HowToSubmit'
 import SubgraphSection from 'components/SubgraphSection'
 
@@ -17,7 +16,6 @@ const Container = styled.div`
 const Home = () => {
   return (
     <Container>
-      <PromoBanner />
       <Hero />
       <ProjectsUsingScout />
       <HowToSubmit

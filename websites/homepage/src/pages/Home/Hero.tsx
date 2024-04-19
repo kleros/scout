@@ -34,7 +34,7 @@ const LeftSide = styled.div`
 
   ${landscapeStyle(
     () => css`
-      width: 600px;
+      width: 560px;
       text-align: left;
     `
   )}
@@ -49,13 +49,14 @@ const Intro = styled.p`
   ${landscapeStyle(
     () => css`
       margin: 0;
+      margin-bottom: 16px;
     `
   )}
 `
 
 const Title = styled.p`
   display: flex;
-  margin: 12px auto;
+  margin: 0 auto;
   font-size: ${responsiveSize(48, 64)};
   font-weight: 600;
   font-family: 'Avenir', sans-serif;
@@ -63,6 +64,7 @@ const Title = styled.p`
   ${landscapeStyle(
     () => css`
       margin: 0;
+      margin-bottom: 20px;
     `
   )}
 `
@@ -70,21 +72,12 @@ const Title = styled.p`
 const Description = styled.p`
   display: flex;
   font-size: ${responsiveSize(20, 24)};
-  margin-bottom: 32px;
-`
-
-const CreditsContainer = styled.div`
-  display: flex;
-  height: 60px;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: ${responsiveSize(32, 24)};
-  flex-wrap: wrap;
+  margin: 0;
+  margin-bottom: ${responsiveSize(32, 60)};
 
   ${landscapeStyle(
     () => css`
-      justify-content: flex-start;
+      width: 520px;
     `
   )}
 `

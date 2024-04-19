@@ -11,14 +11,20 @@ import { Button, ButtonAnchor } from 'components/Button'
 const Container = styled.div`
   display: flex;
   background: url(${ScoutBackground}) no-repeat center center;
-  height: ${responsiveSize(728, 814)};
+  height: ${responsiveSize(860, 814)};
   width: 100%;
   background-size: cover;
   color: #fff;
   justify-content: center;
-  gap: ${responsiveSize(0, 64)};
+  gap: 0;
   flex-wrap: wrap;
   margin-top: ${responsiveSize(90, 80)};
+
+  ${landscapeStyle(
+    () => css`
+      gap: 12vw;
+    `
+  )}
 `
 
 const LeftContent = styled.div`
@@ -32,7 +38,7 @@ const LeftContent = styled.div`
   ${landscapeStyle(
     () => css`
       width: auto;
-      max-width: 440px;
+      max-width: 520px;
       align-items: flex-start;
     `
   )}
@@ -66,12 +72,18 @@ const StyledButtonAnchor = styled(ButtonAnchor)``
 const StyledButton = styled(Button)`
   display: flex;
   gap: 10px;
-  width: 336px;
+  width: 320px;
+
+  ${landscapeStyle(
+    () => css`
+      width: 448px;
+    `
+  )}
 `
 
 const MetamaskPopup = styled.img`
-  max-width: ${responsiveSize(340, 340)};
-  max-height: ${responsiveSize(290, 440)};
+  max-width: ${responsiveSize(340, 397)};
+  max-height: ${responsiveSize(290, 580)};
 
   ${landscapeStyle(
     () => css`

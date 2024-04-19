@@ -12,7 +12,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-  gap: 32px;
+  gap: 36px;
   align-items: center;
   justify-content: center;
   margin-top: ${responsiveSize(48, 100)};
@@ -34,11 +34,12 @@ const StyledText = styled.p`
   font-family: 'Oxanium', sans-serif;
   color: #fff;
   margin: 0;
+  font-size: 16px;
 `
 
 const LogosContainer = styled.div`
   display: flex;
-  gap: 32px;
+  gap: 30px;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
@@ -61,7 +62,6 @@ const ProjectsUsingScout = () => {
           <Logo key={logo.alt} src={logo.src} alt={logo.alt} />
         ))}
       </LogosContainer>
-
       <StyledText>& MANY MORE</StyledText>
     </Container>
   )

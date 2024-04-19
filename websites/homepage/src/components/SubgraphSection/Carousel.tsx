@@ -17,7 +17,7 @@ const CarouselContainer = styled.div`
   text-align: center;
   width: 84vw;
   flex-wrap: wrap;
-  gap: 32px;
+  gap: 36px;
   margin-top: ${responsiveSize(32, 32)};
 
   ${landscapeStyle(
@@ -48,16 +48,15 @@ const InnerContent = styled.div`
 const LeftContent = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
   width: 84vw;
   font-family: 'Oxanium', sans-serif;
   flex-wrap: wrap;
+  align-items: flex-start;
 
   ${landscapeStyle(
     () => css`
-      max-width: 256px;
+      width: auto;
       text-align: left;
-      align-items: flex-start;
     `
   )}
 `
@@ -103,25 +102,42 @@ const Title = styled.h2`
   display: flex;
   color: #fff;
   margin: 0;
+  align-self: center;
+
+  ${landscapeStyle(
+    () => css`
+      align-self: flex-start;
+    `
+  )}
 `
 
 const Description = styled.p`
   display: flex;
   color: #fff;
-  max-width: 240px;
   flex-wrap: wrap;
+
+  ${landscapeStyle(
+    () => css`
+      width: 440px;
+    `
+  )}
 `
 
-const Tooltip = styled.span`
+const Tooltip = styled.span<{ isVisible: boolean }>`
+  position: absolute;
+  top: 20px;
+  left: 95%;
+  transform: translateX(-50%);
   background-color: #555;
   color: white;
   text-align: center;
   border-radius: 6px;
-  padding: 8px 0;
+  padding: 8px 8px;
   font-size: 14px;
-  z-index: 1;
+  z-index: 100;
   opacity: 0.9;
   transition: opacity 0.3s;
+  visibility: ${(isVisible) => (isVisible ? 'visible' : 'hidden')};
 `
 
 const QueryContainer = styled.div`
@@ -134,8 +150,8 @@ const QueryContainer = styled.div`
 
 const Query = styled.div`
   display: flex;
-  width: 200px;
-  height: 136px;
+  width: 268px;
+  height: 108px;
   overflow-y: auto;
   font-family: 'Fira Code', monospace;
   text-align: left;
@@ -146,6 +162,18 @@ const Query = styled.div`
   flex-wrap: wrap;
   white-space: pre-wrap;
   word-break: break-word;
+
+  &::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+    background-color: #1f1826;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(207, 162, 255, 0.3);
+    box-shadow: 0 0 1px rgba(207, 162, 255, 0.3);
+  }
 `
 
 const StyledCopyToClipboard = styled(CopyToClipboard)`
@@ -155,7 +183,7 @@ const StyledCopyToClipboard = styled(CopyToClipboard)`
 const StyledQueryTitle = styled.p`
   opacity: 0.5;
   margin: 8px 0;
-  margin-right: 160px;
+  font-size: 16px;
 
   ${landscapeStyle(
     () => css`
@@ -251,7 +279,7 @@ const Carousel = () => {
           <QueryContainer>
             <Query>{query}</Query>
             <StyledCopyToClipboard onClick={() => handleCopy(query)} />
-            {showTooltip && <Tooltip>Copied!</Tooltip>}
+            {showTooltip && <Tooltip isVisible={showTooltip}>Copied!</Tooltip>}
           </QueryContainer>
           <StyledButtonAnchor
             href="https://thegraph.com/hosted-service/subgraph/kleros/legacy-curate-xdai"

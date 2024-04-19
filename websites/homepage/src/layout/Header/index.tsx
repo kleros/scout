@@ -4,6 +4,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import { useNavigate } from 'react-router-dom'
 import Sections from './Sections'
 import { Button, ButtonAnchor } from 'components/Button'
+import PromoBanner from 'components/PromoBanner'
 import CurateLogo from 'tsx:svgs/header/curate-logo.svg'
 
 const Container = styled.div`
@@ -53,6 +54,17 @@ const Title = styled.div`
   )}
 `
 
+const StyledButton = styled(Button)`
+  font-size: 18px;
+  padding: 6.8px 12px;
+`
+
+const HorizontalLine = styled.div`
+  height: 0.5px;
+  width: 100%;
+  background-color: #cd9dff;
+`
+
 const Navbar: React.FC = () => {
   const navigate = useNavigate()
 
@@ -61,20 +73,24 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <Container>
-      <Title onClick={handlerClickTitle}>
-        <StyledCurateLogo />
-        <StyledText>Kleros Scout</StyledText>
-      </Title>
-      <ButtonAnchor
-        href="https://app.klerosscout.eth.limo"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Button>Enter App</Button>
-      </ButtonAnchor>
-      <Sections />
-    </Container>
+    <>
+      <Container>
+        <Title onClick={handlerClickTitle}>
+          <StyledCurateLogo />
+          <StyledText>Kleros Scout</StyledText>
+        </Title>
+        <ButtonAnchor
+          href="https://app.klerosscout.eth.limo"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <StyledButton>Enter App</StyledButton>
+        </ButtonAnchor>
+        <Sections />
+      </Container>
+      <HorizontalLine />
+      <PromoBanner />
+    </>
   )
 }
 export default Navbar

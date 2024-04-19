@@ -17,6 +17,7 @@ const Container = styled.div`
 const StyledTitle = styled.h1`
   margin: 0;
   text-align: center;
+  font-size: 40px;
 `
 
 const SectionsContainer = styled.div`
@@ -56,9 +57,10 @@ Scroll down to learn how to submit!"
         target="_blank"
         rel="noopener noreferrer"
       >
-        <Button>Submit & earn rewards!</Button>
+        <Button>Contribute & earn rewards!</Button>
       </StyledButtonAnchor>
     </Container>
   )
 }
+
 export default ContributeAndEarn

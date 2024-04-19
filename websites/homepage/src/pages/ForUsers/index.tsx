@@ -3,7 +3,6 @@ import styled from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 import ContributeAndEarn from './ContributeAndEarn'
 import HowToSubmit from 'components/HowToSubmit'
-import PromoBanner from 'components/PromoBanner'
 import InstallMetamaskSnap from './InstallMetamaskSnap'
 
 const Container = styled.div`
@@ -16,7 +15,6 @@ const Container = styled.div`
 const index: React.FC = () => {
   return (
     <Container>
-      <PromoBanner />
       <ContributeAndEarn />
       <HowToSubmit
         titleText="How do I Submit?"

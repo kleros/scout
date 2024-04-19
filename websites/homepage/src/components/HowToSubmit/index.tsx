@@ -21,7 +21,7 @@ const Container = styled.div`
   )}
 `
 
-const Title = styled.h2`
+const Title = styled.h1`
   margin: 0;
   margin-bottom: ${responsiveSize(12, 24)};
   font-family: 'Avenir', sans-serif;
@@ -35,7 +35,7 @@ const Description = styled.p`
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`
-  margin-top: ${responsiveSize(12, 24)};
+  margin-top: ${responsiveSize(12, 52)};
 
   ${landscapeStyle(
     () => css`
@@ -69,7 +69,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         <br />
         They are:{' '}
         <Anchor
-          href="https://app.klerosscout.eth.limo/?registry=Tokens"
+          href="https://app.klerosscout.eth.limo/#/?registry=Tokens"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -77,7 +77,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         </Anchor>
         ,{' '}
         <Anchor
-          href="https://app.klerosscout.eth.limo/?registry=Tags"
+          href="https://app.klerosscout.eth.limo/#/?registry=Tags"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -85,7 +85,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         </Anchor>{' '}
         &{' '}
         <Anchor
-          href="https://app.klerosscout.eth.limo/?registry=CDN"
+          href="https://app.klerosscout.eth.limo/#/?registry=CDN"
           target="_blank"
           rel="noopener noreferrer"
         >

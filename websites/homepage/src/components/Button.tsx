@@ -6,12 +6,11 @@ export const Button = styled.button`
   display: flex;
   color: #000000;
   background: #cd9dff;
-  height: 38px;
   align-items: center;
   font-family: 'Avenir', sans-serif;
-  font-size: 18px;
-  font-weight: bold;
-  padding: 8px ${responsiveSize(8, 20)};
+  font-size: ${responsiveSize(20, 24)};
+  font-weight: 700;
+  padding: 17px ${responsiveSize(12, 32)};
   border: none;
   cursor: pointer;
   &:active {

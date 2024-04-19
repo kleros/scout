@@ -1,11 +1,18 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  width: 300px;
+  width: 84vw;
   align-items: center;
+
+  ${landscapeStyle(
+    () => css`
+      width: 420px;
+    `
+  )}
 `
 
 const ImagePlaceholder = styled.div`
@@ -19,6 +26,14 @@ const ImagePlaceholder = styled.div`
   padding: 8px;
 `
 
+const StyledTitle = styled.h2`
+  font-size: 32px;
+`
+
+const StyledDescription = styled.p`
+  margin: 0;
+`
+
 interface ISection {
   title: string
   description: string
@@ -28,9 +43,10 @@ const Section: React.FC<ISection> = ({ title, description }) => {
   return (
     <Container>
       <ImagePlaceholder>Illustration</ImagePlaceholder>
-      <h2>{title}</h2>
-      {description}
+      <StyledTitle>{title}</StyledTitle>
+      <StyledDescription>{description}</StyledDescription>
     </Container>
   )
 }
+
 export default Section

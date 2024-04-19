@@ -9,13 +9,13 @@ const Container = styled.div`
   padding: 20px;
   flex-wrap: wrap;
   font-family: 'Oxanium', sans-serif;
-  gap: 32px;
+  gap: ${responsiveSize(40, 40)};
   justify-content: center;
   width: 84vw;
 
   ${landscapeStyle(
     () => css`
-      width: 84%;
+      width: 100%;
     `
   )}
 `
@@ -25,9 +25,15 @@ const StepsContainer = styled.div`
   margin-top: 32px;
   position: relative;
   flex-direction: column;
-  width: 400px;
-  gap: 24px;
+  width: 578px;
+  gap: 42px;
   transition: transform 0.3s ease, opacity 0.3s ease;
+
+  ${landscapeStyle(
+    () => css`
+      height: 460px;
+    `
+  )}
 `
 
 const Step = styled.div`
@@ -45,31 +51,34 @@ const TitleAndDescription = styled.div`
 const VerticalLine = styled.div<{ activeStep: number }>`
   position: absolute;
   top: 30px;
-  left: 15px;
+  left: 16px;
   width: 1px;
   background-color: #cd9dff;
   z-index: 0;
 
   ${({ activeStep }) =>
     `
-    height: ${activeStep === 3 ? 'calc(100% - 240px)' : 'calc(100% - 60px)'};
+    height: ${activeStep === 3 ? 'calc(100% - 400px)' : 'calc(100% - 80px)'};
   `};
 
   ${({ activeStep }) =>
     landscapeStyle(
       () => css`
         height: ${activeStep === 3
-          ? 'calc(100% - 180px)'
-          : 'calc(100% - 114px)'};
+          ? 'calc(100% - 300px)'
+          : 'calc(100% - 88px)'};
+        top: 30px;
+        left: 24px;
       `
     )}
 `
 
 const StepIndicator = styled.div<{ isActive: boolean }>`
   display: flex;
-  min-width: ${({ isActive }) => (isActive ? '30px' : '28px')};
-  height: ${({ isActive }) => (isActive ? '30px' : '28px')};
+  min-width: ${({ isActive }) => (isActive ? '32px' : '30px')};
+  height: ${({ isActive }) => (isActive ? '32px' : '30px')};
   border-radius: 50%;
+  font-size: ${responsiveSize(20, 24)};
   color: ${({ isActive }) => (isActive ? '#fff' : '#747474')};
   background-color: ${({ isActive }) => (isActive ? '#5A2393' : '#08020E')};
   border: ${({ isActive }) => (isActive ? 'none' : '1px solid #cd9dff;')};
@@ -77,26 +86,35 @@ const StepIndicator = styled.div<{ isActive: boolean }>`
   align-items: center;
   margin-right: 16px;
   z-index: 1;
+
+  ${({ isActive }) =>
+    landscapeStyle(
+      () => css`
+        top: 5px;
+        min-width: ${isActive ? '48px' : '46px'};
+        height: ${isActive ? '48px' : '46px'};
+      `
+    )}
 `
 
 const StepTitle = styled.div<{ isActive: boolean }>`
   display: flex;
   color: ${({ isActive }) => (isActive ? '#CFA2FF' : '#747474')};
   font-weight: ${({ isActive }) => (isActive ? '600' : '400')};
-  font-size: ${({ isActive }) => (isActive ? '16px' : '14px')};
-`
+  font-size: ${({ isActive }) =>
+    isActive ? responsiveSize(20, 24) : responsiveSize(16, 20)};
+  margin-bottom: 4px;
 
-const StepDescription = styled.div<{ isActive: boolean }>`
-  color: #fff;
-  padding-top: 5px;
-  display: ${({ isActive }) => (isActive ? 'block' : 'none')};
-  position: relative;
-  z-index: 1;
+  ${landscapeStyle(
+    () => css`
+      margin-bottom: 12px;
+    `
+  )}
 `
 
 const ImagePlaceholder = styled.div`
-  width: 260px;
-  height: 260px;
+  width: 448px;
+  height: 300px;
   background: #1b1b1b;
   color: #848484;
   display: flex;
@@ -104,27 +122,48 @@ const ImagePlaceholder = styled.div`
   align-items: center;
   margin-top: ${responsiveSize(4, 32)};
   padding: 8px;
+
+  ${landscapeStyle(
+    () => css`
+      height: 436px;
+    `
+  )}
+`
+
+const Paragraph = styled.div<{ isActive: boolean }>`
+  display: ${({ isActive }) => (isActive ? 'block' : 'none')};
+  color: #fff;
+  font-size: ${responsiveSize(20, 24)};
+  margin-bottom: 10px;
+  font-weight: 300;
 `
 
 const steps = [
   {
     id: 1,
     title: 'Go to any of the 3 registries & read the policy.',
-    description:
-      'Understanding how to submit insights is key to keeping Kleros Scout reliable. The policy contains simple rules to keep in mind while making submissions to the registries.',
+    paragraphs: [
+      'Understanding how to submit insights is key to keeping Kleros Scout reliable.',
+      'The policy contains simple rules to keep in mind while making submissions to the registries.',
+    ],
   },
   {
     id: 2,
     title: 'Submit/Suggest an insight with a deposit.',
-    description:
-      'You can now fill in the contract insights & make a submission with a deposit. This will be returned to you if the submission you’ve made is correct!',
+    paragraphs: [
+      'You can now fill in the contract insights & make a submission with a deposit.',
+      'This will be returned to you if the submission you’ve made is correct!',
+    ],
   },
   {
     id: 3,
     title:
       'Post the challenge period, your insight is accepted & eligible to earn rewards!',
-    description:
-      'Once submitted, your insight is reviewed by the community. If it is challenged for any reason, it is taken to the Kleros Court where a crowdsourced jury decides if the insight’s valid. If there’s no challenge, it is added to the registry & you’re eligible for rewards!',
+    paragraphs: [
+      'Once submitted, your insight is reviewed by the community. If it is challenged for any reason' +
+        ' it is taken to the Kleros Court where a crowdsourced jury decides if the insight’s valid.' +
+        ' If there’s no challenge, it is added to the registry & you’re eligible for rewards!',
+    ],
   },
 ]
 
@@ -144,9 +183,11 @@ const StepComponent = () => {
               <StepTitle isActive={activeStep === step.id}>
                 {step.title}
               </StepTitle>
-              <StepDescription isActive={activeStep === step.id}>
-                {step.description}
-              </StepDescription>
+              {step.paragraphs.map((paragraph, index) => (
+                <Paragraph key={index} isActive={activeStep === step.id}>
+                  {paragraph}
+                </Paragraph>
+              ))}
             </TitleAndDescription>
           </Step>
         ))}

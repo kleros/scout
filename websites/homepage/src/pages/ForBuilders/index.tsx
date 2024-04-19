@@ -1,9 +1,8 @@
 import React from 'react'
-import PromoBanner from 'components/PromoBanner'
 import styled from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
-import SubgraphSection from '../../components/SubgraphSection'
-import ProjectsUsingScout from '../Home/ProjectsUsingScout'
+import SubgraphSection from 'components/SubgraphSection'
+import ProjectsUsingScout from 'components/ProjectsUsingScout'
 import HowToSubmit from 'components/HowToSubmit'
 import PoweredBy from './PoweredBy'
 
@@ -17,7 +16,6 @@ const Container = styled.div`
 const ForBuilders: React.FC = () => {
   return (
     <Container>
-      <PromoBanner />
       <SubgraphSection />
       <ProjectsUsingScout />
       <HowToSubmit

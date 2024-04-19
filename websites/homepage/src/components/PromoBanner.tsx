@@ -23,6 +23,7 @@ const Container = styled.a`
 
 const StyledP = styled.p`
   margin: 0 24px;
+  font-size: 14px;
 
   ${landscapeStyle(
     () =>
