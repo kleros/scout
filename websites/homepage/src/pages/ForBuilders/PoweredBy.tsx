@@ -13,18 +13,11 @@ const Container = styled.div`
   background-size: cover;
   color: #fff;
   justify-content: center;
-  gap: ${responsiveSize(0, 64)};
+  gap: ${responsiveSize(0, 580)};
   flex-wrap: wrap;
-  margin-top: ${responsiveSize(90, 120)};
-
-  ${landscapeStyle(
-    () => css`
-      justify-content: flex-start;
-    `
-  )}
 `
 
-const InnerContent = styled.div`
+const LeftContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${responsiveSize(16, 32)};
@@ -37,7 +30,6 @@ const InnerContent = styled.div`
       width: auto;
       max-width: 500px;
       align-items: flex-start;
-      margin-left: 23vw;
     `
   )}
 `
@@ -74,13 +66,13 @@ const StyledDescription = styled.p`
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`
-  margin-top: ${responsiveSize(20, 0)};
+  margin-top: ${responsiveSize(20, 12)};
 `
 
 const PoweredBy = () => {
   return (
     <Container>
-      <InnerContent>
+      <LeftContent>
         <StyledTitle>Powered by Kleros Curate</StyledTitle>
         <DescriptionsContainer>
           <StyledDescription>
@@ -101,7 +93,8 @@ const PoweredBy = () => {
         >
           <Button>Get in Touch</Button>
         </StyledButtonAnchor>
-      </InnerContent>
+      </LeftContent>
+      <div></div>
     </Container>
   )
 }

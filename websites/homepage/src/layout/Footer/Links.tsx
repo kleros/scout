@@ -1,6 +1,7 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
+import { responsiveSize } from 'styles/responsiveSize'
 import { links } from 'consts/links'
 
 const Container = styled.div`
@@ -14,6 +15,7 @@ const Container = styled.div`
   ${landscapeStyle(
     () => css`
       grid-template-columns: repeat(2, 1fr);
+      column-gap: ${responsiveSize(140, 280)};
     `
   )}
 `

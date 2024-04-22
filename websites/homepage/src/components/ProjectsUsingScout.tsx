@@ -1,6 +1,5 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
-import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import etherscan from 'pngs/projects-using-scout/etherscan.png'
 import uniswap from 'pngs/projects-using-scout/uniswap.png'
@@ -15,7 +14,6 @@ const Container = styled.div`
   gap: 36px;
   align-items: center;
   justify-content: center;
-  margin-top: ${responsiveSize(48, 100)};
   width: 84vw;
 
   ${landscapeStyle(

@@ -8,8 +8,10 @@ import InstallMetamaskSnap from './InstallMetamaskSnap'
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  margin-bottom: ${responsiveSize(80, 160)};
   align-items: center;
+  gap: ${responsiveSize(96, 200)};
+  margin-top: ${responsiveSize(36, 80)};
+  margin-bottom: ${responsiveSize(80, 160)};
 `
 
 const index: React.FC = () => {

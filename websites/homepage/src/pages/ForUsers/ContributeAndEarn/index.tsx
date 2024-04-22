@@ -11,7 +11,6 @@ const Container = styled.div`
   color: #fff;
   flex-direction: column;
   gap: ${responsiveSize(24, 60)};
-  margin-top: ${responsiveSize(36, 72)};
 `
 
 const StyledTitle = styled.h1`
@@ -27,6 +26,7 @@ const SectionsContainer = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   text-align: center;
+  font-family: 'Oxanium', sans-serif;
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`

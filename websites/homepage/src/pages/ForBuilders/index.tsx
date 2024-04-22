@@ -9,15 +9,25 @@ import PoweredBy from './PoweredBy'
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  margin-bottom: ${responsiveSize(80, 160)};
   align-items: center;
+  gap: ${responsiveSize(96, 200)};
+  margin-top: ${responsiveSize(36, 80)};
+  margin-bottom: ${responsiveSize(80, 160)};
+`
+
+const SubgraphSectionAndProjectsUsingScout = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${responsiveSize(48, 100)};
 `
 
 const ForBuilders: React.FC = () => {
   return (
     <Container>
-      <SubgraphSection />
-      <ProjectsUsingScout />
+      <SubgraphSectionAndProjectsUsingScout>
+        <SubgraphSection />
+        <ProjectsUsingScout />
+      </SubgraphSectionAndProjectsUsingScout>
       <HowToSubmit
         titleText="How does Community Curation work?"
         buttonText="Get in Touch"

@@ -1,12 +1,10 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
-import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import Carousel from './Carousel'
 
 const Container = styled.div`
   color: #fff;
-  margin-top: ${responsiveSize(36, 72)};
   width: 84vw;
 
   ${landscapeStyle(

@@ -16,26 +16,32 @@ const Container = styled.div`
   background-size: cover;
   color: #fff;
   justify-content: center;
-  gap: ${responsiveSize(0, 168)};
+  gap: ${responsiveSize(0, 208)};
   flex-wrap: wrap;
-  margin-top: ${responsiveSize(90, 80)};
 `
 
 const LeftContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${responsiveSize(16, 32)};
-  margin-top: ${responsiveSize(60, 160)};
+  margin-top: ${responsiveSize(20, 40)};
   width: 84vw;
   align-items: center;
+  height: ${responsiveSize(290, 522)};
 
   ${landscapeStyle(
     () => css`
       width: auto;
       max-width: 520px;
       align-items: flex-start;
+      justify-content: space-between;
     `
   )}
+`
+
+const TitleAndDescription = styled.div`
+  display: flex;
+  flex-direction: column;
 `
 
 const StyledTitle = styled.h1`
@@ -66,35 +72,32 @@ const StyledButtonAnchor = styled(ButtonAnchor)``
 const StyledButton = styled(Button)`
   display: flex;
   gap: 10px;
-  width: 320px;
+  width: 312px;
 
   ${landscapeStyle(
     () => css`
-      width: 448px;
+      width: 404px;
     `
   )}
 `
 
 const MetamaskPopup = styled.img`
-  max-width: ${responsiveSize(340, 397)};
-  max-height: ${responsiveSize(290, 580)};
-
-  ${landscapeStyle(
-    () => css`
-      margin-top: 160px;
-    `
-  )}
+  max-width: ${responsiveSize(340, 357)};
+  max-height: ${responsiveSize(290, 522)};
+  margin-top: ${responsiveSize(20, 40)};
 `
 
 const InstallMetamaskSnap = () => {
   return (
     <Container>
       <LeftContent>
-        <StyledTitle>Install the Kleros Scout Snap</StyledTitle>
-        <StyledDescription>
-          Install the Kleros Scout Snap on your MetaMask wallet and learn
-          crucial information about the smart-contracts you interact with.
-        </StyledDescription>
+        <TitleAndDescription>
+          <StyledTitle>Install the Kleros Scout Snap</StyledTitle>
+          <StyledDescription>
+            Install the Kleros Scout Snap on your MetaMask wallet and learn
+            crucial information about the smart-contracts you interact with.
+          </StyledDescription>
+        </TitleAndDescription>
         <StyledButtonAnchor
           href="https://snaps.metamask.io/snap/npm/kleros/scout-snap/"
           target="_blank"

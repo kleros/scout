@@ -198,7 +198,7 @@ const Image = styled.img`
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`
-  margin-top: ${responsiveSize(20, 24)};
+  margin-top: ${responsiveSize(20, 32)};
   margin-right: 84px;
 
   ${landscapeStyle(

@@ -1,6 +1,7 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
+import { responsiveSize } from 'styles/responsiveSize'
 // import { socialmedia } from 'consts/socialmedia'
 import SecuredByKlerosLogo from 'svgs/footer/secured-by-kleros.svg'
 import Links from './Links'
@@ -11,14 +12,13 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 0 32px 32px 32px;
+  padding: 0 0 32px 0;
   gap: 24px;
 
   ${landscapeStyle(
     () => css`
       flex-direction: row;
-      justify-content: space-between;
-      padding-bottom: 32px;
+      gap: ${responsiveSize(140, 280)};
       align-items: flex-start;
     `
   )}

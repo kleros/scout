@@ -9,15 +9,25 @@ import SubgraphSection from 'components/SubgraphSection'
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  margin-bottom: ${responsiveSize(80, 160)};
   align-items: center;
+  gap: ${responsiveSize(96, 200)};
+  margin-top: ${responsiveSize(36, 80)};
+  margin-bottom: ${responsiveSize(80, 160)};
+`
+
+const HeroAndProjectsUsingScout = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${responsiveSize(48, 100)};
 `
 
 const Home = () => {
   return (
     <Container>
-      <Hero />
-      <ProjectsUsingScout />
+      <HeroAndProjectsUsingScout>
+        <Hero />
+        <ProjectsUsingScout />
+      </HeroAndProjectsUsingScout>
       <HowToSubmit
         titleText="How does it work?"
         buttonText="Submit & earn rewards!"

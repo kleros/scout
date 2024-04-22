@@ -12,7 +12,6 @@ const Container = styled.div`
   align-items: center;
   color: #fff;
   width: 84vw;
-  margin-top: ${responsiveSize(64, 100)};
 
   ${landscapeStyle(
     () => css`

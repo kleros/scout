@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -170,10 +170,18 @@ const steps = [
 const StepComponent = () => {
   const [activeStep, setActiveStep] = useState(1)
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prevStep) => (prevStep === 3 ? 1 : prevStep + 1))
+    }, 10000)
+
+    return () => clearInterval(interval)
+  }, [activeStep])
+
   return (
     <Container>
       <StepsContainer>
-        <VerticalLine activeStep={activeStep} /> {/* Added this line */}
+        <VerticalLine activeStep={activeStep} />
         {steps.map((step) => (
           <Step key={step.id} onClick={() => setActiveStep(step.id)}>
             <StepIndicator isActive={activeStep === step.id}>

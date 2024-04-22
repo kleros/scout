@@ -17,7 +17,6 @@ const Container = styled.div`
   gap: ${responsiveSize(48, 0)};
   width: 84vw;
   margin: 0 auto;
-  margin-top: ${responsiveSize(36, 80)};
 
   ${landscapeStyle(
     () => css`

@@ -8,9 +8,9 @@ export const Button = styled.button`
   background: #cd9dff;
   align-items: center;
   font-family: 'Avenir', sans-serif;
-  font-size: ${responsiveSize(20, 24)};
+  font-size: ${responsiveSize(17, 21)};
   font-weight: 700;
-  padding: 17px ${responsiveSize(12, 32)};
+  padding: 16px ${responsiveSize(12, 32)};
   border: none;
   cursor: pointer;
   &:active {
