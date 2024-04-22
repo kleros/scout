@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
@@ -239,6 +239,14 @@ const components = [
 const Carousel = () => {
   const [index, setIndex] = useState(0)
   const [showTooltip, setShowTooltip] = useState(false)
+
+  useEffect(() => {
+    const images = [EtherscanImg, MetamaskPopup, KlerosTokensImg]
+    images.forEach((imageUrl) => {
+      const img = new window.Image()
+      img.src = imageUrl
+    })
+  }, [])
 
   const handlePrev = () => {
     setIndex((prevIndex) =>
