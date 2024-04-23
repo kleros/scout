@@ -8,20 +8,12 @@ import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
 import AddressDisplay from 'components/AddressDisplay'
 
 const Card = styled.div`
-  background-color: #3A2154;
+  background-color: #3a2154;
   border-radius: 12px;
   color: white;
   font-family: 'Oxanium', sans-serif;
   width: 84vw;
   box-sizing: border-box;
-  transition: transform 150ms ease-in-out, box-shadow 150ms ease-in-out;
-  &:hover {
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-  }
-  &:active {
-    transform: scale(0.95);
-  }
 
   ${landscapeStyle(
     () => css`
@@ -36,7 +28,7 @@ const CardStatus = styled.div<{ status: string }>`
   padding-top: 20px;
   padding-bottom: 15px;
   margin-bottom: 10px;
-  border-bottom: 3px solid #08020E;
+  border-bottom: 3px solid #08020e;
 
   &:before {
     content: '';
@@ -61,9 +53,10 @@ const CardContent = styled.div`
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   padding: 8px;
-  padding-bottom: 16px;
+  padding-bottom: 20px;
+  align-items: center;
 `
 
 const ImageWrapper = styled.div`
@@ -75,6 +68,22 @@ const ImageWrapper = styled.div`
 const Image = styled.img<{ isFullWidth: boolean }>`
   height: 100px;
   ${({ isFullWidth }) => isFullWidth && 'width: 100%; height: 100%;'}
+`
+
+const DetailsButton = styled.button`
+  background-color: #3a2154;
+  border-radius: 8px;
+  border: 2px solid #fff;
+  color: #fff;
+  cursor: pointer;
+  width: 140px;
+  height: 32px;
+  font-size: 16px;
+  transition: transform 100ms ease-in-out, box-shadow 150ms ease-in-out;
+
+  &:active {
+    transform: scale(0.97);
+  }
 `
 
 interface IEntry {
@@ -124,7 +133,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [, setSearchParams] = useSearchParams()
 
-  const handleEntryClick = () => {
+  const handleEntryDetailsClick = () => {
     setSearchParams((prev) => {
       const prevParams = prev.toString()
       const newParams = new URLSearchParams(prevParams)
@@ -132,12 +141,9 @@ const Entry: React.FC<IEntry> = ({ item }) => {
       return newParams
     })
   }
+
   return (
-    <Card
-      onClick={() => {
-        handleEntryClick()
-      }}
-    >
+    <Card>
       <Status
         status={item.status}
         disputed={item.disputed}
@@ -180,6 +186,13 @@ const Entry: React.FC<IEntry> = ({ item }) => {
             <div>{item.key1}</div>
           </>
         )}
+        <DetailsButton
+          onClick={() => {
+            handleEntryDetailsClick()
+          }}
+        >
+          Details
+        </DetailsButton>
       </CardContent>
     </Card>
   )
