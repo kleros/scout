@@ -72,6 +72,7 @@ const Image = styled.img<{ isFullWidth: boolean }>`
 
 const DetailsButton = styled.button`
   background-color: #3a2154;
+  font-family: 'Oxanium', sans-serif;
   border-radius: 8px;
   border: 2px solid #fff;
   color: #fff;
