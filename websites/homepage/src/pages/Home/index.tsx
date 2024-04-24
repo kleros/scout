@@ -33,7 +33,7 @@ const Home = () => {
         buttonText="Submit & earn rewards!"
         buttonLink="https://app.klerosscout.eth.limo/"
       />
-      <SubgraphSection />
+      <SubgraphSection isForBuildersTab={false} />
     </Container>
   )
 }

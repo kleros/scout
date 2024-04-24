@@ -27,14 +27,12 @@ const LeftContent = styled.div`
   margin-top: ${responsiveSize(20, 40)};
   width: 84vw;
   align-items: center;
-  height: ${responsiveSize(290, 522)};
 
   ${landscapeStyle(
     () => css`
       width: auto;
       max-width: 520px;
       align-items: flex-start;
-      justify-content: space-between;
     `
   )}
 `
@@ -77,6 +75,7 @@ const StyledButton = styled(Button)`
   ${landscapeStyle(
     () => css`
       width: 404px;
+      margin-top: 8px;
     `
   )}
 `

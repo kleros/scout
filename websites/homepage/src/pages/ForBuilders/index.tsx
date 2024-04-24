@@ -25,7 +25,7 @@ const ForBuilders: React.FC = () => {
   return (
     <Container>
       <SubgraphSectionAndProjectsUsingScout>
-        <SubgraphSection />
+        <SubgraphSection isForBuildersTab={true} />
         <ProjectsUsingScout />
       </SubgraphSectionAndProjectsUsingScout>
       <HowToSubmit

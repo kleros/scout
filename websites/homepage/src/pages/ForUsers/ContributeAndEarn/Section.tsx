@@ -16,33 +16,61 @@ const Container = styled.div`
 `
 
 const ImagePlaceholder = styled.div`
-  width: 140px;
-  height: 140px;
-  background: #1b1b1b;
+  width: 106px;
+  height: 106px;
   color: #848484;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 8px;
+
+  ${landscapeStyle(
+    () =>
+      css`
+        width: 142px;
+      `
+  )}
 `
 
 const StyledTitle = styled.h2`
   font-size: 32px;
+  margin: 12px;
+
+  ${landscapeStyle(
+    () =>
+      css`
+        margin: 26px;
+      `
+  )}
 `
 
 const StyledDescription = styled.p`
   margin: 0;
 `
 
+const Image = styled.img`
+  width: 106px;
+
+  ${landscapeStyle(
+    () =>
+      css`
+        width: 142px;
+      `
+  )}
+`
+
 interface ISection {
   title: string
   description: string
+  image: string
 }
 
-const Section: React.FC<ISection> = ({ title, description }) => {
+const Section: React.FC<ISection> = ({ title, description, image }) => {
   return (
     <Container>
-      <ImagePlaceholder>Illustration</ImagePlaceholder>
+      <ImagePlaceholder>
+        <Image src={image} />
+      </ImagePlaceholder>
       <StyledTitle>{title}</StyledTitle>
       <StyledDescription>{description}</StyledDescription>
     </Container>

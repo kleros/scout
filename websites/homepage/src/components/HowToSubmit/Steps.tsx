@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
+import PolicyImage from 'pngs/how-to-submit/policy.png'
+import SubmitImage from 'pngs/how-to-submit/submit.png'
+import RewardsImage from 'pngs/how-to-submit/rewards.png'
 
 const Container = styled.div`
   display: flex;
@@ -9,7 +12,7 @@ const Container = styled.div`
   padding: 20px;
   flex-wrap: wrap;
   font-family: 'Oxanium', sans-serif;
-  gap: ${responsiveSize(40, 40)};
+  gap: ${responsiveSize(0, 40)};
   justify-content: center;
   width: 84vw;
 
@@ -112,10 +115,9 @@ const StepTitle = styled.div<{ isActive: boolean }>`
   )}
 `
 
-const ImagePlaceholder = styled.div`
+const ImageContainer = styled.div`
   width: 448px;
   height: 300px;
-  background: #1b1b1b;
   color: #848484;
   display: flex;
   justify-content: center;
@@ -136,6 +138,18 @@ const Paragraph = styled.div<{ isActive: boolean }>`
   font-size: ${responsiveSize(20, 24)};
   margin-bottom: 10px;
   font-weight: 300;
+`
+
+const Image = styled.img`
+  width: 320px;
+  height: 320px;
+
+  ${landscapeStyle(
+    () => css`
+      width: 425px;
+      height: 425px;
+    `
+  )}
 `
 
 const steps = [
@@ -178,6 +192,14 @@ const StepComponent = () => {
     return () => clearInterval(interval)
   }, [activeStep])
 
+  useEffect(() => {
+    const images = [PolicyImage, SubmitImage, RewardsImage]
+    images.forEach((imageUrl) => {
+      const img = new window.Image()
+      img.src = imageUrl
+    })
+  }, [])
+
   return (
     <Container>
       <StepsContainer>
@@ -200,9 +222,11 @@ const StepComponent = () => {
           </Step>
         ))}
       </StepsContainer>
-      <ImagePlaceholder>
-        Infographic/GIF about Step {activeStep}
-      </ImagePlaceholder>
+      <ImageContainer>
+        {activeStep === 1 && <Image src={PolicyImage} alt="Policy" />}
+        {activeStep === 2 && <Image src={SubmitImage} alt="Submit" />}
+        {activeStep === 3 && <Image src={RewardsImage} alt="Rewards" />}
+      </ImageContainer>
     </Container>
   )
 }
