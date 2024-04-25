@@ -14,6 +14,7 @@ import { fetchItemCounts } from 'utils/itemCounts'
 import { revRegistryMap } from 'utils/fetchItems'
 import { fetchItemDetails } from 'utils/itemDetails'
 import { formatTimestamp } from 'utils/formatTimestamp'
+import { getStatusLabel } from 'utils/getStatusLabel'
 import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
@@ -33,7 +34,7 @@ export const ModalOverlay = styled.div`
 
 const ModalContainer = styled.div`
   display: flex;
-  background-color: #3A2154;
+  background-color: #3a2154;
   border-radius: 12px;
   width: 84vw;
   flex-direction: column;
@@ -53,9 +54,9 @@ const EntryDetailsHeader = styled.h1`
   margin: 0;
 `
 
-const StatusButton = styled.button<{ status: string }>`
-  background-color: #3182ce;
-  color: white;
+const StatusButton = styled.button<{ status?: string }>`
+  background-color: #cd9dff;
+  color: #380c65;
   padding: 12px 24px;
   font-family: 'Oxanium', sans-serif;
   font-size: 16px;
@@ -73,13 +74,6 @@ const StatusButton = styled.button<{ status: string }>`
     background-color: #c7c7c7;
     cursor: not-allowed;
   }
-
-  ${({ status }) =>
-    status === 'Registered'
-      ? 'background-color: #ed8936; color: white;'
-      : status === 'RegistrationRequested'
-      ? 'background-color: #f56565; color: white;'
-      : 'background-color: #f56565; color: white;'}
 
   ${landscapeStyle(
     () => css`
@@ -267,6 +261,23 @@ const DetailsModal: React.FC = () => {
     return `${Number(formatEther(sum))} xDAI`
   }, [detailsData, deposits, arbitrationCostData])
 
+  const AppealButton = () => {
+    const [searchParams] = useSearchParams()
+    const itemDetails = searchParams.get('itemdetails')
+
+    if (!itemDetails) return null
+
+    const [itemId, contractAddress] = itemDetails.split('@')
+
+    const redirectUrl = `https://curate.kleros.io/tcr/100/${contractAddress}/${itemId}`
+
+    return (
+      <a href={redirectUrl} target="_blank" rel="noopener noreferrer">
+        <StatusButton>Appeal decision on Curate</StatusButton>
+      </a>
+    )
+  }
+
   return (
     <ModalOverlay>
       <ModalContainer ref={containerRef}>
@@ -291,22 +302,28 @@ const DetailsModal: React.FC = () => {
               <Header>
                 <EntryDetailsHeader>Entry details</EntryDetailsHeader>
                 <StatusSpan status={detailsData.status}>
-                  {detailsData.status}
+                  {detailsData?.disputed
+                    ? 'Challenged'
+                    : getStatusLabel(detailsData.status)}
                 </StatusSpan>
-                <StatusButton
-                  onClick={() => {
-                    setIsConfirmationOpen(true)
-                    setEvidenceConfirmationType(detailsData.status)
-                  }}
-                  status={detailsData.status}
-                >
-                  {detailsData.status === 'Registered' && `Remove entry`}
-                  {detailsData.status === 'RegistrationRequested' &&
-                    'Challenge registration'}
-                  {detailsData.status === 'ClearingRequested' &&
-                    'Challenge removal'}
-                  {' — ' + formattedDepositCost}
-                </StatusButton>
+                {!detailsData.disputed ? (
+                  <StatusButton
+                    onClick={() => {
+                      setIsConfirmationOpen(true)
+                      setEvidenceConfirmationType(detailsData.status)
+                    }}
+                    status={detailsData.status}
+                  >
+                    {detailsData.status === 'Registered' && `Remove entry`}
+                    {detailsData.status === 'RegistrationRequested' &&
+                      'Challenge registration'}
+                    {detailsData.status === 'ClearingRequested' &&
+                      'Challenge removal'}
+                    {' — ' + formattedDepositCost}
+                  </StatusButton>
+                ) : (
+                  <AppealButton />
+                )}
               </Header>
               <EntryDetailsContainer>
                 {detailsData.props &&
@@ -343,7 +360,8 @@ const DetailsModal: React.FC = () => {
                         </StyledReactMarkdown>
                       </EvidenceDescription>
                       <EvidenceField>
-                      <strong>Time:</strong> {formatTimestamp(evidence.timestamp)}
+                        <strong>Time:</strong>{' '}
+                        {formatTimestamp(evidence.timestamp)}
                       </EvidenceField>
                       <EvidenceField>
                         <strong>Party:</strong> {evidence.party}

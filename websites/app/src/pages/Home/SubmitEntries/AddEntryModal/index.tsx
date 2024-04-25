@@ -110,7 +110,6 @@ export const Buttons = styled.div`
 
 export const SubmitButton = styled.button`
   background-color: #3182ce;
-  width: 220px;
   align-self: center;
   color: white;
   padding: 12px 24px;

@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton'
 import { useSearchParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
+import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 
 const Card = styled.div`
@@ -59,15 +60,16 @@ const CardContent = styled.div`
   align-items: center;
 `
 
-const ImageWrapper = styled.div`
+const TokenLogoWrapper = styled.div`
   display: flex;
-  height: 108px;
+  height: 100px;
   justify-content: center;
 `
 
-const Image = styled.img<{ isFullWidth: boolean }>`
-  height: 100px;
-  ${({ isFullWidth }) => isFullWidth && 'width: 100%; height: 100%;'}
+const VisualProofWrapper = styled.div`
+  display: flex;
+  height: 52px;
+  justify-content: center;
 `
 
 const DetailsButton = styled.button`
@@ -143,6 +145,18 @@ const Entry: React.FC<IEntry> = ({ item }) => {
     })
   }
 
+  const tokenLogoURI =
+    item.registryAddress === registryMap['Tokens'] &&
+    `https://ipfs.kleros.io/${
+      (item.props.find((prop) => prop.label === 'Logo') as Prop).value
+    }`
+
+  const visualProofURI =
+    item.registryAddress === registryMap['CDN'] &&
+    `https://ipfs.kleros.io/${
+      (item.props.find((prop) => prop.label === 'Visual proof') as Prop).value
+    }`
+
   return (
     <Card>
       <Status
@@ -158,25 +172,29 @@ const Entry: React.FC<IEntry> = ({ item }) => {
           <>
             <div>{item.key2}</div>
             <div>{item.key1}</div>
-            <div>{item.key3}</div>
+            <StyledWebsiteAnchor
+              href={item.key3}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {item.key3}
+            </StyledWebsiteAnchor>
           </>
         )}
         {item.registryAddress === registryMap['Tokens'] && (
           <>
             {item.props && item.props.find((prop) => prop.label === 'Logo') && (
-              <ImageWrapper>
-                {!imgLoaded && <Skeleton height={100} width={100} />}
-                <Image
-                  src={`https://ipfs.kleros.io/${
-                    (item.props.find((prop) => prop.label === 'Logo') as Prop)
-                      .value
-                  }`}
-                  alt="Logo"
-                  isFullWidth={false}
-                  onLoad={() => setImgLoaded(true)}
-                  style={{ display: imgLoaded ? 'block' : 'none' }}
-                />
-              </ImageWrapper>
+              <a href={tokenLogoURI} target="_blank" rel="noopener noreferrer">
+                <TokenLogoWrapper>
+                  {!imgLoaded && <Skeleton height={100} width={100} />}
+                  <img
+                    src={tokenLogoURI}
+                    alt="Logo"
+                    onLoad={() => setImgLoaded(true)}
+                    style={{ display: imgLoaded ? 'block' : 'none' }}
+                  />
+                </TokenLogoWrapper>
+              </a>
             )}
             <div>{item.key2}</div>
             <div>{item.key1}</div>
@@ -184,7 +202,31 @@ const Entry: React.FC<IEntry> = ({ item }) => {
         )}
         {item.registryAddress === registryMap['CDN'] && (
           <>
-            <div>{item.key1}</div>
+            <StyledWebsiteAnchor
+              href={`https://${item.key1}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {item.key1}
+            </StyledWebsiteAnchor>
+            {item.props &&
+              item.props.find((prop) => prop.label === 'Visual proof') && (
+                <a
+                  href={visualProofURI}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <VisualProofWrapper>
+                    {!imgLoaded && <Skeleton height={52} width={100} />}
+                    <img
+                      src={visualProofURI}
+                      alt="Visual proof"
+                      onLoad={() => setImgLoaded(true)}
+                      style={{ display: imgLoaded ? 'block' : 'none' }}
+                    />
+                  </VisualProofWrapper>
+                </a>
+              )}
           </>
         )}
         <DetailsButton
