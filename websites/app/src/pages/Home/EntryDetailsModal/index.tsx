@@ -230,7 +230,10 @@ const DetailsModal: React.FC = () => {
 
   const evidences = useMemo(() => {
     if (!detailsData) return []
-    return detailsData.requests.map((r) => r.evidenceGroup.evidences).flat(1)
+    return detailsData.requests
+      .map((r) => r.evidenceGroup.evidences)
+      .flat(1)
+      .sort((a, b) => Number(a.timestamp) - Number(b.timestamp))
   }, [detailsData])
 
   const closeModal = () => {
