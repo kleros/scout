@@ -32,16 +32,14 @@ const ImageUpload: React.FC<{
 
   useEffect(() => {
     if (!imageFile) return
-    const ipfsBlablabla = async () => {
+    const uploadImageToIPFS = async () => {
       const data = await new Response(new Blob([imageFile])).arrayBuffer()
-
-      const path = getIPFSPath(
-        await ipfsPublish(imageFile.name as string, data)
-      )
-      console.log({ path })
-      p.setPath(path)
+      const ipfsObject = await ipfsPublish(imageFile.name, data)
+      const ipfsPath = getIPFSPath(ipfsObject)
+      console.log({ ipfsPath })
+      p.setPath(ipfsPath)
     }
-    ipfsBlablabla()
+    uploadImageToIPFS()
   }, [imageFile])
 
   return (

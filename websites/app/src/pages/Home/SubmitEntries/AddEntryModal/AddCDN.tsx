@@ -84,11 +84,12 @@ const AddCDN: React.FC = () => {
     }
     const enc = new TextEncoder()
     const fileData = enc.encode(JSON.stringify(item))
-    const ipfsURL = getIPFSPath(await ipfsPublish('item.json', fileData))
+    const ipfsObject = await ipfsPublish('item.json', fileData)
+    const ipfsPath = getIPFSPath(ipfsObject)
     await initiateTransactionToCurate(
       '0x957a53a994860be4750810131d9c876b2f52d6e1',
       countsData?.CDN.deposits as DepositParams,
-      ipfsURL
+      ipfsPath
     )
   }
 

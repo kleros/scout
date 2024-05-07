@@ -319,7 +319,7 @@ const DetailsModal: React.FC = () => {
                   >
                     {detailsData.status === 'Registered' && `Remove entry`}
                     {detailsData.status === 'RegistrationRequested' &&
-                      'Challenge registration'}
+                      'Challenge entry'}
                     {detailsData.status === 'ClearingRequested' &&
                       'Challenge removal'}
                     {' — ' + formattedDepositCost}

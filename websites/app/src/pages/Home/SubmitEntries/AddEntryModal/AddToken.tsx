@@ -99,11 +99,12 @@ const AddToken: React.FC = () => {
     }
     const enc = new TextEncoder()
     const fileData = enc.encode(JSON.stringify(item))
-    const ipfsURL = getIPFSPath(await ipfsPublish('item.json', fileData))
+    const ipfsObject = await ipfsPublish('item.json', fileData)
+    const ipfsPath = getIPFSPath(ipfsObject)
     await initiateTransactionToCurate(
       '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
       countsData?.Tokens.deposits as DepositParams,
-      ipfsURL
+      ipfsPath
     )
   }
 
