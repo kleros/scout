@@ -1,6 +1,7 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import ipfsPublish from 'utils/ipfsPublish'
+import { getIPFSPath } from 'utils/getIPFSPath'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -34,7 +35,9 @@ const ImageUpload: React.FC<{
     const ipfsBlablabla = async () => {
       const data = await new Response(new Blob([imageFile])).arrayBuffer()
 
-      const path = await ipfsPublish(imageFile.name as string, data)
+      const path = getIPFSPath(
+        await ipfsPublish(imageFile.name as string, data)
+      )
       console.log({ path })
       p.setPath(path)
     }

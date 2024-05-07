@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
+import { getIPFSPath } from 'utils/getIPFSPath'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
@@ -98,7 +99,7 @@ const AddToken: React.FC = () => {
     }
     const enc = new TextEncoder()
     const fileData = enc.encode(JSON.stringify(item))
-    const ipfsURL = await ipfsPublish('item.json', fileData)
+    const ipfsURL = getIPFSPath(await ipfsPublish('item.json', fileData))
     await initiateTransactionToCurate(
       '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
       countsData?.Tokens.deposits as DepositParams,
