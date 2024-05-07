@@ -57,7 +57,7 @@ const ImageUpload: React.FC<{
         <img
           width={200}
           height={200}
-          src={`https://ipfs.kleros.io${p.path}`}
+          src={`https://cdn.kleros.link${p.path}`}
           alt="preview"
         />
       )}
