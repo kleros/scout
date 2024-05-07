@@ -1,2 +1,6 @@
-export const getIPFSPath = (ipfsEvidenceObject: { cids: string[] }): string =>
-  `/ipfs/${ipfsEvidenceObject.cids[0].split('ipfs://')[1]}`
+export interface IPFSResultObject {
+  cids: string[]
+}
+
+export const getIPFSPath = (ipfsResultObject: IPFSResultObject): string =>
+  `/ipfs/${ipfsResultObject.cids[0].split('ipfs://')[1]}`
