@@ -3,6 +3,7 @@ import { Contract, BrowserProvider } from 'ethers'
 import klerosCurateABI from './abi/kleros-curate-abi.json'
 import { GraphItemDetails } from './itemDetails'
 import { DepositParams } from './fetchRegistryDeposits'
+import { getIPFSPath } from './getIPFSPath'
 
 export async function performEvidenceBasedRequest(
   itemDetails: GraphItemDetails,
@@ -24,7 +25,8 @@ export async function performEvidenceBasedRequest(
     const enc = new TextEncoder()
     const fileData = enc.encode(JSON.stringify(evidenceObject))
 
-    const ipfsURL = await ipfsPublish('evidence.json', fileData)
+    const ipfsObject = await ipfsPublish('evidence.json', fileData)
+    const ipfsPath = getIPFSPath(ipfsObject)
 
     // Ensure MetaMask or an equivalent provider is available
     if (!window.ethereum) {
@@ -60,13 +62,13 @@ export async function performEvidenceBasedRequest(
       case 'Evidence':
         transactionResponse = await contract.submitEvidence(
           itemDetails.itemID,
-          ipfsURL
+          ipfsPath
         )
         break
       case 'RegistrationRequested':
         transactionResponse = await contract.challengeRequest(
           itemDetails.itemID,
-          ipfsURL,
+          ipfsPath,
           {
             value:
               arbitrationCost + depositParams.submissionChallengeBaseDeposit,
@@ -76,7 +78,7 @@ export async function performEvidenceBasedRequest(
       case 'Registered':
         transactionResponse = await contract.removeItem(
           itemDetails.itemID,
-          ipfsURL,
+          ipfsPath,
           {
             value: arbitrationCost + depositParams.removalBaseDeposit,
           }
@@ -85,7 +87,7 @@ export async function performEvidenceBasedRequest(
       case 'ClearingRequested':
         transactionResponse = await contract.challengeRequest(
           itemDetails.itemID,
-          ipfsURL,
+          ipfsPath,
           {
             value: arbitrationCost + depositParams.removalChallengeBaseDeposit,
           }

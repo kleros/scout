@@ -37,7 +37,7 @@ const ImageWithSkeleton = ({ src, alt }) => {
 export const renderValue = (key, value) => {
   if (typeof value === 'string' && value.startsWith('/ipfs/')) {
     return (
-      <ImageWithSkeleton src={`https://ipfs.kleros.io${value}`} alt={key} />
+      <ImageWithSkeleton src={`https://cdn.kleros.link${value}`} alt={key} />
     )
   }
 

@@ -93,13 +93,13 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   // inject metadata into the uncomplete "ItemCounts". hacky code
   const regMEs = await Promise.all([
     fetch(
-      'https://ipfs.kleros.io' + result?.Tags?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' + result?.Tags?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
     fetch(
-      'https://ipfs.kleros.io' + result?.CDN?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' + result?.CDN?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
     fetch(
-      'https://ipfs.kleros.io' + result?.Tokens?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' + result?.Tokens?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
   ])
   itemCounts.Tags.metadata = {

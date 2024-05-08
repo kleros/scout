@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
+import { getIPFSPath } from 'utils/getIPFSPath'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
@@ -83,11 +84,12 @@ const AddCDN: React.FC = () => {
     }
     const enc = new TextEncoder()
     const fileData = enc.encode(JSON.stringify(item))
-    const ipfsURL = await ipfsPublish('item.json', fileData)
+    const ipfsObject = await ipfsPublish('item.json', fileData)
+    const ipfsPath = getIPFSPath(ipfsObject)
     await initiateTransactionToCurate(
       '0x957a53a994860be4750810131d9c876b2f52d6e1',
       countsData?.CDN.deposits as DepositParams,
-      ipfsURL
+      ipfsPath
     )
   }
 

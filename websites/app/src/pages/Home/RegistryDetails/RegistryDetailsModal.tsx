@@ -111,7 +111,7 @@ const RegistryDetailsModal: React.FC = () => {
           <StyledLabel>
             Policy:{' '}
             <StyledA
-              href={`https://ipfs.kleros.io${registry.metadata.policyURI}`}
+              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
               target="_blank"
             >
               Link
@@ -119,7 +119,7 @@ const RegistryDetailsModal: React.FC = () => {
           </StyledLabel>
           {!imgLoaded && <Skeleton height={200} width={200} />}
           <StyledImg
-            src={`https://ipfs.kleros.io${registry.metadata.logoURI}`}
+            src={`https://cdn.kleros.link${registry.metadata.logoURI}`}
             onLoad={() => setImgLoaded(true)}
             style={{ display: imgLoaded ? 'block' : 'none' }}
           ></StyledImg>

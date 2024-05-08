@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
+import { getIPFSPath } from 'utils/getIPFSPath'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
@@ -100,11 +101,12 @@ const AddAddressTag: React.FC = () => {
     }
     const enc = new TextEncoder()
     const fileData = enc.encode(JSON.stringify(item))
-    const ipfsURL = await ipfsPublish('item.json', fileData)
+    const ipfsObject = await ipfsPublish('item.json', fileData)
+    const ipfsPath = getIPFSPath(ipfsObject)
     await initiateTransactionToCurate(
       '0x66260c69d03837016d88c9877e61e08ef74c59f2',
       countsData?.Tags.deposits as DepositParams,
-      ipfsURL
+      ipfsPath
     )
   }
 
