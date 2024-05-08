@@ -188,7 +188,7 @@ const StepComponent = () => {
   const [isManuallyClicked, setIsManuallyClicked] = useState(false)
 
   useEffect(() => {
-    let interval: Timeout | null = null
+    let interval: Timeout
 
     if (!isManuallyClicked) {
       interval = setInterval(() => {
@@ -196,12 +196,8 @@ const StepComponent = () => {
       }, 10000)
     }
 
-    return () => {
-      if (interval !== null) {
-        clearInterval(interval)
-      }
-    }
-  }, [activeStep, isManuallyClicked])
+    return () => clearInterval(interval)
+  }, [isManuallyClicked])
 
   useEffect(() => {
     const images = [PolicyImage, SubmitImage, RewardsImage]
