@@ -4,7 +4,7 @@ export function uploadFormDataToIPFS(
   formData: FormData,
   operation: string = 'evidence'
 ): Promise<Response> {
-  const baseUrl = 'https://deploy-preview-11--kleros-scout-app.netlify.app'
+  const baseUrl = 'https://kleros-scout-app.netlify.app'
   const url = `${baseUrl}/.netlify/functions/uploadToIPFS?dapp=curate&key=scout&operation=${operation}`
 
   return fetch(url, {
