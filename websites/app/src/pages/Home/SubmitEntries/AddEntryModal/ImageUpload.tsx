@@ -1,6 +1,7 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import ipfsPublish from 'utils/ipfsPublish'
+import { getIPFSPath } from 'utils/getIPFSPath'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -31,14 +32,14 @@ const ImageUpload: React.FC<{
 
   useEffect(() => {
     if (!imageFile) return
-    const ipfsBlablabla = async () => {
+    const uploadImageToIPFS = async () => {
       const data = await new Response(new Blob([imageFile])).arrayBuffer()
-
-      const path = await ipfsPublish(imageFile.name as string, data)
-      console.log({ path })
-      p.setPath(path)
+      const ipfsObject = await ipfsPublish(imageFile.name, data)
+      const ipfsPath = getIPFSPath(ipfsObject)
+      console.log({ ipfsPath })
+      p.setPath(ipfsPath)
     }
-    ipfsBlablabla()
+    uploadImageToIPFS()
   }, [imageFile])
 
   return (
@@ -57,7 +58,7 @@ const ImageUpload: React.FC<{
         <img
           width={200}
           height={200}
-          src={`https://ipfs.kleros.io${p.path}`}
+          src={`https://cdn.kleros.link${p.path}`}
           alt="preview"
         />
       )}

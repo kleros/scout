@@ -230,7 +230,10 @@ const DetailsModal: React.FC = () => {
 
   const evidences = useMemo(() => {
     if (!detailsData) return []
-    return detailsData.requests.map((r) => r.evidenceGroup.evidences).flat(1)
+    return detailsData.requests
+      .map((r) => r.evidenceGroup.evidences)
+      .flat(1)
+      .sort((a, b) => Number(a.timestamp) - Number(b.timestamp))
   }, [detailsData])
 
   const closeModal = () => {
@@ -316,7 +319,7 @@ const DetailsModal: React.FC = () => {
                   >
                     {detailsData.status === 'Registered' && `Remove entry`}
                     {detailsData.status === 'RegistrationRequested' &&
-                      'Challenge registration'}
+                      'Challenge entry'}
                     {detailsData.status === 'ClearingRequested' &&
                       'Challenge removal'}
                     {' — ' + formattedDepositCost}
