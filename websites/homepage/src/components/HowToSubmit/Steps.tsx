@@ -181,16 +181,27 @@ const steps = [
   },
 ]
 
+type Timeout = ReturnType<typeof setTimeout>
+
 const StepComponent = () => {
   const [activeStep, setActiveStep] = useState(1)
+  const [isManuallyClicked, setIsManuallyClicked] = useState(false)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prevStep) => (prevStep === 3 ? 1 : prevStep + 1))
-    }, 10000)
+    let interval: Timeout | null = null
 
-    return () => clearInterval(interval)
-  }, [activeStep])
+    if (!isManuallyClicked) {
+      interval = setInterval(() => {
+        setActiveStep((prevStep) => (prevStep === 3 ? 1 : prevStep + 1))
+      }, 10000)
+    }
+
+    return () => {
+      if (interval !== null) {
+        clearInterval(interval)
+      }
+    }
+  }, [activeStep, isManuallyClicked])
 
   useEffect(() => {
     const images = [PolicyImage, SubmitImage, RewardsImage]
@@ -205,7 +216,7 @@ const StepComponent = () => {
       <StepsContainer>
         <VerticalLine activeStep={activeStep} />
         {steps.map((step) => (
-          <Step key={step.id} onClick={() => setActiveStep(step.id)}>
+          <Step key={step.id} onClick={() => {setActiveStep(step.id), setIsManuallyClicked(true)}}>
             <StepIndicator isActive={activeStep === step.id}>
               {step.id}
             </StepIndicator>
