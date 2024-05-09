@@ -140,7 +140,29 @@ const Paragraph = styled.div<{ isActive: boolean }>`
   font-weight: 300;
 `
 
-const Image = styled.img`
+const StyledPolicyImage = styled(PolicyImage)`
+  width: 320px;
+  height: 320px;
+
+  ${landscapeStyle(
+    () => css`
+      width: 425px;
+      height: 425px;
+    `
+  )}
+`
+const StyledSubmitImage = styled(SubmitImage)`
+  width: 320px;
+  height: 320px;
+
+  ${landscapeStyle(
+    () => css`
+      width: 425px;
+      height: 425px;
+    `
+  )}
+`
+const StyledRewardsImage = styled(RewardsImage)`
   width: 320px;
   height: 320px;
 
@@ -199,18 +221,6 @@ const StepComponent = () => {
     return () => clearInterval(interval)
   }, [isManuallyClicked])
 
-  useEffect(() => {
-    const images = [PolicyImage, SubmitImage, RewardsImage]
-    const preloadImages = () => {
-      images.forEach((imageUrl) => {
-        const img = new window.Image()
-        img.src = imageUrl
-      })
-    }
-
-    preloadImages()
-  }, [])
-
   return (
     <Container>
       <StepsContainer>
@@ -239,9 +249,9 @@ const StepComponent = () => {
         ))}
       </StepsContainer>
       <ImageContainer>
-        {activeStep === 1 && <PolicyImage />}
-        {activeStep === 2 && <RewardsImage />}
-        {activeStep === 3 && <SubmitImage />}
+        {activeStep === 1 && <StyledPolicyImage />}
+        {activeStep === 2 && <StyledSubmitImage />}
+        {activeStep === 3 && <StyledRewardsImage />}
       </ImageContainer>
     </Container>
   )
