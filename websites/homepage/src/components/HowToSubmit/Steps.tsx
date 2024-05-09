@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
-import PolicyImage from 'pngs/how-to-submit/policy.png'
-import SubmitImage from 'pngs/how-to-submit/submit.png'
-import RewardsImage from 'pngs/how-to-submit/rewards.png'
+import PolicyImage from 'tsx:svgs/how-to-submit/policy.svg'
+import SubmitImage from 'tsx:svgs/how-to-submit/submit.svg'
+import RewardsImage from 'tsx:svgs/how-to-submit/rewards.svg'
 
 const Container = styled.div`
   display: flex;
@@ -201,10 +201,14 @@ const StepComponent = () => {
 
   useEffect(() => {
     const images = [PolicyImage, SubmitImage, RewardsImage]
-    images.forEach((imageUrl) => {
-      const img = new window.Image()
-      img.src = imageUrl
-    })
+    const preloadImages = () => {
+      images.forEach((imageUrl) => {
+        const img = new window.Image()
+        img.src = imageUrl
+      })
+    }
+
+    preloadImages()
   }, [])
 
   return (
@@ -212,7 +216,12 @@ const StepComponent = () => {
       <StepsContainer>
         <VerticalLine activeStep={activeStep} />
         {steps.map((step) => (
-          <Step key={step.id} onClick={() => {setActiveStep(step.id), setIsManuallyClicked(true)}}>
+          <Step
+            key={step.id}
+            onClick={() => {
+              setActiveStep(step.id), setIsManuallyClicked(true)
+            }}
+          >
             <StepIndicator isActive={activeStep === step.id}>
               {step.id}
             </StepIndicator>
@@ -230,9 +239,9 @@ const StepComponent = () => {
         ))}
       </StepsContainer>
       <ImageContainer>
-        {activeStep === 1 && <Image src={PolicyImage} alt="Policy" />}
-        {activeStep === 2 && <Image src={SubmitImage} alt="Submit" />}
-        {activeStep === 3 && <Image src={RewardsImage} alt="Rewards" />}
+        {activeStep === 1 && <PolicyImage />}
+        {activeStep === 2 && <RewardsImage />}
+        {activeStep === 3 && <SubmitImage />}
       </ImageContainer>
     </Container>
   )
