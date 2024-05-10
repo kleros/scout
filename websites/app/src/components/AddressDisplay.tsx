@@ -21,7 +21,7 @@ const StyledAddressA = styled.a`
 `
 
 const truncateAddress = (addr: string) => {
-  return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`
+  return `${addr?.substring(0, 6)}...${addr?.substring(addr.length - 4)}`
 }
 
 interface IAddressDisplay {
@@ -29,8 +29,8 @@ interface IAddressDisplay {
 }
 
 const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
-  const parts = address.split(':')
-  const keyForReference = `${parts[0]}:${parts[1]}`
+  const parts = address?.split(':')
+  const keyForReference = `${parts?.[0]}:${parts?.[1]}`
   const reference = references.find(
     (ref) => `${ref.namespaceId}:${ref.id}` === keyForReference
   )
@@ -42,9 +42,9 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
       <StyledSpan bgColor={bgColor}>{reference?.label}</StyledSpan>
       <StyledAddressA
         target="_blank"
-        href={`https://${reference?.explorer}/address/${parts[2]}`}
+        href={`https://${reference?.explorer}/address/${parts?.[2]}`}
       >
-        {truncateAddress(parts[2])}
+        {truncateAddress(parts?.[2])}
       </StyledAddressA>
     </Container>
   )

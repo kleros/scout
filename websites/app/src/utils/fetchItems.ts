@@ -101,77 +101,80 @@ export const fetchItems = async (
     .map((chainId) => `{key0_starts_with_nocase: "eip155:${chainId}:"}`)
     .join(',')}]},`
 
+  const textFilterObject = `{or: [
+    {key0_contains_nocase: $text},
+    {key1_contains_nocase: $text},
+    {key2_contains_nocase: $text},
+    {key3_contains_nocase: $text},
+  ]}`
+
   const query = gql`
     query (
-      $registry: [String!]!
-      $status: [String!]!
-      $disputed: [Boolean!]!
-      $text: String!
-      $skip: Int!
-      $first: Int!
-      $orderDirection: OrderDirection!
-    ) {
-      litems(
-        where: {
-          and: [
-            {registry_in: $registry},
-            {status_in: $status},
-            {disputed_in: $disputed},
-            # network section, dynamically generated.
+  $registry: [String!]!
+  $status: [String!]!
+  $disputed: [Boolean!]!
+  $text: String!
+  $skip: Int!
+  $first: Int!
+  $orderDirection: OrderDirection!
+) {
+  litems(
+    where: {
+      and: [
+        {registry_in: $registry},
+        {status_in: $status},
+        {disputed_in: $disputed},
+        # network section, dynamically generated.
             # only use if needed
-            ${network.length === 0 ? '' : networkQueryObject}
-            # filtering
-            {or: [
-              {key0_contains_nocase: $text},
-              {key1_contains_nocase: $text},
-              {key2_contains_nocase: $text},
-              {key3_contains_nocase: $text},
-            ]}]
-        }
-        skip: $skip
-        first: $first
-        orderBy: "latestRequestSubmissionTime"
-        orderDirection: $orderDirection
-      ) {
-        id
-        latestRequestSubmissionTime
-        registryAddress
-        itemID
-        status
-        disputed
-        data
-        key0
-        key1
-        key2
-        key3
-        props {
-          value
-          type
-          label
-          description
-          isIdentifier
-        }
-        requests(first: 1, orderBy: submissionTime, orderDirection: desc) {
-          disputed
-          disputeID
-          submissionTime
-          resolved
-          requester
-          challenger
-          resolutionTime
-          deposit
-          rounds(first: 1, orderBy: creationTime, orderDirection: desc) {
-            appealPeriodStart
-            appealPeriodEnd
-            ruling
-            hasPaidRequester
-            hasPaidChallenger
-            amountPaidRequester
-            amountPaidChallenger
-          }
-        }
+        ${network.length === 0 ? '' : networkQueryObject}
+        # text filtering
+        ${text === '' ? '' : textFilterObject}
+      ]
+    }
+    skip: $skip
+    first: $first
+    orderBy: "latestRequestSubmissionTime"
+    orderDirection: $orderDirection
+  ) {
+    id
+    latestRequestSubmissionTime
+    registryAddress
+    itemID
+    status
+    disputed
+    data
+    key0
+    key1
+    key2
+    key3
+    props {
+      value
+      type
+      label
+      description
+      isIdentifier
+    }
+    requests(first: 1, orderBy: submissionTime, orderDirection: desc) {
+      disputed
+      disputeID
+      submissionTime
+      resolved
+      requester
+      challenger
+      resolutionTime
+      deposit
+      rounds(first: 1, orderBy: creationTime, orderDirection: desc) {
+        appealPeriodStart
+        appealPeriodEnd
+        ruling
+        hasPaidRequester
+        hasPaidChallenger
+        amountPaidRequester
+        amountPaidChallenger
       }
     }
+  }
+}
   `
 
   const result = (await request({
