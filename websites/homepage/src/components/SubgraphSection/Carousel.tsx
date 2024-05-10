@@ -242,10 +242,14 @@ const Carousel = () => {
 
   useEffect(() => {
     const images = [EtherscanImg, MetamaskPopup, KlerosTokensImg]
-    images.forEach((imageUrl) => {
-      const img = new window.Image()
-      img.src = imageUrl
-    })
+    const preloadImages = () => {
+      images.forEach((imageUrl) => {
+        const img = new window.Image()
+        img.src = imageUrl
+      })
+    }
+
+    preloadImages()
   }, [])
 
   const handlePrev = () => {
