@@ -239,10 +239,10 @@ const Home: React.FC = () => {
   return (
     <Container>
       <AlertMessage>
-        We are experiencing technical issues with our subgraph, which is causing
-        some entries to display incorrectly. Do NOT reject these "undefined"
-        entries, they may be valid. Go to curate.kleros.io to review them
-        properly.
+        TheGraph is currently experiencing intermittent issues and may cause
+        some of the entries on this frontend to display incorrectly. When in
+        doubt about the integrity of an entry, double-check the entry on
+        alternative frontends (e.g. curate.kleros.io)
       </AlertMessage>
       <Navbar />
       <SearchAndRegistryDetailsAndSubmitContainer>
