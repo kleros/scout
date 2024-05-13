@@ -148,13 +148,13 @@ const Entry: React.FC<IEntry> = ({ item }) => {
   const tokenLogoURI =
     item.registryAddress === registryMap['Tokens'] &&
     `https://cdn.kleros.link${
-      (item.props.find((prop) => prop.label === 'Logo') as Prop).value
+      (item.props?.find((prop) => prop.label === 'Logo') as Prop)?.value
     }`
 
   const visualProofURI =
     item.registryAddress === registryMap['CDN'] &&
     `https://cdn.kleros.link${
-      (item.props.find((prop) => prop.label === 'Visual proof') as Prop).value
+      (item.props?.find((prop) => prop.label === 'Visual proof') as Prop)?.value
     }`
 
   return (

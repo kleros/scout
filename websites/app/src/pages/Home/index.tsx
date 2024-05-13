@@ -23,7 +23,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #08020E;
+  background: #08020e;
   min-height: 100vh;
   color: white;
   padding-bottom: 48px;
@@ -34,7 +34,7 @@ const SearchAndRegistryDetailsAndSubmitContainer = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  background: #08020E;
+  background: #08020e;
   color: white;
   width: 84vw;
   margin-bottom: ${responsiveSize(24, 24)};
@@ -77,6 +77,17 @@ export const ClosedButtonContainer = styled.div`
   display: flex;
   width: 24px;
   height: 24px;
+`
+
+export const AlertMessage = styled.div`
+  display: flex;
+  width: 100vw;
+  background-color: #a83232;
+  color: #ffffff;
+  border-radius: 5px;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 0;
 `
 
 export const ITEMS_PER_PAGE = 20
@@ -227,6 +238,12 @@ const Home: React.FC = () => {
 
   return (
     <Container>
+      <AlertMessage>
+        We are experiencing technical issues with our subgraph, which is causing
+        some entries to display incorrectly. Do NOT reject these "undefined"
+        entries, they may be valid. Go to curate.kleros.io to review them
+        properly.
+      </AlertMessage>
       <Navbar />
       <SearchAndRegistryDetailsAndSubmitContainer>
         <Search />
