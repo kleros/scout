@@ -194,7 +194,10 @@ const StyledQueryTitle = styled.p`
 
 const Image = styled.img`
   width: ${responsiveSize(280, 400)};
-  height: 33%;
+  max-height: 400px;
+  object-fit: contain;
+  height: auto;
+  align-self: stretch;
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`
