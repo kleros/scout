@@ -1,21 +1,21 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { responsiveSize } from 'styles/responsiveSize'
 import { links } from 'consts/links'
 
 const Container = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-  font-family: 'Oxanium', sans-serif;
-  justify-content: center;
-  align-items: center;
-
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    height: calc(200px - 7vw);
+    min-height: 140px;
+    gap: 16px;
+    font-family: 'Oxanium', sans-serif;
+    
   ${landscapeStyle(
     () => css`
-      grid-template-columns: repeat(2, 1fr);
-      column-gap: ${responsiveSize(140, 280)};
+      gap: 8px;
+      column-gap: 8rem;
     `
   )}
 `
@@ -23,7 +23,7 @@ const Container = styled.div`
 const StyledAnchor = styled.a`
   color: #d5d5d5;
   text-decoration: none;
-  text-align: center;
+  text-align: left;
 
   &:hover {
     text-decoration: underline;
