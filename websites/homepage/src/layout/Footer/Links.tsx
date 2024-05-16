@@ -4,18 +4,18 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import { links } from 'consts/links'
 
 const Container = styled.div`
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    height: calc(200px - 7vw);
-    min-height: 140px;
-    gap: 16px;
-    font-family: 'Oxanium', sans-serif;
-    
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  min-height: 140px;
+  gap: 16px;
+  font-family: 'Oxanium', sans-serif;
+
   ${landscapeStyle(
     () => css`
       gap: 8px;
       column-gap: 8rem;
+      height: calc(200px - 7vw);
     `
   )}
 `
