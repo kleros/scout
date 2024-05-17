@@ -18,7 +18,6 @@ const Container = styled.div`
   ${landscapeStyle(
     () => css`
       flex-direction: row;
-      gap: ${responsiveSize(140, 280)};
       align-items: flex-start;
     `
   )}
@@ -45,6 +44,14 @@ const Container = styled.div`
   }
 `
 
+const StyledSecuredByKlerosLogo = styled(SecuredByKlerosLogo)`
+  ${landscapeStyle(
+    () => css`
+      margin-right: ${responsiveSize(0, 452)};
+    `
+  )}
+`
+
 const SecuredByKleros: React.FC = () => (
   <a
     className="secured-by-kleros"
@@ -52,7 +59,7 @@ const SecuredByKleros: React.FC = () => (
     target="_blank"
     rel="noreferrer"
   >
-    <SecuredByKlerosLogo />
+    <StyledSecuredByKlerosLogo />
   </a>
 )
 
