@@ -140,36 +140,12 @@ const Paragraph = styled.div<{ isActive: boolean }>`
   font-weight: 300;
 `
 
-const StyledPolicyImage = styled(PolicyImage)`
-  width: 320px;
-  height: 320px;
+const StyledImage = styled.div`
+  width: 220px;
 
   ${landscapeStyle(
     () => css`
-      width: 425px;
-      height: 425px;
-    `
-  )}
-`
-const StyledSubmitImage = styled(SubmitImage)`
-  width: 320px;
-  height: 320px;
-
-  ${landscapeStyle(
-    () => css`
-      width: 425px;
-      height: 425px;
-    `
-  )}
-`
-const StyledRewardsImage = styled(RewardsImage)`
-  width: 320px;
-  height: 320px;
-
-  ${landscapeStyle(
-    () => css`
-      width: 425px;
-      height: 425px;
+      width: 340px;
     `
   )}
 `
@@ -249,9 +225,9 @@ const StepComponent = () => {
         ))}
       </StepsContainer>
       <ImageContainer>
-        {activeStep === 1 && <StyledPolicyImage />}
-        {activeStep === 2 && <StyledSubmitImage />}
-        {activeStep === 3 && <StyledRewardsImage />}
+        {activeStep === 1 && <StyledImage as={PolicyImage} />}
+        {activeStep === 2 && <StyledImage as={SubmitImage} />}
+        {activeStep === 3 && <StyledImage as={RewardsImage} />}
       </ImageContainer>
     </Container>
   )
