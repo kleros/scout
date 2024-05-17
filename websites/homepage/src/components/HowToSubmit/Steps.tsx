@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
-import PolicyImage from 'pngs/how-to-submit/policy.png'
-import SubmitImage from 'pngs/how-to-submit/submit.png'
-import RewardsImage from 'pngs/how-to-submit/rewards.png'
+import PolicyImage from 'tsx:svgs/how-to-submit/policy.svg'
+import SubmitImage from 'tsx:svgs/how-to-submit/submit.svg'
+import RewardsImage from 'tsx:svgs/how-to-submit/rewards.svg'
 
 const Container = styled.div`
   display: flex;
@@ -140,14 +140,12 @@ const Paragraph = styled.div<{ isActive: boolean }>`
   font-weight: 300;
 `
 
-const Image = styled.img`
-  width: 320px;
-  height: 320px;
+const StyledImage = styled.div`
+  width: 220px;
 
   ${landscapeStyle(
     () => css`
-      width: 425px;
-      height: 425px;
+      width: 340px;
     `
   )}
 `
@@ -199,20 +197,17 @@ const StepComponent = () => {
     return () => clearInterval(interval)
   }, [isManuallyClicked])
 
-  useEffect(() => {
-    const images = [PolicyImage, SubmitImage, RewardsImage]
-    images.forEach((imageUrl) => {
-      const img = new window.Image()
-      img.src = imageUrl
-    })
-  }, [])
-
   return (
     <Container>
       <StepsContainer>
         <VerticalLine activeStep={activeStep} />
         {steps.map((step) => (
-          <Step key={step.id} onClick={() => {setActiveStep(step.id), setIsManuallyClicked(true)}}>
+          <Step
+            key={step.id}
+            onClick={() => {
+              setActiveStep(step.id), setIsManuallyClicked(true)
+            }}
+          >
             <StepIndicator isActive={activeStep === step.id}>
               {step.id}
             </StepIndicator>
@@ -230,9 +225,9 @@ const StepComponent = () => {
         ))}
       </StepsContainer>
       <ImageContainer>
-        {activeStep === 1 && <Image src={PolicyImage} alt="Policy" />}
-        {activeStep === 2 && <Image src={SubmitImage} alt="Submit" />}
-        {activeStep === 3 && <Image src={RewardsImage} alt="Rewards" />}
+        {activeStep === 1 && <StyledImage as={PolicyImage} />}
+        {activeStep === 2 && <StyledImage as={SubmitImage} />}
+        {activeStep === 3 && <StyledImage as={RewardsImage} />}
       </ImageContainer>
     </Container>
   )

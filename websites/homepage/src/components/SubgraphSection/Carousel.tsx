@@ -194,7 +194,10 @@ const StyledQueryTitle = styled.p`
 
 const Image = styled.img`
   width: ${responsiveSize(280, 400)};
-  height: 33%;
+  max-height: 400px;
+  object-fit: contain;
+  height: auto;
+  align-self: stretch;
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`
@@ -242,10 +245,14 @@ const Carousel = () => {
 
   useEffect(() => {
     const images = [EtherscanImg, MetamaskPopup, KlerosTokensImg]
-    images.forEach((imageUrl) => {
-      const img = new window.Image()
-      img.src = imageUrl
-    })
+    const preloadImages = () => {
+      images.forEach((imageUrl) => {
+        const img = new window.Image()
+        img.src = imageUrl
+      })
+    }
+
+    preloadImages()
   }, [])
 
   const handlePrev = () => {
