@@ -18,7 +18,7 @@ const getDupesInRegistry = async (
         where: {
           registry: $registry,
           status_in: ["Registered", "ClearingRequested"],
-          key0_contains_nocase: $richAddress,
+          metadata_ : { key0_contains_nocase: $richAddress },
           ${domain ? `key1_starts_with_nocase: "${domain}"` : ''}
         }
       ) {
@@ -28,7 +28,7 @@ const getDupesInRegistry = async (
   `
 
   const result = (await request({
-    url: 'https://api.thegraph.com/subgraphs/name/kleros/legacy-curate-xdai',
+    url: 'https://api.studio.thegraph.com/query/61738/legacy-curate-gnosis/version/latest',
     document: query,
     variables: {
       registry: registryAddress,

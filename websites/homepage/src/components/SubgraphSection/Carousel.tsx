@@ -218,7 +218,7 @@ const components = [
     description:
       'Kleros’ Address tags provides crucial contract insights BEFORE interaction.',
     query:
-      '{\n  lregistry(id: "0x66260c69d03837016d88c9877e61e08ef74c59f2") {    numberOfRegistered\n    items {\n      status\n      props {\n        label\n        value\n      }\n    }\n  }\n}',
+      '{\n  lregistry(id: "0x66260c69d03837016d88c9877e61e08ef74c59f2") {    numberOfRegistered\n    items {\n      status\n      metadata : {\n    props {\n        label\n        value\n      }\n     }\n    }\n  }\n}',
     imageUrl: EtherscanImg,
   },
   {
@@ -226,7 +226,7 @@ const components = [
     description:
       'Secure users from front-end DNS attacks, phishing, etc. with Kleros’ Contract to Domain Name mappings.',
     query:
-      '{\n  lregistry(id: "0x957a53a994860be4750810131d9c876b2f52d6e1") {   numberOfRegistered\n    items {\n      status\n      props {\n        label\n        value\n      }\n    }\n  }\n}',
+      '{\n  lregistry(id: "0x957a53a994860be4750810131d9c876b2f52d6e1") {   numberOfRegistered\n    items {\n      status\n      metadata : {\n    props {\n        label\n        value\n      }\n    }\n    }\n  }\n}',
     imageUrl: MetamaskPopup,
   },
   {
@@ -234,7 +234,7 @@ const components = [
     description:
       'Use Kleros’ Tokens, the oldest & still functioning TCR in web3.',
     query:
-      '{\n  lregistry(id: "0xee1502e29795ef6c2d60f8d7120596abe3bad990") {    numberOfRegistered\n    items {\n      status\n      props {\n        label\n        value\n      }\n    }\n  }\n}',
+      '{\n  lregistry(id: "0xee1502e29795ef6c2d60f8d7120596abe3bad990") {    numberOfRegistered\n    items {\n      status\n      metadata : {\n    props {\n        label\n        value\n      }\n    }\n    }\n  }\n}',
     imageUrl: KlerosTokensImg,
   },
 ]
@@ -297,7 +297,7 @@ const Carousel = () => {
             {showTooltip && <Tooltip isVisible={showTooltip}>Copied!</Tooltip>}
           </QueryContainer>
           <StyledButtonAnchor
-            href="https://thegraph.com/hosted-service/subgraph/kleros/legacy-curate-xdai"
+            href="https://thegraph.com/explorer/subgraphs/9hHo5MpjpC1JqfD3BsgFnojGurXRHTrHWcUcZPPCo6m8"
             target="_blank"
             rel="noopener noreferrer"
           >
