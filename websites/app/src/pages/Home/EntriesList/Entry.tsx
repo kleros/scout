@@ -171,18 +171,18 @@ const Entry: React.FC<IEntry> = ({ item }) => {
       />
       <CardContent>
         <strong>
-          <AddressDisplay address={item?.metadata.key0} />
+          <AddressDisplay address={item?.metadata?.key0} />
         </strong>
         {item.registryAddress === registryMap['Tags'] && (
           <>
-            <div>{item?.metadata.key2}</div>
-            <div>{item?.metadata.key1}</div>
+            <div>{item?.metadata?.key2}</div>
+            <div>{item?.metadata?.key1}</div>
             <StyledWebsiteAnchor
-              href={item?.metadata.key3}
+              href={item?.metadata?.key3}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {item?.metadata.key3}
+              {item?.metadata?.key3}
             </StyledWebsiteAnchor>
           </>
         )}
@@ -206,8 +206,8 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                   </TokenLogoWrapper>
                 </a>
               )}
-            <div>{item?.metadata.key2}</div>
-            <div>{item?.metadata.key1}</div>
+            <div>{item?.metadata?.key2}</div>
+            <div>{item?.metadata?.key1}</div>
           </>
         )}
         {item.registryAddress === registryMap['CDN'] && (
@@ -217,7 +217,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {item?.metadata.key1}
+              {item?.metadata?.key1}
             </StyledWebsiteAnchor>
             {item?.metadata?.props &&
               item?.metadata?.props.find(
