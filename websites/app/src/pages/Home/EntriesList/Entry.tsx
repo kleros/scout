@@ -15,6 +15,7 @@ const Card = styled.div`
   font-family: 'Oxanium', sans-serif;
   width: 84vw;
   box-sizing: border-box;
+  word-wrap: break-word;
 
   ${landscapeStyle(
     () => css`
