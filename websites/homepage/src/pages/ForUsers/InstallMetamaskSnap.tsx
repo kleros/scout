@@ -82,6 +82,17 @@ const StyledButton = styled(Button)`
     `
 )}
 `
+interface Snap {
+  blocked: boolean;
+  enabled: boolean;
+  id: string;
+  initialPermissions: Record<string, unknown>;
+  version: string;
+}
+
+interface Snaps {
+  [key: string]: Snap;
+}
 
 const MetamaskPopup = styled.img`
   max-width: ${responsiveSize(340, 357)};
@@ -91,7 +102,7 @@ const MetamaskPopup = styled.img`
 
 const InstallMetamaskSnap = () => {
   const [isConnected, setIsConnected] = useState(false);
-  const [snaps, setSnaps] = useState({});
+  const [snaps, setSnaps] = useState<Snaps>({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [postResult, setPostResult] = useState(null);
   const [address, setAddress] = useState(null);
@@ -152,28 +163,51 @@ const InstallMetamaskSnap = () => {
             crucial information about the smart-contracts you interact with.
           </StyledDescription>
         </TitleAndDescription>
-        <StyledButtonAnchor
-          href="https://snaps.metamask.io/snap/npm/kleros/scout-snap/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <StyledButton>
-            <MetamaskLogo /> Add Kleros Scout to MetaMask
-          </StyledButton>
+        <StyledButtonAnchor>
+
         </StyledButtonAnchor>
         <StyledButton onClick={checkInstallation}>
-          <MetamaskLogo /> Check Installation
+          <MetamaskLogo /> Install Snap
         </StyledButton>
         {isConnected ? (
-          <div>Connected to MetaMask</div>
+          <div>
+            Connected to MetaMask
+            {Object.keys(snaps).length > 0 ? (
+              <div>
+                <h3>Snaps installed:</h3>
+                {Object.entries(snaps).map(([key, snap]) => (
+                  <div key={key}>
+                    <p>ID: {snap.id}</p>
+                    <p>Version: {snap.version}</p>
+                    <p>Blocked: {snap.blocked ? 'Yes' : 'No'}</p>
+                    <p>Enabled: {snap.enabled ? 'Yes' : 'No'}</p>
+                    <p>Initial Permissions:</p>
+                    <ul>
+                      {Object.keys(snap.initialPermissions).map((permission, idx) => (
+                        <li key={idx}>{permission}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>No snaps installed</div>
+            )}
+          </div>
         ) : (
-          <div>Please connect to MetaMask</div>
+          <div>
+            or download directly from the{' '}
+            <a
+              href="https://snaps.metamask.io/snap/npm/kleros/scout-snap/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Metamask Snaps Directory
+            </a>{' '}
+            itself
+          </div>
         )}
-        {Object.keys(snaps).length > 0 ? (
-          <div>Snaps installed: {JSON.stringify(snaps)}</div>
-        ) : (
-          <div>No snaps installed</div>
-        )}
+
       </LeftContent>
       <MetamaskPopup src={MetamaskPopupDarkMode} alt="Metamask Popup" />
       <Modal
