@@ -14,7 +14,7 @@ const Card = styled.div`
   color: white;
   font-family: 'Oxanium', sans-serif;
   box-sizing: border-box;
-  word-wrap: break-word;
+  word-break: break-word;
 `
 
 const CardStatus = styled.div<{ status: string }>`

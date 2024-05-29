@@ -12,6 +12,7 @@ const EntriesContainer = styled.div`
   gap: 20px 40px;
   justify-content: center;
   flex: 1 1 0%;
+  overflow-x: hidden;
   
   ${landscapeStyle(
     () => css`
