@@ -329,8 +329,8 @@ const DetailsModal: React.FC = () => {
                 )}
               </Header>
               <EntryDetailsContainer>
-                {detailsData.props &&
-                  detailsData.props.map(({ label, value }) => (
+                {detailsData?.metadata?.props &&
+                  detailsData?.metadata?.props.map(({ label, value }) => (
                     <LabelAndValue key={label}>
                       <strong>{label}:</strong> {renderValue(label, value)}
                     </LabelAndValue>
@@ -354,12 +354,12 @@ const DetailsModal: React.FC = () => {
                   evidences.map((evidence, idx) => (
                     <Evidence key={idx}>
                       <EvidenceField>
-                        <strong>Title:</strong> {evidence.title}
+                        <strong>Title:</strong> {evidence?.metadata?.title}
                       </EvidenceField>
                       <EvidenceDescription>
                         <strong>Description:</strong>
                         <StyledReactMarkdown>
-                          {evidence.description || ''}
+                          {evidence?.metadata?.description || ''}
                         </StyledReactMarkdown>
                       </EvidenceDescription>
                       <EvidenceField>
