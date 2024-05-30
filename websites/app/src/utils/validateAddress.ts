@@ -18,8 +18,9 @@ const getDupesInRegistry = async (
         where: {
           registry: $registry,
           status_in: ["Registered", "ClearingRequested"],
-          metadata_ : { key0_contains_nocase: $richAddress },
-          ${domain ? `key1_starts_with_nocase: "${domain}"` : ''}
+          metadata_ : { key0_contains_nocase: $richAddress,
+            ${domain ? `key1_starts_with_nocase: "${domain}"` : ''}
+              },
         }
       ) {
         id

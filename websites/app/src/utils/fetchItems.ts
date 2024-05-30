@@ -100,14 +100,17 @@ export const fetchItems = async (
   }
 
   const networkQueryObject = `{or: [${network
-    .map((chainId) => `{key0_starts_with_nocase: "eip155:${chainId}:"}`)
+    .map(
+      (chainId) =>
+        `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`
+    )
     .join(',')}]},`
 
   const textFilterObject = `{or: [
-    {key0_contains_nocase: $text},
-    {key1_contains_nocase: $text},
-    {key2_contains_nocase: $text},
-    {key3_contains_nocase: $text},
+    {metadata_: {key0_contains_nocase: $text}},
+    {metadata_: {key1_contains_nocase: $text}},
+    {metadata_: {key2_contains_nocase: $text}},
+    {metadata_: {key3_contains_nocase: $text}},
   ]}`
 
   const query = gql`
