@@ -6,7 +6,7 @@ export const links = [
   },
   {
     name: 'Subgraph Link',
-    link: 'https://thegraph.com/hosted-service/subgraph/kleros/legacy-curate-xdai',
+    link: 'https://thegraph.com/explorer/subgraphs/9hHo5MpjpC1JqfD3BsgFnojGurXRHTrHWcUcZPPCo6m8',
   },
   { name: 'Kleros Curate', link: 'https://curate.kleros.io/' },
   {

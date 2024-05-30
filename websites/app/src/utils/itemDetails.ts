@@ -3,14 +3,16 @@ import { Prop, Request } from './fetchItems'
 
 export interface GraphEvidence {
   party: string
-  title: string | null
-  description: string | null
   URI: string
-  fileURI: string | null
   number: string
   timestamp: string
   txHash: string
-  fileTypeExtension: string | null
+  metadata: {
+    title: string | null
+    description: string | null
+    fileURI: string | null
+    fileTypeExtension: string | null
+  } | null
 }
 
 export interface EvidenceGroup {
@@ -39,30 +41,34 @@ export interface GraphItemDetails {
     | 'RegistrationRequested'
     | 'ClearingRequested'
   disputed: boolean
-  key0: string
-  key1: string
-  key2: string
-  key3: string
-  props: Prop[]
+  metadata: {
+    key0: string
+    key1: string
+    key2: string
+    key3: string
+    props: Prop[]
+  } | null
   requests: RequestDetails[]
 }
 
 export const fetchItemDetails = async (
-  itemId: string 
+  itemId: string
 ): Promise<GraphItemDetails> => {
   const query = gql`
     query ($id: String!) {
       litem(id: $id) {
-        key0
-        key1
-        key2
-        key3
-        props {
-          value
-          type
-          label
-          description
-          isIdentifier
+        metadata {
+          key0
+          key1
+          key2
+          key3
+          props {
+            value
+            type
+            label
+            description
+            isIdentifier
+          }
         }
         itemID
         registryAddress
@@ -87,14 +93,16 @@ export const fetchItemDetails = async (
             id
             evidences(orderBy: number, orderDirection: desc) {
               party
-              title
-              description
               URI
-              fileURI
               number
               timestamp
               txHash
-              fileTypeExtension
+              metadata {
+                title
+                description
+                fileURI
+                fileTypeExtension
+              }
             }
           }
           rounds(orderBy: creationTime, orderDirection: desc) {
@@ -115,7 +123,7 @@ export const fetchItemDetails = async (
     }
   `
   const result = (await request({
-    url: 'https://api.thegraph.com/subgraphs/name/kleros/legacy-curate-xdai',
+    url: 'https://api.studio.thegraph.com/query/61738/legacy-curate-gnosis/version/latest',
     document: query,
     variables: {
       id: itemId,

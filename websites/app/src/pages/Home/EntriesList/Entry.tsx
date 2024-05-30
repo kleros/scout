@@ -148,13 +148,18 @@ const Entry: React.FC<IEntry> = ({ item }) => {
   const tokenLogoURI =
     item.registryAddress === registryMap['Tokens'] &&
     `https://cdn.kleros.link${
-      (item.props?.find((prop) => prop.label === 'Logo') as Prop)?.value
+      (item?.metadata?.props?.find((prop) => prop.label === 'Logo') as Prop)
+        ?.value
     }`
 
   const visualProofURI =
     item.registryAddress === registryMap['CDN'] &&
     `https://cdn.kleros.link${
-      (item.props?.find((prop) => prop.label === 'Visual proof') as Prop)?.value
+      (
+        item?.metadata?.props?.find(
+          (prop) => prop.label === 'Visual proof'
+        ) as Prop
+      )?.value
     }`
 
   return (
@@ -166,51 +171,58 @@ const Entry: React.FC<IEntry> = ({ item }) => {
       />
       <CardContent>
         <strong>
-          <AddressDisplay address={item.key0} />
+          <AddressDisplay address={item?.metadata?.key0} />
         </strong>
         {item.registryAddress === registryMap['Tags'] && (
           <>
-            <div>{item.key2}</div>
-            <div>{item.key1}</div>
+            <div>{item?.metadata?.key2}</div>
+            <div>{item?.metadata?.key1}</div>
             <StyledWebsiteAnchor
-              href={item.key3}
+              href={item?.metadata?.key3}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {item.key3}
+              {item?.metadata?.key3}
             </StyledWebsiteAnchor>
           </>
         )}
         {item.registryAddress === registryMap['Tokens'] && (
           <>
-            {item.props && item.props.find((prop) => prop.label === 'Logo') && (
-              <a href={tokenLogoURI} target="_blank" rel="noopener noreferrer">
-                <TokenLogoWrapper>
-                  {!imgLoaded && <Skeleton height={100} width={100} />}
-                  <img
-                    src={tokenLogoURI}
-                    alt="Logo"
-                    onLoad={() => setImgLoaded(true)}
-                    style={{ display: imgLoaded ? 'block' : 'none' }}
-                  />
-                </TokenLogoWrapper>
-              </a>
-            )}
-            <div>{item.key2}</div>
-            <div>{item.key1}</div>
+            {item?.metadata?.props &&
+              item.metadata?.props.find((prop) => prop.label === 'Logo') && (
+                <a
+                  href={tokenLogoURI}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <TokenLogoWrapper>
+                    {!imgLoaded && <Skeleton height={100} width={100} />}
+                    <img
+                      src={tokenLogoURI}
+                      alt="Logo"
+                      onLoad={() => setImgLoaded(true)}
+                      style={{ display: imgLoaded ? 'block' : 'none' }}
+                    />
+                  </TokenLogoWrapper>
+                </a>
+              )}
+            <div>{item?.metadata?.key2}</div>
+            <div>{item?.metadata?.key1}</div>
           </>
         )}
         {item.registryAddress === registryMap['CDN'] && (
           <>
             <StyledWebsiteAnchor
-              href={`https://${item.key1}`}
+              href={`https://${item?.metadata?.key1}`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {item.key1}
+              {item?.metadata?.key1}
             </StyledWebsiteAnchor>
-            {item.props &&
-              item.props.find((prop) => prop.label === 'Visual proof') && (
+            {item?.metadata?.props &&
+              item?.metadata?.props.find(
+                (prop) => prop.label === 'Visual proof'
+              ) && (
                 <a
                   href={visualProofURI}
                   target="_blank"
