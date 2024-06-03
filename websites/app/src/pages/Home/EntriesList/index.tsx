@@ -11,7 +11,6 @@ const EntriesContainer = styled.div`
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 20px 40px;
   justify-content: center;
-  flex: 1 1 0%;
   overflow-x: hidden;
   
   ${landscapeStyle(
