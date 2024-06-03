@@ -39,11 +39,13 @@ export interface GraphItem {
     | 'ClearingRequested'
   disputed: boolean
   data: string
-  key0: string
-  key1: string
-  key2: string
-  key3: string
-  props: Prop[]
+  metadata: {
+    key0: string
+    key1: string
+    key2: string
+    key3: string
+    props: Prop[]
+  } | null
   requests: Request[]
 }
 
@@ -98,14 +100,17 @@ export const fetchItems = async (
   }
 
   const networkQueryObject = `{or: [${network
-    .map((chainId) => `{key0_starts_with_nocase: "eip155:${chainId}:"}`)
+    .map(
+      (chainId) =>
+        `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`
+    )
     .join(',')}]},`
 
   const textFilterObject = `{or: [
-    {key0_contains_nocase: $text},
-    {key1_contains_nocase: $text},
-    {key2_contains_nocase: $text},
-    {key3_contains_nocase: $text},
+    {metadata_: {key0_contains_nocase: $text}},
+    {metadata_: {key1_contains_nocase: $text}},
+    {metadata_: {key2_contains_nocase: $text}},
+    {metadata_: {key3_contains_nocase: $text}},
   ]}`
 
   const query = gql`
@@ -143,16 +148,18 @@ export const fetchItems = async (
     status
     disputed
     data
-    key0
-    key1
-    key2
-    key3
-    props {
-      value
-      type
-      label
-      description
-      isIdentifier
+    metadata {
+      key0
+      key1
+      key2
+      key3
+      props {
+        value
+        type
+        label
+        description
+        isIdentifier
+      }
     }
     requests(first: 1, orderBy: submissionTime, orderDirection: desc) {
       disputed
@@ -178,7 +185,7 @@ export const fetchItems = async (
   `
 
   const result = (await request({
-    url: 'https://api.thegraph.com/subgraphs/name/kleros/legacy-curate-xdai',
+    url: 'https://api.studio.thegraph.com/query/61738/legacy-curate-gnosis/version/latest',
     document: query,
     variables: {
       registry: registry.map((r) => registryMap[r]),

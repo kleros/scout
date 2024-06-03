@@ -85,7 +85,7 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   `
 
   const result = (await request({
-    url: 'https://api.thegraph.com/subgraphs/name/kleros/legacy-curate-xdai',
+    url: 'https://api.studio.thegraph.com/query/61738/legacy-curate-gnosis/version/latest',
     document: query,
   })) as any
   const itemCounts: ItemCounts = convertStringFieldsToNumber(result)
@@ -125,9 +125,9 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   }
   // inject registry deposits as well
   const regDs = await Promise.all([
-    fetchRegistryDeposits("0x66260c69d03837016d88c9877e61e08ef74c59f2"),
-    fetchRegistryDeposits("0x957a53a994860be4750810131d9c876b2f52d6e1"),
-    fetchRegistryDeposits("0xee1502e29795ef6c2d60f8d7120596abe3bad990"),
+    fetchRegistryDeposits('0x66260c69d03837016d88c9877e61e08ef74c59f2'),
+    fetchRegistryDeposits('0x957a53a994860be4750810131d9c876b2f52d6e1'),
+    fetchRegistryDeposits('0xee1502e29795ef6c2d60f8d7120596abe3bad990'),
   ])
   itemCounts.Tags.deposits = regDs[0] as DepositParams
   itemCounts.CDN.deposits = regDs[1] as DepositParams
