@@ -13,14 +13,8 @@ const Card = styled.div`
   border-radius: 12px;
   color: white;
   font-family: 'Oxanium', sans-serif;
-  width: 84vw;
   box-sizing: border-box;
-
-  ${landscapeStyle(
-    () => css`
-      width: auto;
-    `
-  )}
+  word-break: break-word;
 `
 
 const CardStatus = styled.div<{ status: string }>`

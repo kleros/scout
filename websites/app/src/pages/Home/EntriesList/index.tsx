@@ -8,13 +8,14 @@ import { ITEMS_PER_PAGE } from 'pages/Home'
 const EntriesContainer = styled.div`
   width: 80%;
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 20px 40px;
   justify-content: center;
-
+  overflow-x: hidden;
+  
   ${landscapeStyle(
     () => css`
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     `
   )}
 `
