@@ -79,17 +79,6 @@ export const ClosedButtonContainer = styled.div`
   height: 24px;
 `
 
-export const AlertMessage = styled.div`
-  display: flex;
-  width: 100vw;
-  background-color: #a83232;
-  color: #ffffff;
-  border-radius: 5px;
-  justify-content: center;
-  text-align: center;
-  padding: 6px 0;
-`
-
 export const ITEMS_PER_PAGE = 20
 
 const Home: React.FC = () => {
@@ -238,12 +227,6 @@ const Home: React.FC = () => {
 
   return (
     <Container>
-      <AlertMessage>
-        We are experiencing technical issues with our subgraph, which is causing
-        some entries to display incorrectly. Do NOT reject these "undefined"
-        entries, they may be valid. Go to curate.kleros.io to review them
-        properly.
-      </AlertMessage>
       <Navbar />
       <SearchAndRegistryDetailsAndSubmitContainer>
         <Search />

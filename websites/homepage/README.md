@@ -14,6 +14,4 @@ Open [http://localhost:1234](http://localhost:1234) with your browser to see the
 
 ## Deploy on IPFS
 
-Command: ipfs add -r out/
-
-To ensure persistent pinning, it's best to just use Fleek.co.
+It's automatically deployed to Fleek with each push, you can check on app.fleek.co
