@@ -5,11 +5,9 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import ScoutBackground from 'pngs/scout-background.png'
 import MetamaskPopupDarkMode from 'pngs/metamask-popup-dark-mode.png'
 import MetamaskLogo from 'tsx:svgs/promo-banner/metamask.svg'
-import { Button, ButtonAnchor } from 'components/Button'
-// import { installSnap } from 'components/PromoBanner'
-import Modal from 'react-modal';
-
-Modal.setAppElement(document.body);
+import GalxeIcon from 'tsx:svgs/promo-banner/galxe.svg'
+import { Button } from 'components/Button'
+import GalxeModal from 'components/GalxeModal'
 
 const Container = styled.div`
   display: flex;
@@ -32,12 +30,12 @@ const LeftContent = styled.div`
   align-items: center;
 
   ${landscapeStyle(
-  () => css`
+    () => css`
       width: auto;
       max-width: 520px;
       align-items: flex-start;
     `
-)}
+  )}
 `
 
 const TitleAndDescription = styled.div`
@@ -51,10 +49,10 @@ const StyledTitle = styled.h1`
   text-align: center;
 
   ${landscapeStyle(
-  () => css`
+    () => css`
       text-align: start;
     `
-)}
+  )}
 `
 
 const StyledDescription = styled.p`
@@ -62,13 +60,11 @@ const StyledDescription = styled.p`
   text-align: center;
 
   ${landscapeStyle(
-  () => css`
+    () => css`
       text-align: start;
     `
-)}
+  )}
 `
-
-const StyledButtonAnchor = styled(ButtonAnchor)``
 
 const StyledButton = styled(Button)`
   display: flex;
@@ -76,22 +72,98 @@ const StyledButton = styled(Button)`
   width: 312px;
 
   ${landscapeStyle(
-  () => css`
+    () => css`
       width: 404px;
       margin-top: 8px;
     `
-)}
+  )}
 `
-interface Snap {
-  blocked: boolean;
-  enabled: boolean;
-  id: string;
-  initialPermissions: Record<string, unknown>;
-  version: string;
+
+const StyledAnchor = styled.a`
+  display: flex;
+  align-items: center;
+  margin-top: 4px;
+  font-family: 'Avenir', sans-serif;
+  color: #fff;
+  text-decoration: underline;
+  flex-wrap: wrap;
+  text-align: center;
+  justify-content: center;
+  width: 100%;
+
+  &:hover {
+    color: #ccc;
+  }
+
+  ${landscapeStyle(
+    () => css`
+      justify-content: flex-start;
+    `
+  )}
+`
+
+const GalxeIconStyled = styled(GalxeIcon)`
+  display: flex;
+  margin-bottom: 8px;
+  margin-right: ${responsiveSize(0, 14)};
+  align-items: center;
+  justify-content: center;
+
+  ${landscapeStyle(
+    () => css`
+      margin-bottom: 0;
+    `
+  )}
+`
+
+const connectToMetaMask = async (
+  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>,
+  setAddress: React.Dispatch<React.SetStateAction<string | null>>
+) => {
+  try {
+    const accounts = await window.ethereum.request({
+      method: 'eth_requestAccounts',
+    })
+    setIsConnected(true)
+    setAddress(accounts[0])
+    console.log('Connected to MetaMask')
+  } catch (error) {
+    console.error('Error connecting to MetaMask:', error)
+  }
 }
 
-interface Snaps {
-  [key: string]: Snap;
+const installSnap = async () => {
+  return await window.ethereum.request({
+    method: 'wallet_requestSnaps',
+    params: {
+      'npm:@kleros/scout-snap': { version: '1.1.0' },
+    },
+  })
+}
+
+export const checkInstallation = async ({
+  isConnected,
+  setIsConnected,
+  address,
+  setAddress,
+  setIsModalOpen,
+}: {
+  isConnected: boolean
+  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>
+  address: string | null
+  setAddress: React.Dispatch<React.SetStateAction<string | null>>
+  setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
+  if (!isConnected) {
+    await connectToMetaMask(setIsConnected, setAddress)
+  }
+  try {
+    const result = await installSnap()
+    console.log('Snaps installed:', result)
+    setIsModalOpen(true)
+  } catch (error) {
+    console.error('Error checking snaps installation:', error)
+  }
 }
 
 const MetamaskPopup = styled.img`
@@ -100,59 +172,11 @@ const MetamaskPopup = styled.img`
   margin-top: ${responsiveSize(20, 40)};
 `
 
-const InstallMetamaskSnap = () => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [snaps, setSnaps] = useState<Snaps>({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [postResult, setPostResult] = useState(null);
-  const [address, setAddress] = useState(null);
+const InstallMetamaskSnap: React.FC = () => {
+  const [isConnected, setIsConnected] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [address, setAddress] = useState<string | null>(null)
 
-
-  const connectToMetaMask = async () => {
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setIsConnected(true);
-      setAddress(accounts[0]);
-
-      console.log('Connected to MetaMask');
-    } catch (error) {
-      console.error('Error connecting to MetaMask:', error);
-    }
-  };
-
-  const checkInstallation = async () => {
-    if (!isConnected) {
-      await connectToMetaMask();
-    }
-
-    try {
-      const result = await window.ethereum.request({
-        method: 'wallet_getSnaps',
-        params: [],
-      });
-      console.log('Snaps installed:', result);
-      setSnaps(result);
-      setIsModalOpen(true);
-    } catch (error) {
-      console.error('Error checking snaps installation:', error);
-    }
-  };
-  const handleParticipation = async () => {
-    try {
-      const response = await fetch('https://galxe-service-6c648393ea39.herokuapp.com/upsertAddress', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ contractAddress: address }),
-      });
-      const data = await response.json();
-      setPostResult(data);
-    } catch (error) {
-      console.error('Error participating in Galxe campaign:', error);
-    }
-    setIsModalOpen(false);
-  };
   return (
     <Container>
       <LeftContent>
@@ -163,65 +187,36 @@ const InstallMetamaskSnap = () => {
             crucial information about the smart-contracts you interact with.
           </StyledDescription>
         </TitleAndDescription>
-        <StyledButtonAnchor>
-
-        </StyledButtonAnchor>
-        <StyledButton onClick={checkInstallation}>
-          <MetamaskLogo /> Install Snap
+        <StyledButton
+          onClick={() =>
+            checkInstallation({
+              isConnected,
+              setIsConnected,
+              address,
+              setAddress,
+              setIsModalOpen,
+            })
+          }
+        >
+          <MetamaskLogo /> Add Kleros Scout to Metamask
         </StyledButton>
-        {isConnected ? (
-          <div>
-            Connected to MetaMask
-            {Object.keys(snaps).length > 0 ? (
-              <div>
-                <h3>Snaps installed:</h3>
-                {Object.entries(snaps).map(([key, snap]) => (
-                  <div key={key}>
-                    <p>ID: {snap.id}</p>
-                    <p>Version: {snap.version}</p>
-                    <p>Blocked: {snap.blocked ? 'Yes' : 'No'}</p>
-                    <p>Enabled: {snap.enabled ? 'Yes' : 'No'}</p>
-                    <p>Initial Permissions:</p>
-                    <ul>
-                      {Object.keys(snap.initialPermissions).map((permission, idx) => (
-                        <li key={idx}>{permission}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div>No snaps installed</div>
-            )}
-          </div>
-        ) : (
-          <div>
-            or download directly from the{' '}
-            <a
-              href="https://snaps.metamask.io/snap/npm/kleros/scout-snap/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Metamask Snaps Directory
-            </a>{' '}
-            itself
-          </div>
-        )}
-
+        <StyledAnchor
+          href="https://app.galxe.com/quest/kleros/GCYsVtdurQ"
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          <GalxeIconStyled />
+          Claim your Galxe NFT if you’ve already installed!
+        </StyledAnchor>
       </LeftContent>
       <MetamaskPopup src={MetamaskPopupDarkMode} alt="Metamask Popup" />
-      <Modal
-        isOpen={isModalOpen}
-        onRequestClose={() => setIsModalOpen(false)}
-        contentLabel="Galxe Campaign Participation"
-      >
-        <h2>Participate in Galxe Campaign</h2>
-        <p>Would you like to participate in the Galxe campaign?</p>
-        <button onClick={handleParticipation}>Yes</button>
-        <button onClick={() => setIsModalOpen(false)}>No</button>
-      </Modal>
+      <GalxeModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        address={address}
+      />
     </Container>
-  );
+  )
 }
 
 export default InstallMetamaskSnap

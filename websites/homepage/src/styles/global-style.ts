@@ -24,4 +24,7 @@ export const GlobalStyle = createGlobalStyle`
     --highlight-color: #A98BC9;
   }
 
+  .ReactModal__Overlay {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+  }
 `
