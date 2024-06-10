@@ -7,7 +7,7 @@ import MetamaskPopupDarkMode from 'pngs/metamask-popup-dark-mode.png'
 import MetamaskLogo from 'tsx:svgs/promo-banner/metamask.svg'
 import GalxeIcon from 'tsx:svgs/promo-banner/galxe.svg'
 import { Button } from 'components/Button'
-import GalxeModal from 'components/GalxeModal'
+import GalxeModal, { handleAnchorClick } from 'components/GalxeModal'
 
 const Container = styled.div`
   display: flex;
@@ -104,16 +104,10 @@ const StyledAnchor = styled.a`
 
 const GalxeIconStyled = styled(GalxeIcon)`
   display: flex;
-  margin-bottom: 8px;
-  margin-right: ${responsiveSize(0, 14)};
+  margin-bottom: ${responsiveSize(8, 0)};
+  margin-right: 8px;
   align-items: center;
   justify-content: center;
-
-  ${landscapeStyle(
-    () => css`
-      margin-bottom: 0;
-    `
-  )}
 `
 
 const connectToMetaMask = async (
@@ -154,9 +148,25 @@ export const checkInstallation = async ({
   setAddress: React.Dispatch<React.SetStateAction<string | null>>
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
-  if (!isConnected) {
-    await connectToMetaMask(setIsConnected, setAddress)
+  let connected = isConnected
+  if (!connected) {
+    try {
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      })
+      setIsConnected(true)
+      setAddress(accounts[0])
+      connected = true
+    } catch (error) {
+      console.error('Error connecting to MetaMask:', error)
+      return
+    }
   }
+
+  if (!connected) {
+    return
+  }
+
   try {
     const result = await installSnap()
     console.log('Snaps installed:', result)
@@ -204,6 +214,7 @@ const InstallMetamaskSnap: React.FC = () => {
           href="https://app.galxe.com/quest/kleros/GCYsVtdurQ"
           target="_blank"
           rel="noreferrer noopener"
+          onClick={(e) => handleAnchorClick(e, address, setIsModalOpen)}
         >
           <GalxeIconStyled />
           Claim your Galxe NFT if you’ve already installed!
