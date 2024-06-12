@@ -1,8 +1,10 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import MetamaskIcon from 'tsx:svgs/promo-banner/metamask.svg'
-import RightArrow from 'tsx:svgs/promo-banner/right-arrow.svg'
+import GalxeIcon from 'tsx:svgs/promo-banner/galxe.svg'
+import { checkInstallation } from 'pages/ForUsers/InstallMetamaskSnap'
+import GalxeModal from 'components/GalxeModal'
 
 const Container = styled.a`
   display: flex;
@@ -33,32 +35,42 @@ const StyledP = styled.p`
   )}
 `
 
-// export const installSnap = async () => {
-//   try {
-//     await window.ethereum.request({
-//       method: 'wallet_requestSnaps',
-//       params: {
-//         'npm:@kleros/scout-snap': { version: '1.1.0' },
-//       },
-//     })
-//   } catch (error) {
-//     console.error(error)
-//   }
-// }
+const BoldText = styled.span`
+  font-weight: 600;
+`
 
-const PromoBanner: React.FC = () => (
-  <Container
-    href="https://snaps.metamask.io/snap/npm/kleros/scout-snap/"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    <MetamaskIcon />
-    <StyledP>
-      Protect yourself by installing the Kleros Scout Snap on your MetaMask
-      Wallet
-    </StyledP>
-    <RightArrow />
-  </Container>
-)
+const PromoBanner: React.FC = () => {
+  const [isConnected, setIsConnected] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [address, setAddress] = useState<string | null>(null)
+
+  return (
+    <>
+      <Container
+        onClick={() =>
+          checkInstallation({
+            isConnected,
+            setIsConnected,
+            address,
+            setAddress,
+            setIsModalOpen,
+          })
+        }
+      >
+        <MetamaskIcon />
+        <StyledP>
+          Secure txns on your MetaMask Wallet and claim{' '}
+          <BoldText>Galxe points</BoldText> by installing the Kleros Scout Snap
+        </StyledP>
+        <GalxeIcon />
+      </Container>
+      <GalxeModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        address={address}
+      />
+    </>
+  )
+}
 
 export default PromoBanner
