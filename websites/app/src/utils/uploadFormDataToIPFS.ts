@@ -5,7 +5,7 @@ export async function uploadFormDataToIPFS(
   operation: string = 'evidence',
   pinToGraph = false
 ): Promise<Response> {
-  const url = `$https://kleros-api.netlify.app/.netlify/functions/upload-to-ipfs?operation=${operation}&pinToGraph=${pinToGraph}`
+  const url = `https://kleros-api.netlify.app/.netlify/functions/upload-to-ipfs?operation=${operation}&pinToGraph=${pinToGraph}`
 
   const response = await fetch(url, {
     method: 'POST',
