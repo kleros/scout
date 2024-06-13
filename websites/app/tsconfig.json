@@ -15,7 +15,8 @@
       "queries*": ["./src/hooks/queries*"],
       "pages*": ["./src/pages*"],
       "styles*": ["./src/styles*"],
-      "svgs*": ["./src/assets/svgs*"]
+      "svgs*": ["./src/assets/svgs*"],
+      "gifs*": ["./src/assets/gifs*"]
     },
     "moduleResolution": "node",
     "strict": true,
