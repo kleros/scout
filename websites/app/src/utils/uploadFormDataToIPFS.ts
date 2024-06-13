@@ -1,22 +1,23 @@
 import { fetch } from 'cross-fetch'
 
-export function uploadFormDataToIPFS(
+export async function uploadFormDataToIPFS(
   formData: FormData,
-  operation: string = 'evidence'
+  operation: string = 'evidence',
+  pinToGraph = false
 ): Promise<Response> {
-  const baseUrl = 'https://kleros-scout-app.netlify.app'
-  const url = `${baseUrl}/.netlify/functions/uploadToIPFS?dapp=curate&key=scout&operation=${operation}`
+  const url = `https://kleros-api.netlify.app/.netlify/functions/upload-to-ipfs?operation=${operation}&pinToGraph=${pinToGraph}`
 
-  return fetch(url, {
+  const response = await fetch(url, {
     method: 'POST',
     body: formData,
-  }).then(async (response) => {
-    if (response.status !== 200) {
-      const error = await response
-        .json()
-        .catch(() => ({ message: 'Error uploading to IPFS' }))
-      throw new Error(error.message)
-    }
-    return response
   })
+
+  if (response.status !== 200) {
+    const error = await response
+      .json()
+      .catch(() => ({ message: 'Error uploading to IPFS' }))
+    throw new Error(error.message)
+  }
+  const data = await response.json()
+  return data
 }

@@ -1,21 +1,19 @@
 import React from 'react'
 import styled from 'styled-components'
+import LoadingGif from 'gifs/loading-icosahedron.gif'
 
 const Container = styled.div`
   display: flex;
 `
 
 const LoadingImage = styled.img`
-  height: 128px;
+  height: 92px;
 `
 
 const LoadingItems: React.FC = () => {
   return (
     <Container>
-      <LoadingImage
-        src="https://assets.materialup.com/uploads/92425af1-601b-486e-ad06-1de737628ca0/preview.gif"
-        alt="Loading..."
-      />
+      <LoadingImage src={LoadingGif} />
     </Container>
   )
 }
