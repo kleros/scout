@@ -130,7 +130,7 @@ const installSnap = async () => {
   return await window.ethereum.request({
     method: 'wallet_requestSnaps',
     params: {
-      'npm:@kleros/scout-snap': { version: '1.1.0' },
+      'npm:@kleros/scout-snap': { version: '1.3.1' },
     },
   })
 }
