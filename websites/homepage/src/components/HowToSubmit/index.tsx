@@ -54,7 +54,7 @@ gap: 24px;
 )}
 `
 
-const Container1 = styled.div`
+const StatsContainer = styled.div`
 display: flex;
 flex-direction: column;
 justify-content: center;
@@ -63,7 +63,7 @@ padding: 0px;
 width: 148px;
 `
 
-const Title1 = styled.h1`
+const StatsTitle = styled.h1`
   margin: 0;
   margin-bottom: ${responsiveSize(12, 24)};
   font-family: 'Avenir', sans-serif;
@@ -73,7 +73,7 @@ const Title1 = styled.h1`
   color: #9C46FF;
 `
 
-const Description1 = styled.p`
+const StatsDescription = styled.p`
   margin: 0;
   text-align: center;
   font-family: 'Oxanium', sans-serif;
@@ -148,22 +148,22 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
       <Steps />
       {showStats && (
         <Box>
-          <Container1>
-            <Title1>$8000</Title1>
-            <Description1>MONTHLY REWARD POOL</Description1>
-          </Container1>
-          <Container1>
-            <Title1>$8000</Title1>
-            <Description1>MONTHLY REWARD POOL</Description1>
-          </Container1>
-          <Container1>
-            <Title1>$15</Title1>
-            <Description1>AVG. REWARD PER SUBMISSION</Description1>
-          </Container1>
-          <Container1>
-            <Title1>$40</Title1>
-            <Description1>AVG. REWARD PER CHALLENGE</Description1>
-          </Container1>
+          <StatsContainer>
+            <StatsTitle>$8000</StatsTitle>
+            <StatsDescription>MONTHLY REWARD POOL</StatsDescription>
+          </StatsContainer>
+          <StatsContainer>
+            <StatsTitle>$8000</StatsTitle>
+            <StatsDescription>MONTHLY REWARD POOL</StatsDescription>
+          </StatsContainer>
+          <StatsContainer>
+            <StatsTitle>$15</StatsTitle>
+            <StatsDescription>AVG. REWARD PER SUBMISSION</StatsDescription>
+          </StatsContainer>
+          <StatsContainer>
+            <StatsTitle>$40</StatsTitle>
+            <StatsDescription>AVG. REWARD PER CHALLENGE</StatsDescription>
+          </StatsContainer>
         </Box>
       )}
       <StyledButtonAnchor
