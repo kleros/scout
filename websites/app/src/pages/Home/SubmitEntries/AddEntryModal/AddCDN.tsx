@@ -20,6 +20,9 @@ import {
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
+  ExpectedPayouts,
+  PayoutsContainer,
+  Divider
 } from './index'
 
 const columns = [
@@ -119,6 +122,7 @@ const AddCDN: React.FC = () => {
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>
+      <Divider />
       <RichAddressForm
         networkOption={network}
         setNetwork={setNetwork}
@@ -137,15 +141,20 @@ const AddCDN: React.FC = () => {
         onChange={(e) => setDomain(e.target.value)}
       />
       <ImageUpload path={path} setPath={setPath} />
-      <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
-        Submit -{' '}
-        {countsData?.CDN?.deposits
-          ? formatEther(
-              countsData.CDN.deposits.arbitrationCost +
-                countsData.CDN.deposits.submissionBaseDeposit
+      <PayoutsContainer>
+        <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
+          Submit
+        </SubmitButton>
+        <ExpectedPayouts>
+          Deposit:{' '}
+          {countsData?.Tags?.deposits
+            ? formatEther(
+              countsData.Tags.deposits.arbitrationCost +
+              countsData.Tags.deposits.submissionBaseDeposit
             ) + ' xDAI'
-          : null}
-      </SubmitButton>
+            : null}{' | '}Expected Reward: $40
+        </ExpectedPayouts>
+      </PayoutsContainer>
     </AddContainer>
   )
 }

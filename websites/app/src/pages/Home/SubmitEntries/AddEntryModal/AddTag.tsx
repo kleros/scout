@@ -19,6 +19,9 @@ import {
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
+  ExpectedPayouts,
+  PayoutsContainer,
+  Divider
 } from './index'
 
 const columns = [
@@ -138,6 +141,7 @@ const AddAddressTag: React.FC = () => {
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>
+      <Divider />
       <RichAddressForm
         networkOption={network}
         setNetwork={setNetwork}
@@ -173,15 +177,20 @@ const AddAddressTag: React.FC = () => {
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
       />
-      <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
-        Submit -{' '}
-        {countsData?.Tags?.deposits
-          ? formatEther(
+      <PayoutsContainer>
+        <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
+          Submit
+        </SubmitButton>
+        <ExpectedPayouts>
+          Deposit:{' '}
+          {countsData?.Tags?.deposits
+            ? formatEther(
               countsData.Tags.deposits.arbitrationCost +
-                countsData.Tags.deposits.submissionBaseDeposit
+              countsData.Tags.deposits.submissionBaseDeposit
             ) + ' xDAI'
-          : null}
-      </SubmitButton>
+            : null}{' | '}Expected Reward: $40
+        </ExpectedPayouts>
+      </PayoutsContainer>
     </AddContainer>
   )
 }

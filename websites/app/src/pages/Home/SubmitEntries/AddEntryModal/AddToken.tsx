@@ -20,6 +20,9 @@ import {
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
+  ExpectedPayouts,
+  PayoutsContainer,
+  Divider
 } from './index'
 
 const columns = [
@@ -136,6 +139,7 @@ const AddToken: React.FC = () => {
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>
+      <Divider />
       <RichAddressForm
         networkOption={network}
         setNetwork={setNetwork}
@@ -166,15 +170,20 @@ const AddToken: React.FC = () => {
         onChange={(e) => setSymbol(e.target.value)}
       />
       <ImageUpload path={path} setPath={setPath} />
-      <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
-        Submit -{' '}
-        {countsData?.Tokens?.deposits
-          ? formatEther(
-              countsData.Tokens.deposits.arbitrationCost +
-                countsData.Tokens.deposits.submissionBaseDeposit
+      <PayoutsContainer>
+        <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
+          Submit
+        </SubmitButton>
+        <ExpectedPayouts>
+          Deposit:{' '}
+          {countsData?.Tags?.deposits
+            ? formatEther(
+              countsData.Tags.deposits.arbitrationCost +
+              countsData.Tags.deposits.submissionBaseDeposit
             ) + ' xDAI'
-          : null}
-      </SubmitButton>
+            : null}{' | '}Expected Reward: $40
+        </ExpectedPayouts>
+      </PayoutsContainer>
     </AddContainer>
   )
 }
