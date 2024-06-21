@@ -23,6 +23,7 @@ import {
   PayoutsContainer,
   Divider
 } from './index'
+import { useDebounce } from 'react-use'
 
 const columns = [
   {
@@ -67,11 +68,21 @@ const AddAddressTag: React.FC = () => {
     label: 'Mainnet',
   })
   const [address, setAddress] = useState<string>('')
+  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
+
+  useDebounce(
+    () => {
+      setDebouncedAddress(address)
+    },
+    1000,
+    [address]
+  )
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
     {
-      queryKey: ['addressissues', network.value + ':' + address, 'Tags', '-'],
-      queryFn: () => getAddressValidationIssue(network.value, address, 'Tags'),
+      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-'],
+      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags'),
+      enabled: !!debouncedAddress,
     }
   )
 
@@ -149,8 +160,8 @@ const AddAddressTag: React.FC = () => {
         setAddress={setAddress}
         registry="Tags"
       />
-      {addressIssuesLoading && 'Loading'}
-      {addressIssuesData && (
+      {addressIssuesLoading && 'Loading...'}
+      {addressIssuesData && !addressIssuesLoading && (
         <ErrorMessage>{addressIssuesData.message}</ErrorMessage>
       )}
       Project name

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
@@ -7,6 +7,7 @@ import { getIPFSPath } from 'utils/getIPFSPath'
 import { fetchItemCounts } from 'utils/itemCounts'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
+import { useDebounce } from 'react-use'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
 import { ClosedButtonContainer } from 'pages/Home'
@@ -65,11 +66,26 @@ const AddToken: React.FC = () => {
   })
   const [address, setAddress] = useState<string>('')
 
+  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
+
+  useDebounce(
+    () => {
+      setDebouncedAddress(address)
+    },
+    1000,
+    [address]
+  )
+
+  const networkAddressKey = useMemo(() => {
+    return network.value + ':' + debouncedAddress
+  }, [network.value, debouncedAddress])
+
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
     {
-      queryKey: ['addressissues', network.value + ':' + address, 'Tokens', '-'],
+      queryKey: ['addressissues', networkAddressKey, 'Tokens', '-'],
       queryFn: () =>
-        getAddressValidationIssue(network.value, address, 'Tokens'),
+        getAddressValidationIssue(network.value, debouncedAddress, 'Tokens'),
+      enabled: !!debouncedAddress,
     }
   )
 
@@ -148,7 +164,7 @@ const AddToken: React.FC = () => {
         registry="Tags"
       />
       {addressIssuesLoading && 'Loading...'}
-      {addressIssuesData && (
+      {addressIssuesData && !addressIssuesLoading && (
         <ErrorMessage>{addressIssuesData.message}</ErrorMessage>
       )}
       Decimals
