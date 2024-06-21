@@ -22,6 +22,7 @@ const index: React.FC = () => {
         titleText="How do I Submit?"
         buttonText="Start submitting & earn rewards!"
         buttonLink="https://app.klerosscout.eth.limo/"
+        showStats={true} 
       />
       <InstallMetamaskSnap />
     </Container>
