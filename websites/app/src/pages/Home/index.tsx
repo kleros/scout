@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -7,6 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchItems } from 'utils/fetchItems'
 import { fetchItemCounts } from 'utils/itemCounts'
 import Navbar from './Navbar'
+import RewardsPage from './RewardsSection'
 import RegistryDetails from './RegistryDetails'
 import SubmitButton from './SubmitButton'
 import Search from './Search'
@@ -83,6 +84,7 @@ export const ITEMS_PER_PAGE = 20
 
 const Home: React.FC = () => {
   let [searchParams, setSearchParams] = useSearchParams()
+  const [showRewardsPage, setShowRewardsPage] = useState(false);
 
   const searchQueryKeys = useMemo(
     () => [
@@ -158,7 +160,7 @@ const Home: React.FC = () => {
             ? countsData[registry].numberOfRegistered
             : 0) +
           (status.includes('RegistrationRequested') &&
-          disputed.includes('false')
+            disputed.includes('false')
             ? countsData[registry].numberOfRegistrationRequested
             : 0) +
           (status.includes('RegistrationRequested') && disputed.includes('true')
@@ -227,27 +229,33 @@ const Home: React.FC = () => {
 
   return (
     <Container>
-      <Navbar />
-      <SearchAndRegistryDetailsAndSubmitContainer>
-        <Search />
-        <RegistryDetailsAndSubmitContainer>
-          <RegistryDetails />
-          <SubmitButton />
-        </RegistryDetailsAndSubmitContainer>
-      </SearchAndRegistryDetailsAndSubmitContainer>
-
-      <Filters />
-
-      {searchLoading || !searchData ? (
-        <LoadingItems />
+      <Navbar setShowRewardsPage={setShowRewardsPage} />
+      {showRewardsPage ? (
+        <RewardsPage />
       ) : (
-        <EntriesList searchData={searchData} />
-      )}
-      <Pagination totalPages={totalPages} />
+        <>
+          <SearchAndRegistryDetailsAndSubmitContainer>
+            <Search />
+            <RegistryDetailsAndSubmitContainer>
+              <RegistryDetails />
+              <SubmitButton />
+            </RegistryDetailsAndSubmitContainer>
+          </SearchAndRegistryDetailsAndSubmitContainer>
 
-      {isDetailsModalOpen && <DetailsModal />}
-      {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
-      {isAddItemOpen && <AddEntryModal />}
+          <Filters />
+
+          {searchLoading || !searchData ? (
+            <LoadingItems />
+          ) : (
+            <EntriesList searchData={searchData} />
+          )}
+          <Pagination totalPages={totalPages} />
+
+          {isDetailsModalOpen && <DetailsModal />}
+          {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
+          {isAddItemOpen && <AddEntryModal />}
+        </>
+      )}
     </Container>
   )
 }

@@ -53,9 +53,14 @@ const Title = styled.div`
   )}
 `
 
-const StyledA = styled.a`
+const StyledButton = styled.button`
   display: none;
   font-family: 'Oxanium', sans-serif;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
 
   ${landscapeStyle(
     () => css`
@@ -63,7 +68,6 @@ const StyledA = styled.a`
       position: relative;
       padding-right: 64px;
       text-decoration: none;
-      color: #fff;
 
       :hover {
         text-decoration: underline;
@@ -72,28 +76,32 @@ const StyledA = styled.a`
   )}
 `
 
-interface INavbar {}
+interface INavbar {
+  setShowRewardsPage: (show: boolean) => void;
+}
 
-const Navbar: React.FC<INavbar> = ({}) => {
+const Navbar: React.FC<INavbar> = ({ setShowRewardsPage }) => {
   const navigate = useNavigate()
 
-  const handlerClickTitle = () => {
-    navigate('/')
+  const handleClickTitle = () => {
+    setShowRewardsPage(false);
+    navigate('/');
+  }
+  
+  const handleClickRewards = () => {
+    setShowRewardsPage(true);
   }
 
   return (
     <Container>
-      <Title onClick={handlerClickTitle}>
+      <Title onClick={handleClickTitle}>
         <StyledCurateLogo />
         <StyledText>Kleros Scout</StyledText>
       </Title>
-      <Registries />
-      <StyledA
-        href="https://blog.kleros.io/renewal-and-amendments-in-curates-combined-incentive-program/"
-        target="blank"
-      >
+      <Registries setShowRewardsPage={setShowRewardsPage} />
+      <StyledButton onClick={handleClickRewards}>
         Earn Rewards by Submitting!
-      </StyledA>
+      </StyledButton>
     </Container>
   )
 }
