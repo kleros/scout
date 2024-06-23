@@ -17,13 +17,13 @@ const Section = styled.section`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(1, minmax(0px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
   
   ${landscapeStyle(
     () => css`
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(5, minmax(0px, 1fr));
     `
   )}
 `;
@@ -80,18 +80,21 @@ const FormulaBox = styled.div`
   border-radius: 0.5rem;
   border: 1px solid #5A2393;
   word-break: break-all;
+  display: flex;
 `;
 
 const FormulaText = styled.p`
   font-size: 1rem;
   color: #CD9DFF;
-  margin-bottom: 0.5rem;
+  padding: 0 1rem;
+  border-right: 1px solid white;
 `;
 
 const Formula = styled.p`
   font-size: 1rem;
   color: #E87B35;
   font-family: monospace;
+  padding: 0 1rem;
 `;
 
 const RewardSection: React.FC = () => (

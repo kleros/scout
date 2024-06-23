@@ -2,7 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import CurateLogo from 'tsx:svgs/header/curate-logo.svg'
 import Registries from './Registries'
 
@@ -76,20 +76,18 @@ const StyledButton = styled.button`
   )}
 `
 
-interface INavbar {
-  setShowRewardsPage: (show: boolean) => void;
-}
+interface INavbar {}
 
-const Navbar: React.FC<INavbar> = ({ setShowRewardsPage }) => {
+const Navbar: React.FC<INavbar> = ({}) => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const handleClickTitle = () => {
-    setShowRewardsPage(false);
-    navigate('/');
+    navigate('/')
   }
-  
+
   const handleClickRewards = () => {
-    setShowRewardsPage(true);
+    setSearchParams({ page: 'rewards' })
   }
 
   return (
@@ -98,7 +96,7 @@ const Navbar: React.FC<INavbar> = ({ setShowRewardsPage }) => {
         <StyledCurateLogo />
         <StyledText>Kleros Scout</StyledText>
       </Title>
-      <Registries setShowRewardsPage={setShowRewardsPage} />
+      <Registries />
       <StyledButton onClick={handleClickRewards}>
         Earn Rewards by Submitting!
       </StyledButton>

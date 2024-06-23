@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -84,7 +84,6 @@ export const ITEMS_PER_PAGE = 20
 
 const Home: React.FC = () => {
   let [searchParams, setSearchParams] = useSearchParams()
-  const [showRewardsPage, setShowRewardsPage] = useState(false);
 
   const searchQueryKeys = useMemo(
     () => [
@@ -111,6 +110,11 @@ const Home: React.FC = () => {
 
   const isAddItemOpen = useMemo(
     () => !!searchParams.get('additem'),
+    [searchParams]
+  )
+
+  const showRewardsPage = useMemo(
+    () => searchParams.get('page') === 'rewards',
     [searchParams]
   )
 
@@ -229,7 +233,7 @@ const Home: React.FC = () => {
 
   return (
     <Container>
-      <Navbar setShowRewardsPage={setShowRewardsPage} />
+      <Navbar />
       {showRewardsPage ? (
         <RewardsPage />
       ) : (

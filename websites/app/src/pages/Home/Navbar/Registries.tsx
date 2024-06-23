@@ -27,20 +27,19 @@ const StyledItem = styled.div<{ isSelected: boolean }>`
 
 interface IItem {
   name: string
-  setShowRewardsPage: (show: boolean) => void;
 }
 
-const Item: React.FC<IItem> = ({ name, setShowRewardsPage }) => {
+const Item: React.FC<IItem> = ({ name }) => {
   let [searchParams, setSearchParams] = useSearchParams()
   const isSelected = searchParams.get('registry') === name
 
   const handleItemClick = (event) => {
     event.stopPropagation()
-    setShowRewardsPage(false)
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev.toString())
       newParams.set('registry', name)
       // bounce to page 1
+      newParams.set('page', 'home')
       newParams.set('page', '1')
       return newParams
     })
@@ -55,15 +54,11 @@ const Item: React.FC<IItem> = ({ name, setShowRewardsPage }) => {
 
 const ITEMS = [{ name: 'Tags' }, { name: 'Tokens' }, { name: 'CDN' }]
 
-interface IRegistries {
-  setShowRewardsPage: (show: boolean) => void;
-}
-
-const Registries: React.FC<IRegistries> = ({ setShowRewardsPage }) => {
+const Registries: React.FC = () => {
   return (
     <Container>
       {ITEMS.map((item) => (
-        <Item key={item.name} name={item.name} setShowRewardsPage={setShowRewardsPage} />
+        <Item key={item.name} name={item.name} />
       ))}
     </Container>
   )
