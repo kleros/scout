@@ -60,10 +60,10 @@ const TokenLogoWrapper = styled.div`
   justify-content: center;
 `
 
-const VisualProofWrapper = styled.div`
-  display: flex;
-  height: 300px;
-  justify-content: center;
+const VisualProofWrapper = styled.img`
+    object-fit: cover;
+    align-self: stretch;
+    width: 90%;
 `
 
 const DetailsButton = styled.button`
@@ -222,15 +222,13 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <VisualProofWrapper>
-                    {!imgLoaded && <Skeleton height={52} width={100} />}
-                    <img
-                      src={visualProofURI}
-                      alt="Visual proof"
-                      onLoad={() => setImgLoaded(true)}
-                      style={{ display: imgLoaded ? 'block' : 'none' }}
-                    />
-                  </VisualProofWrapper>
+                  {!imgLoaded && <Skeleton height={600} width={600} />}
+                  <VisualProofWrapper
+                    src={visualProofURI}
+                    alt="Visual proof"
+                    onLoad={() => setImgLoaded(true)}
+                    style={{ display: imgLoaded ? '' : 'none' }}
+                  />
                 </a>
               )}
           </>
