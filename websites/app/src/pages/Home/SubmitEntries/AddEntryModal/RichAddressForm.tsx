@@ -45,10 +45,10 @@ export const StyledAddressInput = styled.input`
   color: #fff;
   border-radius: 0 12px 12px 12px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 400;
   ::placeholder {
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 400;
     color: #cd9dff;
   }
 

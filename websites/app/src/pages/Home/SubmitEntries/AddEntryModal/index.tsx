@@ -33,7 +33,7 @@ const ModalContainer = styled.div`
 
   ${landscapeStyle(
     () => css`
-      width: 40%;
+      width: 60%;
     `
   )}
 `
@@ -49,7 +49,6 @@ export const AddHeader = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin-bottom: 20px;
   gap: 24px;
 `
 
@@ -85,17 +84,17 @@ export const StyledWholeField = styled.div`
 
 export const StyledTextInput = styled.input`
   display: flex;
-  background: rgba(255, 255, 255, 0.15);
   padding: 8px 12px;
   outline: none;
   border: none;
   border-radius: 12px;
   color: #fff;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 400;
+  background: rgba(255, 255, 255, 0.15);
 
   ::placeholder {
-    font-weight: 700;
+    font-weight: 400;
     color: #cd9dff;
   }
 
@@ -152,7 +151,7 @@ export const PayoutsContainer = styled.p`
 
 export const ExpectedPayouts = styled.p`
   font-family: "Avenir", sans-serif;
-  font-size: 20px;
+  font-size: 16px;
   font-style: normal;
   font-weight: 800;
   align-self: center;
