@@ -53,7 +53,7 @@ const Title = styled.div`
   )}
 `
 
-const StyledButton = styled.button`
+const StyledButton = styled.button<{ isSelected: boolean }>`
   display: none;
   font-family: 'Oxanium', sans-serif;
   background: none;
@@ -67,7 +67,8 @@ const StyledButton = styled.button`
       display: flex;
       position: relative;
       padding-right: 64px;
-      text-decoration: none;
+      text-decoration: ${({ isSelected }) => (isSelected ? 'underline' : 'none')};
+      font-weight: ${({ isSelected }) => (isSelected ? 600 : 400)};
 
       :hover {
         text-decoration: underline;
@@ -81,6 +82,8 @@ interface INavbar {}
 const Navbar: React.FC<INavbar> = ({}) => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
+  
+  const isRewardsPage = searchParams.get('page') === 'rewards'
 
   const handleClickTitle = () => {
     navigate('/')
@@ -97,7 +100,7 @@ const Navbar: React.FC<INavbar> = ({}) => {
         <StyledText>Kleros Scout</StyledText>
       </Title>
       <Registries />
-      <StyledButton onClick={handleClickRewards}>
+      <StyledButton onClick={handleClickRewards} isSelected={isRewardsPage}>
         Earn Rewards by Submitting!
       </StyledButton>
     </Container>
