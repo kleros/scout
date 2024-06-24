@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchItems } from 'utils/fetchItems'
 import { fetchItemCounts } from 'utils/itemCounts'
 import Navbar from './Navbar'
-import RewardsPage from './RewardsSection'
+import RewardsPage from '../RewardsSection'
 import RegistryDetails from './RegistryDetails'
 import SubmitButton from './SubmitButton'
 import Search from './Search'
@@ -126,6 +126,7 @@ const Home: React.FC = () => {
     queryKey: ['fetch', ...searchQueryKeys],
     queryFn: () => fetchItems(searchParams),
   })
+
   const {
     isLoading: countsLoading,
     error: countsError,
@@ -198,6 +199,10 @@ const Home: React.FC = () => {
 
   // If missing search params, insert defaults.
   useEffect(() => {
+    if (searchParams.get('page') === 'rewards') {
+      return
+    }
+
     const registry = searchParams.getAll('registry')
     const status = searchParams.getAll('status')
     const disputed = searchParams.getAll('disputed')

@@ -39,7 +39,6 @@ const Item: React.FC<IItem> = ({ name }) => {
       const newParams = new URLSearchParams(prev.toString())
       newParams.set('registry', name)
       // bounce to page 1
-      newParams.set('page', 'home')
       newParams.set('page', '1')
       return newParams
     })
