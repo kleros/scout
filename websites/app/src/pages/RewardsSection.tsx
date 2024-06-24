@@ -44,13 +44,14 @@ const StatBox = styled.div<StatBoxProps>`
 `;
 
 const StatNumber = styled.p`
-  font-size: 1.875rem;
+  font-size: 40px;
   font-weight: bold;
   color: #9C46FF;
+  margin-bottom: 0;
 `;
 
 const StatLabel = styled.p`
-  font-size: 0.875rem;
+  font-size: 16px;
   color: white;
 `;
 
@@ -60,7 +61,7 @@ const Divider = styled.hr`
 `;
 
 const Text = styled.p`
-  font-size: 1rem;
+  font-size: 24px;
   color: white;
   margin-top: 0.5rem;
 `;
@@ -69,7 +70,7 @@ const List = styled.ul`
   list-style-type: disc;
   list-style-position: inside;
   margin-top: 0.5rem;
-  font-size: 1rem;
+  font-size: 24px;
   color: white;
 `;
 
@@ -81,19 +82,25 @@ const FormulaBox = styled.div`
   border: 1px solid #5A2393;
   word-break: break-all;
   display: flex;
+  font-size: 24px;
+  font-family: "Oxanium", sans-serif;
+
+  ${landscapeStyle(
+    () => css`
+      word-break: normal;
+    `
+  )}
+
 `;
 
 const FormulaText = styled.p`
-  font-size: 1rem;
   color: #CD9DFF;
   padding: 0 1rem;
   border-right: 1px solid white;
 `;
 
 const Formula = styled.p`
-  font-size: 1rem;
   color: #E87B35;
-  font-family: monospace;
   padding: 0 1rem;
 `;
 
