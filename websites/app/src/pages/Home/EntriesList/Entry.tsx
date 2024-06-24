@@ -62,7 +62,7 @@ const TokenLogoWrapper = styled.div`
 
 const VisualProofWrapper = styled.div`
   display: flex;
-  height: 52px;
+  height: 300px;
   justify-content: center;
 `
 
