@@ -34,7 +34,8 @@ const Description = styled.p`
 `
 
 const Box = styled.div`
-width: 84%;
+width: 100%;
+max-width: 1110px;
 border: 2px solid #3A3A3A;
 border-radius: 16px;
 padding: 50px 0px;
@@ -85,7 +86,7 @@ const StatsDescription = styled.p`
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`
-  margin-top: 52px;
+  margin-top: ${responsiveSize(24, 0)};
 
   ${landscapeStyle(
     () => css`

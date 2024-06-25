@@ -4,8 +4,8 @@ import Section from './Section'
 import { Button, ButtonAnchor } from 'components/Button'
 import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import SubmitImage from 'pngs/contribute-and-earn/submit.png'
-import ChallengeImage from 'pngs/contribute-and-earn/challenge.png'
+import SubmitImage from 'svgs/contribute-and-earn/submit.svg'
+import ChallengeImage from 'svgs/contribute-and-earn/challenge.svg'
 
 const Container = styled.div`
   display: flex;

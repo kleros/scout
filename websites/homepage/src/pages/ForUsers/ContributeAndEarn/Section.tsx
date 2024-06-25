@@ -16,8 +16,8 @@ const Container = styled.div`
 `
 
 const ImagePlaceholder = styled.div`
-  width: 106px;
-  height: 106px;
+  width: 300px;
+  height: 222px;
   color: #848484;
   display: flex;
   justify-content: center;
@@ -27,7 +27,7 @@ const ImagePlaceholder = styled.div`
   ${landscapeStyle(
     () =>
       css`
-        width: 142px;
+        width: 300px;
       `
   )}
 `
@@ -47,15 +47,13 @@ const StyledTitle = styled.h2`
 const StyledDescription = styled.p`
   margin: 0;
 `
-
-const Image = styled.img`
-  width: 106px;
+const StyledImage = styled.div`
+  width: 220px;
 
   ${landscapeStyle(
-    () =>
-      css`
-        width: 142px;
-      `
+    () => css`
+      width: 340px;
+    `
   )}
 `
 
@@ -69,7 +67,7 @@ const Section: React.FC<ISection> = ({ title, description, image }) => {
   return (
     <Container>
       <ImagePlaceholder>
-        <Image src={image} />
+        <StyledImage as={image} />
       </ImagePlaceholder>
       <StyledTitle>{title}</StyledTitle>
       <StyledDescription>{description}</StyledDescription>
