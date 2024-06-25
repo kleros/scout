@@ -103,7 +103,7 @@ const GalxeModal: React.FC<{
     >
       <h2>🎉 Congrats on Installing the Snap</h2>
       <AnchorText
-        href="https://app.galxe.com/quest/kleros/GCYsVtdurQ"
+        href="https://app.galxe.com/quest/kleros/GChGetgSMD"
         target="_blank"
         rel="noreferrer noopener"
         onClick={(e) => handleAnchorClick(e, address, setIsModalOpen)}
