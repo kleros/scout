@@ -154,8 +154,8 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
             <StatsDescription>MONTHLY REWARD POOL</StatsDescription>
           </StatsContainer>
           <StatsContainer>
-            <StatsTitle>$8000</StatsTitle>
-            <StatsDescription>MONTHLY REWARD POOL</StatsDescription>
+            <StatsTitle>618</StatsTitle>
+            <StatsDescription>AVG. MONTHLY SUBMISSION</StatsDescription>
           </StatsContainer>
           <StatsContainer>
             <StatsTitle>$15</StatsTitle>

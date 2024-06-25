@@ -113,8 +113,8 @@ const RewardSection: React.FC = () => (
                 <StatLabel>MONTHLY REWARD POOL</StatLabel>
             </StatBox>
             <StatBox>
-                <StatNumber>$8000</StatNumber>
-                <StatLabel>MONTHLY REWARD POOL</StatLabel>
+                <StatNumber>618</StatNumber>
+                <StatLabel>AVG. MONTHLY SUBMISSION</StatLabel>
             </StatBox>
             <StatBox>
                 <StatNumber>$15</StatNumber>

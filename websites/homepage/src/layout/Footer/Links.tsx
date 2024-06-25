@@ -16,7 +16,6 @@ const Container = styled.div`
       gap: 8px;
       column-gap: 8rem;
       height: calc(200px - 7vw);
-      margin-right: 128px;
     `
   )}
 `
