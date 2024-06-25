@@ -85,8 +85,9 @@ const StatsDescription = styled.p`
   letter-spacing: 0.08em;
 `
 
-const StyledButtonAnchor = styled(ButtonAnchor)`
-  margin-top: ${responsiveSize(24, 0)};
+const StyledButtonAnchor = styled(ButtonAnchor)<{ showStats: boolean }>`
+  margin-top: ${({ showStats }) =>
+    showStats ? responsiveSize(24, 0) : responsiveSize(24, 48)};
 
   ${landscapeStyle(
     () => css`
@@ -168,6 +169,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         </Box>
       )}
       <StyledButtonAnchor
+        {...{ showStats }}
         href={buttonLink}
         target="_blank"
         rel="noopener noreferrer"

@@ -128,7 +128,7 @@ const RewardSection: React.FC = () => (
         <div>
             <Title>Contribute to Kleros Scout and earn rewards!</Title>
             <Text>
-                The reward pool consists of 300,000 PNK (~$5300 as of February 1, 2024) for submitters. Here is how the
+                The reward pool consists of 300,000 PNK (~$7680 as of June 25, 2024) for submitters. Here is how the
                 reward pool is allocated to the three registries across different chains.
             </Text>
             <List>
