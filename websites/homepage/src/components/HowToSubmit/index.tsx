@@ -34,17 +34,17 @@ const Description = styled.p`
 `
 
 const Box = styled.div`
-width: 100%;
-max-width: 1110px;
-border: 2px solid #3A3A3A;
-border-radius: 16px;
-padding: 50px 0px;
-margin: 0px;
-display: flex;
-justify-content: space-evenly;
-align-items: center;
-flex-wrap: wrap;
-gap: 24px;
+  width: 100%;
+  max-width: 1110px;
+  border: 2px solid #3A3A3A;
+  border-radius: 16px;
+  padding: 50px 0px;
+  margin: 0px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
 
   ${landscapeStyle(
   () => css`
@@ -155,7 +155,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
           </StatsContainer>
           <StatsContainer>
             <StatsTitle>618</StatsTitle>
-            <StatsDescription>AVG. MONTHLY SUBMISSION</StatsDescription>
+            <StatsDescription>AVG. MONTHLY SUBMISSIONS</StatsDescription>
           </StatsContainer>
           <StatsContainer>
             <StatsTitle>$15</StatsTitle>

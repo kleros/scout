@@ -13,6 +13,8 @@ const Section = styled.section`
   border-radius: 0.5rem;
   border: 1px solid #CD9DFF;
   width: 80%;
+  font-size: 20px;
+  font-family: "Oxanium", sans-serif;
 `;
 
 const Grid = styled.div`
@@ -31,7 +33,7 @@ const Grid = styled.div`
 const Title = styled.h2`
   font-size: 2rem;
   font-weight: bold;
-  margin-bottom: 1rem;
+  font-family: "Avenir", sans-serif;
 `;
 
 const StatBox = styled.div<StatBoxProps>`
@@ -48,6 +50,7 @@ const StatNumber = styled.p`
   font-weight: bold;
   color: #9C46FF;
   margin-bottom: 0;
+  font-family: "Avenir", sans-serif;
 `;
 
 const StatLabel = styled.p`
@@ -57,33 +60,25 @@ const StatLabel = styled.p`
 
 const Divider = styled.hr`
   border-color: white;
-  margin-bottom: 1.5rem;
 `;
 
 const Text = styled.p`
-  font-size: 24px;
   color: white;
-  margin-top: 0.5rem;
 `;
 
 const List = styled.ul`
   list-style-type: disc;
   list-style-position: inside;
-  margin-top: 0.5rem;
-  font-size: 24px;
   color: white;
 `;
 
 const FormulaBox = styled.div`
   background-color: #161616;
   padding: 1rem;
-  margin-top: 1rem;
   border-radius: 0.5rem;
   border: 1px solid #5A2393;
   word-break: break-all;
   display: flex;
-  font-size: 24px;
-  font-family: "Oxanium", sans-serif;
 
   ${landscapeStyle(
     () => css`
@@ -104,6 +99,10 @@ const Formula = styled.p`
   padding: 0 1rem;
 `;
 
+const FormulaSpan = styled.span`
+  color: #fff;
+`;
+
 const RewardSection: React.FC = () => (
     <Section>
         <Grid>
@@ -114,7 +113,7 @@ const RewardSection: React.FC = () => (
             </StatBox>
             <StatBox>
                 <StatNumber>618</StatNumber>
-                <StatLabel>AVG. MONTHLY SUBMISSION</StatLabel>
+                <StatLabel>AVG. MONTHLY SUBMISSIONS</StatLabel>
             </StatBox>
             <StatBox>
                 <StatNumber>$15</StatNumber>
@@ -149,8 +148,8 @@ const RewardSection: React.FC = () => (
             <FormulaBox>
                 <FormulaText>The calculation of rewards will look like this</FormulaText>
                 <Formula>
-                    reward per submission = (1/2*(reward_pool/total_submissions )) +
-                    (1/2*(txns_with_contract*total_txns_with_all_contracts))
+                    reward per submission<FormulaSpan> = (1/2*(</FormulaSpan>reward_pool<FormulaSpan>/</FormulaSpan>total_submissions<FormulaSpan> )) +
+                    (1/2*(</FormulaSpan>txns_with_contract<FormulaSpan>*</FormulaSpan>total_txns_with_all_contracts<FormulaSpan>))</FormulaSpan>
                 </Formula>
             </FormulaBox>
             <Text>Points to note:</Text>
