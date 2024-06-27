@@ -52,13 +52,15 @@ export const AddHeader = styled.div`
   gap: 24px;
 `
 
-export const AddTitle = styled.h2`
+export const AddTitle = styled.div`
   margin: 0;
   margin-bottom: 4px;
+  font-size: 32px;
+  font-family: Avenir, sans-serif;
 `
 
 export const AddSubtitle = styled.div`
-  font-size: 15px;
+  font-size: 16px;
   opacity: 70%;
 `
 
@@ -90,6 +92,7 @@ export const SubmissionButton = styled.a`
   text-decoration: none;
   align-self: center;
   padding: 0.75rem 1rem;
+  font-size: 16px;
 
   :hover {
     text-decoration: underline;
