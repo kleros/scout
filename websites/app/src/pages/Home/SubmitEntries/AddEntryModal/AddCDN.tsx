@@ -24,6 +24,7 @@ import {
   PayoutsContainer,
   Divider
 } from './index'
+import { useDebounce } from 'react-use'
 
 const columns = [
   {
@@ -55,7 +56,18 @@ const AddCDN: React.FC = () => {
     label: 'Mainnet',
   })
   const [address, setAddress] = useState<string>('')
+  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
   const [path, setPath] = useState<string>('')
+  const [domain, setDomain] = useState<string>('')
+
+  useDebounce(
+    () => {
+      setDebouncedAddress(address)
+    },
+    1000,
+    [address]
+  )
+
   const {
     isLoading: countsLoading,
     error: countsError,
@@ -68,12 +80,11 @@ const AddCDN: React.FC = () => {
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
     {
-      queryKey: ['addressissues', network.value + ':' + address, 'CDN', '-'],
-      queryFn: () => getAddressValidationIssue(network.value, address, 'CDN'),
+      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', '-'],
+      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'CDN'),
+      enabled: !!debouncedAddress,
     }
   )
-
-  const [domain, setDomain] = useState<string>('')
 
   const submitCDN = async () => {
     const values = {
