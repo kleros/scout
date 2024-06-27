@@ -82,6 +82,21 @@ export const StyledWholeField = styled.div`
   flex-direction: column;
 `
 
+export const SubmissionButton = styled.a`
+  border-radius: 4px;
+  border: 1px solid #262626;
+  color: #CD9DFF;
+  font-family: "Avenir", sans-serif;
+  text-decoration: none;
+  align-self: center;
+  padding: 0.75rem 1rem;
+
+  :hover {
+    text-decoration: underline;
+  }
+
+`
+
 export const StyledTextInput = styled.input`
   display: flex;
   padding: 8px 12px;
