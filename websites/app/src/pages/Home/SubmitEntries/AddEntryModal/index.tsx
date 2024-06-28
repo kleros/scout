@@ -48,6 +48,7 @@ export const AddContainer = styled.div`
 export const AddHeader = styled.div`
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 24px;
 `
