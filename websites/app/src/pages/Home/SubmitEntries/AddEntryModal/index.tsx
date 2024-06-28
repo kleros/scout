@@ -205,18 +205,9 @@ const AddEntryModal: React.FC = () => {
     [searchParams]
   )
 
-  const closeModal = () => {
-    setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      newParams.delete('additem')
-      return newParams
-    })
-  }
-
   return (
-    <ModalOverlay onClick={closeModal}>
-      <ModalContainer ref={containerRef} onClick={(e) => e.stopPropagation()}>
+    <ModalOverlay >
+      <ModalContainer ref={containerRef} >
         {addingItemToRegistry === 'Tags' ? (
           <AddAddressTag />
         ) : addingItemToRegistry === 'CDN' ? (
