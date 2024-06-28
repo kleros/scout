@@ -74,7 +74,7 @@ const AddToken: React.FC = () => {
     () => {
       setDebouncedAddress(address)
     },
-    1000,
+    500,
     [address]
   )
 
