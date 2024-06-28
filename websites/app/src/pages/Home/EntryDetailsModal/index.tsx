@@ -163,6 +163,11 @@ const EvidenceDescription = styled(EvidenceField)`
   word-break: break-word;
 `
 
+const StyledImage = styled.img`
+  object-fit: cover;
+  width: 200px;
+`
+
 const NoEvidenceText = styled.div`
   color: #a0aec0;
   font-style: italic;
@@ -362,6 +367,10 @@ const DetailsModal: React.FC = () => {
                           {evidence?.metadata?.description || ''}
                         </StyledReactMarkdown>
                       </EvidenceDescription>
+                      {evidence?.metadata?.fileURI ?
+                        <StyledImage
+                          src={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`}
+                        /> : null}
                       <EvidenceField>
                         <strong>Time:</strong>{' '}
                         {formatTimestamp(evidence.timestamp)}
