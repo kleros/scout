@@ -13,18 +13,15 @@ const EntriesContainer = styled.div<EntriesContainerProps>`
   width: 80%;
   display: grid;
   gap: 20px 40px;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
   justify-content: center;
   overflow-x: hidden;
   
-  ${({ isCDN }) => css`
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-    
-    ${landscapeStyle(
-      () => css`
-        grid-template-columns: repeat(${isCDN ? 2 : 4}, minmax(0, 1fr));
-      `
-    )}
-  `}
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    `
+  )}
 `
 
 interface IEntriesList {
