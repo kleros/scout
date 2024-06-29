@@ -48,12 +48,13 @@ const getAddressValidationIssue = async (
   domain?: string
 ): Promise<Issue | null> => {
   if (!address) return null
-  if (registry === 'CDN' && !domain) return null
 
   // check its an address. we dont check checksum.
   if (!isAddress(address)) {
     return { message: 'Not EVM address', severity: 'error' }
   }
+  
+  if (registry === 'CDN' && !domain) return null
   // check its not a dupe.
   const ndupes = await getDupesInRegistry(
     chainId + ':' + address,
