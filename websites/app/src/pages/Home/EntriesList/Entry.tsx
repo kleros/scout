@@ -222,7 +222,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {!imgLoaded && <Skeleton height={300} width={600} />}
+                  {!imgLoaded && <Skeleton height={150} width={300} />}
                   <VisualProofWrapper
                     src={visualProofURI}
                     alt="Visual proof"

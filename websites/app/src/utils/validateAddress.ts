@@ -51,7 +51,7 @@ const getAddressValidationIssue = async (
 
   // check its an address. we dont check checksum.
   if (!isAddress(address)) {
-    return { message: 'Not EVM address', severity: 'error' }
+    return { message: 'Not a valid EVM address', severity: 'error' }
   }
   
   if (registry === 'CDN' && !domain) return null

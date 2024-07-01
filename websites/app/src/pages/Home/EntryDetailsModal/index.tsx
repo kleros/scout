@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { lazy, useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -18,6 +18,8 @@ import { getStatusLabel } from 'utils/getStatusLabel'
 import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
+
+const FileViewer = lazy(() => import("components/FileViewer"));
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -161,11 +163,6 @@ const EvidenceField = styled.div`
 const EvidenceDescription = styled(EvidenceField)`
   flex-direction: column;
   word-break: break-word;
-`
-
-const StyledImage = styled.img`
-  object-fit: cover;
-  width: 200px;
 `
 
 const NoEvidenceText = styled.div`
@@ -368,8 +365,8 @@ const DetailsModal: React.FC = () => {
                         </StyledReactMarkdown>
                       </EvidenceDescription>
                       {evidence?.metadata?.fileURI ?
-                        <StyledImage
-                          src={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`}
+                        <FileViewer
+                          url={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`}
                         /> : null}
                       <EvidenceField>
                         <strong>Time:</strong>{' '}
