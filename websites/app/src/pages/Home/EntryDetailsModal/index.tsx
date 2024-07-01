@@ -1,4 +1,4 @@
-import React, { lazy, useMemo, useRef, useState } from 'react'
+import React, { Suspense, lazy, useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -18,6 +18,7 @@ import { getStatusLabel } from 'utils/getStatusLabel'
 import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
+import Loader from '~src/components/Loader'
 
 const FileViewer = lazy(() => import("components/FileViewer"));
 
@@ -182,6 +183,25 @@ const LabelAndValue = styled.div`
   gap: 4px;
   align-items: center;
 `
+const Container = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const LoaderContainer = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+`;
+
+const NewTabInfo = styled.a`
+  align-self: flex-end;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
 
 const DetailsModal: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -364,10 +384,22 @@ const DetailsModal: React.FC = () => {
                           {evidence?.metadata?.description || ''}
                         </StyledReactMarkdown>
                       </EvidenceDescription>
-                      {evidence?.metadata?.fileURI ?
-                        <FileViewer
-                          url={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`}
-                        /> : null}
+                      {evidence?.metadata?.fileURI ? (
+                        <>
+                          <NewTabInfo href={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`} rel="noreferrer" target="_blank">
+                            Open in new tab
+                          </NewTabInfo>
+                          <Suspense
+                            fallback={
+                              <LoaderContainer>
+                                <Loader width={"48px"} height={"48px"} />
+                              </LoaderContainer>
+                            }
+                          >
+                            <FileViewer url={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`} />
+                          </Suspense>
+                        </>
+                      ) : null}
                       <EvidenceField>
                         <strong>Time:</strong>{' '}
                         {formatTimestamp(evidence.timestamp)}

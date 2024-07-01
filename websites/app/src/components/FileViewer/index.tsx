@@ -4,7 +4,6 @@ import styled from "styled-components";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 
 import "@cyntler/react-doc-viewer/dist/index.css";
-import { customScrollbar } from "styles/customScrollbar";
 
 import MarkdownRenderer from "./Viewers/MarkdownViewer";
 
@@ -14,8 +13,6 @@ const Wrapper = styled.div`
   box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.06);
   max-height: 1050px;
   overflow: scroll;
-
-  ${customScrollbar}
 `;
 
 const StyledDocViewer = styled(DocViewer)`
