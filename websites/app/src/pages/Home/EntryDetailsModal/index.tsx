@@ -387,7 +387,7 @@ const DetailsModal: React.FC = () => {
                           <StyledButton
                             onClick={() => {
                               if (evidence.metadata?.fileURI) {
-                                setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` }, { replace: true });
+                                setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` });
                               }
                             }}
                           >

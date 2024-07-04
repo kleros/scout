@@ -233,7 +233,7 @@ const Home: React.FC = () => {
         page: page === null ? '1' : page,
         orderDirection: orderDirection === null ? 'desc' : orderDirection,
       })
-      setSearchParams(newSearchParams, { replace: true })
+      setSearchParams(newSearchParams)
     }
   }, [searchParams, setSearchParams])
 

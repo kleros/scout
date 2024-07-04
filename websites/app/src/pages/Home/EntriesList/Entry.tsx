@@ -193,7 +193,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                 <StyledButton
                   onClick={() => {
                     if (tokenLogoURI) {
-                      setSearchParams({ attachment: tokenLogoURI }, { replace: true });
+                      setSearchParams({ attachment: tokenLogoURI });
                     }
                   }}
                 >
@@ -228,7 +228,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                 <StyledButton
                   onClick={() => {
                     if (visualProofURI) {
-                      setSearchParams({ attachment: visualProofURI }, { replace: true });
+                      setSearchParams({ attachment: visualProofURI });
                     }
                   }}
                 >
