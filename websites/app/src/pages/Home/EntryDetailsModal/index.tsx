@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -18,9 +18,7 @@ import { getStatusLabel } from 'utils/getStatusLabel'
 import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
-import Loader from '~src/components/Loader'
-
-const FileViewer = lazy(() => import("components/FileViewer"));
+import AttachmentIcon from "svgs/icons/attachment.svg";
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -153,7 +151,7 @@ const Evidence = styled.div`
 `
 
 const EvidenceField = styled.div`
-  margin-bottom: 8px;
+  margin: 8px 0;
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
@@ -183,24 +181,25 @@ const LabelAndValue = styled.div`
   gap: 4px;
   align-items: center;
 `
-const Container = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
 
-const LoaderContainer = styled.div`
-  width: 100%;
+const StyledButton = styled.button`
+  height: fit-content;
   display: flex;
-  justify-content: center;
-`;
-
-const NewTabInfo = styled.a`
-  align-self: flex-end;
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  cursor: pointer;
+  color: white;
+  background: none;
+  text-decoration: underline;
+  border: none;
+  padding: 0;
+  gap: ${responsiveSize(5, 6)};
+  ${landscapeStyle(
+    () => css`
+      > svg {
+        width: 16px;
+        fill: white;
+      }
+    `
+  )}
 `;
 
 const DetailsModal: React.FC = () => {
@@ -385,21 +384,17 @@ const DetailsModal: React.FC = () => {
                         </StyledReactMarkdown>
                       </EvidenceDescription>
                       {evidence?.metadata?.fileURI ? (
-                        <>
-                          <NewTabInfo href={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`} rel="noreferrer" target="_blank">
-                            Open in new tab
-                          </NewTabInfo>
-                          <Suspense
-                            fallback={
-                              <LoaderContainer>
-                                <Loader width={"48px"} height={"48px"} />
-                              </LoaderContainer>
-                            }
+                          <StyledButton
+                            onClick={() => {
+                              if (evidence.metadata?.fileURI) {
+                                setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` }, { replace: true });
+                              }
+                            }}
                           >
-                            <FileViewer url={`https://cdn.kleros.link${evidence?.metadata?.fileURI}`} />
-                          </Suspense>
-                        </>
-                      ) : null}
+                            View Attached File
+                            <AttachmentIcon />
+                          </StyledButton>
+                        ) : null}
                       <EvidenceField>
                         <strong>Time:</strong>{' '}
                         {formatTimestamp(evidence.timestamp)}

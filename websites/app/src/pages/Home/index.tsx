@@ -19,6 +19,7 @@ import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal'
 import Filters from './Filters'
 import AddEntryModal from './SubmitEntries/AddEntryModal'
 import CloseIcon from 'tsx:svgs/icons/close.svg'
+import EvidenceAttachmentDisplay from '~src/components/AttachmentDisplay'
 
 const Container = styled.div`
   display: flex;
@@ -118,6 +119,11 @@ const Home: React.FC = () => {
     [searchParams]
   )
 
+  const isAttachmentOpen = useMemo(
+    () => !!searchParams.get('attachment'),
+    [searchParams]
+  )
+
   const {
     isLoading: searchLoading,
     error: searchError,
@@ -199,10 +205,10 @@ const Home: React.FC = () => {
 
   // If missing search params, insert defaults.
   useEffect(() => {
-    if (searchParams.get('page') === 'rewards') {
+    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment')) {
       return
     }
-
+    
     const registry = searchParams.getAll('registry')
     const status = searchParams.getAll('status')
     const disputed = searchParams.getAll('disputed')
@@ -241,6 +247,8 @@ const Home: React.FC = () => {
       <Navbar />
       {showRewardsPage ? (
         <RewardsPage />
+      ) : isAttachmentOpen ? (
+        <EvidenceAttachmentDisplay />
       ) : (
         <>
           <SearchAndRegistryDetailsAndSubmitContainer>

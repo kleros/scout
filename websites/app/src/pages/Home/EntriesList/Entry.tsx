@@ -82,6 +82,12 @@ const DetailsButton = styled.button`
     transform: scale(0.97);
   }
 `
+const StyledButton = styled.button`
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+`;
 
 interface IEntry {
   item: GraphItem
@@ -184,10 +190,12 @@ const Entry: React.FC<IEntry> = ({ item }) => {
           <>
             {item?.metadata?.props &&
               item.metadata?.props.find((prop) => prop.label === 'Logo') && (
-                <a
-                  href={tokenLogoURI}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <StyledButton
+                  onClick={() => {
+                    if (tokenLogoURI) {
+                      setSearchParams({ attachment: tokenLogoURI }, { replace: true });
+                    }
+                  }}
                 >
                   <TokenLogoWrapper>
                     {!imgLoaded && <Skeleton height={100} width={100} />}
@@ -198,7 +206,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                       style={{ display: imgLoaded ? 'block' : 'none' }}
                     />
                   </TokenLogoWrapper>
-                </a>
+                </StyledButton>
               )}
             <div>{item?.metadata?.key2}</div>
             <div>{item?.metadata?.key1}</div>
@@ -217,10 +225,12 @@ const Entry: React.FC<IEntry> = ({ item }) => {
               item?.metadata?.props.find(
                 (prop) => prop.label === 'Visual proof'
               ) && (
-                <a
-                  href={visualProofURI}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <StyledButton
+                  onClick={() => {
+                    if (visualProofURI) {
+                      setSearchParams({ attachment: visualProofURI }, { replace: true });
+                    }
+                  }}
                 >
                   {!imgLoaded && <Skeleton height={150} width={300} />}
                   <VisualProofWrapper
@@ -229,7 +239,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                     onLoad={() => setImgLoaded(true)}
                     style={{ display: imgLoaded ? '' : 'none' }}
                   />
-                </a>
+                </StyledButton>
               )}
           </>
         )}
