@@ -35,12 +35,9 @@ const Item: React.FC<IItem> = ({ name }) => {
 
   const handleItemClick = (event) => {
     event.stopPropagation()
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev.toString())
-      newParams.set('registry', name)
-      // bounce to page 1
-      newParams.set('page', '1')
-      return newParams
+    setSearchParams({
+      registry: name,
+      page: '1'
     })
   }
 
