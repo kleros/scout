@@ -2,10 +2,18 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import AddressDisplay from 'components/AddressDisplay'
+import { useSearchParams } from 'react-router-dom'
 
 const ImageContainer = styled.div`
   margin-left: 4px;
 `
+
+const StyledButton = styled.button`
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+`;
 
 export const StyledWebsiteAnchor = styled.a`
   color: #fff;
@@ -18,18 +26,23 @@ export const StyledWebsiteAnchor = styled.a`
 
 const ImageWithSkeleton = ({ src, alt }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
 
   return (
     <ImageContainer>
-      <a href={src} target="_blank" rel="noopener noreferrer">
+      <StyledButton
+        onClick={() => {
+          setSearchParams({ attachment: src });
+        }}
+      >
         {!imgLoaded && <Skeleton height={100} width={100} />}
         <img
           src={src}
           alt={alt}
-          style={{ display: imgLoaded ? 'block' : 'none' }}
+          style={{ display: imgLoaded ? '' : 'none' }}
           onLoad={() => setImgLoaded(true)}
         />
-      </a>
+      </StyledButton>
     </ImageContainer>
   )
 }
