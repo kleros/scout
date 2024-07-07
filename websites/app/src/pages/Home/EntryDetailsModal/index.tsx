@@ -391,8 +391,8 @@ const DetailsModal: React.FC = () => {
                               }
                             }}
                           >
-                            View Attached File
                             <AttachmentIcon />
+                            View Attached File
                           </StyledButton>
                         ) : null}
                       <EvidenceField>

@@ -10,7 +10,7 @@ const Container = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 38px;
+  margin-bottom: 12px;
 `;
 
 const TitleContainer = styled.div`
@@ -38,7 +38,7 @@ const Header: React.FC = () => {
     <Container>
       <TitleContainer>
         <StyledPaperClip />
-        <Title>Attachment File</Title>{" "}
+        <Title>File</Title>{" "}
       </TitleContainer>
     </Container>
   );

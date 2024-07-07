@@ -19,7 +19,7 @@ import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal'
 import Filters from './Filters'
 import AddEntryModal from './SubmitEntries/AddEntryModal'
 import CloseIcon from 'tsx:svgs/icons/close.svg'
-import EvidenceAttachmentDisplay from '~src/components/AttachmentDisplay'
+import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 
 const Container = styled.div`
   display: flex;
