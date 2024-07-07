@@ -1,7 +1,9 @@
 import React from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 
 import PaperClip from "svgs/icons/paperclip.svg";
+import Arrow from "svgs/icons/arrow-left.svg";
 
 import { responsiveSize } from "styles/responsiveSize";
 
@@ -33,13 +35,35 @@ const StyledPaperClip = styled(PaperClip)`
   }
 `;
 
+const StyledArrow = styled(Arrow)`
+  path {
+    fill: white;
+  }
+`;
+
+const StyledButton = styled.button`
+  background-color: transparent;
+  padding: 0;
+  color: white;
+  border: 0;
+  font-size: 22px;
+  cursor: pointer;
+`;
+
 const Header: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleReturn = () => {
+    navigate(-1);
+  };
+
   return (
     <Container>
       <TitleContainer>
         <StyledPaperClip />
         <Title>File</Title>{" "}
       </TitleContainer>
+      <StyledButton onClick={handleReturn}><StyledArrow /> Return</StyledButton>
     </Container>
   );
 };
