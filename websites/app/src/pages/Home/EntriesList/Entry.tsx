@@ -9,7 +9,7 @@ import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 
 const Card = styled.div`
-  background-color: #3a2154;
+  background-color: #321c49;
   border-radius: 12px;
   color: white;
   font-family: 'Oxanium', sans-serif;
@@ -23,7 +23,7 @@ const CardStatus = styled.div<{ status: string }>`
   padding-top: 20px;
   padding-bottom: 15px;
   margin-bottom: 10px;
-  border-bottom: 3px solid #08020e;
+  border-bottom: 2px solid #5A2393;
 
   &:before {
     content: '';
