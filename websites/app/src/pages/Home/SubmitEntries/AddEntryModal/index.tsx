@@ -163,9 +163,10 @@ export const SubmitButton = styled.button`
   )}
 `
 
-export const PayoutsContainer = styled.p`
+export const PayoutsContainer = styled.div`
   display: flex;
   gap: 24px;
+  margin: 1rem 0;
 `
 
 export const ExpectedPayouts = styled.p`

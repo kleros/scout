@@ -33,7 +33,7 @@ const StyledCurateLogo = styled(CurateLogo)`
   width: 44px;
 `
 
-const StyledText = styled.text`
+const StyledText = styled.h3`
   font-size: 24px;
   font-weight: 600;
   text-align: center;

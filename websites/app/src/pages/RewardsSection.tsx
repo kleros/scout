@@ -32,7 +32,7 @@ const Grid = styled.div`
 
 const Title = styled.h2`
   font-size: 2rem;
-  font-weight: bold;
+  font-weight: 500;
   font-family: "Avenir", sans-serif;
 `;
 
