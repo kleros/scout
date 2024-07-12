@@ -30,20 +30,45 @@ const StyledUploadIcon = styled(UploadIcon)`
   margin-left: 5px;
 `
 
-const ImageUpload: React.FC<{
+interface ImageUploadProps {
   path: string
   setPath: Dispatch<SetStateAction<string>>
-}> = (p) => {
-  const [imageFile, setImageFile] = useState<any>()
+  registry: string
+  setError: Dispatch<SetStateAction<string | null>>
+}
+
+const ImageUpload: React.FC<ImageUploadProps> = ({ path, setPath, registry, setError }) => {
+  const [imageFile, setImageFile] = useState<File | null>(null)
+
+  const validateImage = (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      if (file.size > 4 * 1024 * 1024) {
+        resolve('Image is too large (>4 MB)');
+        return;
+      }
+
+      if (registry === 'Tokens' && file.type !== 'image/png') {
+        resolve('Image must be in PNG format');
+        return;
+      }
+    });
+  };
 
   useEffect(() => {
     if (!imageFile) return
     const uploadImageToIPFS = async () => {
+      const error = await validateImage(imageFile);
+      if (error) {
+        setError(error);
+        return;
+      }
+
       const data = await new Response(new Blob([imageFile])).arrayBuffer()
       const ipfsObject = await ipfsPublish(imageFile.name, data)
       const ipfsPath = getIPFSPath(ipfsObject)
       console.log({ ipfsPath })
-      p.setPath(ipfsPath)
+      setPath(ipfsPath)
+      setError(null);
     }
     uploadImageToIPFS()
   }, [imageFile])
@@ -55,16 +80,17 @@ const ImageUpload: React.FC<{
         Upload Image <StyledUploadIcon />
         <StyledInput
           type="file"
+          accept={registry === 'Tokens' ? ".png" : "image/*"}
           onChange={(e) => {
             setImageFile(e.target.files ? e.target.files[0] : null)
           }}
         />
       </StyledLabel>
-      {p.path && (
+      {path && (
         <img
           width={200}
           height={200}
-          src={`https://cdn.kleros.link${p.path}`}
+          src={`https://cdn.kleros.link${path}`}
           alt="preview"
         />
       )}

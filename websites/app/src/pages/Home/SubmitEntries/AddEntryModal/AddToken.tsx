@@ -69,6 +69,11 @@ const AddToken: React.FC = () => {
   const [address, setAddress] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
+  const [decimals, setDecimals] = useState<string>('')
+  const [name, setName] = useState<string>('')
+  const [symbol, setSymbol] = useState<string>('')
+  const [path, setPath] = useState<string>('')
+  const [imageError, setImageError] = useState<string | null>(null);
 
   useDebounce(
     () => {
@@ -82,19 +87,12 @@ const AddToken: React.FC = () => {
     return network.value + ':' + debouncedAddress
   }, [network.value, debouncedAddress])
 
-  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
-    {
-      queryKey: ['addressissues', networkAddressKey, 'Tokens', '-'],
+  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
+      queryKey: ['addressissues', networkAddressKey, 'Tokens', '-', name, symbol],
       queryFn: () =>
-        getAddressValidationIssue(network.value, debouncedAddress, 'Tokens'),
+        getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, symbol),
       enabled: !!debouncedAddress,
-    }
-  )
-
-  const [decimals, setDecimals] = useState<string>('')
-  const [name, setName] = useState<string>('')
-  const [symbol, setSymbol] = useState<string>('')
-  const [path, setPath] = useState<string>('')
+    })
 
   const {
     isLoading: countsLoading,
@@ -180,14 +178,19 @@ const AddToken: React.FC = () => {
         registry="Tags"
       />
       {addressIssuesLoading && 'Loading...'}
-      {addressIssuesData && !addressIssuesLoading && (
-        <ErrorMessage>{addressIssuesData.message}</ErrorMessage>
+      {addressIssuesData?.address && (
+        <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
       Decimals
       <StyledTextInput
         placeholder="decimals"
         value={decimals}
-        onChange={(e) => setDecimals(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (/^\d*$/.test(value)) {
+            setDecimals(value);
+          }
+        }}
       />
       Name
       <StyledTextInput
@@ -195,13 +198,25 @@ const AddToken: React.FC = () => {
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
+      {addressIssuesData?.projectName && (
+        <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
+      )}
       Symbol
       <StyledTextInput
         placeholder="symbol"
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
       />
-      <ImageUpload path={path} setPath={setPath} />
+      {addressIssuesData?.contractName && (
+        <ErrorMessage>{addressIssuesData.contractName.message}</ErrorMessage>
+      )}
+      <ImageUpload 
+        path={path} 
+        setPath={setPath} 
+        registry="Tokens"
+        setError={setImageError}
+      />
+      {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
       <PayoutsContainer>
         <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
           Submit

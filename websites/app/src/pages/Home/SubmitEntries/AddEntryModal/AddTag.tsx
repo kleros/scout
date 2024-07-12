@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
@@ -71,6 +71,11 @@ const AddAddressTag: React.FC = () => {
   })
   const [address, setAddress] = useState<string>('')
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
+  const [projectName, setProjectName] = useState<string>('')
+  const [contractName, setContractName] = useState<string>('')
+  const [publicNote, setPublicNote] = useState<string>('')
+  const [website, setWebsite] = useState<string>('')
+  const [searchParams, setSearchParams] = useSearchParams()
 
   useDebounce(
     () => {
@@ -80,19 +85,11 @@ const AddAddressTag: React.FC = () => {
     [address]
   )
 
-  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
-    {
-      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-'],
-      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags'),
+  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
+      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-', projectName, contractName, website],
+      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', undefined, projectName, contractName, website),
       enabled: !!debouncedAddress,
-    }
-  )
-
-  const [projectName, setProjectName] = useState<string>('')
-  const [contractName, setContractName] = useState<string>('')
-  const [publicNote, setPublicNote] = useState<string>('')
-  const [website, setWebsite] = useState<string>('')
-  const [searchParams, setSearchParams] = useSearchParams()
+    });
 
   const {
     isLoading: countsLoading,
@@ -178,8 +175,8 @@ const AddAddressTag: React.FC = () => {
         registry="Tags"
       />
       {addressIssuesLoading && 'Loading...'}
-      {addressIssuesData && !addressIssuesLoading && (
-        <ErrorMessage>{addressIssuesData.message}</ErrorMessage>
+      {addressIssuesData?.address && (
+        <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
       Project name
       <StyledTextInput
@@ -187,12 +184,18 @@ const AddAddressTag: React.FC = () => {
         value={projectName}
         onChange={(e) => setProjectName(e.target.value)}
       />
+      {addressIssuesData?.projectName && (
+        <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
+      )}
       Contract name
       <StyledTextInput
         placeholder="contract name"
         value={contractName}
         onChange={(e) => setContractName(e.target.value)}
       />
+      {addressIssuesData?.contractName && (
+        <ErrorMessage>{addressIssuesData.contractName.message}</ErrorMessage>
+      )}
       Public note
       <StyledTextInput
         placeholder="public note"
@@ -205,6 +208,9 @@ const AddAddressTag: React.FC = () => {
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
       />
+      {addressIssuesData?.link && (
+        <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
+      )}
       <PayoutsContainer>
         <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
           Submit

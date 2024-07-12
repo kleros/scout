@@ -3,8 +3,30 @@ import request, { gql } from 'graphql-request'
 import { registryMap } from './fetchItems'
 
 export interface Issue {
-  severity: 'warn' | 'error'
-  message: string
+  address?: {
+    severity: 'warn' | 'error';
+    message: string;
+  };
+  domain?: {
+    severity: 'warn' | 'error';
+    message: string;
+  };
+  contract?: {
+    severity: 'warn' | 'error';
+    message: string;
+  };
+  projectName?: {
+    severity: 'warn' | 'error';
+    message: string;
+  };
+  contractName?: {
+    severity: 'warn' | 'error';
+    message: string;
+  };
+  link?: {
+    severity: 'warn' | 'error';
+    message: string;
+  };
 }
 
 const getDupesInRegistry = async (
@@ -45,26 +67,45 @@ const getAddressValidationIssue = async (
   chainId: string,
   address: string,
   registry: string,
-  domain?: string
+  domain?: string,
+  projectName?: string,
+  contractName?: string,
+  link?: string
 ): Promise<Issue | null> => {
-  if (!address) return null
+  let result: Issue = {};
 
   // check its an address. we dont check checksum.
   if (!isAddress(address)) {
-    return { message: 'Not a valid EVM address', severity: 'error' }
+    result.address = { message: 'Not a valid EVM address', severity: 'error' };
   }
   
-  if (registry === 'CDN' && !domain) return null
+  // if (registry === 'CDN' && !domain) return null
   // check its not a dupe.
   const ndupes = await getDupesInRegistry(
     chainId + ':' + address,
     registryMap[registry],
-    domain
-  )
-  if (ndupes > 0) return { message: 'Duplicate submission', severity: 'error' }
+    domain  
+  );
 
-  // check if its a contract. TODO
-  return null
+  if (ndupes > 0) {
+    result.domain = { message: 'Duplicate submission', severity: 'error' };
+  }
+
+  if (projectName && projectName.length > 50) {
+    result.projectName = { message: 'Project name too long (max 50 characters)', severity: 'error' };
+  }
+  if (contractName && contractName.length > 50) {
+    result.contractName = { message: 'Contract name too long (max 50 characters)', severity: 'error' };
+  }
+
+  if (projectName && (projectName !== projectName.trim())) {
+    result.projectName = { message: 'Project name has leading or trailing whitespace', severity: 'warn' };
+  }
+  if (contractName && (contractName !== contractName.trim())) {
+    result.contractName = { message: 'Contract name has leading or trailing whitespace', severity: 'warn' };
+  }
+
+  return Object.keys(result).length > 0 ? result : null;
 }
 
 export default getAddressValidationIssue

@@ -62,6 +62,7 @@ const AddCDN: React.FC = () => {
   const [path, setPath] = useState<string>('')
   const [domain, setDomain] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
+  const [imageError, setImageError] = useState<string | null>(null);
 
   useDebounce(
     () => {
@@ -87,13 +88,11 @@ const AddCDN: React.FC = () => {
     return countsData[registryLabel]
   }, [searchParams, countsData])
 
-  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
-    {
-      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', '-'],
-      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'CDN'),
-      enabled: !!debouncedAddress,
-    }
-  )
+  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
+    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', domain],
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'CDN', domain),
+    enabled: !!debouncedAddress && !!domain,
+  });
 
   const submitCDN = async () => {
     const values = {
@@ -159,8 +158,8 @@ const AddCDN: React.FC = () => {
         registry="Tags"
       />
       {addressIssuesLoading && 'Loading'}
-      {addressIssuesData && (
-        <ErrorMessage>{addressIssuesData.message}</ErrorMessage>
+      {addressIssuesData?.address && (
+        <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
       Domain
       <StyledTextInput
@@ -168,7 +167,16 @@ const AddCDN: React.FC = () => {
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
       />
-      <ImageUpload path={path} setPath={setPath} />
+      {addressIssuesData?.domain && (
+        <ErrorMessage>{addressIssuesData.domain.message}</ErrorMessage>
+      )}
+      <ImageUpload 
+        path={path} 
+        setPath={setPath} 
+        registry="CDN"
+        setError={setImageError}
+      />
+      {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
       <PayoutsContainer>
         <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
           Submit
