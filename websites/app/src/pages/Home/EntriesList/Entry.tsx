@@ -232,7 +232,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                     }
                   }}
                 >
-                  {!imgLoaded && <Skeleton height={150} width={300} />}
+                  {!imgLoaded && <Skeleton height={100} width={150} />}
                   <VisualProofWrapper
                     src={visualProofURI}
                     alt="Visual proof"
