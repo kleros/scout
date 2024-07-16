@@ -5,7 +5,7 @@ import { useSearchParams } from "react-router-dom";
 
 import NewTabIcon from "svgs/icons/new-tab.svg";
 
-import Loader from "components/Loader";
+import LoadingGif from 'gifs/loading-icosahedron.gif'
 
 import Header from "./Header";
 
@@ -40,6 +40,11 @@ const StyledNewTabIcon = styled(NewTabIcon)`
   }
 `;
 
+const LoadingImage = styled.img`
+  height: 92px;
+  width: 92px;
+`
+
 const EvidenceAttachmentDisplay: React.FC = () => {
   const [searchParams] = useSearchParams();
 
@@ -56,7 +61,7 @@ const EvidenceAttachmentDisplay: React.FC = () => {
           <Suspense
             fallback={
               <LoaderContainer>
-                <Loader width={"48px"} height={"48px"} />
+                <LoadingImage src={LoadingGif} />
               </LoaderContainer>
             }
           >
