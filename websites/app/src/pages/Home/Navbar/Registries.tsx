@@ -40,6 +40,7 @@ const Item: React.FC<IItem> = ({ name }) => {
       newParams.set('registry', name)
       // bounce to page 1
       newParams.set('page', '1')
+      newParams.delete('attachment')
       return newParams
     })
   }
