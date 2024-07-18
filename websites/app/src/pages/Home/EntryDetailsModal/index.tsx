@@ -19,6 +19,7 @@ import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
 import AttachmentIcon from "svgs/icons/attachment.svg";
+import { useScrollTop } from 'hooks/useScrollTop'
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -207,6 +208,8 @@ const DetailsModal: React.FC = () => {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('')
 
+  const scrollTop = useScrollTop();
+  
   const itemDetailsId = useMemo(
     () => searchParams.get('itemdetails'),
     [searchParams]
@@ -388,6 +391,7 @@ const DetailsModal: React.FC = () => {
                             onClick={() => {
                               if (evidence.metadata?.fileURI) {
                                 setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` });
+                                scrollTop();
                               }
                             }}
                           >

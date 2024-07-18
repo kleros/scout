@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import AddressDisplay from 'components/AddressDisplay'
 import { useSearchParams } from 'react-router-dom'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const ImageContainer = styled.div`
   margin-left: 4px;
@@ -28,11 +29,14 @@ const ImageWithSkeleton = ({ src, alt }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
 
+  const scrollTop = useScrollTop();
+
   return (
     <ImageContainer>
       <StyledButton
         onClick={() => {
           setSearchParams({ attachment: src });
+          scrollTop();
         }}
       >
         {!imgLoaded && <Skeleton height={100} width={100} />}

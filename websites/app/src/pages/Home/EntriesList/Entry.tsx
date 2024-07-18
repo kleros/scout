@@ -7,6 +7,7 @@ import { formatEther } from 'ethers'
 import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const Card = styled.div`
   background-color: #321c49;
@@ -135,6 +136,7 @@ const Status: React.FC<IStatus> = ({ status, disputed, bounty }) => {
 const Entry: React.FC<IEntry> = ({ item }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [, setSearchParams] = useSearchParams()
+  const scrollTop = useScrollTop();
 
   const handleEntryDetailsClick = () => {
     setSearchParams((prev) => {
@@ -194,6 +196,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                   onClick={() => {
                     if (tokenLogoURI) {
                       setSearchParams({ attachment: tokenLogoURI });
+                      scrollTop();
                     }
                   }}
                 >
@@ -229,6 +232,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
                   onClick={() => {
                     if (visualProofURI) {
                       setSearchParams({ attachment: visualProofURI });
+                      scrollTop();
                     }
                   }}
                 >
