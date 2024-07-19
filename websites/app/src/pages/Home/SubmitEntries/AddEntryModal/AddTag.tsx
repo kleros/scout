@@ -187,9 +187,9 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.projectName && (
         <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
       )}
-      Contract name
+      Public Name Tag
       <StyledTextInput
-        placeholder="contract name"
+        placeholder="public name tag"
         value={contractName}
         onChange={(e) => setContractName(e.target.value)}
       />

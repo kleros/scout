@@ -19,7 +19,7 @@ export interface Issue {
     severity: 'warn' | 'error';
     message: string;
   };
-  contractName?: {
+  publicNameTag?: {
     severity: 'warn' | 'error';
     message: string;
   };
@@ -69,7 +69,7 @@ const getAddressValidationIssue = async (
   registry: string,
   domain?: string,
   projectName?: string,
-  contractName?: string,
+  publicNameTag?: string,
   link?: string
 ): Promise<Issue | null> => {
   let result: Issue = {};
@@ -91,18 +91,15 @@ const getAddressValidationIssue = async (
     result.domain = { message: 'Duplicate submission', severity: 'error' };
   }
 
-  if (projectName && projectName.length > 50) {
-    result.projectName = { message: 'Project name too long (max 50 characters)', severity: 'error' };
-  }
-  if (contractName && contractName.length > 50) {
-    result.contractName = { message: 'Contract name too long (max 50 characters)', severity: 'error' };
+  if (publicNameTag && publicNameTag?.length > 50) {
+    result.publicNameTag = { message: 'Public Name Tag too long (max 50 characters)', severity: 'error' };
   }
 
   if (projectName && (projectName !== projectName.trim())) {
     result.projectName = { message: 'Project name has leading or trailing whitespace', severity: 'warn' };
   }
-  if (contractName && (contractName !== contractName.trim())) {
-    result.contractName = { message: 'Contract name has leading or trailing whitespace', severity: 'warn' };
+  if (publicNameTag && (publicNameTag !== publicNameTag.trim())) {
+    result.publicNameTag = { message: 'Public Name Tag has leading or trailing whitespace', severity: 'warn' };
   }
 
   return Object.keys(result).length > 0 ? result : null;
