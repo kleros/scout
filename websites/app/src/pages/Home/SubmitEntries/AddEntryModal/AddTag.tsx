@@ -72,7 +72,7 @@ const AddAddressTag: React.FC = () => {
   const [address, setAddress] = useState<string>('')
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
   const [projectName, setProjectName] = useState<string>('')
-  const [contractName, setContractName] = useState<string>('')
+  const [publicNameTag, setPublicNameTag] = useState<string>('')
   const [publicNote, setPublicNote] = useState<string>('')
   const [website, setWebsite] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
@@ -86,8 +86,8 @@ const AddAddressTag: React.FC = () => {
   )
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-', projectName, contractName, website],
-      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', undefined, projectName, contractName, website),
+      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-', projectName, publicNameTag, website],
+      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', undefined, projectName, publicNameTag, website),
       enabled: !!debouncedAddress,
     });
 
@@ -110,7 +110,7 @@ const AddAddressTag: React.FC = () => {
   const submitAddressTag = async () => {
     const values = {
       'Contract Address': `${network.value}:${address}`,
-      'Public Name Tag': contractName,
+      'Public Name Tag': publicNameTag,
       'Project Name': projectName,
       'UI/Website Link': website,
       'Public Note': publicNote,
@@ -133,7 +133,7 @@ const AddAddressTag: React.FC = () => {
   const submittingDisabled =
     !address ||
     !projectName ||
-    !contractName ||
+    !publicNameTag ||
     !publicNote ||
     !website ||
     !!addressIssuesData ||
@@ -190,11 +190,11 @@ const AddAddressTag: React.FC = () => {
       Public Name Tag
       <StyledTextInput
         placeholder="public name tag"
-        value={contractName}
-        onChange={(e) => setContractName(e.target.value)}
+        value={publicNameTag}
+        onChange={(e) => setPublicNameTag(e.target.value)}
       />
-      {addressIssuesData?.contractName && (
-        <ErrorMessage>{addressIssuesData.contractName.message}</ErrorMessage>
+      {addressIssuesData?.publicNameTag && (
+        <ErrorMessage>{addressIssuesData.publicNameTag.message}</ErrorMessage>
       )}
       Public note
       <StyledTextInput
