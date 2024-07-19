@@ -27,6 +27,7 @@ import {
   SubmissionButton
 } from './index'
 import { useSearchParams } from 'react-router-dom'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const columns = [
   {
@@ -74,6 +75,7 @@ const AddToken: React.FC = () => {
   const [symbol, setSymbol] = useState<string>('')
   const [path, setPath] = useState<string>('')
   const [imageError, setImageError] = useState<string | null>(null);
+  const scrollTop = useScrollTop();
 
   useDebounce(
     () => {
@@ -88,11 +90,11 @@ const AddToken: React.FC = () => {
   }, [network.value, debouncedAddress])
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-      queryKey: ['addressissues', networkAddressKey, 'Tokens', '-', name, symbol],
-      queryFn: () =>
-        getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, symbol),
-      enabled: !!debouncedAddress,
-    })
+    queryKey: ['addressissues', networkAddressKey, 'Tokens', '-', name, symbol],
+    queryFn: () =>
+      getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, symbol),
+    enabled: !!debouncedAddress,
+  })
 
   const {
     isLoading: countsLoading,
@@ -158,12 +160,16 @@ const AddToken: React.FC = () => {
           </AddSubtitle>
         </div>
         {registry && (
-        <SubmissionButton
-              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
-              target="_blank"
-            >
-              Submission Guidelines
-        </SubmissionButton>
+          <SubmissionButton
+            onClick={() => {
+              if (registry.metadata.policyURI) {
+                setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                scrollTop();
+              }
+            }}
+          >
+            Submission Guidelines
+          </SubmissionButton>
         )}
         <ClosedButtonContainer>
           <CloseButton />
@@ -209,9 +215,9 @@ const AddToken: React.FC = () => {
       {addressIssuesData?.contractName && (
         <ErrorMessage>{addressIssuesData.contractName.message}</ErrorMessage>
       )}
-      <ImageUpload 
-        path={path} 
-        setPath={setPath} 
+      <ImageUpload
+        path={path}
+        setPath={setPath}
         registry="Tokens"
         setError={setImageError}
       />

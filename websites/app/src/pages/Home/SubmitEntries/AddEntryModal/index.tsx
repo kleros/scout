@@ -85,7 +85,7 @@ export const StyledWholeField = styled.div`
   flex-direction: column;
 `
 
-export const SubmissionButton = styled.a`
+export const SubmissionButton = styled.button`
   border-radius: 4px;
   border: 1px solid #262626;
   color: #CD9DFF;
@@ -94,6 +94,8 @@ export const SubmissionButton = styled.a`
   align-self: center;
   padding: 0.75rem 1rem;
   font-size: 16px;
+  background: none;
+  cursor: pointer;
 
   :hover {
     text-decoration: underline;

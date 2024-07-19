@@ -26,6 +26,7 @@ import {
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const columns = [
   {
@@ -76,6 +77,7 @@ const AddAddressTag: React.FC = () => {
   const [publicNote, setPublicNote] = useState<string>('')
   const [website, setWebsite] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
+  const scrollTop = useScrollTop();
 
   useDebounce(
     () => {
@@ -86,10 +88,10 @@ const AddAddressTag: React.FC = () => {
   )
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-      queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-', projectName, publicNameTag, website],
-      queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', undefined, projectName, publicNameTag, website),
-      enabled: !!debouncedAddress,
-    });
+    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-', projectName, publicNameTag, website],
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', undefined, projectName, publicNameTag, website),
+    enabled: !!debouncedAddress,
+  });
 
   const {
     isLoading: countsLoading,
@@ -155,12 +157,16 @@ const AddAddressTag: React.FC = () => {
           </AddSubtitle>
         </div>
         {registry && (
-        <SubmissionButton
-              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
-              target="_blank"
-            >
-              Submission Guidelines
-        </SubmissionButton>
+          <SubmissionButton
+            onClick={() => {
+              if (registry.metadata.policyURI) {
+                setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                scrollTop();
+              }
+            }}
+          >
+            Submission Guidelines
+          </SubmissionButton>
         )}
         <ClosedButtonContainer>
           <CloseButton />

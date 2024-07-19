@@ -27,6 +27,7 @@ import {
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const columns = [
   {
@@ -63,6 +64,7 @@ const AddCDN: React.FC = () => {
   const [domain, setDomain] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [imageError, setImageError] = useState<string | null>(null);
+  const scrollTop = useScrollTop();
 
   useDebounce(
     () => {
@@ -138,12 +140,16 @@ const AddCDN: React.FC = () => {
           </AddSubtitle>
         </div>
         {registry && (
-        <SubmissionButton
-              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
-              target="_blank"
-            >
-              Submission Guidelines
-        </SubmissionButton>
+          <SubmissionButton
+            onClick={() => {
+              if (registry.metadata.policyURI) {
+                setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                scrollTop();
+              }
+            }}
+          >
+            Submission Guidelines
+          </SubmissionButton>
         )}
         <ClosedButtonContainer>
           <CloseButton />
@@ -169,9 +175,9 @@ const AddCDN: React.FC = () => {
       {addressIssuesData?.domain && (
         <ErrorMessage>{addressIssuesData.domain.message}</ErrorMessage>
       )}
-      <ImageUpload 
-        path={path} 
-        setPath={setPath} 
+      <ImageUpload
+        path={path}
+        setPath={setPath}
         registry="CDN"
         setError={setImageError}
       />
