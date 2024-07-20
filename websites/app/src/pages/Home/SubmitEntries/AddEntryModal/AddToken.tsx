@@ -91,8 +91,7 @@ const AddToken: React.FC = () => {
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', networkAddressKey, 'Tokens', '-', name, symbol],
-    queryFn: () =>
-      getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, symbol),
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, symbol),
     enabled: !!debouncedAddress,
   })
 

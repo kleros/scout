@@ -79,7 +79,6 @@ const getAddressValidationIssue = async (
     result.address = { message: 'Not a valid EVM address', severity: 'error' };
   }
   
-  // if (registry === 'CDN' && !domain) return null
   // check its not a dupe.
   const ndupes = await getDupesInRegistry(
     chainId + ':' + address,
@@ -100,6 +99,17 @@ const getAddressValidationIssue = async (
   }
   if (publicNameTag && (publicNameTag !== publicNameTag.trim())) {
     result.publicNameTag = { message: 'Public Name Tag has leading or trailing whitespace', severity: 'warn' };
+  }
+
+  if (link) {
+    const tagRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
+    const cdnRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
+    
+    if (registry === 'Tags' && !tagRegex.test(link)) {
+      result.link = { message: 'Invalid website format for Tags. Must start with http(s):// and include a valid domain', severity: 'error' };
+    } else if (registry === 'CDN' && !cdnRegex.test(link)) {
+      result.link = { message: 'Invalid website format for CDN. Must be a valid domain', severity: 'error' };
+    }
   }
 
   return Object.keys(result).length > 0 ? result : null;

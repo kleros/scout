@@ -210,7 +210,7 @@ const AddEntryModal: React.FC = () => {
   )
 
   return (
-    <ModalOverlay >
+    <ModalOverlay>
       <ModalContainer ref={containerRef} >
         {addingItemToRegistry === 'Tags' ? (
           <AddAddressTag />
