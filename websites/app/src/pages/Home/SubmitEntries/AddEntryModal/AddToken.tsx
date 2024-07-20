@@ -212,9 +212,6 @@ const AddToken: React.FC = () => {
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
       />
-      {addressIssuesData?.contractName && (
-        <ErrorMessage>{addressIssuesData.contractName.message}</ErrorMessage>
-      )}
       <ImageUpload
         path={path}
         setPath={setPath}
