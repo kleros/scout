@@ -91,8 +91,8 @@ const AddToken: React.FC = () => {
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', networkAddressKey, 'Tokens', '-', name, symbol],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, symbol),
-    enabled: !!debouncedAddress,
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', name, symbol),
+    enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol),
   })
 
   const {
@@ -134,14 +134,9 @@ const AddToken: React.FC = () => {
     )
   }
 
-  const submittingDisabled =
-    !address ||
-    !decimals ||
-    !name ||
-    !symbol ||
-    !!addressIssuesData ||
-    !!addressIssuesLoading ||
-    !path
+  const submittingDisabled = useMemo(() => {
+    return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || imageError);
+  }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, imageError]);
 
   return (
     <AddContainer>

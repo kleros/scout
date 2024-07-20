@@ -89,8 +89,8 @@ const AddAddressTag: React.FC = () => {
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', '-', projectName, publicNameTag, website],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', undefined, projectName, publicNameTag, website),
-    enabled: !!debouncedAddress,
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', projectName, publicNameTag, website),
+    enabled: Boolean(debouncedAddress) || Boolean(projectName) || Boolean(publicNameTag) || Boolean(website),
   });
 
   const {
@@ -132,15 +132,10 @@ const AddAddressTag: React.FC = () => {
     )
   }
 
-  const submittingDisabled =
-    !address ||
-    !projectName ||
-    !publicNameTag ||
-    !publicNote ||
-    !website ||
-    !!addressIssuesData ||
-    !!addressIssuesLoading
-
+    const submittingDisabled = useMemo(() => {
+      return Boolean(!address || !projectName || !publicNameTag || !publicNote || !website || !!addressIssuesData || addressIssuesLoading);
+    }, [address, projectName, publicNameTag, publicNote, website, addressIssuesData, addressIssuesLoading]);
+  
   return (
     <AddContainer>
       <AddHeader>
