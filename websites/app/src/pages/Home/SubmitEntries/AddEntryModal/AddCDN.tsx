@@ -91,7 +91,7 @@ const AddCDN: React.FC = () => {
   }, [searchParams, countsData])
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', '-', domain],
+    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', domain],
     queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'CDN', domain),
     enabled: Boolean(debouncedAddress) || Boolean(domain),
   });
