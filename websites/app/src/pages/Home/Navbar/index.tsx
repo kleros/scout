@@ -15,9 +15,9 @@ const Container = styled.div`
   background: #010002;
   align-items: center;
   justify-content: center;
-  margin-bottom: ${responsiveSize(16, 24)};
-  padding-bottom: ${responsiveSize(16, 0)};
-  gap: 16px;
+  margin-bottom: ${responsiveSize(20, 24)};
+  padding-bottom: ${responsiveSize(18, 0)};
+  gap: 8px;
   border-bottom: 0.5px solid #CD9DFF;
   
   ${landscapeStyle(

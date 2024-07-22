@@ -39,7 +39,7 @@ const SearchAndRegistryDetailsAndSubmitContainer = styled.div`
   background: #08020e;
   color: white;
   width: 84vw;
-  margin-bottom: ${responsiveSize(24, 24)};
+  margin-bottom: 24px;
   gap: 16px;
   flex-wrap: wrap;
 
