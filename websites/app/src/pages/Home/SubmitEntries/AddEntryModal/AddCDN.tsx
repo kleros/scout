@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
@@ -54,14 +55,19 @@ const columns = [
 ]
 
 const AddCDN: React.FC = () => {
-  const [network, setNetwork] = useState<NetworkOption>({
-    value: 'eip155:1',
-    label: 'Mainnet',
-  })
-  const [address, setAddress] = useState<string>('')
+  const [formData, setFormData] = useLocalStorage('addCDNForm', {
+    network: { value: 'eip155:1', label: 'Mainnet' },
+    address: '',
+    domain: '',
+    path: '',
+  });
+
+  const [network, setNetwork] = useState<NetworkOption>(formData.network);
+  const [address, setAddress] = useState<string>(formData.address);
+  const [domain, setDomain] = useState<string>(formData.domain);
+  const [path, setPath] = useState<string>(formData.path);
+
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
-  const [path, setPath] = useState<string>('')
-  const [domain, setDomain] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [imageError, setImageError] = useState<string | null>(null);
   const scrollTop = useScrollTop();
@@ -96,6 +102,10 @@ const AddCDN: React.FC = () => {
     enabled: Boolean(debouncedAddress) || Boolean(domain),
   });
 
+  useEffect(() => {
+    setFormData({ network, address, domain, path });
+  }, [network, address, domain, path]);
+
   const submitCDN = async () => {
     const values = {
       'Contract address': `${network.value}:${address}`,
@@ -114,7 +124,12 @@ const AddCDN: React.FC = () => {
       '0x957a53a994860be4750810131d9c876b2f52d6e1',
       countsData?.CDN.deposits as DepositParams,
       ipfsPath
-    )
+    );
+    clearLocalStorage('addCDNForm');
+  }
+
+  const handleClose = () => {
+    clearLocalStorage('addCDNForm');
   }
 
   const submittingDisabled = useMemo(() => {
@@ -148,7 +163,7 @@ const AddCDN: React.FC = () => {
             Submission Guidelines
           </SubmissionButton>
         )}
-        <ClosedButtonContainer>
+        <ClosedButtonContainer onClick={handleClose}>
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>

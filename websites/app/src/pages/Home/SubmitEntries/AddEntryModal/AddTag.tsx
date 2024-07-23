@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
@@ -66,18 +67,29 @@ const columns = [
 ]
 
 const AddAddressTag: React.FC = () => {
-  const [network, setNetwork] = useState<NetworkOption>({
-    value: 'eip155:1',
-    label: 'Mainnet',
-  })
-  const [address, setAddress] = useState<string>('')
-  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
-  const [projectName, setProjectName] = useState<string>('')
-  const [publicNameTag, setPublicNameTag] = useState<string>('')
-  const [publicNote, setPublicNote] = useState<string>('')
-  const [website, setWebsite] = useState<string>('')
+  const [formData, setFormData] = useLocalStorage('addTagForm', {
+    network: { value: 'eip155:1', label: 'Mainnet' },
+    address: '',
+    projectName: '',
+    publicNameTag: '',
+    publicNote: '',
+    website: '',
+  });
+
+  const [network, setNetwork] = useState<NetworkOption>(formData.network);
+  const [address, setAddress] = useState<string>(formData.address);
+  const [projectName, setProjectName] = useState<string>(formData.projectName);
+  const [publicNameTag, setPublicNameTag] = useState<string>(formData.publicNameTag);
+  const [publicNote, setPublicNote] = useState<string>(formData.publicNote);
+  const [website, setWebsite] = useState<string>(formData.website);
+
   const [searchParams, setSearchParams] = useSearchParams()
+  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
   const scrollTop = useScrollTop();
+
+  useEffect(() => {
+    setFormData({ network, address, projectName, publicNameTag, publicNote, website });
+  }, [network, address, projectName, publicNameTag, publicNote, website]);
 
   useDebounce(
     () => {
@@ -129,7 +141,12 @@ const AddAddressTag: React.FC = () => {
       '0x66260c69d03837016d88c9877e61e08ef74c59f2',
       countsData?.Tags.deposits as DepositParams,
       ipfsPath
-    )
+    );
+    clearLocalStorage('addTagForm');
+  }
+
+  const handleClose = () => {
+    clearLocalStorage('addTagForm');
   }
 
     const submittingDisabled = useMemo(() => {
@@ -163,7 +180,7 @@ const AddAddressTag: React.FC = () => {
             Submission Guidelines
           </SubmissionButton>
         )}
-        <ClosedButtonContainer>
+        <ClosedButtonContainer onClick={handleClose}>
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>

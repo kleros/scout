@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
@@ -63,19 +64,30 @@ const columns = [
 ]
 
 const AddToken: React.FC = () => {
-  const [network, setNetwork] = useState<NetworkOption>({
-    value: 'eip155:1',
-    label: 'Mainnet',
-  })
-  const [address, setAddress] = useState<string>('')
+  const [formData, setFormData] = useLocalStorage('addTokenForm', {
+    network: { value: 'eip155:1', label: 'Mainnet' },
+    address: '',
+    decimals: '',
+    name: '',
+    symbol: '',
+    path: '',
+  });
+
+  const [network, setNetwork] = useState<NetworkOption>(formData.network);
+  const [address, setAddress] = useState<string>(formData.address);
+  const [decimals, setDecimals] = useState<string>(formData.decimals);
+  const [name, setName] = useState<string>(formData.name);
+  const [symbol, setSymbol] = useState<string>(formData.symbol);
+  const [path, setPath] = useState<string>(formData.path);
+
   const [searchParams, setSearchParams] = useSearchParams()
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
-  const [decimals, setDecimals] = useState<string>('')
-  const [name, setName] = useState<string>('')
-  const [symbol, setSymbol] = useState<string>('')
-  const [path, setPath] = useState<string>('')
   const [imageError, setImageError] = useState<string | null>(null);
   const scrollTop = useScrollTop();
+
+  useEffect(() => {
+    setFormData({ network, address, decimals, name, symbol, path });
+  }, [network, address, decimals, name, symbol, path]);
 
   useDebounce(
     () => {
@@ -131,7 +143,12 @@ const AddToken: React.FC = () => {
       '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
       countsData?.Tokens.deposits as DepositParams,
       ipfsPath
-    )
+    );
+    clearLocalStorage('addTokenForm');
+  }
+
+  const handleClose = () => {
+    clearLocalStorage('addTokenForm');
   }
 
   const submittingDisabled = useMemo(() => {
@@ -165,7 +182,7 @@ const AddToken: React.FC = () => {
             Submission Guidelines
           </SubmissionButton>
         )}
-        <ClosedButtonContainer>
+        <ClosedButtonContainer onClick={handleClose}>
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>
