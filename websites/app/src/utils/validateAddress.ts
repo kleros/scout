@@ -98,6 +98,10 @@ const getAddressValidationIssue = async (
     result.projectName = { message: 'Project name has leading or trailing whitespace', severity: 'warn' };
   }
 
+  if (registry === "Tokens" && projectName && projectName.length > 40) {
+    result.projectName = { message: 'Public Name too long (max 40 characters)', severity: 'warn' };
+  }
+
   if (publicNameTag && (publicNameTag !== publicNameTag.trim())) {
     result.publicNameTag = { message: 'Public Name Tag has leading or trailing whitespace', severity: 'warn' };
   }
