@@ -50,6 +50,7 @@ export const StyledAddressInput = styled.input`
     font-size: 18px;
     font-weight: 400;
     color: #cd9dff;
+    opacity: 75%;
   }
 
   ${landscapeStyle(
@@ -90,7 +91,7 @@ const RichAddressForm: React.FC<{
         <StyledAddressInput
           onChange={(e) => p.setAddress(e.target.value)}
           value={p.address}
-          placeholder="0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d"
+          placeholder="eg.0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d..."
         />
       </StyledAddressDiv>
     </StyledWholeField>

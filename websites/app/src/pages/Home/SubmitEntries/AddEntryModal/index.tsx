@@ -117,6 +117,7 @@ export const StyledTextInput = styled.input`
   ::placeholder {
     font-weight: 400;
     color: #cd9dff;
+    opacity: 75%;
   }
 
   ${landscapeStyle(
