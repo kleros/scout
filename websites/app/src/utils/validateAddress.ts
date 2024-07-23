@@ -78,12 +78,12 @@ const getAddressValidationIssue = async (
   if (address && !isAddress(address)) {
     result.address = { message: 'Not a valid EVM address', severity: 'error' };
   }
-  
+
   // check its not a dupe.
   const ndupes = await getDupesInRegistry(
     chainId + ':' + address,
     registryMap[registry],
-    domain  
+    domain
   );
 
   if (ndupes > 0) {
@@ -102,15 +102,16 @@ const getAddressValidationIssue = async (
     result.publicNameTag = { message: 'Public Name Tag has leading or trailing whitespace', severity: 'warn' };
   }
 
-  if (link) {
-    const tagRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
-    const cdnRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
+  const cdnRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
 
-    if (registry === 'Tags' && !tagRegex.test(link)) {
-      result.link = { message: 'Invalid website format for Tags. Must start with http(s):// and include a valid domain', severity: 'error' };
-    } else if (registry === 'CDN' && !cdnRegex.test(link)) {
-      result.link = { message: 'Invalid website format for CDN. Must be a valid domain', severity: 'error' };
-    }
+  if (domain && !cdnRegex.test(domain)) {
+    result.domain = { message: 'Invalid website format for CDN. Must be a valid domain', severity: 'error' };
+  }
+
+  const tagRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
+
+  if (link && !tagRegex.test(link)) {
+    result.link = { message: 'Invalid website format for Tags. Must start with http(s):// and include a valid domain', severity: 'error' };
   }
 
   return Object.keys(result).length > 0 ? result : null;
