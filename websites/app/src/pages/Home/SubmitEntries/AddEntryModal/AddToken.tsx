@@ -213,7 +213,7 @@ const AddToken: React.FC = () => {
         path={path}
         setPath={setPath}
         registry="Tokens"
-        setError={setImageError}
+        {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
       <PayoutsContainer>

@@ -176,7 +176,7 @@ const AddCDN: React.FC = () => {
         path={path}
         setPath={setPath}
         registry="CDN"
-        setError={setImageError}
+        {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
       <PayoutsContainer>
