@@ -90,9 +90,9 @@ const AddToken: React.FC = () => {
   }, [network.value, debouncedAddress])
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'Tokens', name],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name),
-    enabled: Boolean(debouncedAddress) || Boolean(name),
+    queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol],
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, undefined, undefined, symbol),
+    enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol),
   });
 
   const {
@@ -206,6 +206,9 @@ const AddToken: React.FC = () => {
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
       />
+      {addressIssuesData?.symbol && (
+        <ErrorMessage>{addressIssuesData.symbol.message}</ErrorMessage>
+      )}
       <ImageUpload
         path={path}
         setPath={setPath}

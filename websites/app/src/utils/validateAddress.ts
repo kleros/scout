@@ -27,6 +27,10 @@ export interface Issue {
     severity: 'warn' | 'error';
     message: string;
   };
+  symbol?: {
+    severity: 'warn' | 'error';
+    message: string;
+  };
 }
 
 const getDupesInRegistry = async (
@@ -70,7 +74,8 @@ const getAddressValidationIssue = async (
   domain?: string,
   projectName?: string,
   publicNameTag?: string,
-  link?: string
+  link?: string,
+  symbol?: string
 ): Promise<Issue | null> => {
   let result: Issue = {};
 
@@ -100,6 +105,10 @@ const getAddressValidationIssue = async (
 
   if (registry === "Tokens" && projectName && projectName.length > 40) {
     result.projectName = { message: 'Public Name too long (max 40 characters)', severity: 'warn' };
+  }
+
+  if (registry === "Tokens" && symbol && symbol.length > 20) {
+    result.symbol = { message: 'Symbol too long (max 20 characters)', severity: 'warn' };
   }
 
   if (publicNameTag && (publicNameTag !== publicNameTag.trim())) {
