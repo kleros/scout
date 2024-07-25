@@ -42,7 +42,6 @@ const StyledNewTabIcon = styled(NewTabIcon)`
 
 const LoadingImage = styled.img`
   height: 92px;
-  width: 92px;
 `
 
 const EvidenceAttachmentDisplay: React.FC = () => {
