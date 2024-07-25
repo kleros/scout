@@ -223,12 +223,9 @@ const Home: React.FC = () => {
       page === null
     ) {
       const newSearchParams = createSearchParams({
-        registry: registry.length === 0 ? ['Tags'] : registry,
-        status:
-          status.length === 0
-            ? ['Registered', 'RegistrationRequested', 'ClearingRequested']
-            : status,
-        disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
+        registry: registry.length === 0 ? 'Tags' : registry,
+        status: status.length === 0 ? 'Registered' : status,
+        disputed: disputed.length === 0 ? 'false' : disputed,
         text: text === null ? '' : text,
         page: page === null ? '1' : page,
         orderDirection: orderDirection === null ? 'desc' : orderDirection,

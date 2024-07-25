@@ -92,124 +92,118 @@ const RemovableFilter = styled.div`
   }
 `
 
-const Statuses: React.FC = () => {
+const statusLabels = {
+  'Registered': 'Registered',
+  'RegistrationRequested': 'Registration Requested',
+  'ClearingRequested': 'Removal Requested',
+  'Absent': 'Removed'
+};
+
+const registrationStatuses = Object.keys(statusLabels);
+
+const RegistrationStatus: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [open, setOpen] = useState<boolean>(false)
-  const statuses = useMemo(() => searchParams.getAll('status'), [searchParams])
-  const disputeds = useMemo(
-    () => searchParams.getAll('disputed'),
-    [searchParams]
-  )
+  const [open, setOpen] = useState(false)
+  const status = useMemo(() => searchParams.get('status') || 'Registered', [searchParams])
   const dropdownRef = useRef(null)
-  useFocusOutside(dropdownRef, () => setOpen((open) => false))
+  
+  useFocusOutside(dropdownRef, () => setOpen(false))
 
-  const toggleStatus = (status: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev.toString())
-      const statuses = newParams.getAll('status')
-      if (statuses.includes(status)) {
-        // remove
-        newParams.delete('status', status)
-      } else {
-        // add
-        newParams.append('status', status)
-      }
-      // bounce to page 1
+  const toggleStatus = (newStatus: string) => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev)
+      newParams.set('status', newStatus || 'Registered')
       newParams.set('page', '1')
       return newParams
-    })
-  }
-
-  const toggleDisputed = (boolString: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev.toString())
-      const statuses = newParams.getAll('disputed')
-      if (statuses.includes(boolString)) {
-        // remove all
-        newParams.delete('disputed')
-        // append the opposite
-        newParams.append('disputed', boolString === 'true' ? 'false' : 'true')
-      } else {
-        // add
-        newParams.append('disputed', boolString)
-      }
-      // bounce to page 1
-      newParams.set('page', '1')
-      return newParams
-    })
-  }
-
-  const toggleStatusOrDisputed = (s: string) => {
-    if (s === 'true' || s === 'false') {
-      toggleDisputed(s)
-    } else {
-      toggleStatus(s)
-    }
+    }, { replace: true })
   }
 
   return (
     <FilterContainer>
       <DropdownContainer ref={dropdownRef}>
-        <FilterDropdown open={open} onClick={() => setOpen((open) => !open)}>
-          Status
+        <FilterDropdown open={open} onClick={() => setOpen(!open)}>
+          Registration Status
           <FilterDropdownIconWrapper open={open}>
             <DownDirectionIcon />
           </FilterDropdownIconWrapper>
         </FilterDropdown>
         {open && (
           <FilterOptionContainer>
-            <FilterOption
-              selected={statuses.includes('Registered')}
-              onClick={() => toggleStatusOrDisputed('Registered')}
-            >
-              Registered
-            </FilterOption>
-            <FilterOption
-              selected={statuses.includes('RegistrationRequested')}
-              onClick={() => toggleStatusOrDisputed('RegistrationRequested')}
-            >
-              Registration Requested
-            </FilterOption>
-            <FilterOption
-              selected={statuses.includes('ClearingRequested')}
-              onClick={() => toggleStatusOrDisputed('ClearingRequested')}
-            >
-              Removal Requested
-            </FilterOption>
-            <FilterOption
-              selected={statuses.includes('Absent')}
-              onClick={() => toggleStatusOrDisputed('Absent')}
-            >
-              Removed
-            </FilterOption>
-            {/* separation bar here? todo */}
-            <FilterOption
-              selected={disputeds.includes('false')}
-              onClick={() => toggleStatusOrDisputed('false')}
-            >
-              Unchallenged
-            </FilterOption>
-            <FilterOption
-              selected={disputeds.includes('true')}
-              onClick={() => toggleStatusOrDisputed('true')}
-            >
-              Challenged
-            </FilterOption>
+            {registrationStatuses.map((s) => (
+              <FilterOption
+                key={s}
+                selected={status === s}
+                onClick={() => toggleStatus(s)}
+              >
+                {statusLabels[s]}
+              </FilterOption>
+            ))}
           </FilterOptionContainer>
         )}
       </DropdownContainer>
       <RemovableFilterContainer>
-        {statuses.map((s) => (
-          <RemovableFilter key={s} onClick={() => toggleStatus(s)}>
-            {s} ✕
-          </RemovableFilter>
-        ))}
-        {disputeds.map((s) => (
-          <RemovableFilter key={s} onClick={() => toggleDisputed(s)}>
-            {s === 'true' ? 'Challenged' : 'Unchallenged'} ✕
-          </RemovableFilter>
-        ))}
+        <RemovableFilter onClick={() => toggleStatus('')}>
+          {statusLabels[status]} ✕
+        </RemovableFilter>
       </RemovableFilterContainer>
+    </FilterContainer>
+  )
+}
+
+const ChallengeStatus: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [open, setOpen] = useState<boolean>(false)
+  const disputed = useMemo(() => searchParams.get('disputed'), [searchParams])
+  const dropdownRef = useRef(null)
+  useFocusOutside(dropdownRef, () => setOpen(false))
+
+  const toggleDisputed = (value: string) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev.toString())
+      newParams.delete('disputed')
+      if (value) {
+        newParams.append('disputed', value)
+      }
+      newParams.set('page', '1')
+      return newParams
+    })
+  }
+
+  const challengeStatuses = [
+    { value: 'true', label: 'Challenged' },
+    { value: 'false', label: 'Unchallenged' }
+  ]
+
+  return (
+    <FilterContainer>
+      <DropdownContainer ref={dropdownRef}>
+        <FilterDropdown open={open} onClick={() => setOpen(!open)}>
+          Challenge Status
+          <FilterDropdownIconWrapper open={open}>
+            <DownDirectionIcon />
+          </FilterDropdownIconWrapper>
+        </FilterDropdown>
+        {open && (
+          <FilterOptionContainer>
+            {challengeStatuses.map((s) => (
+              <FilterOption
+                key={s.value}
+                selected={disputed === s.value}
+                onClick={() => toggleDisputed(s.value)}
+              >
+                {s.label}
+              </FilterOption>
+            ))}
+          </FilterOptionContainer>
+        )}
+      </DropdownContainer>
+      {disputed && (
+        <RemovableFilterContainer>
+          <RemovableFilter onClick={() => toggleDisputed('')}>
+            {disputed === 'true' ? 'Challenged' : 'Unchallenged'} ✕
+          </RemovableFilter>
+        </RemovableFilterContainer>
+      )}
     </FilterContainer>
   )
 }
@@ -341,7 +335,8 @@ const Container = styled.div`
 const Filters: React.FC = () => {
   return (
     <Container>
-      <Statuses />
+      <RegistrationStatus />
+      <ChallengeStatus />
       <Networks />
       <Ordering />
     </Container>
