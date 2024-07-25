@@ -105,8 +105,7 @@ const Statuses: React.FC = () => {
 
   const toggleStatus = (status: string) => {
     setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
+      const newParams = new URLSearchParams(prev.toString())
       const statuses = newParams.getAll('status')
       if (statuses.includes(status)) {
         // remove
@@ -116,16 +115,14 @@ const Statuses: React.FC = () => {
         newParams.append('status', status)
       }
       // bounce to page 1
-      newParams.delete('page')
-      newParams.append('page', '1')
+      newParams.set('page', '1')
       return newParams
     })
   }
 
   const toggleDisputed = (boolString: string) => {
     setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
+      const newParams = new URLSearchParams(prev.toString())
       const statuses = newParams.getAll('disputed')
       if (statuses.includes(boolString)) {
         // remove all
@@ -137,8 +134,7 @@ const Statuses: React.FC = () => {
         newParams.append('disputed', boolString)
       }
       // bounce to page 1
-      newParams.delete('page')
-      newParams.append('page', '1')
+      newParams.set('page', '1')
       return newParams
     })
   }
@@ -172,17 +168,17 @@ const Statuses: React.FC = () => {
               selected={statuses.includes('RegistrationRequested')}
               onClick={() => toggleStatusOrDisputed('RegistrationRequested')}
             >
-              Submitted
+              Registration Requested
             </FilterOption>
             <FilterOption
-              selected={statuses.includes('ClearingRequested')}
-              onClick={() => toggleStatusOrDisputed('ClearingRequested')}
+              selected={statuses.includes('RemovalRequested')}
+              onClick={() => toggleStatusOrDisputed('RemovalRequested')}
             >
-              Removing
+              Removal Requested
             </FilterOption>
             <FilterOption
-              selected={statuses.includes('Absent')}
-              onClick={() => toggleStatusOrDisputed('Absent')}
+              selected={statuses.includes('Removed')}
+              onClick={() => toggleStatusOrDisputed('Removed')}
             >
               Removed
             </FilterOption>
@@ -205,26 +201,12 @@ const Statuses: React.FC = () => {
       <RemovableFilterContainer>
         {statuses.map((s) => (
           <RemovableFilter key={s} onClick={() => toggleStatus(s)}>
-            {
-              {
-                Registered: 'Registered',
-                RegistrationRequested: 'Submitted',
-                ClearingRequested: 'Removing',
-                Absent: 'Removed',
-              }[s]
-            }{' '}
-            ✕
+            {s} ✕
           </RemovableFilter>
         ))}
         {disputeds.map((s) => (
           <RemovableFilter key={s} onClick={() => toggleDisputed(s)}>
-            {
-              {
-                true: 'Challenged',
-                false: 'Unchallenged',
-              }[s]
-            }{' '}
-            ✕
+            {s === 'true' ? 'Challenged' : 'Unchallenged'} ✕
           </RemovableFilter>
         ))}
       </RemovableFilterContainer>
