@@ -11,7 +11,6 @@ const Container = styled.div`
   justify-content: center;
   width: 80%;
   margin: 48px auto 0;
-  display: flex;
   gap: 12px;
   align-items: center;
 
