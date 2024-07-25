@@ -21,7 +21,7 @@ const Card = styled.div`
 const CardStatus = styled.div<{ status: string }>`
   text-align: center;
   font-weight: bold;
-  padding: 15px 10px;
+  padding: 15px 20px;
   margin-bottom: 10px;
   border-bottom: 2px solid #5A2393;
 
