@@ -16,6 +16,7 @@ const Container = styled.div`
   ${landscapeStyle(
     () => css`
       flex-direction: row;
+      justify-content: center;
     `
   )}
 `
