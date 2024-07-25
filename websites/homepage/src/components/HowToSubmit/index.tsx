@@ -159,7 +159,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
             <StatsDescription>AVG. MONTHLY SUBMISSIONS</StatsDescription>
           </StatsContainer>
           <StatsContainer>
-            <StatsTitle>$15</StatsTitle>
+            <StatsTitle>$12</StatsTitle>
             <StatsDescription>AVG. REWARD PER SUBMISSION</StatsDescription>
           </StatsContainer>
           <StatsContainer>

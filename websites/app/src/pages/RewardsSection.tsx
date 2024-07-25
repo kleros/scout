@@ -116,7 +116,7 @@ const RewardSection: React.FC = () => (
                 <StatLabel>AVG. MONTHLY SUBMISSIONS</StatLabel>
             </StatBox>
             <StatBox>
-                <StatNumber>$15</StatNumber>
+                <StatNumber>$12</StatNumber>
                 <StatLabel>AVG. REWARD PER SUBMISSION</StatLabel>
             </StatBox>
             <StatBox>
