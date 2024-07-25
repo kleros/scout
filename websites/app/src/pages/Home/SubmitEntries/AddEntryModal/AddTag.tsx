@@ -215,7 +215,7 @@ const AddAddressTag: React.FC = () => {
       )}
       Public note
       <StyledTextInput
-        placeholder="e.g. This contract is used for distributing juror rewards..."
+        placeholder="e.g. This contract is used for..."
         value={publicNote}
         onChange={(e) => setPublicNote(e.target.value)}
       />
