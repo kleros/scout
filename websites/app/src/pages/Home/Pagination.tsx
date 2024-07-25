@@ -16,7 +16,6 @@ const Container = styled.div`
   ${landscapeStyle(
     () => css`
       flex-direction: row;
-      justify-content: space-between;
     `
   )}
 `
@@ -99,10 +98,7 @@ const Pagination: React.FC<IPagination> = ({ totalPages }) => {
             if (e.key === 'Enter') setCurrentPage(pageInput)
           }}
         />
-        <Span>of {totalPages === null ? '???' : totalPages}</Span>
-        <StyledButton onClick={() => setCurrentPage(pageInput)}>
-          Go
-        </StyledButton>
+        <Span>of {totalPages === null ? '?' : totalPages}</Span>
       </PageControls>
       <StyledButton
         onClick={() => setCurrentPage(page + 1)}
