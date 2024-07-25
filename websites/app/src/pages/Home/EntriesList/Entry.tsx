@@ -8,6 +8,7 @@ import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 import { useScrollTop } from 'hooks/useScrollTop'
+import { formatTimestamp } from 'utils/formatTimestamp'
 
 const Card = styled.div`
   background-color: #321c49;
@@ -246,6 +247,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
               )}
           </>
         )}
+        Submitted on:{' '}{formatTimestamp(Number(item?.requests[0].submissionTime), false)}
         <DetailsButton
           onClick={() => {
             handleEntryDetailsClick()
