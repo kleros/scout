@@ -164,8 +164,11 @@ const ChallengeStatus: React.FC = () => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev.toString())
       newParams.delete('disputed')
-      if (value) {
+      if (value === 'true') {
         newParams.append('disputed', value)
+        if (newParams.get('status') === 'Registered' || newParams.get('status') === 'Absent') {
+          newParams.set('status', 'RegistrationRequested')
+        }
       }
       newParams.set('page', '1')
       return newParams
@@ -202,7 +205,7 @@ const ChallengeStatus: React.FC = () => {
       </DropdownContainer>
       {disputed && (
         <RemovableFilterContainer>
-          <RemovableFilter onClick={() => toggleDisputed('')}>
+          <RemovableFilter onClick={() => toggleDisputed(disputed === 'true' ? 'false' : 'true')}>
             {disputed === 'true' ? 'Challenged' : 'Unchallenged'} ✕
           </RemovableFilter>
         </RemovableFilterContainer>
