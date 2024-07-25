@@ -35,7 +35,7 @@ const CardStatus = styled.div<{ status: string }>`
     background-color: ${({ status }) =>
       ({
         Registered: '#90EE90',
-        Submitted: '#FFEA00',
+        'Registration Requested': '#FFEA00',
         'Challenged Submission': '#E87B35',
         'Challenged Removal': '#E87B35',
         Removed: 'red',
@@ -108,8 +108,8 @@ const Status: React.FC<IStatus> = ({ status, disputed, bounty }) => {
   const readableStatusMap = {
     Registered: 'Registered',
     Absent: 'Removed',
-    RegistrationRequested: 'Submitted',
-    ClearingRequested: 'Removing',
+    RegistrationRequested: 'Registration Requested',
+    ClearingRequested: 'Removal Requested',
   }
   const challengedStatusMap = {
     RegistrationRequested: 'Challenged Submission',

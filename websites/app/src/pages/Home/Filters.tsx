@@ -171,14 +171,14 @@ const Statuses: React.FC = () => {
               Registration Requested
             </FilterOption>
             <FilterOption
-              selected={statuses.includes('RemovalRequested')}
-              onClick={() => toggleStatusOrDisputed('RemovalRequested')}
+              selected={statuses.includes('ClearingRequested')}
+              onClick={() => toggleStatusOrDisputed('ClearingRequested')}
             >
               Removal Requested
             </FilterOption>
             <FilterOption
-              selected={statuses.includes('Removed')}
-              onClick={() => toggleStatusOrDisputed('Removed')}
+              selected={statuses.includes('Absent')}
+              onClick={() => toggleStatusOrDisputed('Absent')}
             >
               Removed
             </FilterOption>
