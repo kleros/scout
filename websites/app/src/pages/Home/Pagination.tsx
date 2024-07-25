@@ -6,7 +6,9 @@ import Button from 'components/Button'
 
 const Container = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
   width: 80%;
   margin: 48px auto 0;
   display: flex;
@@ -15,7 +17,6 @@ const Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      flex-direction: row;
       justify-content: flex-end;
     `
   )}
