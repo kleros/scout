@@ -16,17 +16,19 @@ const FilterContainer = styled.div`
 const DropdownContainer = styled.div`
   display: flex;
   flex-direction: column;
-  margin-top: 4px;
 `
 
 const FilterDropdown = styled.div<{ open: boolean }>`
   display: flex;
-  font-size: 18px;
   font-family: 'Oxanium', sans-serif;
+  font-size: 18px;
   font-weight: 600;
-  flex-direction: row;
-  border-radius: 8px;
+  height: 28px;
+  align-items: center;
+  padding: 0 4px;
+  border-radius: 6px;
   cursor: pointer;
+
   &:hover {
     background: linear-gradient(145deg, #7e57c2, #482c85);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -49,6 +51,7 @@ const FilterOptionContainer = styled.div`
   margin-top: 30px;
   position: absolute;
   border-radius: 8px;
+  z-index: 10;
 `
 
 // when selected, has a border, bold and more opacity
