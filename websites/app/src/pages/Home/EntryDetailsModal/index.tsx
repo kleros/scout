@@ -359,6 +359,7 @@ const DetailsModal: React.FC = () => {
                       <strong>{label}:</strong> {renderValue(label, value)}
                     </LabelAndValue>
                   ))}
+                  <LabelAndValue><strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}</LabelAndValue>
               </EntryDetailsContainer>
               {/* EVIDENCES */}
               <EvidenceSection>
@@ -401,7 +402,7 @@ const DetailsModal: React.FC = () => {
                         ) : null}
                       <EvidenceField>
                         <strong>Time:</strong>{' '}
-                        {formatTimestamp(evidence.timestamp)}
+                        {formatTimestamp(Number(evidence.timestamp), true)}
                       </EvidenceField>
                       <EvidenceField>
                         <strong>Party:</strong> {evidence.party}
