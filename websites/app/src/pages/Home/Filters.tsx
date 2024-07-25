@@ -23,7 +23,6 @@ const FilterDropdown = styled.div<{ open: boolean }>`
   font-family: 'Oxanium', sans-serif;
   font-size: 18px;
   font-weight: 600;
-  height: 28px;
   align-items: center;
   padding: 0 4px;
   border-radius: 6px;
@@ -83,7 +82,6 @@ const RemovableFilter = styled.div`
   font-family: 'Oxanium', sans-serif;
   font-size: 16px;
   font-weight: 400;
-  height: 28px;
   align-items: center;
   padding: 0 4px;
   border-radius: 6px;
