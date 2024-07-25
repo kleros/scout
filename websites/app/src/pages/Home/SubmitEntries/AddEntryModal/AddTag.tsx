@@ -197,7 +197,7 @@ const AddAddressTag: React.FC = () => {
       )}
       Project name
       <StyledTextInput
-        placeholder="e.g. Pinakion"
+        placeholder="e.g. Kleros"
         value={projectName}
         onChange={(e) => setProjectName(e.target.value)}
       />
@@ -206,7 +206,7 @@ const AddAddressTag: React.FC = () => {
       )}
       Public Name Tag
       <StyledTextInput
-        placeholder="public name tag"
+        placeholder="e.g. PNK Merkle Drop"
         value={publicNameTag}
         onChange={(e) => setPublicNameTag(e.target.value)}
       />
@@ -215,7 +215,7 @@ const AddAddressTag: React.FC = () => {
       )}
       Public note
       <StyledTextInput
-        placeholder="public note"
+        placeholder="e.g. This contract is used for distributing juror rewards..."
         value={publicNote}
         onChange={(e) => setPublicNote(e.target.value)}
       />
