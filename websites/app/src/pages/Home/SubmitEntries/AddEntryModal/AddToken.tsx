@@ -199,7 +199,7 @@ const AddToken: React.FC = () => {
       )}
       Decimals
       <StyledTextInput
-        placeholder="decimals"
+        placeholder="e.g. 18"
         value={decimals}
         onChange={(e) => {
           const value = e.target.value;
@@ -210,7 +210,7 @@ const AddToken: React.FC = () => {
       />
       Name
       <StyledTextInput
-        placeholder="name"
+        placeholder="e.g. Pinakion"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
@@ -219,7 +219,7 @@ const AddToken: React.FC = () => {
       )}
       Symbol
       <StyledTextInput
-        placeholder="symbol"
+        placeholder="e.g. PNK"
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
       />

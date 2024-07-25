@@ -197,7 +197,7 @@ const AddAddressTag: React.FC = () => {
       )}
       Project name
       <StyledTextInput
-        placeholder="project name"
+        placeholder="e.g. Pinakion"
         value={projectName}
         onChange={(e) => setProjectName(e.target.value)}
       />
@@ -221,7 +221,7 @@ const AddAddressTag: React.FC = () => {
       />
       UI/Website link
       <StyledTextInput
-        placeholder="ui/website link"
+        placeholder="e.g. https://kleros.io"
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
       />

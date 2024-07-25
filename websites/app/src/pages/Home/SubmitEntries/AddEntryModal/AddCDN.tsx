@@ -180,7 +180,7 @@ const AddCDN: React.FC = () => {
       )}
       Domain
       <StyledTextInput
-        placeholder="domain"
+        placeholder="e.g. kleros.io"
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
       />

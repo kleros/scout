@@ -91,7 +91,7 @@ const RichAddressForm: React.FC<{
         <StyledAddressInput
           onChange={(e) => p.setAddress(e.target.value)}
           value={p.address}
-          placeholder="eg.0x93ed3fbe21207ec2e8f2d3c3de6e058cb73bc04d..."
+          placeholder="e.g. 0x93ed3fbe..."
         />
       </StyledAddressDiv>
     </StyledWholeField>

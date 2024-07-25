@@ -105,16 +105,18 @@ export const SubmissionButton = styled.button`
 
 export const StyledTextInput = styled.input`
   display: flex;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.15);
   padding: 8px 12px;
   outline: none;
   border: none;
-  border-radius: 12px;
   color: #fff;
-  font-size: 20px;
+  border-radius: 12px;
+  font-size: 18px;
   font-weight: 400;
-  background: rgba(255, 255, 255, 0.15);
 
   ::placeholder {
+    font-size: 18px;
     font-weight: 400;
     color: #cd9dff;
     opacity: 75%;
