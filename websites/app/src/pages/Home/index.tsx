@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams, createSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchItems } from 'utils/fetchItems'
@@ -214,18 +213,24 @@ const Home: React.FC = () => {
     const disputed = searchParams.getAll('disputed')
     const text = searchParams.get('text')
     const page = searchParams.get('page')
+    const network = searchParams.getAll('network')
     const orderDirection = searchParams.get('orderDirection')
     if (
       registry.length === 0 ||
       status.length === 0 ||
       disputed.length === 0 ||
+      network.length === 0 ||
       orderDirection === null ||
       page === null
     ) {
       const newSearchParams = createSearchParams({
-        registry: registry.length === 0 ? 'Tags' : registry,
-        status: status.length === 0 ? 'Registered' : status,
-        disputed: disputed.length === 0 ? 'false' : disputed,
+        registry: registry.length === 0 ? ['Tags'] : registry,
+        network: network.length === 0 ? ['1', '100', '137', '56', '42161', '10', '43114', '42220', '8453', '250', '324'] : network,
+        status:
+          status.length === 0
+            ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']
+            : status,
+        disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
         text: text === null ? '' : text,
         page: page === null ? '1' : page,
         orderDirection: orderDirection === null ? 'desc' : orderDirection,
