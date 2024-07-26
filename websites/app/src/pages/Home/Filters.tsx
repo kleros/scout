@@ -223,6 +223,7 @@ const Ordering: React.FC = React.memo(() => {
 
 const Container = styled.div`
   display: flex;
+  flex-wrap: wrap;
   width: 84vw;
   flex-direction: column;
   justify-content: space-between;
