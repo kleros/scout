@@ -225,15 +225,12 @@ const Container = styled.div`
   display: flex;
   flex-wrap: wrap;
   width: 84vw;
-  flex-direction: column;
-  justify-content: space-between;
   gap: 20px;
   margin-bottom: ${responsiveSize(24, 28)};
 
   ${landscapeStyle(
     () => css`
       width: 80%;
-      flex-direction: row;
     `
   )}
 `
