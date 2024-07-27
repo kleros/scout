@@ -51,6 +51,7 @@ const FilterOptionContainer = styled.div`
   position: absolute;
   border-radius: 8px;
   z-index: 10;
+  overflow: hidden;
 `
 
 // when selected, has a border, bold and more opacity
