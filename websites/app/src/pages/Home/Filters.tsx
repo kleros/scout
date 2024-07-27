@@ -54,18 +54,22 @@ const FilterOptionContainer = styled.div`
 `
 
 // when selected, has a border, bold and more opacity
-const FilterOption = styled.div<{ selected: boolean }>`
-  text-align: center;
+const FilterOption = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: left;
   font-family: 'Oxanium', sans-serif;
   font-size: 16px;
   padding: 6px;
-  font-weight: ${({ selected }) => (selected ? 'bold' : 'normal')};
-  opacity: ${({ selected }) => (selected ? '100%' : '60%')};
   cursor: pointer;
   &:hover {
     background: linear-gradient(145deg, #7e57c2, #482c85);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
+`
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  margin-right: 8px;
 `
 
 // renders right of the dropdown filter
@@ -153,9 +157,13 @@ const FilterDropdown: React.FC<FilterDropdownProps> = React.memo(({ label, optio
             {options.map((option) => (
               <FilterOption
                 key={option.value}
-                selected={selectedValues.includes(option.value)}
                 onClick={() => onToggle(option.value)}
               >
+                <Checkbox
+                  checked={selectedValues.includes(option.value)}
+                  onChange={() => onToggle(option.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
                 {option.label}
               </FilterOption>
             ))}
