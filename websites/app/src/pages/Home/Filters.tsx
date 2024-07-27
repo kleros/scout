@@ -172,7 +172,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = React.memo(({ label, optio
         )}
       </DropdownContainer>
       <RemovableFilterContainer>
-        {selectedValues.length === options.length || selectedValues.length === 0 ? (
+        {selectedValues.length === options.length ? (
           <RemovableFilter>All {label}</RemovableFilter>
         ) : (
           selectedValues.map(value => (
