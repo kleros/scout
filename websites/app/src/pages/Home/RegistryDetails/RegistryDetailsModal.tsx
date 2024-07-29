@@ -7,6 +7,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
 import { useFocusOutside } from 'hooks/useFocusOutside'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -58,6 +59,15 @@ const StyledA = styled.a`
   color: #add8e6;
 `
 
+const StyledButton = styled.button`
+  color: #add8e6;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 20px;
+  font-weight: bold;
+`
+
 const StyledImg = styled.img`
   height: 200px;
   width: 200px;
@@ -66,6 +76,7 @@ const StyledImg = styled.img`
 const RegistryDetailsModal: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [imgLoaded, setImgLoaded] = useState(false)
+  const scrollTop = useScrollTop();
 
   const {
     isLoading: countsLoading,
@@ -110,12 +121,16 @@ const RegistryDetailsModal: React.FC = () => {
           </StyledLabel>
           <StyledLabel>
             Policy:{' '}
-            <StyledA
-              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
-              target="_blank"
+            <StyledButton
+              onClick={() => {
+                if (registry.metadata.policyURI) {
+                  setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                  scrollTop();
+                }
+              }}
             >
-              Link
-            </StyledA>
+              View
+            </StyledButton>
           </StyledLabel>
           {!imgLoaded && <Skeleton height={200} width={200} />}
           <StyledImg
