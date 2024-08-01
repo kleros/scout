@@ -27,7 +27,7 @@ export const StyledWebsiteAnchor = styled.a`
 
 const ImageWithSkeleton = ({ src, alt }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
 
   const scrollTop = useScrollTop();
 

@@ -7,6 +7,7 @@ import { DepositParams } from 'utils/fetchRegistryDeposits'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
 import { StyledCloseButton, ClosedButtonContainer } from 'pages/Home'
 import { ModalOverlay } from './index'
+import { GraphItemDetails } from 'utils/itemDetails'
 
 const Container = styled.div`
   position: fixed;
@@ -69,9 +70,12 @@ const TextArea = styled.textarea`
 `
 
 interface IConfirmationBox {
-  evidenceConfirmationType: string
-  isConfirmationOpen: boolean
-  setIsConfirmationOpen: (isOpen: boolean) => void
+  evidenceConfirmationType: string;
+  isConfirmationOpen: boolean;
+  setIsConfirmationOpen: (isOpen: boolean) => void;
+  detailsData: GraphItemDetails;
+  deposits: DepositParams | undefined;
+  arbitrationCostData: bigint | undefined;
 }
 
 const ConfirmationBox: React.FC<IConfirmationBox> = ({

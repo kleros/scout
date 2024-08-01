@@ -313,14 +313,7 @@ const DetailsModal: React.FC = () => {
           <>
             {/* ConfirmationBox Modal */}
             {isConfirmationOpen && (
-              <ConfirmationBox
-                evidenceConfirmationType={evidenceConfirmationType}
-                isConfirmationOpen={isConfirmationOpen}
-                setIsConfirmationOpen={setIsConfirmationOpen}
-                detailsData={detailsData}
-                deposits={deposits}
-                arbitrationCostData={arbitrationCostData}
-              />
+              <ConfirmationBox {...{evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData}} />
             )}
 
             {/* DETAILS */}

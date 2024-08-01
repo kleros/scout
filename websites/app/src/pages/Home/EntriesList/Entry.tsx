@@ -174,7 +174,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
       />
       <CardContent>
         <strong>
-          <AddressDisplay address={item?.metadata?.key0} />
+          <AddressDisplay address={item?.metadata?.key0 || ''} />
         </strong>
         {item.registryAddress === registryMap['Tags'] && (
           <>
@@ -204,7 +204,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
                   <TokenLogoWrapper>
                     {!imgLoaded && <Skeleton height={100} width={100} />}
                     <img
-                      src={tokenLogoURI}
+                      src={tokenLogoURI || undefined}
                       alt="Logo"
                       onLoad={() => setImgLoaded(true)}
                       style={{ display: imgLoaded ? 'block' : 'none' }}
@@ -239,7 +239,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
                 >
                   {!imgLoaded && <Skeleton height={100} width={150} />}
                   <VisualProofWrapper
-                    src={visualProofURI}
+                    src={visualProofURI || undefined}
                     alt="Visual proof"
                     onLoad={() => setImgLoaded(true)}
                     style={{ display: imgLoaded ? '' : 'none' }}
