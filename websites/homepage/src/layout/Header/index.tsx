@@ -38,6 +38,7 @@ const StyledText = styled.h3`
   font-weight: 600;
   text-align: center;
   font-family: 'Avenir', sans-serif;
+  margin: 0;
 `
 
 const Title = styled.div`
