@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import Skeleton from 'react-loading-skeleton'
@@ -9,6 +9,7 @@ import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { formatTimestamp } from 'utils/formatTimestamp'
+import useHumanizedCountdown, { useChallengePeriodDuration, useChallengeRemainingTime } from 'hooks/countdown'
 
 const Card = styled.div`
   background-color: #321c49;
@@ -90,31 +91,25 @@ const StyledButton = styled.button`
   padding: 0;
 `;
 
-interface IEntry {
-  item: GraphItem
+const readableStatusMap = {
+  Registered: 'Registered',
+  Absent: 'Removed',
+  RegistrationRequested: 'Registration Requested',
+  ClearingRequested: 'Removal Requested',
 }
 
-interface IStatus {
-  status:
-    | 'Registered'
-    | 'Absent'
-    | 'RegistrationRequested'
-    | 'ClearingRequested'
-  disputed: boolean
-  bounty: string
+const challengedStatusMap = {
+  RegistrationRequested: 'Challenged Submission',
+  ClearingRequested: 'Challenged Removal',
 }
 
-const Status: React.FC<IStatus> = ({ status, disputed, bounty }) => {
-  const readableStatusMap = {
-    Registered: 'Registered',
-    Absent: 'Removed',
-    RegistrationRequested: 'Registration Requested',
-    ClearingRequested: 'Removal Requested',
-  }
-  const challengedStatusMap = {
-    RegistrationRequested: 'Challenged Submission',
-    ClearingRequested: 'Challenged Removal',
-  }
+interface StatusProps {
+  status: 'Registered' | 'Absent' | 'RegistrationRequested' | 'ClearingRequested';
+  disputed: boolean;
+  bounty: string;
+}
+
+const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   const label = disputed
     ? challengedStatusMap[status]
     : readableStatusMap[status]
@@ -128,33 +123,39 @@ const Status: React.FC<IStatus> = ({ status, disputed, bounty }) => {
   return (
     <CardStatus status={label}>
       {label}
-      {readableBounty ? ' — ' + readableBounty + ' xDAI' : ''}
+      {readableBounty ? ` — ${readableBounty} xDAI` : ''}
     </CardStatus>
   )
-}
+})
 
-const Entry: React.FC<IEntry> = ({ item }) => {
+const Entry = React.memo(({ item }: { item: GraphItem }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [, setSearchParams] = useSearchParams()
-  const scrollTop = useScrollTop();
+  const [searchParams, setSearchParams] = useSearchParams()
+  const scrollTop = useScrollTop()
+  
+  const challengePeriodDuration = useChallengePeriodDuration(item.registryAddress)
+  const challengeRemainingTime = useChallengeRemainingTime(item, challengePeriodDuration)
+  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
 
-  const handleEntryDetailsClick = () => {
+  const handleEntryDetailsClick = useCallback(() => {
     setSearchParams((prev) => {
       const prevParams = prev.toString()
       const newParams = new URLSearchParams(prevParams)
       newParams.append('itemdetails', item.id)
       return newParams
     })
-  }
+  }, [setSearchParams, item.id])
 
-  const tokenLogoURI =
+  const tokenLogoURI = useMemo(() => 
     item.registryAddress === registryMap['Tokens'] &&
     `https://cdn.kleros.link${
       (item?.metadata?.props?.find((prop) => prop.label === 'Logo') as Prop)
         ?.value
-    }`
+    }`,
+    [item]
+  )
 
-  const visualProofURI =
+  const visualProofURI = useMemo(() => 
     item.registryAddress === registryMap['CDN'] &&
     `https://cdn.kleros.link${
       (
@@ -162,7 +163,9 @@ const Entry: React.FC<IEntry> = ({ item }) => {
           (prop) => prop.label === 'Visual proof'
         ) as Prop
       )?.value
-    }`
+    }`,
+    [item]
+  )
 
   return (
     <Card>
@@ -247,17 +250,16 @@ const Entry: React.FC<IEntry> = ({ item }) => {
               )}
           </>
         )}
-        Submitted on:{' '}{formatTimestamp(Number(item?.requests[0].submissionTime), false)}
-        <DetailsButton
-          onClick={() => {
-            handleEntryDetailsClick()
-          }}
-        >
+        <div>Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}</div>
+        {formattedChallengeRemainingTime && (
+          <div>Finalises in {formattedChallengeRemainingTime}</div>
+        )}
+        <DetailsButton onClick={handleEntryDetailsClick}>
           Details
         </DetailsButton>
       </CardContent>
     </Card>
   )
-}
+})
 
 export default Entry
