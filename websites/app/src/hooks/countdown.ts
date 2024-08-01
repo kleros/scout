@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import humanizeDuration from 'humanize-duration'
 import { GraphItem, registryMap } from 'utils/fetchItems';
-import { ethers } from 'ethers';
+import { JsonRpcProvider, Contract } from 'ethers';
 
-export const useChallengePeriodDuration = (registryAddress) => {
+export const useChallengePeriodDuration = (registryAddress: string) => {
   const [duration, setDuration] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchDuration = async () => {
-      const provider = new ethers.JsonRpcProvider('https://rpc.gnosischain.com')
+      const provider = new JsonRpcProvider('https://rpc.gnosischain.com')
       const abi = ['function challengePeriodDuration() view returns (uint256)']
       let contractAddress
 
@@ -28,7 +28,7 @@ export const useChallengePeriodDuration = (registryAddress) => {
       }
 
       try {
-        const contract = new ethers.Contract(contractAddress, abi, provider)
+        const contract = new Contract(contractAddress, abi, provider)
         const result = await contract.challengePeriodDuration()
         setDuration(Number(result))
       } catch (error) {

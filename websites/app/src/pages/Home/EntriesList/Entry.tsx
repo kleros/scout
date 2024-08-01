@@ -8,7 +8,7 @@ import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { formatTimestamp } from 'utils/formatTimestamp'
-import useHumanizedCountdown, { useChallengePeriodDuration, useChallengeRemainingTime } from 'hooks/countdown'
+import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
 
 const Card = styled.div`
   background-color: #321c49;
@@ -127,12 +127,11 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   )
 })
 
-const Entry = React.memo(({ item }: { item: GraphItem }) => {
+const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, challengePeriodDuration: number | null }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [, setSearchParams] = useSearchParams()
   const scrollTop = useScrollTop()
   
-  const challengePeriodDuration = useChallengePeriodDuration(item.registryAddress)
   const challengeRemainingTime = useChallengeRemainingTime(item, challengePeriodDuration)
   const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
 
