@@ -28,6 +28,7 @@ import {
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
+import { registryMap } from 'utils/fetchItems'
 
 const columns = [
   {
@@ -138,10 +139,10 @@ const AddAddressTag: React.FC = () => {
     const ipfsObject = await ipfsPublish('item.json', fileData)
     const ipfsPath = getIPFSPath(ipfsObject)
     await initiateTransactionToCurate(
-      '0x66260c69d03837016d88c9877e61e08ef74c59f2',
+      registryMap.Tags,
       countsData?.Tags.deposits as DepositParams,
       ipfsPath
-    );
+    )
     clearLocalStorage('addTagForm');
   }
 

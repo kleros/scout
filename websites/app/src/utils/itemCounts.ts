@@ -1,5 +1,6 @@
 import { gql, request } from 'graphql-request'
 import { DepositParams, fetchRegistryDeposits } from './fetchRegistryDeposits'
+import { registryMap } from './fetchItems'
 
 export interface RegistryMetadata {
   address: string
@@ -45,7 +46,7 @@ const convertStringFieldsToNumber = (obj: any): any => {
 export const fetchItemCounts = async (): Promise<ItemCounts> => {
   const query = gql`
     {
-      Tags: lregistry(id: "0x66260c69d03837016d88c9877e61e08ef74c59f2") {
+      Tags: lregistry(id: "${registryMap.Tags}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -57,7 +58,7 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
           URI
         }
       }
-      CDN: lregistry(id: "0x957a53a994860be4750810131d9c876b2f52d6e1") {
+      CDN: lregistry(id: "${registryMap.CDN}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -69,7 +70,7 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
           URI
         }
       }
-      Tokens: lregistry(id: "0xee1502e29795ef6c2d60f8d7120596abe3bad990") {
+      Tokens: lregistry(id: "${registryMap.Tokens}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -125,9 +126,9 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   }
   // inject registry deposits as well
   const regDs = await Promise.all([
-    fetchRegistryDeposits('0x66260c69d03837016d88c9877e61e08ef74c59f2'),
-    fetchRegistryDeposits('0x957a53a994860be4750810131d9c876b2f52d6e1'),
-    fetchRegistryDeposits('0xee1502e29795ef6c2d60f8d7120596abe3bad990'),
+    fetchRegistryDeposits(registryMap.Tags),
+    fetchRegistryDeposits(registryMap.CDN),
+    fetchRegistryDeposits(registryMap.Tokens),
   ])
   itemCounts.Tags.deposits = regDs[0] as DepositParams
   itemCounts.CDN.deposits = regDs[1] as DepositParams

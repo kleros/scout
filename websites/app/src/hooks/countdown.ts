@@ -13,14 +13,14 @@ export const useChallengePeriodDuration = (registryAddress) => {
       let contractAddress
 
       switch (registryAddress) {
-        case registryMap['Tags']:
-          contractAddress = '0x66260c69d03837016d88c9877e61e08ef74c59f2'
+        case registryMap.Tags:
+          contractAddress = registryMap.Tags
           break
-        case registryMap['Tokens']:
-          contractAddress = '0xee1502e29795ef6c2d60f8d7120596abe3bad990'
+        case registryMap.Tokens:
+          contractAddress = registryMap.Tokens
           break
-        case registryMap['CDN']:
-          contractAddress = '0x957a53a994860be4750810131d9c876b2f52d6e1'
+        case registryMap.CDN:
+          contractAddress = registryMap.CDN
           break
         default:
           console.error('Unknown registry')
