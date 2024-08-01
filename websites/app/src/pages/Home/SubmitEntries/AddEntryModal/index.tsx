@@ -190,7 +190,7 @@ export const ErrorMessage = styled.div`
 `
 
 export const CloseButton = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
 
   const closeModal = () => {
     setSearchParams((prev) => {
@@ -206,7 +206,7 @@ export const CloseButton = () => {
 
 const AddEntryModal: React.FC = () => {
   const containerRef = useRef(null)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const addingItemToRegistry = useMemo(
     () => searchParams.get('additem'),
     [searchParams]

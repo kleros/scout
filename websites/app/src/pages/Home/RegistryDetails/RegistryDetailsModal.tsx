@@ -79,8 +79,6 @@ const RegistryDetailsModal: React.FC = () => {
   const scrollTop = useScrollTop();
 
   const {
-    isLoading: countsLoading,
-    error: countsError,
     data: countsData,
   } = useQuery({
     queryKey: ['counts'],

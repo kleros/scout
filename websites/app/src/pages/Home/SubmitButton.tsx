@@ -1,6 +1,5 @@
 import React from 'react'
-import styled, { css } from 'styled-components'
-import { landscapeStyle } from 'styles/landscapeStyle'
+import styled from 'styled-components'
 import { useSearchParams } from 'react-router-dom'
 import Button from 'components/Button'
 
@@ -9,7 +8,6 @@ const StyledButton = styled(Button)`
   background: #cd9dff;
   color: #380c65;
   font-family: 'Avenir', sans-serif;
-  ${landscapeStyle(() => css``)};
   &:hover,
   active {
     background: linear-gradient(145deg, #a188d6, #7e57c2);

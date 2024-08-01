@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import styled, { css } from 'styled-components'
-import { landscapeStyle } from 'styles/landscapeStyle'
+import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import { useSearchParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
@@ -130,7 +129,7 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
 
 const Entry = React.memo(({ item }: { item: GraphItem }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [, setSearchParams] = useSearchParams()
   const scrollTop = useScrollTop()
   
   const challengePeriodDuration = useChallengePeriodDuration(item.registryAddress)

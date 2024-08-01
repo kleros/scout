@@ -125,7 +125,6 @@ const Home: React.FC = () => {
 
   const {
     isLoading: searchLoading,
-    error: searchError,
     data: searchData,
   } = useQuery({
     queryKey: ['fetch', ...searchQueryKeys],
@@ -134,7 +133,6 @@ const Home: React.FC = () => {
 
   const {
     isLoading: countsLoading,
-    error: countsError,
     data: countsData,
   } = useQuery({
     queryKey: ['counts'],

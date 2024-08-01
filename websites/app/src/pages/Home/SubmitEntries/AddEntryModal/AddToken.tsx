@@ -108,8 +108,6 @@ const AddToken: React.FC = () => {
   });
 
   const {
-    isLoading: countsLoading,
-    error: countsError,
     data: countsData,
   } = useQuery({
     queryKey: ['counts'],
