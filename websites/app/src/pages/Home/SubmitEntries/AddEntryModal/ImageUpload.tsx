@@ -63,7 +63,6 @@ const ImageUpload: React.FC<{
         const data = await imageFile.arrayBuffer()
         const ipfsObject = await ipfsPublish(imageFile.name, data)
         const ipfsPath = getIPFSPath(ipfsObject)
-        console.log({ ipfsPath })
         setPath(ipfsPath)
         setImageError(null)
       } catch (err) {

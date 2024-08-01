@@ -269,7 +269,6 @@ const DetailsModal: React.FC = () => {
     })
     setIsConfirmationOpen(false)
   }
-  console.log(detailsData)
 
   const containerRef = useRef(null)
   useFocusOutside(containerRef, () => closeModal())

@@ -35,7 +35,6 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
     (ref) => `${ref.namespaceId}:${ref.id}` === keyForReference
   )
   const bgColor = chainColorMap[keyForReference] || '#a0aec0'
-  console.log(keyForReference)
 
   return (
     <Container>
