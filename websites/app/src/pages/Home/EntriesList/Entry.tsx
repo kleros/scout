@@ -250,9 +250,9 @@ const Entry = React.memo(({ item }: { item: GraphItem }) => {
               )}
           </>
         )}
-        <div>Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}</div>
+        <div style={{color: "#CD9DFF"}}>Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}</div>
         {formattedChallengeRemainingTime && (
-          <div>Finalises in {formattedChallengeRemainingTime}</div>
+          <div style={{color: "#CD9DFF"}}>Finalises in {formattedChallengeRemainingTime}</div>
         )}
         <DetailsButton onClick={handleEntryDetailsClick}>
           Details
