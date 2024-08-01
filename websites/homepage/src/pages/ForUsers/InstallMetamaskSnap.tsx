@@ -167,8 +167,7 @@ export const checkInstallation = async ({
   }
 
   try {
-    const result = await installSnap()
-    console.log('Snaps installed:', result)
+    await installSnap()
     setIsModalOpen(true)
   } catch (error) {
     console.error('Error checking snaps installation:', error)

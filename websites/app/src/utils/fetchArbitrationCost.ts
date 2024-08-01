@@ -30,7 +30,7 @@ export const fetchArbitrationCost = async (
 
     return arbitrationCost
   } catch (e) {
-    console.log('fetchArbitrationCost error!', e)
+    console.error('fetchArbitrationCost error!', e)
     return undefined
   }
 }

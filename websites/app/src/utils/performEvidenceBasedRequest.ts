@@ -97,10 +97,8 @@ export async function performEvidenceBasedRequest(
         throw new Error(`Unknown request type: ${requestType}`)
     }
 
-    console.log('Transaction hash:', transactionResponse.hash)
     // Wait for the transaction to be confirmed
-    const receipt = await transactionResponse.wait()
-    console.log('Transaction was mined in block', receipt.blockNumber)
+    await transactionResponse.wait()
 
     return true
   } catch (error) {
