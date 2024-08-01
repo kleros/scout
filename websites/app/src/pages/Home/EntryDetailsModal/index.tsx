@@ -18,6 +18,8 @@ import { getStatusLabel } from 'utils/getStatusLabel'
 import LoadingItems from '../LoadingItems'
 import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
+import AttachmentIcon from "svgs/icons/attachment.svg";
+import { useScrollTop } from 'hooks/useScrollTop'
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -150,7 +152,7 @@ const Evidence = styled.div`
 `
 
 const EvidenceField = styled.div`
-  margin-bottom: 8px;
+  margin: 8px 0;
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
@@ -181,11 +183,33 @@ const LabelAndValue = styled.div`
   align-items: center;
 `
 
+const StyledButton = styled.button`
+  height: fit-content;
+  display: flex;
+  cursor: pointer;
+  color: white;
+  background: none;
+  text-decoration: underline;
+  border: none;
+  padding: 0;
+  gap: ${responsiveSize(5, 6)};
+  ${landscapeStyle(
+    () => css`
+      > svg {
+        width: 16px;
+        fill: white;
+      }
+    `
+  )}
+`;
+
 const DetailsModal: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('')
 
+  const scrollTop = useScrollTop();
+  
   const itemDetailsId = useMemo(
     () => searchParams.get('itemdetails'),
     [searchParams]
@@ -245,7 +269,6 @@ const DetailsModal: React.FC = () => {
     })
     setIsConfirmationOpen(false)
   }
-  console.log(detailsData)
 
   const containerRef = useRef(null)
   useFocusOutside(containerRef, () => closeModal())
@@ -290,14 +313,7 @@ const DetailsModal: React.FC = () => {
           <>
             {/* ConfirmationBox Modal */}
             {isConfirmationOpen && (
-              <ConfirmationBox
-                evidenceConfirmationType={evidenceConfirmationType}
-                isConfirmationOpen={isConfirmationOpen}
-                setIsConfirmationOpen={setIsConfirmationOpen}
-                detailsData={detailsData}
-                deposits={deposits}
-                arbitrationCostData={arbitrationCostData}
-              />
+              <ConfirmationBox {...{evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData}} />
             )}
 
             {/* DETAILS */}
@@ -335,6 +351,7 @@ const DetailsModal: React.FC = () => {
                       <strong>{label}:</strong> {renderValue(label, value)}
                     </LabelAndValue>
                   ))}
+                  <LabelAndValue><strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}</LabelAndValue>
               </EntryDetailsContainer>
               {/* EVIDENCES */}
               <EvidenceSection>
@@ -362,9 +379,22 @@ const DetailsModal: React.FC = () => {
                           {evidence?.metadata?.description || ''}
                         </StyledReactMarkdown>
                       </EvidenceDescription>
+                      {evidence?.metadata?.fileURI ? (
+                          <StyledButton
+                            onClick={() => {
+                              if (evidence.metadata?.fileURI) {
+                                setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` });
+                                scrollTop();
+                              }
+                            }}
+                          >
+                            <AttachmentIcon />
+                            View Attached File
+                          </StyledButton>
+                        ) : null}
                       <EvidenceField>
                         <strong>Time:</strong>{' '}
-                        {formatTimestamp(evidence.timestamp)}
+                        {formatTimestamp(Number(evidence.timestamp), true)}
                       </EvidenceField>
                       <EvidenceField>
                         <strong>Party:</strong> {evidence.party}

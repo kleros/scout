@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -16,17 +16,18 @@ const FilterContainer = styled.div`
 const DropdownContainer = styled.div`
   display: flex;
   flex-direction: column;
-  margin-top: 4px;
 `
 
-const FilterDropdown = styled.div<{ open: boolean }>`
+const FilterDropdownButton = styled.div<{ open: boolean }>`
   display: flex;
-  font-size: 18px;
   font-family: 'Oxanium', sans-serif;
+  font-size: 18px;
   font-weight: 600;
-  flex-direction: row;
-  border-radius: 8px;
+  align-items: center;
+  padding: 0 4px;
+  border-radius: 6px;
   cursor: pointer;
+
   &:hover {
     background: linear-gradient(145deg, #7e57c2, #482c85);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
@@ -49,21 +50,27 @@ const FilterOptionContainer = styled.div`
   margin-top: 30px;
   position: absolute;
   border-radius: 8px;
+  z-index: 10;
+  overflow: hidden;
 `
 
 // when selected, has a border, bold and more opacity
-const FilterOption = styled.div<{ selected: boolean }>`
-  text-align: center;
+const FilterOption = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: left;
   font-family: 'Oxanium', sans-serif;
   font-size: 16px;
   padding: 6px;
-  font-weight: ${({ selected }) => (selected ? 'bold' : 'normal')};
-  opacity: ${({ selected }) => (selected ? '100%' : '60%')};
   cursor: pointer;
   &:hover {
     background: linear-gradient(145deg, #7e57c2, #482c85);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   }
+`
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  margin-right: 8px;
 `
 
 // renders right of the dropdown filter
@@ -80,7 +87,6 @@ const RemovableFilter = styled.div`
   font-family: 'Oxanium', sans-serif;
   font-size: 16px;
   font-weight: 400;
-  height: 28px;
   align-items: center;
   padding: 0 4px;
   border-radius: 6px;
@@ -92,266 +98,148 @@ const RemovableFilter = styled.div`
   }
 `
 
-const Statuses: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [open, setOpen] = useState<boolean>(false)
-  const statuses = useMemo(() => searchParams.getAll('status'), [searchParams])
-  const disputeds = useMemo(
-    () => searchParams.getAll('disputed'),
-    [searchParams]
-  )
-  const dropdownRef = useRef(null)
-  useFocusOutside(dropdownRef, () => setOpen((open) => false))
+const STATUS_LABELS = {
+  'Registered': 'Registered',
+  'RegistrationRequested': 'Registration Requested',
+  'ClearingRequested': 'Removal Requested',
+  'Absent': 'Removed'
+};
 
-  const toggleStatus = (status: string) => {
+const REGISTRATION_STATUSES = Object.keys(STATUS_LABELS);
+
+const CHALLENGE_STATUSES = [
+  { value: 'true', label: 'Challenged' },
+  { value: 'false', label: 'Unchallenged' }
+];
+
+const useFilterState = (paramName: string): [string[], (value: string) => void] => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const values = useMemo(() => searchParams.getAll(paramName), [searchParams, paramName]);
+
+  const toggleValue = useCallback((value: string) => {
     setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      const statuses = newParams.getAll('status')
-      if (statuses.includes(status)) {
-        // remove
-        newParams.delete('status', status)
+      const newParams = new URLSearchParams(prev);
+      if (values.includes(value)) {
+        newParams.delete(paramName, value);
       } else {
-        // add
-        newParams.append('status', status)
+        newParams.append(paramName, value);
       }
-      // bounce to page 1
-      newParams.delete('page')
-      newParams.append('page', '1')
-      return newParams
-    })
-  }
+      newParams.set('page', '1');
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams, values, paramName]);
 
-  const toggleDisputed = (boolString: string) => {
-    setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      const statuses = newParams.getAll('disputed')
-      if (statuses.includes(boolString)) {
-        // remove all
-        newParams.delete('disputed')
-        // append the opposite
-        newParams.append('disputed', boolString === 'true' ? 'false' : 'true')
-      } else {
-        // add
-        newParams.append('disputed', boolString)
-      }
-      // bounce to page 1
-      newParams.delete('page')
-      newParams.append('page', '1')
-      return newParams
-    })
-  }
+  return [values, toggleValue];
+};
 
-  const toggleStatusOrDisputed = (s: string) => {
-    if (s === 'true' || s === 'false') {
-      toggleDisputed(s)
-    } else {
-      toggleStatus(s)
-    }
-  }
-
-  return (
-    <FilterContainer>
-      <DropdownContainer ref={dropdownRef}>
-        <FilterDropdown open={open} onClick={() => setOpen((open) => !open)}>
-          Status
-          <FilterDropdownIconWrapper open={open}>
-            <DownDirectionIcon />
-          </FilterDropdownIconWrapper>
-        </FilterDropdown>
-        {open && (
-          <FilterOptionContainer>
-            <FilterOption
-              selected={statuses.includes('Registered')}
-              onClick={() => toggleStatusOrDisputed('Registered')}
-            >
-              Registered
-            </FilterOption>
-            <FilterOption
-              selected={statuses.includes('RegistrationRequested')}
-              onClick={() => toggleStatusOrDisputed('RegistrationRequested')}
-            >
-              Submitted
-            </FilterOption>
-            <FilterOption
-              selected={statuses.includes('ClearingRequested')}
-              onClick={() => toggleStatusOrDisputed('ClearingRequested')}
-            >
-              Removing
-            </FilterOption>
-            <FilterOption
-              selected={statuses.includes('Absent')}
-              onClick={() => toggleStatusOrDisputed('Absent')}
-            >
-              Removed
-            </FilterOption>
-            {/* separation bar here? todo */}
-            <FilterOption
-              selected={disputeds.includes('false')}
-              onClick={() => toggleStatusOrDisputed('false')}
-            >
-              Unchallenged
-            </FilterOption>
-            <FilterOption
-              selected={disputeds.includes('true')}
-              onClick={() => toggleStatusOrDisputed('true')}
-            >
-              Challenged
-            </FilterOption>
-          </FilterOptionContainer>
-        )}
-      </DropdownContainer>
-      <RemovableFilterContainer>
-        {statuses.map((s) => (
-          <RemovableFilter key={s} onClick={() => toggleStatus(s)}>
-            {
-              {
-                Registered: 'Registered',
-                RegistrationRequested: 'Submitted',
-                ClearingRequested: 'Removing',
-                Absent: 'Removed',
-              }[s]
-            }{' '}
-            ✕
-          </RemovableFilter>
-        ))}
-        {disputeds.map((s) => (
-          <RemovableFilter key={s} onClick={() => toggleDisputed(s)}>
-            {
-              {
-                true: 'Challenged',
-                false: 'Unchallenged',
-              }[s]
-            }{' '}
-            ✕
-          </RemovableFilter>
-        ))}
-      </RemovableFilterContainer>
-    </FilterContainer>
-  )
+interface FilterDropdownProps {
+  label: string;
+  options: Array<{ value: string; label: string }>;
+  selectedValues: string[];
+  onToggle: (value: string) => void;
 }
 
-const Networks: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [open, setOpen] = useState<boolean>(false)
-  const networks = useMemo(() => searchParams.getAll('network'), [searchParams])
-  const dropdownRef = useRef(null)
-  useFocusOutside(dropdownRef, () => setOpen((open) => false))
+const FilterDropdown: React.FC<FilterDropdownProps> = React.memo(({ label, options, selectedValues, onToggle }) => {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  useFocusOutside(dropdownRef, () => setOpen(false));
 
-  const toggleNetwork = (network: string) => {
-    setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      const networks = newParams.getAll('network')
-      if (networks.includes(network)) {
-        // remove
-        newParams.delete('network', network)
-      } else {
-        // add
-        newParams.append('network', network)
-      }
-      // bounce to page 1
-      newParams.delete('page')
-      newParams.append('page', '1')
-      return newParams
-    })
-  }
-
-  // todo refactor
-  // adding networks manually should be a crime
   return (
     <FilterContainer>
       <DropdownContainer ref={dropdownRef}>
-        <FilterDropdown open={open} onClick={() => setOpen((open) => !open)}>
-          Network
+        <FilterDropdownButton open={open} onClick={() => setOpen(!open)}>
+          {label}
           <FilterDropdownIconWrapper open={open}>
             <DownDirectionIcon />
           </FilterDropdownIconWrapper>
-        </FilterDropdown>
+        </FilterDropdownButton>
         {open && (
           <FilterOptionContainer>
-            {relevantNetworks.map((n) => (
+            {options.map((option) => (
               <FilterOption
-                key={n.chainId}
-                selected={networks.includes(String(n.chainId))}
-                onClick={() => toggleNetwork(String(n.chainId))}
+                key={option.value}
+                onClick={() => onToggle(option.value)}
               >
-                {n.name}
+                <Checkbox
+                  checked={selectedValues.includes(option.value)}
+                  onChange={() => onToggle(option.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {option.label}
               </FilterOption>
             ))}
           </FilterOptionContainer>
         )}
       </DropdownContainer>
       <RemovableFilterContainer>
-        {networks.length === 0 ? (
-          <RemovableFilter>All Networks</RemovableFilter>
+        {selectedValues.length === options.length ? (
+          <RemovableFilter>All {label}</RemovableFilter>
         ) : (
-          networks.map((s) => (
-            <RemovableFilter key={s} onClick={() => toggleNetwork(s)}>
-              {relevantNetworks.find((n) => s === String(n.chainId))?.name} ✕
+          selectedValues.map(value => (
+            <RemovableFilter key={value} onClick={() => onToggle(value)}>
+              {options.find(o => o.value === value)?.label} ✕
             </RemovableFilter>
           ))
         )}
       </RemovableFilterContainer>
     </FilterContainer>
-  )
-}
+  );
+});
 
-const Ordering: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const direction = useMemo(
-    () => searchParams.get('orderDirection'),
-    [searchParams]
-  )
+const RegistrationStatus: React.FC = React.memo(() => {
+  const [statuses, toggleStatus] = useFilterState('status');
+  const options = REGISTRATION_STATUSES.map(s => ({ value: s, label: STATUS_LABELS[s] }));
+  return <FilterDropdown label="Registration Status" options={options} selectedValues={statuses} onToggle={toggleStatus} />;
+});
 
-  const toggleDirection = () => {
-    setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      const direction = newParams.get('orderDirection')
-      newParams.delete('orderDirection')
-      if (direction === 'desc') {
-        newParams.append('orderDirection', 'asc')
-      } else {
-        newParams.append('orderDirection', 'desc')
-      }
-      // bounce to page 1
-      newParams.delete('page')
-      newParams.append('page', '1')
-      return newParams
-    })
-  }
+const ChallengeStatus: React.FC = React.memo(() => {
+  const [disputedValues, toggleDisputed] = useFilterState('disputed');
+  return <FilterDropdown label="Challenge Status" options={CHALLENGE_STATUSES} selectedValues={disputedValues} onToggle={toggleDisputed} />;
+});
+
+const Networks: React.FC = React.memo(() => {
+  const [networks, toggleNetwork] = useFilterState('network');
+  const options = relevantNetworks.map(n => ({ value: String(n.chainId), label: n.name }));
+  return <FilterDropdown label="Networks" options={options} selectedValues={networks} onToggle={toggleNetwork} />;
+});
+
+const Ordering: React.FC = React.memo(() => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const direction = searchParams.get('orderDirection');
+
+  const toggleDirection = useCallback(() => {
+    setSearchParams(prev => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set('orderDirection', direction === 'desc' ? 'asc' : 'desc');
+      newParams.set('page', '1');
+      return newParams;
+    });
+  }, [setSearchParams, direction]);
 
   return (
     <FilterContainer>
       <DropdownContainer>
-        <FilterDropdown
-          open={direction === 'desc'}
-          onClick={() => toggleDirection()}
-        >
+        <FilterDropdownButton open={direction === 'desc'} onClick={toggleDirection}>
           {direction === 'desc' ? 'Newest' : 'Oldest'}
           <FilterDropdownIconWrapper open={direction === 'asc'}>
             <DownDirectionIcon />
           </FilterDropdownIconWrapper>
-        </FilterDropdown>
+        </FilterDropdownButton>
       </DropdownContainer>
     </FilterContainer>
-  )
-}
+  );
+});
 
 const Container = styled.div`
   display: flex;
+  flex-wrap: wrap;
   width: 84vw;
-  flex-direction: column;
-  justify-content: space-between;
   gap: 20px;
   margin-bottom: ${responsiveSize(24, 28)};
 
   ${landscapeStyle(
     () => css`
       width: 80%;
-      flex-direction: row;
     `
   )}
 `
@@ -359,7 +247,8 @@ const Container = styled.div`
 const Filters: React.FC = () => {
   return (
     <Container>
-      <Statuses />
+      <RegistrationStatus />
+      <ChallengeStatus />
       <Networks />
       <Ordering />
     </Container>

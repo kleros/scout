@@ -117,7 +117,7 @@ const StepTitle = styled.div<{ isActive: boolean }>`
 
 const ImageContainer = styled.div`
   width: 448px;
-  height: 300px;
+  height: 225px;
   color: #848484;
   display: flex;
   justify-content: center;

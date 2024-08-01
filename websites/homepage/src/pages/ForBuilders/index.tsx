@@ -32,6 +32,7 @@ const ForBuilders: React.FC = () => {
         titleText="How does Community Curation work?"
         buttonText="Get in Touch"
         buttonLink="https://t.me/KlerosCurate"
+        showStats={false} 
       />
       <PoweredBy />
     </Container>

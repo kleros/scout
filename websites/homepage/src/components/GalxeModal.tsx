@@ -74,7 +74,6 @@ const handleParticipation = async (
         body: JSON.stringify({ contractAddress: address }),
       }
     )
-    console.log(response)
   } catch (error) {
     console.error('Error participating in Galxe campaign:', error)
   }

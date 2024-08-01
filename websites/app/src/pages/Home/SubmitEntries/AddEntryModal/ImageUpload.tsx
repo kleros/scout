@@ -2,11 +2,13 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
+import UploadIcon from 'tsx:svgs/icons/upload.svg'
 
 const StyledLabel = styled.label`
   cursor: pointer;
-  width: 100px;
-  display: inline-block;
+  width: fit-content;
+  display: flex;  
+  align-items: center;
   padding: 10px 20px;
   background-color: #855caf;
   color: white;
@@ -24,41 +26,75 @@ const StyledInput = styled.input`
   position: absolute;
 `
 
+const StyledUploadIcon = styled(UploadIcon)`
+  margin-left: 5px;
+`
+
 const ImageUpload: React.FC<{
   path: string
   setPath: Dispatch<SetStateAction<string>>
-}> = (p) => {
-  const [imageFile, setImageFile] = useState<any>()
+  setImageError: Dispatch<SetStateAction<string | null>>
+  registry: string
+}> = ({ path, setPath, setImageError, registry }) => {
+  const [imageFile, setImageFile] = useState<File | null>(null)
+
+  const validateImage = (file: File): string | null => {
+    if (registry === 'Tokens') {
+      if (!file.type.startsWith('image/png')) {
+        return 'Only PNG images are allowed for Tokens registry.'
+      }
+      if (file.size > 4 * 1024 * 1024) {
+        return 'Image size should not exceed 4MB.'
+      }
+    }
+    return null
+  }
 
   useEffect(() => {
     if (!imageFile) return
     const uploadImageToIPFS = async () => {
-      const data = await new Response(new Blob([imageFile])).arrayBuffer()
-      const ipfsObject = await ipfsPublish(imageFile.name, data)
-      const ipfsPath = getIPFSPath(ipfsObject)
-      console.log({ ipfsPath })
-      p.setPath(ipfsPath)
+      const error = validateImage(imageFile)
+      if (error) {
+        setImageError(error)
+        return
+      }
+
+      try {
+        const data = await imageFile.arrayBuffer()
+        const ipfsObject = await ipfsPublish(imageFile.name, data)
+        const ipfsPath = getIPFSPath(ipfsObject)
+        setPath(ipfsPath)
+        setImageError(null)
+      } catch (err) {
+        setImageError('Failed to upload image. Please try again.')
+      }
     }
     uploadImageToIPFS()
-  }, [imageFile])
+  }, [imageFile, registry, setPath, setImageError])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+    }
+  }
 
   return (
     <>
       Image
       <StyledLabel>
-        Upload Image
+        Upload Image <StyledUploadIcon />
         <StyledInput
           type="file"
-          onChange={(e) => {
-            setImageFile(e.target.files ? e.target.files[0] : null)
-          }}
+          onChange={handleFileChange}
+          accept={registry === 'Tokens' ? '.png' : 'image/*'}
         />
       </StyledLabel>
-      {p.path && (
+      {path && (
         <img
           width={200}
           height={200}
-          src={`https://cdn.kleros.link${p.path}`}
+          src={`https://cdn.kleros.link${path}`}
           alt="preview"
         />
       )}

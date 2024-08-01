@@ -120,7 +120,6 @@ const connectToMetaMask = async (
     })
     setIsConnected(true)
     setAddress(accounts[0])
-    console.log('Connected to MetaMask')
   } catch (error) {
     console.error('Error connecting to MetaMask:', error)
   }
@@ -168,8 +167,7 @@ export const checkInstallation = async ({
   }
 
   try {
-    const result = await installSnap()
-    console.log('Snaps installed:', result)
+    await installSnap()
     setIsModalOpen(true)
   } catch (error) {
     console.error('Error checking snaps installation:', error)

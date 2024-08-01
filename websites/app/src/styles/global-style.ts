@@ -4,6 +4,7 @@ export const GlobalStyle = createGlobalStyle`
   body {
     font-family: 'Open Sans', sans-serif;
     margin: 0;
+    overflow: hidden;
   }
 
   .os-theme-dark {

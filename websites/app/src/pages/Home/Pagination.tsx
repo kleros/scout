@@ -6,17 +6,17 @@ import Button from 'components/Button'
 
 const Container = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
   width: 80%;
   margin: 48px auto 0;
-  display: flex;
   gap: 12px;
   align-items: center;
 
   ${landscapeStyle(
     () => css`
-      flex-direction: row;
-      justify-content: space-between;
+      justify-content: flex-end;
     `
   )}
 `
@@ -99,10 +99,7 @@ const Pagination: React.FC<IPagination> = ({ totalPages }) => {
             if (e.key === 'Enter') setCurrentPage(pageInput)
           }}
         />
-        <Span>of {totalPages === null ? '???' : totalPages}</Span>
-        <StyledButton onClick={() => setCurrentPage(pageInput)}>
-          Go
-        </StyledButton>
+        <Span>of {totalPages === null ? '?' : totalPages}</Span>
       </PageControls>
       <StyledButton
         onClick={() => setCurrentPage(page + 1)}

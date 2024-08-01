@@ -1,11 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
-import { fetchItemCounts } from 'utils/itemCounts'
+import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
@@ -20,7 +21,14 @@ import {
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
+  ExpectedPayouts,
+  PayoutsContainer,
+  Divider,
+  SubmissionButton
 } from './index'
+import { useDebounce } from 'react-use'
+import { useSearchParams } from 'react-router-dom'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const columns = [
   {
@@ -47,15 +55,32 @@ const columns = [
 ]
 
 const AddCDN: React.FC = () => {
-  const [network, setNetwork] = useState<NetworkOption>({
-    value: 'eip155:1',
-    label: 'Mainnet',
-  })
-  const [address, setAddress] = useState<string>('')
-  const [path, setPath] = useState<string>('')
+  const [formData, setFormData] = useLocalStorage('addCDNForm', {
+    network: { value: 'eip155:1', label: 'Mainnet' },
+    address: '',
+    domain: '',
+    path: '',
+  });
+
+  const [network, setNetwork] = useState<NetworkOption>(formData.network);
+  const [address, setAddress] = useState<string>(formData.address);
+  const [domain, setDomain] = useState<string>(formData.domain);
+  const [path, setPath] = useState<string>(formData.path);
+
+  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [imageError, setImageError] = useState<string | null>(null);
+  const scrollTop = useScrollTop();
+
+  useDebounce(
+    () => {
+      setDebouncedAddress(address)
+    },
+    500,
+    [address]
+  )
+
   const {
-    isLoading: countsLoading,
-    error: countsError,
     data: countsData,
   } = useQuery({
     queryKey: ['counts'],
@@ -63,14 +88,21 @@ const AddCDN: React.FC = () => {
     staleTime: Infinity,
   })
 
-  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
-    {
-      queryKey: ['addressissues', network.value + ':' + address, 'CDN', '-'],
-      queryFn: () => getAddressValidationIssue(network.value, address, 'CDN'),
-    }
-  )
+  const registry: FocusedRegistry | undefined = useMemo(() => {
+    const registryLabel = searchParams.get('registry')
+    if (registryLabel === null || !countsData) return undefined
+    return countsData[registryLabel]
+  }, [searchParams, countsData])
 
-  const [domain, setDomain] = useState<string>('')
+  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
+    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', domain],
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'CDN', domain),
+    enabled: Boolean(debouncedAddress) || Boolean(domain),
+  });
+
+  useEffect(() => {
+    setFormData({ network, address, domain, path });
+  }, [network, address, domain, path]);
 
   const submitCDN = async () => {
     const values = {
@@ -90,15 +122,17 @@ const AddCDN: React.FC = () => {
       '0x957a53a994860be4750810131d9c876b2f52d6e1',
       countsData?.CDN.deposits as DepositParams,
       ipfsPath
-    )
+    );
+    clearLocalStorage('addCDNForm');
   }
 
-  const submittingDisabled =
-    !address ||
-    !domain ||
-    !!addressIssuesData ||
-    !!addressIssuesLoading ||
-    !path
+  const handleClose = () => {
+    clearLocalStorage('addCDNForm');
+  }
+
+  const submittingDisabled = useMemo(() => {
+    return Boolean(!address || !domain || !!addressIssuesData || !!addressIssuesLoading || !path || imageError);
+  }, [address, domain, addressIssuesData, addressIssuesLoading, path, imageError]);
 
   return (
     <AddContainer>
@@ -115,10 +149,23 @@ const AddCDN: React.FC = () => {
             </StyledGoogleFormAnchor>
           </AddSubtitle>
         </div>
-        <ClosedButtonContainer>
+        {registry && (
+          <SubmissionButton
+            onClick={() => {
+              if (registry.metadata.policyURI) {
+                setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                scrollTop();
+              }
+            }}
+          >
+            Submission Guidelines
+          </SubmissionButton>
+        )}
+        <ClosedButtonContainer onClick={handleClose}>
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>
+      <Divider />
       <RichAddressForm
         networkOption={network}
         setNetwork={setNetwork}
@@ -126,26 +173,39 @@ const AddCDN: React.FC = () => {
         setAddress={setAddress}
         registry="Tags"
       />
-      {addressIssuesLoading && 'Loading'}
-      {addressIssuesData && (
-        <ErrorMessage>{addressIssuesData.message}</ErrorMessage>
+      {addressIssuesData?.address && (
+        <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
       Domain
       <StyledTextInput
-        placeholder="domain"
+        placeholder="e.g. kleros.io"
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
       />
-      <ImageUpload path={path} setPath={setPath} />
-      <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
-        Submit -{' '}
-        {countsData?.CDN?.deposits
-          ? formatEther(
-              countsData.CDN.deposits.arbitrationCost +
-                countsData.CDN.deposits.submissionBaseDeposit
+      {addressIssuesData?.domain && (
+        <ErrorMessage>{addressIssuesData.domain.message}</ErrorMessage>
+      )}
+      <ImageUpload
+        path={path}
+        setPath={setPath}
+        registry="CDN"
+        {...{setImageError}}
+      />
+      {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
+      <PayoutsContainer>
+        <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
+          Submit
+        </SubmitButton>
+        <ExpectedPayouts>
+          Deposit:{' '}
+          {countsData?.Tags?.deposits
+            ? formatEther(
+              countsData.Tags.deposits.arbitrationCost +
+              countsData.Tags.deposits.submissionBaseDeposit
             ) + ' xDAI'
-          : null}
-      </SubmitButton>
+            : null}{' | '}Expected Reward: $12
+        </ExpectedPayouts>
+      </PayoutsContainer>
     </AddContainer>
   )
 }

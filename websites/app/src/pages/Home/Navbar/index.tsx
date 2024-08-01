@@ -2,7 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import CurateLogo from 'tsx:svgs/header/curate-logo.svg'
 import Registries from './Registries'
 
@@ -15,9 +15,11 @@ const Container = styled.div`
   background: #010002;
   align-items: center;
   justify-content: center;
-  margin-bottom: ${responsiveSize(16, 24)};
-  gap: 16px;
-
+  margin-bottom: ${responsiveSize(20, 24)};
+  padding-bottom: ${responsiveSize(18, 0)};
+  gap: 8px;
+  border-bottom: 1px solid #CD9DFF;
+  
   ${landscapeStyle(
     () => css`
       height: 60px;
@@ -32,7 +34,7 @@ const StyledCurateLogo = styled(CurateLogo)`
   width: 44px;
 `
 
-const StyledText = styled.text`
+const StyledText = styled.h3`
   font-size: 24px;
   font-weight: 600;
   text-align: center;
@@ -53,17 +55,22 @@ const Title = styled.div`
   )}
 `
 
-const StyledA = styled.a`
+const StyledButton = styled.button<{ isSelected: boolean }>`
   display: none;
   font-family: 'Oxanium', sans-serif;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
 
   ${landscapeStyle(
     () => css`
       display: flex;
       position: relative;
       padding-right: 64px;
-      text-decoration: none;
-      color: #fff;
+      text-decoration: ${({ isSelected }) => (isSelected ? 'underline' : 'none')};
+      font-weight: ${({ isSelected }) => (isSelected ? 600 : 400)};
 
       :hover {
         text-decoration: underline;
@@ -76,24 +83,28 @@ interface INavbar {}
 
 const Navbar: React.FC<INavbar> = ({}) => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  
+  const isRewardsPage = searchParams.get('page') === 'rewards'
 
-  const handlerClickTitle = () => {
+  const handleClickTitle = () => {
     navigate('/')
+  }
+
+  const handleClickRewards = () => {
+    setSearchParams({ page: 'rewards' })
   }
 
   return (
     <Container>
-      <Title onClick={handlerClickTitle}>
+      <Title onClick={handleClickTitle}>
         <StyledCurateLogo />
         <StyledText>Kleros Scout</StyledText>
       </Title>
       <Registries />
-      <StyledA
-        href="https://blog.kleros.io/renewal-and-amendments-in-curates-combined-incentive-program/"
-        target="blank"
-      >
+      <StyledButton onClick={handleClickRewards} isSelected={isRewardsPage}>
         Earn Rewards by Submitting!
-      </StyledA>
+      </StyledButton>
     </Container>
   )
 }

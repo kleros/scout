@@ -112,7 +112,7 @@ export const fetchRegistryDeposits = async (
     }
     return depositParams
   } catch (e) {
-    console.log('fetchRegistryDeposits error!', e)
+    console.error('fetchRegistryDeposits error!', e)
     return undefined
   }
 }

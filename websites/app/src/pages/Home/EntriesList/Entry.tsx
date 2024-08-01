@@ -1,15 +1,17 @@
-import React, { useState } from 'react'
-import styled, { css } from 'styled-components'
-import { landscapeStyle } from 'styles/landscapeStyle'
+import React, { useCallback, useMemo, useState } from 'react'
+import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import { useSearchParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
+import { useScrollTop } from 'hooks/useScrollTop'
+import { formatTimestamp } from 'utils/formatTimestamp'
+import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
 
 const Card = styled.div`
-  background-color: #3a2154;
+  background-color: #321c49;
   border-radius: 12px;
   color: white;
   font-family: 'Oxanium', sans-serif;
@@ -20,10 +22,9 @@ const Card = styled.div`
 const CardStatus = styled.div<{ status: string }>`
   text-align: center;
   font-weight: bold;
-  padding-top: 20px;
-  padding-bottom: 15px;
+  padding: 15px 20px;
   margin-bottom: 10px;
-  border-bottom: 3px solid #08020e;
+  border-bottom: 2px solid #5A2393;
 
   &:before {
     content: '';
@@ -34,7 +35,7 @@ const CardStatus = styled.div<{ status: string }>`
     background-color: ${({ status }) =>
       ({
         Registered: '#90EE90',
-        Submitted: '#FFEA00',
+        'Registration Requested': '#FFEA00',
         'Challenged Submission': '#E87B35',
         'Challenged Removal': '#E87B35',
         Removed: 'red',
@@ -60,10 +61,10 @@ const TokenLogoWrapper = styled.div`
   justify-content: center;
 `
 
-const VisualProofWrapper = styled.div`
-  display: flex;
-  height: 52px;
-  justify-content: center;
+const VisualProofWrapper = styled.img`
+    object-fit: cover;
+    align-self: stretch;
+    width: 90%;
 `
 
 const DetailsButton = styled.button`
@@ -82,32 +83,32 @@ const DetailsButton = styled.button`
     transform: scale(0.97);
   }
 `
+const StyledButton = styled.button`
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+`;
 
-interface IEntry {
-  item: GraphItem
+const readableStatusMap = {
+  Registered: 'Registered',
+  Absent: 'Removed',
+  RegistrationRequested: 'Registration Requested',
+  ClearingRequested: 'Removal Requested',
 }
 
-interface IStatus {
-  status:
-    | 'Registered'
-    | 'Absent'
-    | 'RegistrationRequested'
-    | 'ClearingRequested'
-  disputed: boolean
-  bounty: string
+const challengedStatusMap = {
+  RegistrationRequested: 'Challenged Submission',
+  ClearingRequested: 'Challenged Removal',
 }
 
-const Status: React.FC<IStatus> = ({ status, disputed, bounty }) => {
-  const readableStatusMap = {
-    Registered: 'Registered',
-    Absent: 'Removed',
-    RegistrationRequested: 'Submitted',
-    ClearingRequested: 'Removing',
-  }
-  const challengedStatusMap = {
-    RegistrationRequested: 'Challenged Submission',
-    ClearingRequested: 'Challenged Removal',
-  }
+interface StatusProps {
+  status: 'Registered' | 'Absent' | 'RegistrationRequested' | 'ClearingRequested';
+  disputed: boolean;
+  bounty: string;
+}
+
+const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   const label = disputed
     ? challengedStatusMap[status]
     : readableStatusMap[status]
@@ -121,32 +122,38 @@ const Status: React.FC<IStatus> = ({ status, disputed, bounty }) => {
   return (
     <CardStatus status={label}>
       {label}
-      {readableBounty ? ' — ' + readableBounty + ' xDAI' : ''}
+      {readableBounty ? ` — ${readableBounty} xDAI` : ''}
     </CardStatus>
   )
-}
+})
 
-const Entry: React.FC<IEntry> = ({ item }) => {
+const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, challengePeriodDuration: number | null }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
   const [, setSearchParams] = useSearchParams()
+  const scrollTop = useScrollTop()
+  
+  const challengeRemainingTime = useChallengeRemainingTime(item, challengePeriodDuration)
+  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
 
-  const handleEntryDetailsClick = () => {
+  const handleEntryDetailsClick = useCallback(() => {
     setSearchParams((prev) => {
       const prevParams = prev.toString()
       const newParams = new URLSearchParams(prevParams)
       newParams.append('itemdetails', item.id)
       return newParams
     })
-  }
+  }, [setSearchParams, item.id])
 
-  const tokenLogoURI =
+  const tokenLogoURI = useMemo(() => 
     item.registryAddress === registryMap['Tokens'] &&
     `https://cdn.kleros.link${
       (item?.metadata?.props?.find((prop) => prop.label === 'Logo') as Prop)
         ?.value
-    }`
+    }`,
+    [item]
+  )
 
-  const visualProofURI =
+  const visualProofURI = useMemo(() => 
     item.registryAddress === registryMap['CDN'] &&
     `https://cdn.kleros.link${
       (
@@ -154,7 +161,9 @@ const Entry: React.FC<IEntry> = ({ item }) => {
           (prop) => prop.label === 'Visual proof'
         ) as Prop
       )?.value
-    }`
+    }`,
+    [item]
+  )
 
   return (
     <Card>
@@ -165,7 +174,7 @@ const Entry: React.FC<IEntry> = ({ item }) => {
       />
       <CardContent>
         <strong>
-          <AddressDisplay address={item?.metadata?.key0} />
+          <AddressDisplay address={item?.metadata?.key0 || ''} />
         </strong>
         {item.registryAddress === registryMap['Tags'] && (
           <>
@@ -184,21 +193,24 @@ const Entry: React.FC<IEntry> = ({ item }) => {
           <>
             {item?.metadata?.props &&
               item.metadata?.props.find((prop) => prop.label === 'Logo') && (
-                <a
-                  href={tokenLogoURI}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <StyledButton
+                  onClick={() => {
+                    if (tokenLogoURI) {
+                      setSearchParams({ attachment: tokenLogoURI });
+                      scrollTop();
+                    }
+                  }}
                 >
                   <TokenLogoWrapper>
                     {!imgLoaded && <Skeleton height={100} width={100} />}
                     <img
-                      src={tokenLogoURI}
+                      src={tokenLogoURI || undefined}
                       alt="Logo"
                       onLoad={() => setImgLoaded(true)}
                       style={{ display: imgLoaded ? 'block' : 'none' }}
                     />
                   </TokenLogoWrapper>
-                </a>
+                </StyledButton>
               )}
             <div>{item?.metadata?.key2}</div>
             <div>{item?.metadata?.key1}</div>
@@ -217,34 +229,35 @@ const Entry: React.FC<IEntry> = ({ item }) => {
               item?.metadata?.props.find(
                 (prop) => prop.label === 'Visual proof'
               ) && (
-                <a
-                  href={visualProofURI}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <StyledButton
+                  onClick={() => {
+                    if (visualProofURI) {
+                      setSearchParams({ attachment: visualProofURI });
+                      scrollTop();
+                    }
+                  }}
                 >
-                  <VisualProofWrapper>
-                    {!imgLoaded && <Skeleton height={52} width={100} />}
-                    <img
-                      src={visualProofURI}
-                      alt="Visual proof"
-                      onLoad={() => setImgLoaded(true)}
-                      style={{ display: imgLoaded ? 'block' : 'none' }}
-                    />
-                  </VisualProofWrapper>
-                </a>
+                  {!imgLoaded && <Skeleton height={100} width={150} />}
+                  <VisualProofWrapper
+                    src={visualProofURI || undefined}
+                    alt="Visual proof"
+                    onLoad={() => setImgLoaded(true)}
+                    style={{ display: imgLoaded ? '' : 'none' }}
+                  />
+                </StyledButton>
               )}
           </>
         )}
-        <DetailsButton
-          onClick={() => {
-            handleEntryDetailsClick()
-          }}
-        >
+        <div style={{color: "#CD9DFF"}}>Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}</div>
+        {formattedChallengeRemainingTime && (
+          <div style={{color: "#CD9DFF"}}>Finalises in {formattedChallengeRemainingTime}</div>
+        )}
+        <DetailsButton onClick={handleEntryDetailsClick}>
           Details
         </DetailsButton>
       </CardContent>
     </Card>
   )
-}
+})
 
 export default Entry

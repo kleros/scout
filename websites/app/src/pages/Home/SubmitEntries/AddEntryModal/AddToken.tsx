@@ -1,12 +1,14 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
+import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
 import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'ethers'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
-import { fetchItemCounts } from 'utils/itemCounts'
+import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
 import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
+import { useDebounce } from 'react-use'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
 import { ClosedButtonContainer } from 'pages/Home'
@@ -20,7 +22,13 @@ import {
   StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
+  ExpectedPayouts,
+  PayoutsContainer,
+  Divider,
+  SubmissionButton
 } from './index'
+import { useSearchParams } from 'react-router-dom'
+import { useScrollTop } from 'hooks/useScrollTop'
 
 const columns = [
   {
@@ -56,34 +64,62 @@ const columns = [
 ]
 
 const AddToken: React.FC = () => {
-  const [network, setNetwork] = useState<NetworkOption>({
-    value: 'eip155:1',
-    label: 'Mainnet',
-  })
-  const [address, setAddress] = useState<string>('')
+  const [formData, setFormData] = useLocalStorage('addTokenForm', {
+    network: { value: 'eip155:1', label: 'Mainnet' },
+    address: '',
+    decimals: '',
+    name: '',
+    symbol: '',
+    path: '',
+  });
 
-  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery(
-    {
-      queryKey: ['addressissues', network.value + ':' + address, 'Tokens', '-'],
-      queryFn: () =>
-        getAddressValidationIssue(network.value, address, 'Tokens'),
-    }
+  const [network, setNetwork] = useState<NetworkOption>(formData.network);
+  const [address, setAddress] = useState<string>(formData.address);
+  const [decimals, setDecimals] = useState<string>(formData.decimals);
+  const [name, setName] = useState<string>(formData.name);
+  const [symbol, setSymbol] = useState<string>(formData.symbol);
+  const [path, setPath] = useState<string>(formData.path);
+
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
+  const [imageError, setImageError] = useState<string | null>(null);
+  const scrollTop = useScrollTop();
+
+  useEffect(() => {
+    setFormData({ network, address, decimals, name, symbol, path });
+  }, [network, address, decimals, name, symbol, path]);
+
+  useDebounce(
+    () => {
+      setDebouncedAddress(address)
+    },
+    500,
+    [address]
   )
 
-  const [decimals, setDecimals] = useState<string>('')
-  const [name, setName] = useState<string>('')
-  const [symbol, setSymbol] = useState<string>('')
-  const [path, setPath] = useState<string>('')
+  const networkAddressKey = useMemo(() => {
+    return network.value + ':' + debouncedAddress
+  }, [network.value, debouncedAddress])
+
+  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
+    queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol],
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, undefined, undefined, symbol),
+    enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol),
+  });
 
   const {
-    isLoading: countsLoading,
-    error: countsError,
     data: countsData,
   } = useQuery({
     queryKey: ['counts'],
     queryFn: () => fetchItemCounts(),
     staleTime: Infinity,
   })
+
+  const registry: FocusedRegistry | undefined = useMemo(() => {
+    const registryLabel = searchParams.get('registry')
+    if (registryLabel === null || !countsData) return undefined
+    return countsData[registryLabel]
+  }, [searchParams, countsData])
 
   const submitToken = async () => {
     const values = {
@@ -105,17 +141,17 @@ const AddToken: React.FC = () => {
       '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
       countsData?.Tokens.deposits as DepositParams,
       ipfsPath
-    )
+    );
+    clearLocalStorage('addTokenForm');
   }
 
-  const submittingDisabled =
-    !address ||
-    !decimals ||
-    !name ||
-    !symbol ||
-    !!addressIssuesData ||
-    !!addressIssuesLoading ||
-    !path
+  const handleClose = () => {
+    clearLocalStorage('addTokenForm');
+  }
+
+  const submittingDisabled = useMemo(() => {
+    return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || imageError);
+  }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, imageError]);
 
   return (
     <AddContainer>
@@ -132,10 +168,23 @@ const AddToken: React.FC = () => {
             </StyledGoogleFormAnchor>
           </AddSubtitle>
         </div>
-        <ClosedButtonContainer>
+        {registry && (
+          <SubmissionButton
+            onClick={() => {
+              if (registry.metadata.policyURI) {
+                setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                scrollTop();
+              }
+            }}
+          >
+            Submission Guidelines
+          </SubmissionButton>
+        )}
+        <ClosedButtonContainer onClick={handleClose}>
           <CloseButton />
         </ClosedButtonContainer>
       </AddHeader>
+      <Divider />
       <RichAddressForm
         networkOption={network}
         setNetwork={setNetwork}
@@ -143,38 +192,59 @@ const AddToken: React.FC = () => {
         setAddress={setAddress}
         registry="Tags"
       />
-      {addressIssuesLoading && 'Loading...'}
-      {addressIssuesData && (
-        <ErrorMessage>{addressIssuesData.message}</ErrorMessage>
+      {addressIssuesData?.address && (
+        <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
       Decimals
       <StyledTextInput
-        placeholder="decimals"
+        placeholder="e.g. 18"
         value={decimals}
-        onChange={(e) => setDecimals(e.target.value)}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (/^\d*$/.test(value)) {
+            setDecimals(value);
+          }
+        }}
       />
       Name
       <StyledTextInput
-        placeholder="name"
+        placeholder="e.g. Pinakion"
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
+      {addressIssuesData?.projectName && (
+        <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
+      )}
       Symbol
       <StyledTextInput
-        placeholder="symbol"
+        placeholder="e.g. PNK"
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
       />
-      <ImageUpload path={path} setPath={setPath} />
-      <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
-        Submit -{' '}
-        {countsData?.Tokens?.deposits
-          ? formatEther(
-              countsData.Tokens.deposits.arbitrationCost +
-                countsData.Tokens.deposits.submissionBaseDeposit
+      {addressIssuesData?.symbol && (
+        <ErrorMessage>{addressIssuesData.symbol.message}</ErrorMessage>
+      )}
+      <ImageUpload
+        path={path}
+        setPath={setPath}
+        registry="Tokens"
+        {...{setImageError}}
+      />
+      {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
+      <PayoutsContainer>
+        <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
+          Submit
+        </SubmitButton>
+        <ExpectedPayouts>
+          Deposit:{' '}
+          {countsData?.Tags?.deposits
+            ? formatEther(
+              countsData.Tags.deposits.arbitrationCost +
+              countsData.Tags.deposits.submissionBaseDeposit
             ) + ' xDAI'
-          : null}
-      </SubmitButton>
+            : null}{' | '}Expected Reward: $12
+        </ExpectedPayouts>
+      </PayoutsContainer>
     </AddContainer>
   )
 }

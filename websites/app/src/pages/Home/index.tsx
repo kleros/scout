@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams, createSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchItems } from 'utils/fetchItems'
 import { fetchItemCounts } from 'utils/itemCounts'
 import Navbar from './Navbar'
+import RewardsPage from '../RewardsSection'
 import RegistryDetails from './RegistryDetails'
 import SubmitButton from './SubmitButton'
 import Search from './Search'
@@ -18,6 +18,7 @@ import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal'
 import Filters from './Filters'
 import AddEntryModal from './SubmitEntries/AddEntryModal'
 import CloseIcon from 'tsx:svgs/icons/close.svg'
+import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 
 const Container = styled.div`
   display: flex;
@@ -37,7 +38,7 @@ const SearchAndRegistryDetailsAndSubmitContainer = styled.div`
   background: #08020e;
   color: white;
   width: 84vw;
-  margin-bottom: ${responsiveSize(24, 24)};
+  margin-bottom: 24px;
   gap: 16px;
   flex-wrap: wrap;
 
@@ -112,17 +113,26 @@ const Home: React.FC = () => {
     [searchParams]
   )
 
+  const showRewardsPage = useMemo(
+    () => searchParams.get('page') === 'rewards',
+    [searchParams]
+  )
+
+  const isAttachmentOpen = useMemo(
+    () => !!searchParams.get('attachment'),
+    [searchParams]
+  )
+
   const {
     isLoading: searchLoading,
-    error: searchError,
     data: searchData,
   } = useQuery({
     queryKey: ['fetch', ...searchQueryKeys],
     queryFn: () => fetchItems(searchParams),
   })
+
   const {
     isLoading: countsLoading,
-    error: countsError,
     data: countsData,
   } = useQuery({
     queryKey: ['counts'],
@@ -158,7 +168,7 @@ const Home: React.FC = () => {
             ? countsData[registry].numberOfRegistered
             : 0) +
           (status.includes('RegistrationRequested') &&
-          disputed.includes('false')
+            disputed.includes('false')
             ? countsData[registry].numberOfRegistrationRequested
             : 0) +
           (status.includes('RegistrationRequested') && disputed.includes('true')
@@ -192,31 +202,38 @@ const Home: React.FC = () => {
 
   // If missing search params, insert defaults.
   useEffect(() => {
+    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment')) {
+      return
+    }
+    
     const registry = searchParams.getAll('registry')
     const status = searchParams.getAll('status')
     const disputed = searchParams.getAll('disputed')
     const text = searchParams.get('text')
     const page = searchParams.get('page')
+    const network = searchParams.getAll('network')
     const orderDirection = searchParams.get('orderDirection')
     if (
       registry.length === 0 ||
       status.length === 0 ||
       disputed.length === 0 ||
+      network.length === 0 ||
       orderDirection === null ||
       page === null
     ) {
       const newSearchParams = createSearchParams({
         registry: registry.length === 0 ? ['Tags'] : registry,
+        network: network.length === 0 ? ['1', '100', '137', '56', '42161', '10', '43114', '42220', '8453', '250', '324'] : network,
         status:
           status.length === 0
-            ? ['Registered', 'RegistrationRequested', 'ClearingRequested']
+            ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']
             : status,
         disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
         text: text === null ? '' : text,
         page: page === null ? '1' : page,
         orderDirection: orderDirection === null ? 'desc' : orderDirection,
       })
-      setSearchParams(newSearchParams, { replace: true })
+      setSearchParams(newSearchParams)
     }
   }, [searchParams, setSearchParams])
 
@@ -228,26 +245,34 @@ const Home: React.FC = () => {
   return (
     <Container>
       <Navbar />
-      <SearchAndRegistryDetailsAndSubmitContainer>
-        <Search />
-        <RegistryDetailsAndSubmitContainer>
-          <RegistryDetails />
-          <SubmitButton />
-        </RegistryDetailsAndSubmitContainer>
-      </SearchAndRegistryDetailsAndSubmitContainer>
-
-      <Filters />
-
-      {searchLoading || !searchData ? (
-        <LoadingItems />
+      {showRewardsPage ? (
+        <RewardsPage />
+      ) : isAttachmentOpen ? (
+        <EvidenceAttachmentDisplay />
       ) : (
-        <EntriesList searchData={searchData} />
-      )}
-      <Pagination totalPages={totalPages} />
+        <>
+          <SearchAndRegistryDetailsAndSubmitContainer>
+            <Search />
+            <RegistryDetailsAndSubmitContainer>
+              <RegistryDetails />
+              <SubmitButton />
+            </RegistryDetailsAndSubmitContainer>
+          </SearchAndRegistryDetailsAndSubmitContainer>
 
-      {isDetailsModalOpen && <DetailsModal />}
-      {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
-      {isAddItemOpen && <AddEntryModal />}
+          <Filters />
+
+          {searchLoading || !searchData ? (
+            <LoadingItems />
+          ) : (
+            <EntriesList searchData={searchData} />
+          )}
+          <Pagination totalPages={totalPages} />
+
+          {isDetailsModalOpen && <DetailsModal />}
+          {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
+          {isAddItemOpen && <AddEntryModal />}
+        </>
+      )}
     </Container>
   )
 }

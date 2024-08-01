@@ -33,8 +33,61 @@ const Description = styled.p`
   font-family: 'Oxanium', sans-serif;
 `
 
-const StyledButtonAnchor = styled(ButtonAnchor)`
-  margin-top: ${responsiveSize(12, 52)};
+const Box = styled.div`
+  width: 100%;
+  max-width: 1110px;
+  border: 2px solid #3A3A3A;
+  border-radius: 16px;
+  padding: 50px 0px;
+  margin: 0px;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+
+  ${landscapeStyle(
+  () => css`
+      height: 184px;
+      margin: 50px 0px;
+      padding: 0px;
+    `
+)}
+`
+
+const StatsContainer = styled.div`
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+padding: 0px;
+width: 148px;
+`
+
+const StatsTitle = styled.h1`
+  margin: 0;
+  margin-bottom: ${responsiveSize(12, 24)};
+  font-family: 'Avenir', sans-serif;
+  text-align: center;
+  font-style: normal;
+  font-weight: 800;
+  color: #9C46FF;
+`
+
+const StatsDescription = styled.p`
+  margin: 0;
+  text-align: center;
+  font-family: 'Oxanium', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 20px;
+  letter-spacing: 0.08em;
+`
+
+const StyledButtonAnchor = styled(ButtonAnchor)<{ showStats: boolean }>`
+  margin-top: ${({ showStats }) =>
+    showStats ? responsiveSize(24, 0) : responsiveSize(24, 48)};
 
   ${landscapeStyle(
     () => css`
@@ -52,12 +105,14 @@ interface IHowToSubmit {
   titleText: string
   buttonText: string
   buttonLink: string
+  showStats: boolean
 }
 
 const HowToSubmit: React.FC<IHowToSubmit> = ({
   titleText,
   buttonText,
   buttonLink,
+  showStats = false,
 }) => {
   return (
     <Container>
@@ -93,7 +148,28 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         .
       </Description>
       <Steps />
+      {showStats && (
+        <Box>
+          <StatsContainer>
+            <StatsTitle>$8000</StatsTitle>
+            <StatsDescription>MONTHLY REWARD POOL</StatsDescription>
+          </StatsContainer>
+          <StatsContainer>
+            <StatsTitle>618</StatsTitle>
+            <StatsDescription>AVG. MONTHLY SUBMISSIONS</StatsDescription>
+          </StatsContainer>
+          <StatsContainer>
+            <StatsTitle>$12</StatsTitle>
+            <StatsDescription>AVG. REWARD PER SUBMISSION</StatsDescription>
+          </StatsContainer>
+          <StatsContainer>
+            <StatsTitle>$40</StatsTitle>
+            <StatsDescription>AVG. REWARD PER CHALLENGE</StatsDescription>
+          </StatsContainer>
+        </Box>
+      )}
       <StyledButtonAnchor
+        {...{ showStats }}
         href={buttonLink}
         target="_blank"
         rel="noopener noreferrer"
