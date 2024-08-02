@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 import { useScrollTop } from 'hooks/useScrollTop'
+import { registryMap } from 'utils/fetchItems'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -135,7 +136,7 @@ const RegistryDetailsModal: React.FC = () => {
           <StyledImg
             src={`https://cdn.kleros.link${registry.metadata.logoURI}`}
             onLoad={() => setImgLoaded(true)}
-            style={{ display: imgLoaded ? 'block' : 'none' }}
+            style={{ filter: registry.metadata?.address === registryMap.CDN ? 'invert(1)' : '', display: imgLoaded ? 'block' : 'none' }}
           ></StyledImg>
         </ModalContainer>
       )}
