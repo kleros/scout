@@ -264,9 +264,9 @@ const Home: React.FC = () => {
           {searchLoading || !searchData ? (
             <LoadingItems />
           ) : (
-            <EntriesList searchData={searchData} />
+            <EntriesList {...{searchData}} />
           )}
-          <Pagination totalPages={totalPages} />
+          <Pagination {...{totalPages}} />
 
           {isDetailsModalOpen && <DetailsModal />}
           {isRegistryDetailsModalOpen && <RegistryDetailsModal />}

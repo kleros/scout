@@ -99,7 +99,7 @@ const Pagination: React.FC<IPagination> = ({ totalPages }) => {
             if (e.key === 'Enter') setCurrentPage(pageInput)
           }}
         />
-        <Span>of {totalPages === null ? '?' : totalPages}</Span>
+        <Span>of {totalPages === null ? '50+' : totalPages}</Span>
       </PageControls>
       <StyledButton
         onClick={() => setCurrentPage(page + 1)}
