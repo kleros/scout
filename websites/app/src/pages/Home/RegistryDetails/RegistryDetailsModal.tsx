@@ -24,7 +24,8 @@ const ModalOverlay = styled.div`
 
 const ModalContainer = styled.div`
   display: flex;
-  background-color: #3A2154;
+  background-color: #000;
+  border: 2px solid #CD9DFF;
   border-radius: 12px;
   width: 84vw;
   flex-direction: column;

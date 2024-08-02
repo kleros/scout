@@ -28,7 +28,7 @@ const ModalContainer = styled.div`
   max-height: 85%;
   overflow-y: auto;
   position: relative;
-  border: 1px solid #CD9DFF;
+  border: 2px solid #CD9DFF;
   box-shadow: 0px 4px 8px 29px rgba(0, 0, 0, 0.25);
 
   ${landscapeStyle(
