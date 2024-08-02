@@ -132,7 +132,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
   const [, setSearchParams] = useSearchParams()
   const scrollTop = useScrollTop()
   
-  const challengeRemainingTime = useChallengeRemainingTime(item, challengePeriodDuration)
+  const challengeRemainingTime = useChallengeRemainingTime(item.requests[0]?.submissionTime, item.disputed, challengePeriodDuration)
   const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
 
   const handleEntryDetailsClick = useCallback(() => {
