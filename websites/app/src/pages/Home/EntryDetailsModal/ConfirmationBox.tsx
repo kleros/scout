@@ -15,7 +15,8 @@ const Container = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   width: 84vw;
-  background-color: #3A2154;
+  background-color: #000;
+  border: 2px solid #CD9DFF;
   border-radius: 12px;
   color: #fff;
   display: flex;
