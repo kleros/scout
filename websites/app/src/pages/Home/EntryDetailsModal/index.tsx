@@ -38,7 +38,7 @@ export const ModalOverlay = styled.div`
 
 const ModalContainer = styled.div`
   display: flex;
-  background-color: #000;
+  background-color: #cd9eff1a;
   border: 2px solid #CD9DFF;
   border-radius: 12px;
   width: 84vw;
@@ -47,6 +47,7 @@ const ModalContainer = styled.div`
   overflow-y: auto;
   color: #fff;
   flex-wrap: wrap;
+  backdrop-filter: blur(50px);
 
   ${landscapeStyle(
     () => css`

@@ -91,8 +91,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   const [evidenceText, setEvidenceText] = useState('')
 
   return (
-    <>
-      <ModalOverlay />
+    <ModalOverlay>
       <Container>
         <InnerContainer>
           <ConfirmationTitle>
@@ -149,7 +148,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
           </SubmitButton>
         </InnerContainer>
       </Container>
-    </>
+    </ModalOverlay>
   )
 }
 export default ConfirmationBox
