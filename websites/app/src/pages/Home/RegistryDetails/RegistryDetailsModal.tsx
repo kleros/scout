@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 import { useScrollTop } from 'hooks/useScrollTop'
+import { registryMap } from 'utils/fetchItems'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -24,7 +25,9 @@ const ModalOverlay = styled.div`
 
 const ModalContainer = styled.div`
   display: flex;
-  background-color: #3A2154;
+  background-color: #cd9eff1a;
+  backdrop-filter: blur(50px);
+  border: 2px solid #CD9DFF;
   border-radius: 12px;
   width: 84vw;
   flex-direction: column;
@@ -80,6 +83,7 @@ const RegistryDetailsModal: React.FC = () => {
 
   const {
     data: countsData,
+    isLoading,
   } = useQuery({
     queryKey: ['counts'],
     queryFn: () => fetchItemCounts(),
@@ -105,39 +109,50 @@ const RegistryDetailsModal: React.FC = () => {
 
   return (
     <ModalOverlay>
-      {registry && (
-        <ModalContainer ref={containerRef}>
-          <StyledLabel>Title: {registry.metadata.tcrTitle}</StyledLabel>
-          <StyledLabel>
-            Address:{' '}
-            <StyledA
-              href={`https://gnosisscan.io/address/${registry.metadata.address}`}
-              target="_blank"
-            >
-              {registry.metadata.address}
-            </StyledA>
-          </StyledLabel>
-          <StyledLabel>
-            Policy:{' '}
-            <StyledButton
-              onClick={() => {
-                if (registry.metadata.policyURI) {
-                  setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
-                  scrollTop();
-                }
-              }}
-            >
-              View
-            </StyledButton>
-          </StyledLabel>
-          {!imgLoaded && <Skeleton height={200} width={200} />}
-          <StyledImg
-            src={`https://cdn.kleros.link${registry.metadata.logoURI}`}
-            onLoad={() => setImgLoaded(true)}
-            style={{ display: imgLoaded ? 'block' : 'none' }}
-          ></StyledImg>
-        </ModalContainer>
-      )}
+      <ModalContainer ref={containerRef}>
+        {isLoading ? (
+          <>
+            <Skeleton height={25} width={500} />
+            <Skeleton height={25} width={500} />
+            <Skeleton height={25} width={500} />
+            <Skeleton height={200} width={200} />
+          </>
+        ) : registry ? (
+          <>
+            <StyledLabel>Title: {registry.metadata.tcrTitle}</StyledLabel>
+            <StyledLabel>
+              Address:{' '}
+              <StyledA
+                href={`https://gnosisscan.io/address/${registry.metadata.address}`}
+                target="_blank"
+              >
+                {registry.metadata.address}
+              </StyledA>
+            </StyledLabel>
+            <StyledLabel>
+              Policy:{' '}
+              <StyledButton
+                onClick={() => {
+                  if (registry.metadata.policyURI) {
+                    setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                    scrollTop();
+                  }
+                }}
+              >
+                View
+              </StyledButton>
+            </StyledLabel>
+            {!imgLoaded && <Skeleton height={200} width={200} />}
+            <StyledImg
+              src={`https://cdn.kleros.link${registry.metadata.logoURI}`}
+              onLoad={() => setImgLoaded(true)}
+              style={{ filter: registry.metadata?.address === registryMap.CDN ? 'invert(1)' : '', display: imgLoaded ? 'block' : 'none' }}
+            />
+          </>
+        ) : (
+          <StyledLabel>No registry data available</StyledLabel>
+        )}
+      </ModalContainer>
     </ModalOverlay>
   )
 }

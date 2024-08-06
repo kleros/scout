@@ -18,7 +18,7 @@ const StyledNetworkSelect = styled(Select)`
   width: 200px;
 
   > div {
-    background: #262626;
+    background: #333333;
     border: none;
     border-radius: 12px 12px 0 0;
 
@@ -38,7 +38,7 @@ const StyledNetworkSelect = styled(Select)`
 export const StyledAddressInput = styled.input`
   display: flex;
   width: 100%;
-  background: rgba(255, 255, 255, 0.15);
+  background: #333333;
   padding: 8px 12px;
   outline: none;
   border: none;

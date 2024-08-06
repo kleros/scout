@@ -20,6 +20,8 @@ import ConfirmationBox from './ConfirmationBox'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
 import AttachmentIcon from "svgs/icons/attachment.svg";
 import { useScrollTop } from 'hooks/useScrollTop'
+import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
+import { useChallengePeriodDuration } from 'hooks/countdown'
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -36,7 +38,8 @@ export const ModalOverlay = styled.div`
 
 const ModalContainer = styled.div`
   display: flex;
-  background-color: #3a2154;
+  background-color: #cd9eff1a;
+  border: 2px solid #CD9DFF;
   border-radius: 12px;
   width: 84vw;
   flex-direction: column;
@@ -44,6 +47,7 @@ const ModalContainer = styled.div`
   overflow-y: auto;
   color: #fff;
   flex-wrap: wrap;
+  backdrop-filter: blur(50px);
 
   ${landscapeStyle(
     () => css`
@@ -119,7 +123,7 @@ const EntryDetailsContainer = styled.div`
   padding: 20px 0;
   flex-direction: row;
   margin-bottom: 16px;
-  border-bottom: 2px solid #edf2f7;
+  border-bottom: 2px solid #CD9DFF;
   gap: 16px;
   flex-wrap: wrap;
 
@@ -181,6 +185,7 @@ const LabelAndValue = styled.div`
   flex-direction: row;
   gap: 4px;
   align-items: center;
+  width: 100%;
 `
 
 const StyledButton = styled.button`
@@ -225,6 +230,10 @@ const DetailsModal: React.FC = () => {
   const registryParsedFromItemId = itemDetailsId
     ? itemDetailsId.split('@')[1]
     : ''
+
+  const challengePeriodDuration = useChallengePeriodDuration(registryParsedFromItemId)
+  const challengeRemainingTime = useChallengeRemainingTime(detailsData?.requests[0]?.submissionTime, detailsData?.disputed, challengePeriodDuration)
+  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
 
   const { data: countsData } = useQuery({
     queryKey: ['counts'],
@@ -351,7 +360,17 @@ const DetailsModal: React.FC = () => {
                       <strong>{label}:</strong> {renderValue(label, value)}
                     </LabelAndValue>
                   ))}
-                  <LabelAndValue><strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}</LabelAndValue>
+                <LabelAndValue style={{color: "#CD9DFF"}}>
+                  <strong>Submitted by:</strong> {detailsData?.requests[0].requester}
+                </LabelAndValue>
+                <LabelAndValue style={{color: "#CD9DFF"}}>
+                  <strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}
+                </LabelAndValue>
+                {formattedChallengeRemainingTime && (
+                  <LabelAndValue style={{color: "#CD9DFF"}}>
+                    <strong>Challenge Period ends in:</strong> {formattedChallengeRemainingTime}
+                  </LabelAndValue>
+                )}
               </EntryDetailsContainer>
               {/* EVIDENCES */}
               <EvidenceSection>

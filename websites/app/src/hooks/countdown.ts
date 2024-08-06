@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import humanizeDuration from 'humanize-duration'
-import { GraphItem, registryMap } from 'utils/fetchItems';
+import { registryMap } from 'utils/fetchItems';
 import { JsonRpcProvider, Contract } from 'ethers';
 
 export const useChallengePeriodDuration = (registryAddress: string) => {
@@ -42,23 +42,28 @@ export const useChallengePeriodDuration = (registryAddress: string) => {
   return duration
 }
 
-export const useChallengeRemainingTime = (item: GraphItem, challengePeriodDuration: number | null) => {
+export const useChallengeRemainingTime = (
+  submissionTime: string | undefined,
+  disputed: boolean | undefined,
+  challengePeriodDuration: number | null
+) => {
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
 
   useEffect(() => {
     if (
-      item?.requests[0].submissionTime &&
-      !item.disputed &&
+      submissionTime &&
+      disputed !== undefined &&
+      !disputed &&
       challengePeriodDuration !== null
     ) {
-      const submissionTime = Number(item.requests[0].submissionTime) * 1000
-      const deadline = submissionTime + challengePeriodDuration * 1000
+      const submissionTimeMs = Number(submissionTime) * 1000
+      const deadline = submissionTimeMs + challengePeriodDuration * 1000
       const remaining = deadline - Date.now()
       setRemainingTime(remaining > 0 ? remaining : null)
     } else {
       setRemainingTime(null)
     }
-  }, [item, challengePeriodDuration])
+  }, [submissionTime, disputed, challengePeriodDuration])
 
   return remainingTime
 }

@@ -15,7 +15,8 @@ const Container = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   width: 84vw;
-  background-color: #3A2154;
+  background-color: #000;
+  border: 2px solid #CD9DFF;
   border-radius: 12px;
   color: #fff;
   display: flex;
@@ -90,8 +91,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   const [evidenceText, setEvidenceText] = useState('')
 
   return (
-    <>
-      <ModalOverlay />
+    <ModalOverlay>
       <Container>
         <InnerContainer>
           <ConfirmationTitle>
@@ -148,7 +148,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
           </SubmitButton>
         </InnerContainer>
       </Container>
-    </>
+    </ModalOverlay>
   )
 }
 export default ConfirmationBox

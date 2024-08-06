@@ -22,13 +22,14 @@ const ModalOverlay = styled.div`
 `
 
 const ModalContainer = styled.div`
-  background: #000;
+  background: #cd9eff1a;
+  backdrop-filter: blur(50px);
   border-radius: 12px;
   width: 84vw;
   max-height: 85%;
   overflow-y: auto;
   position: relative;
-  border: 1px solid #CD9DFF;
+  border: 2px solid #CD9DFF;
   box-shadow: 0px 4px 8px 29px rgba(0, 0, 0, 0.25);
 
   ${landscapeStyle(
@@ -87,7 +88,7 @@ export const StyledWholeField = styled.div`
 
 export const SubmissionButton = styled.button`
   border-radius: 4px;
-  border: 1px solid #262626;
+  border: 1px solid #333333;
   color: #CD9DFF;
   font-family: "Avenir", sans-serif;
   text-decoration: none;
@@ -106,7 +107,7 @@ export const SubmissionButton = styled.button`
 export const StyledTextInput = styled.input`
   display: flex;
   width: 100%;
-  background: rgba(255, 255, 255, 0.15);
+  background: #333333;
   padding: 8px 12px;
   outline: none;
   border: none;
