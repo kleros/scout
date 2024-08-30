@@ -223,7 +223,7 @@ const Home: React.FC = () => {
     ) {
       const newSearchParams = createSearchParams({
         registry: registry.length === 0 ? ['Tags'] : registry,
-        network: network.length === 0 ? ['1', '100', '137', '56', '42161', '10', '43114', '42220', '8453', '250', '324'] : network,
+        network: network.length === 0 ? ['1', '100', '137', '56', '42161', '10', '43114', '534352', '42220', '8453', '250', '324'] : network,
         status:
           status.length === 0
             ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']

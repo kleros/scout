@@ -146,4 +146,11 @@ export const references = [
     label: 'CELO',
     explorer: 'celoscan.io',
   },
+  {
+    id: '534352',
+    namespaceId: 'eip155',
+    name: 'Scroll',
+    label: 'ETH',
+    explorer: 'scrollscan.dev',
+  },
 ]
