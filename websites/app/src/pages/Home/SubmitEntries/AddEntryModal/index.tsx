@@ -106,7 +106,6 @@ export const SubmissionButton = styled.button`
 
 export const StyledTextInput = styled.input`
   display: flex;
-  width: 100%;
   background: #333333;
   padding: 8px 12px;
   outline: none;

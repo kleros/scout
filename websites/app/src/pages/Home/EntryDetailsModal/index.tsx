@@ -48,6 +48,7 @@ const ModalContainer = styled.div`
   color: #fff;
   flex-wrap: wrap;
   backdrop-filter: blur(50px);
+  word-break: break-word;
 
   ${landscapeStyle(
     () => css`
