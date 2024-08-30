@@ -129,7 +129,7 @@ export const references = [
     id: '534352',
     namespaceId: 'eip155',
     name: 'Scroll',
-    label: 'ETH',
+    label: 'Scroll',
     explorer: 'scrollscan.com',
   },
   {

@@ -19,6 +19,7 @@ export const relevantNetworks: { chainId: number; name: string }[] = [
   { chainId: 137, name: 'Polygon' },
   { chainId: 56, name: 'BSC' },
   { chainId: 42161, name: 'Arbitrum One' },
+  { chainId: 534352, name: 'Scroll' },
   { chainId: 10, name: 'Optimism' },
   { chainId: 43114, name: 'Avalanche C-Chain' },
   { chainId: 42220, name: 'Celo Mainnet' },
