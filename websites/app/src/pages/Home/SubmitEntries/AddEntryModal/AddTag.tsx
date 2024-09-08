@@ -89,6 +89,25 @@ const AddAddressTag: React.FC = () => {
   const scrollTop = useScrollTop();
 
   useEffect(() => {
+    const networkParam = searchParams.get('network');
+    const addressParam = searchParams.get('address');
+    const projectNameParam = searchParams.get('projectName');
+    const publicNameTagParam = searchParams.get('publicNameTag');
+    const publicNoteParam = searchParams.get('publicNote');
+    const websiteParam = searchParams.get('website');
+
+    if (networkParam) {
+      const networkOption = { value: networkParam, label: networkParam.split(':')[1] || 'Custom' };
+      setNetwork(networkOption);
+    }
+    if (addressParam) setAddress(addressParam);
+    if (projectNameParam) setProjectName(projectNameParam);
+    if (publicNameTagParam) setPublicNameTag(publicNameTagParam);
+    if (publicNoteParam) setPublicNote(publicNoteParam);
+    if (websiteParam) setWebsite(websiteParam);
+  }, [searchParams]);
+
+  useEffect(() => {
     setFormData({ network, address, projectName, publicNameTag, publicNote, website });
   }, [network, address, projectName, publicNameTag, publicNote, website]);
 

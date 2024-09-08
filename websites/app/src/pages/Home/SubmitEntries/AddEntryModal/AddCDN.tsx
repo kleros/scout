@@ -72,6 +72,19 @@ const AddCDN: React.FC = () => {
   const [imageError, setImageError] = useState<string | null>(null);
   const scrollTop = useScrollTop();
 
+  useEffect(() => {
+    const networkParam = searchParams.get('network');
+    const addressParam = searchParams.get('address');
+    const urlDomain = searchParams.get('domain');
+
+    if (networkParam) {
+      const networkOption = { value: networkParam, label: networkParam.split(':')[1] || 'Custom' };
+      setNetwork(networkOption);
+    }
+    if (addressParam) setAddress(addressParam);
+    if (urlDomain) setDomain(urlDomain);
+  }, [searchParams]);
+
   useDebounce(
     () => {
       setDebouncedAddress(address)

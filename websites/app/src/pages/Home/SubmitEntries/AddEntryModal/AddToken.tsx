@@ -86,6 +86,23 @@ const AddToken: React.FC = () => {
   const scrollTop = useScrollTop();
 
   useEffect(() => {
+    const networkParam = searchParams.get('network');
+    const addressParam = searchParams.get('address');
+    const decimalsParam = searchParams.get('decimals');
+    const nameParam = searchParams.get('name');
+    const symbolParam = searchParams.get('symbol');
+
+    if (networkParam) {
+      const networkOption = { value: networkParam, label: networkParam.split(':')[1] || 'Custom' };
+      setNetwork(networkOption);
+    }
+    if (addressParam) setAddress(addressParam);
+    if (decimalsParam) setDecimals(decimalsParam);
+    if (nameParam) setName(nameParam);
+    if (symbolParam) setSymbol(symbolParam);
+  }, [searchParams]);
+
+  useEffect(() => {
     setFormData({ network, address, decimals, name, symbol, path });
   }, [network, address, decimals, name, symbol, path]);
 
