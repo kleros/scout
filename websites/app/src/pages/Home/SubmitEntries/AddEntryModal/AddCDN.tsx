@@ -29,6 +29,7 @@ import {
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
+import { references } from 'utils/chains'
 
 const columns = [
   {
@@ -73,16 +74,30 @@ const AddCDN: React.FC = () => {
   const scrollTop = useScrollTop();
 
   useEffect(() => {
-    const networkParam = searchParams.get('network');
-    const addressParam = searchParams.get('address');
-    const urlDomain = searchParams.get('domain');
-
-    if (networkParam) {
-      const networkOption = { value: networkParam, label: networkParam.split(':')[1] || 'Custom' };
-      setNetwork(networkOption);
+    const caip10AddressParam = searchParams.get('caip10Address');
+    const domainParam = searchParams.get('domain');
+  
+    if (caip10AddressParam) {
+      const separatorIndex = caip10AddressParam.lastIndexOf(':');
+      const networkIdentifier = caip10AddressParam.substring(0, separatorIndex);
+      const walletAddress = caip10AddressParam.substring(separatorIndex + 1);
+  
+      const networkLabel = references.find(
+        (reference) => `${reference.namespaceId}:${reference.id}` === networkIdentifier
+      )?.label;
+  
+      const networkOption = {
+        value: networkIdentifier,
+        label: networkLabel,
+      };
+  
+      setNetwork({ ...networkOption, label: networkLabel || '' });
+      setAddress(walletAddress);
     }
-    if (addressParam) setAddress(addressParam);
-    if (urlDomain) setDomain(urlDomain);
+  
+    if (domainParam) {
+      setDomain(domainParam);
+    }
   }, [searchParams]);
 
   useDebounce(

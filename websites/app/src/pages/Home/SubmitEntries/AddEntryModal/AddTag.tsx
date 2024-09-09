@@ -29,6 +29,7 @@ import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { registryMap } from 'utils/fetchItems'
+import { references } from 'utils/chains'
 
 const columns = [
   {
@@ -89,18 +90,29 @@ const AddAddressTag: React.FC = () => {
   const scrollTop = useScrollTop();
 
   useEffect(() => {
-    const networkParam = searchParams.get('network');
-    const addressParam = searchParams.get('address');
+    const caip10AddressParam = searchParams.get('caip10Address');
     const projectNameParam = searchParams.get('projectName');
     const publicNameTagParam = searchParams.get('publicNameTag');
     const publicNoteParam = searchParams.get('publicNote');
     const websiteParam = searchParams.get('website');
-
-    if (networkParam) {
-      const networkOption = { value: networkParam, label: networkParam.split(':')[1] || 'Custom' };
-      setNetwork(networkOption);
+  
+    if (caip10AddressParam) {
+      const separatorIndex = caip10AddressParam.lastIndexOf(':');
+      const networkIdentifier = caip10AddressParam.substring(0, separatorIndex);
+      const walletAddress = caip10AddressParam.substring(separatorIndex + 1);
+  
+      const networkLabel = references.find(
+        (reference) => `${reference.namespaceId}:${reference.id}` === networkIdentifier
+      )?.label;
+  
+      const networkOption = {
+        value: networkIdentifier,
+        label: networkLabel,
+      };
+  
+      setNetwork({ ...networkOption, label: networkLabel || '' });
+      setAddress(walletAddress);
     }
-    if (addressParam) setAddress(addressParam);
     if (projectNameParam) setProjectName(projectNameParam);
     if (publicNameTagParam) setPublicNameTag(publicNameTagParam);
     if (publicNoteParam) setPublicNote(publicNoteParam);
