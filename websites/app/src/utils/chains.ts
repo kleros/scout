@@ -95,7 +95,7 @@ export const references = [
     namespaceId: 'eip155',
     name: 'Avalanche C-Chain',
     label: 'AVAX',
-    explorer: 'snowtrace.io',
+    explorer: 'snowscan.xyz',
   },
   {
     id: '25',
@@ -130,14 +130,14 @@ export const references = [
     namespaceId: 'eip155',
     name: 'Scroll',
     label: 'Scroll',
-    explorer: 'scrollscan.dev',
+    explorer: 'scrollscan.com',
   },
   {
     id: '324',
     namespaceId: 'eip155',
     name: 'zkSync',
     label: 'zkSync',
-    explorer: 'explorer.zksync.io',
+    explorer: 'era.zksync.network',
   },
   {
     id: '42220',
