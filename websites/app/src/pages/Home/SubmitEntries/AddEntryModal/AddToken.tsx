@@ -29,6 +29,7 @@ import {
 } from './index'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
+import { references } from 'utils/chains'
 
 const columns = [
   {
@@ -84,6 +85,34 @@ const AddToken: React.FC = () => {
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
   const [imageError, setImageError] = useState<string | null>(null);
   const scrollTop = useScrollTop();
+
+  useEffect(() => {
+    const caip10AddressParam = searchParams.get('caip10Address');
+    const decimalsParam = searchParams.get('decimals');
+    const nameParam = searchParams.get('name');
+    const symbolParam = searchParams.get('symbol');
+  
+    if (caip10AddressParam) {
+      const separatorIndex = caip10AddressParam.lastIndexOf(':');
+      const networkIdentifier = caip10AddressParam.substring(0, separatorIndex);
+      const walletAddress = caip10AddressParam.substring(separatorIndex + 1);
+  
+      const networkLabel = references.find(
+        (reference) => `${reference.namespaceId}:${reference.id}` === networkIdentifier
+      )?.label;
+  
+      const networkOption = {
+        value: networkIdentifier,
+        label: networkLabel,
+      };
+  
+      setNetwork({ ...networkOption, label: networkLabel || '' });
+      setAddress(walletAddress);
+    }
+    if (decimalsParam) setDecimals(decimalsParam);
+    if (nameParam) setName(nameParam);
+    if (symbolParam) setSymbol(symbolParam);
+  }, [searchParams]);
 
   useEffect(() => {
     setFormData({ network, address, decimals, name, symbol, path });
