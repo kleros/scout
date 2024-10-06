@@ -13,8 +13,11 @@ export const useChallengePeriodDuration = (registryAddress: string) => {
       let contractAddress
 
       switch (registryAddress) {
-        case registryMap.Tags:
-          contractAddress = registryMap.Tags
+        case registryMap['Single Tags']:
+          contractAddress = registryMap['Single Tags']
+          break
+        case registryMap['Tags Queries']:
+          contractAddress = registryMap['Tags Queries']
           break
         case registryMap.Tokens:
           contractAddress = registryMap.Tokens

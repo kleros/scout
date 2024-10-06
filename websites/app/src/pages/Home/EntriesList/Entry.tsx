@@ -176,7 +176,20 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
         <strong>
           <AddressDisplay address={item?.metadata?.key0 || ''} />
         </strong>
-        {item.registryAddress === registryMap['Tags'] && (
+        {item.registryAddress === registryMap['Single Tags'] && (
+          <>
+            <div>{item?.metadata?.key2}</div>
+            <div>{item?.metadata?.key1}</div>
+            <StyledWebsiteAnchor
+              href={item?.metadata?.key3}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {item?.metadata?.key3}
+            </StyledWebsiteAnchor>
+          </>
+        )}
+        {item.registryAddress === registryMap['Tags Queries'] && (
           <>
             <div>{item?.metadata?.key2}</div>
             <div>{item?.metadata?.key1}</div>
