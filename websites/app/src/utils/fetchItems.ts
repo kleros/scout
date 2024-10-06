@@ -2,13 +2,15 @@ import { gql, request } from 'graphql-request'
 import { ITEMS_PER_PAGE } from 'pages/Home'
 
 export const registryMap = {
-  Tags: '0x66260c69d03837016d88c9877e61e08ef74c59f2',
+  'Single Tags': '0x66260c69d03837016d88c9877e61e08ef74c59f2',
+  'Tags Queries': '0xae6aaed5434244be3699c56e7ebc828194f26dc3',
   CDN: '0x957a53a994860be4750810131d9c876b2f52d6e1',
   Tokens: '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
 }
 
 export const revRegistryMap = {
-  '0x66260c69d03837016d88c9877e61e08ef74c59f2': 'Tags',
+  '0x66260c69d03837016d88c9877e61e08ef74c59f2': 'Single Tags',
+  '0xae6aaed5434244be3699c56e7ebc828194f26dc3': 'Tags Queries',
   '0x957a53a994860be4750810131d9c876b2f52d6e1': 'CDN',
   '0xee1502e29795ef6c2d60f8d7120596abe3bad990': 'Tokens',
 }

@@ -22,7 +22,8 @@ export interface FocusedRegistry {
 }
 
 export interface ItemCounts {
-  Tags: FocusedRegistry
+  "Single Tags": FocusedRegistry
+  "Tags Queries": FocusedRegistry
   CDN: FocusedRegistry
   Tokens: FocusedRegistry
 }
@@ -46,7 +47,19 @@ const convertStringFieldsToNumber = (obj: any): any => {
 export const fetchItemCounts = async (): Promise<ItemCounts> => {
   const query = gql`
     {
-      Tags: lregistry(id: "${registryMap.Tags}") {
+      "Single Tags": lregistry(id: "${registryMap['Single Tags']}") {
+        id
+        numberOfAbsent
+        numberOfRegistered
+        numberOfClearingRequested
+        numberOfChallengedClearing
+        numberOfRegistrationRequested
+        numberOfChallengedRegistrations
+        registrationMetaEvidence {
+          URI
+        }
+      }
+      "Tags Queries": lregistry(id: "${registryMap['Tags Queries']}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -94,7 +107,10 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   // inject metadata into the uncomplete "ItemCounts". hacky code
   const regMEs = await Promise.all([
     fetch(
-      'https://cdn.kleros.link' + result?.Tags?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' + result?.["Single Tags"]?.registrationMetaEvidence?.URI
+    ).then((r) => r.json()),
+    fetch(
+      'https://cdn.kleros.link' + result?.["Tags Queries"]?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
     fetch(
       'https://cdn.kleros.link' + result?.CDN?.registrationMetaEvidence?.URI
@@ -103,8 +119,15 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
       'https://cdn.kleros.link' + result?.Tokens?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
   ])
-  itemCounts.Tags.metadata = {
-    address: result?.Tags?.id,
+  itemCounts['Single Tags'].metadata = {
+    address: result?.["Single Tags"]?.id,
+    policyURI: regMEs[0].fileURI,
+    logoURI: regMEs[0].metadata.logoURI,
+    tcrTitle: regMEs[0].metadata.tcrTitle,
+    tcrDescription: regMEs[0].metadata.tcrDescription,
+  }
+  itemCounts['Tags Queries'].metadata = {
+    address: result?.["Tags Queries"]?.id,
     policyURI: regMEs[0].fileURI,
     logoURI: regMEs[0].metadata.logoURI,
     tcrTitle: regMEs[0].metadata.tcrTitle,
@@ -126,11 +149,13 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   }
   // inject registry deposits as well
   const regDs = await Promise.all([
-    fetchRegistryDeposits(registryMap.Tags),
+    fetchRegistryDeposits(registryMap['Single Tags']),
+    fetchRegistryDeposits(registryMap['Tags Queries']),
     fetchRegistryDeposits(registryMap.CDN),
     fetchRegistryDeposits(registryMap.Tokens),
   ])
-  itemCounts.Tags.deposits = regDs[0] as DepositParams
+  itemCounts['Single Tags'].deposits = regDs[0] as DepositParams
+  itemCounts['Tags Queries'].deposits = regDs[0] as DepositParams
   itemCounts.CDN.deposits = regDs[1] as DepositParams
   itemCounts.Tokens.deposits = regDs[2] as DepositParams
 

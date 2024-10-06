@@ -132,8 +132,8 @@ const AddAddressTag: React.FC = () => {
   )
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Tags', projectName, publicNameTag, website],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tags', undefined, projectName, publicNameTag, website),
+    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Single Tags', projectName, publicNameTag, website],
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Single Tags', undefined, projectName, publicNameTag, website),
     enabled: Boolean(debouncedAddress) || Boolean(projectName) || Boolean(publicNameTag) || Boolean(website),
   });
 
@@ -168,8 +168,8 @@ const AddAddressTag: React.FC = () => {
     const ipfsObject = await ipfsPublish('item.json', fileData)
     const ipfsPath = getIPFSPath(ipfsObject)
     await initiateTransactionToCurate(
-      registryMap.Tags,
-      countsData?.Tags.deposits as DepositParams,
+      registryMap['Single Tags'],
+      countsData?.['Single Tags'].deposits as DepositParams,
       ipfsPath
     )
     clearLocalStorage('addTagForm');
@@ -220,7 +220,7 @@ const AddAddressTag: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Tags"
+        registry="Single Tags"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -264,10 +264,10 @@ const AddAddressTag: React.FC = () => {
         </SubmitButton>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.Tags?.deposits
+          {countsData?.['Single Tags']?.deposits
             ? formatEther(
-              countsData.Tags.deposits.arbitrationCost +
-              countsData.Tags.deposits.submissionBaseDeposit
+              countsData['Single Tags'].deposits.arbitrationCost +
+              countsData['Single Tags'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}{' | '}Expected Reward: $12
         </ExpectedPayouts>
