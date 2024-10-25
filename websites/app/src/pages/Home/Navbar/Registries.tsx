@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
@@ -57,14 +57,14 @@ interface IItem {
 
 const Item: React.FC<IItem> = ({ name, subItems }) => {
   let [searchParams, setSearchParams] = useSearchParams()
-  const [isExpanded, setIsExpanded] = React.useState(false)
-  const isSelected = (searchParams.get('registry')) === name || 
-                     (name === 'Tags' && ['Single Tags', 'Tags Queries'].includes(searchParams.get('registry') || ''))
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [displayName, setDisplayName] = useState(name)
+  const isSelected = (searchParams.get('registry')) === displayName || 
+                     (name === 'Tags' && ['Single_Tags', 'Tags_Queries'].includes(searchParams.get('registry') || ''))
   const dropdownRef = React.useRef<HTMLDivElement>(null);
   useFocusOutside(dropdownRef, () => setIsExpanded(false));
 
-  const handleItemClick = (event, itemName) => {
-    event.stopPropagation()
+  const handleItemClick = (itemName) => {
     if (subItems) {
       setIsExpanded(!isExpanded)
     } else {
@@ -79,8 +79,7 @@ const Item: React.FC<IItem> = ({ name, subItems }) => {
     }
   }
 
-  const handleSubItemClick = (event, subItemName) => {
-    event.stopPropagation()
+  const handleSubItemClick = (subItemName) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev.toString())
       newParams.set('registry', subItemName)
@@ -89,24 +88,25 @@ const Item: React.FC<IItem> = ({ name, subItems }) => {
       newParams.delete('attachment')
       return newParams
     })
+    setDisplayName(subItemName)
+    setIsExpanded(false)
   }
 
   return (
     <>
-      <StyledItem key={name} onClick={(e) => handleItemClick(e, name)} isSelected={isSelected}>
-        {name}
+      <StyledItem key={name} onClick={() => handleItemClick(name)} {...{isSelected}}>
+        {displayName}
         {name === 'Tags' && (
           <FilterDropdownIconWrapper open={isExpanded}>
             <DownDirectionIcon />
           </FilterDropdownIconWrapper>
         )}
-      </StyledItem>
       {subItems && isExpanded && (
         <StyledDropdown ref={dropdownRef}>
           {subItems.map((subItem) => (
             <StyledItem
               key={subItem.name}
-              onClick={(e) => handleSubItemClick(e, subItem.name)}
+              onClick={(e) => handleSubItemClick(subItem.name)}
               isSelected={searchParams.get('registry') === subItem.name}
             >
               {subItem.name}
@@ -114,12 +114,13 @@ const Item: React.FC<IItem> = ({ name, subItems }) => {
           ))}
         </StyledDropdown>
       )}
+      </StyledItem>
     </>
   )
 }
 
 const ITEMS = [
-  { name: 'Tags', subItems: [{ name: 'Single Tags' }, { name: 'Tags Queries' }] },
+  { name: 'Tags', subItems: [{ name: 'Single_Tags' }, { name: 'Tags_Queries' }] },
   { name: 'Tokens' },
   { name: 'CDN' }
 ]

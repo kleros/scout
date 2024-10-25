@@ -159,7 +159,7 @@ const Home: React.FC = () => {
       return undefined
     } else if (!text && network.length === 0) {
       // can use the subgraph category counts.
-      const getCount = (registry: 'Single Tags' | 'Tags Queries' | 'Tokens' | 'CDN') => {
+      const getCount = (registry: 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN') => {
         return (
           (status.includes('Absent') && disputed.includes('false')
             ? countsData[registry].numberOfAbsent
@@ -184,8 +184,8 @@ const Home: React.FC = () => {
       }
 
       const count =
-        (registry.includes('Single Tags') ? getCount('Single Tags') : 0) +
-        (registry.includes('Tags Queries') ? getCount('Tags Queries') : 0) +
+        (registry.includes('Single_Tags') ? getCount('Single_Tags') : 0) +
+        (registry.includes('Tags_Queries') ? getCount('Tags_Queries') : 0) +
         (registry.includes('CDN') ? getCount('CDN') : 0) +
         (registry.includes('Tokens') ? getCount('Tokens') : 0)
       return count
@@ -223,7 +223,7 @@ const Home: React.FC = () => {
       page === null
     ) {
       const newSearchParams = createSearchParams({
-        registry: registry.length === 0 ? ['Single Tags'] : registry,
+        registry: registry.length === 0 ? ['Single_Tags'] : registry,
         network: network.length === 0 ? ['1', '100', '137', '56', '42161', '10', '43114', '534352', '42220', '8453', '250', '324'] : network,
         status:
           status.length === 0

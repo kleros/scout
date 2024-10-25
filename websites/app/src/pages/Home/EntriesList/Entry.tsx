@@ -145,7 +145,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
   }, [setSearchParams, item.id])
 
   const tokenLogoURI = useMemo(() => 
-    item.registryAddress === registryMap['Tokens'] &&
+    item.registryAddress === registryMap.Tokens &&
     `https://cdn.kleros.link${
       (item?.metadata?.props?.find((prop) => prop.label === 'Logo') as Prop)
         ?.value
@@ -154,7 +154,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
   )
 
   const visualProofURI = useMemo(() => 
-    item.registryAddress === registryMap['CDN'] &&
+    item.registryAddress === registryMap.CDN &&
     `https://cdn.kleros.link${
       (
         item?.metadata?.props?.find(
@@ -176,7 +176,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
         <strong>
           <AddressDisplay address={item?.metadata?.key0 || ''} />
         </strong>
-        {item.registryAddress === registryMap['Single Tags'] && (
+        {item.registryAddress === registryMap.Single_Tags && (
           <>
             <div>{item?.metadata?.key2}</div>
             <div>{item?.metadata?.key1}</div>
@@ -189,7 +189,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
             </StyledWebsiteAnchor>
           </>
         )}
-        {item.registryAddress === registryMap['Tags Queries'] && (
+        {item.registryAddress === registryMap.Tags_Queries && (
           <>
             <div>{item?.metadata?.key2}</div>
             <div>{item?.metadata?.key1}</div>
@@ -202,7 +202,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
             </StyledWebsiteAnchor>
           </>
         )}
-        {item.registryAddress === registryMap['Tokens'] && (
+        {item.registryAddress === registryMap.Tokens && (
           <>
             {item?.metadata?.props &&
               item.metadata?.props.find((prop) => prop.label === 'Logo') && (
@@ -229,7 +229,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
             <div>{item?.metadata?.key1}</div>
           </>
         )}
-        {item.registryAddress === registryMap['CDN'] && (
+        {item.registryAddress === registryMap.CDN && (
           <>
             <StyledWebsiteAnchor
               href={`https://${item?.metadata?.key1}`}

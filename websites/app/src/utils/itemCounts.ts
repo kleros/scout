@@ -22,8 +22,8 @@ export interface FocusedRegistry {
 }
 
 export interface ItemCounts {
-  "Single Tags": FocusedRegistry
-  "Tags Queries": FocusedRegistry
+  Single_Tags: FocusedRegistry
+  Tags_Queries: FocusedRegistry
   CDN: FocusedRegistry
   Tokens: FocusedRegistry
 }
@@ -47,7 +47,7 @@ const convertStringFieldsToNumber = (obj: any): any => {
 export const fetchItemCounts = async (): Promise<ItemCounts> => {
   const query = gql`
     {
-      "Single Tags": lregistry(id: "${registryMap['Single Tags']}") {
+      Single_Tags: lregistry(id: "${registryMap.Single_Tags}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -59,7 +59,7 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
           URI
         }
       }
-      "Tags Queries": lregistry(id: "${registryMap['Tags Queries']}") {
+      Tags_Queries: lregistry(id: "${registryMap.Tags_Queries}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -107,10 +107,10 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   // inject metadata into the uncomplete "ItemCounts". hacky code
   const regMEs = await Promise.all([
     fetch(
-      'https://cdn.kleros.link' + result?.["Single Tags"]?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' + result?.Single_Tags?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
     fetch(
-      'https://cdn.kleros.link' + result?.["Tags Queries"]?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' + result?.Tags_Queries?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
     fetch(
       'https://cdn.kleros.link' + result?.CDN?.registrationMetaEvidence?.URI
@@ -119,45 +119,45 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
       'https://cdn.kleros.link' + result?.Tokens?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
   ])
-  itemCounts['Single Tags'].metadata = {
-    address: result?.["Single Tags"]?.id,
+  itemCounts.Single_Tags.metadata = {
+    address: result?.Single_Tags?.id,
     policyURI: regMEs[0].fileURI,
     logoURI: regMEs[0].metadata.logoURI,
     tcrTitle: regMEs[0].metadata.tcrTitle,
     tcrDescription: regMEs[0].metadata.tcrDescription,
   }
-  itemCounts['Tags Queries'].metadata = {
-    address: result?.["Tags Queries"]?.id,
-    policyURI: regMEs[0].fileURI,
-    logoURI: regMEs[0].metadata.logoURI,
-    tcrTitle: regMEs[0].metadata.tcrTitle,
-    tcrDescription: regMEs[0].metadata.tcrDescription,
-  }
-  itemCounts.CDN.metadata = {
-    address: result?.CDN?.id,
+  itemCounts.Tags_Queries.metadata = {
+    address: result?.Tags_Queries?.id,
     policyURI: regMEs[1].fileURI,
     logoURI: regMEs[1].metadata.logoURI,
     tcrTitle: regMEs[1].metadata.tcrTitle,
     tcrDescription: regMEs[1].metadata.tcrDescription,
   }
-  itemCounts.Tokens.metadata = {
-    address: result?.Tokens?.id,
+  itemCounts.CDN.metadata = {
+    address: result?.CDN?.id,
     policyURI: regMEs[2].fileURI,
     logoURI: regMEs[2].metadata.logoURI,
     tcrTitle: regMEs[2].metadata.tcrTitle,
     tcrDescription: regMEs[2].metadata.tcrDescription,
   }
+  itemCounts.Tokens.metadata = {
+    address: result?.Tokens?.id,
+    policyURI: regMEs[3].fileURI,
+    logoURI: regMEs[3].metadata.logoURI,
+    tcrTitle: regMEs[3].metadata.tcrTitle,
+    tcrDescription: regMEs[3].metadata.tcrDescription,
+  }
   // inject registry deposits as well
   const regDs = await Promise.all([
-    fetchRegistryDeposits(registryMap['Single Tags']),
-    fetchRegistryDeposits(registryMap['Tags Queries']),
+    fetchRegistryDeposits(registryMap.Single_Tags),
+    fetchRegistryDeposits(registryMap.Tags_Queries),
     fetchRegistryDeposits(registryMap.CDN),
     fetchRegistryDeposits(registryMap.Tokens),
   ])
-  itemCounts['Single Tags'].deposits = regDs[0] as DepositParams
-  itemCounts['Tags Queries'].deposits = regDs[0] as DepositParams
-  itemCounts.CDN.deposits = regDs[1] as DepositParams
-  itemCounts.Tokens.deposits = regDs[2] as DepositParams
+  itemCounts.Single_Tags.deposits = regDs[0] as DepositParams
+  itemCounts.Tags_Queries.deposits = regDs[1] as DepositParams
+  itemCounts.CDN.deposits = regDs[2] as DepositParams
+  itemCounts.Tokens.deposits = regDs[3] as DepositParams
 
   return itemCounts
 }

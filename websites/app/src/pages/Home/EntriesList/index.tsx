@@ -9,14 +9,14 @@ import { useChallengePeriodDuration } from 'hooks/countdown';
 import { registryMap } from 'utils/fetchItems';
 
 const useRegistryDurations = () => {
-  const singleTagsDuration = useChallengePeriodDuration(registryMap['Single Tags']);
-  const tagsQueriesDuration = useChallengePeriodDuration(registryMap['Tags Queries']);
+  const singleTagsDuration = useChallengePeriodDuration(registryMap.Single_Tags);
+  const tagsQueriesDuration = useChallengePeriodDuration(registryMap.Tags_Queries);
   const tokensDuration = useChallengePeriodDuration(registryMap.Tokens);
   const cdnDuration = useChallengePeriodDuration(registryMap.CDN);
 
   return useMemo(() => ({
-    [registryMap['Single Tags']]: singleTagsDuration,
-    [registryMap['Tags Queries']]: tagsQueriesDuration,
+    [registryMap.Single_Tags]: singleTagsDuration,
+    [registryMap.Tags_Queries]: tagsQueriesDuration,
     [registryMap.Tokens]: tokensDuration,
     [registryMap.CDN]: cdnDuration,
   }), [singleTagsDuration, tagsQueriesDuration, tokensDuration, cdnDuration]);

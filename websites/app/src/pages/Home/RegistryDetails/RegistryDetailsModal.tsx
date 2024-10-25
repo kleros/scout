@@ -73,7 +73,6 @@ const StyledButton = styled.button`
 
 const StyledImg = styled.img`
   height: 200px;
-  width: 200px;
 `
 
 const RegistryDetailsModal: React.FC = () => {

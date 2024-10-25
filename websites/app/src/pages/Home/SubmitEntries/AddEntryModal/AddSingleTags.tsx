@@ -132,8 +132,8 @@ const AddAddressTag: React.FC = () => {
   )
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Single Tags', projectName, publicNameTag, website],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Single Tags', undefined, projectName, publicNameTag, website),
+    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Single_Tags', projectName, publicNameTag, website],
+    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Single_Tags', undefined, projectName, publicNameTag, website),
     enabled: Boolean(debouncedAddress) || Boolean(projectName) || Boolean(publicNameTag) || Boolean(website),
   });
 
@@ -168,8 +168,8 @@ const AddAddressTag: React.FC = () => {
     const ipfsObject = await ipfsPublish('item.json', fileData)
     const ipfsPath = getIPFSPath(ipfsObject)
     await initiateTransactionToCurate(
-      registryMap['Single Tags'],
-      countsData?.['Single Tags'].deposits as DepositParams,
+      registryMap.Single_Tags,
+      countsData?.Single_Tags.deposits as DepositParams,
       ipfsPath
     )
     clearLocalStorage('addTagForm');
@@ -220,7 +220,7 @@ const AddAddressTag: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Single Tags"
+        registry="Single_Tags"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -264,10 +264,10 @@ const AddAddressTag: React.FC = () => {
         </SubmitButton>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Single Tags']?.deposits
+          {countsData?.['Single_Tags']?.deposits
             ? formatEther(
-              countsData['Single Tags'].deposits.arbitrationCost +
-              countsData['Single Tags'].deposits.submissionBaseDeposit
+              countsData['Single_Tags'].deposits.arbitrationCost +
+              countsData['Single_Tags'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}{' | '}Expected Reward: $12
         </ExpectedPayouts>
