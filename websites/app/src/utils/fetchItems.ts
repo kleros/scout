@@ -102,16 +102,19 @@ export const fetchItems = async (
     return []
   }
 
-  // Only include network filtering if we're not querying Tags_Queries
-  const shouldIncludeNetworkFilter = !registry.includes('Tags_Queries')
+  const isTagsQueriesRegistry = registry.includes('Tags_Queries')
   
-  const networkQueryObject = shouldIncludeNetworkFilter && network.length > 0
-    ? `{or: [${network
-        .map(
-          (chainId) =>
-            `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`
-        )
-        .join(',')}]},`
+  // Network filtering logic based on registry type
+  const networkQueryObject = network.length > 0
+    ? isTagsQueriesRegistry
+      // For Tags_Queries, filter using key2
+      ? `{or: [${network
+          .map((chainId) => `{metadata_: {key2: "${chainId}"}}`)
+          .join(',')}]},`
+      // For other registries, filter using key0
+      : `{or: [${network
+          .map((chainId) => `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`)
+          .join(',')}]},`
     : ''
 
   const textFilterObject = `{or: [
@@ -123,73 +126,70 @@ export const fetchItems = async (
 
   const query = gql`
     query (
-  $registry: [String!]!
-  $status: [String!]!
-  $disputed: [Boolean!]!
-  $text: String!
-  $skip: Int!
-  $first: Int!
-  $orderDirection: OrderDirection!
-) {
-  litems(
-    where: {
-      and: [
-        {registry_in: $registry},
-        {status_in: $status},
-        {disputed_in: $disputed},
-        # network section, dynamically generated.
-        # only use if needed and not querying Tags_Queries
-        ${networkQueryObject}
-        # text filtering
-        ${text === '' ? '' : textFilterObject}
-      ]
-    }
-    skip: $skip
-    first: $first
-    orderBy: "latestRequestSubmissionTime"
-    orderDirection: $orderDirection
-  ) {
-    id
-    latestRequestSubmissionTime
-    registryAddress
-    itemID
-    status
-    disputed
-    data
-    metadata {
-      key0
-      key1
-      key2
-      key3
-      props {
-        value
-        type
-        label
-        description
-        isIdentifier
+      $registry: [String!]!
+      $status: [String!]!
+      $disputed: [Boolean!]!
+      $text: String!
+      $skip: Int!
+      $first: Int!
+      $orderDirection: OrderDirection!
+    ) {
+      litems(
+        where: {
+          and: [
+            {registry_in: $registry},
+            {status_in: $status},
+            {disputed_in: $disputed},
+            ${networkQueryObject}
+            ${text === '' ? '' : textFilterObject}
+          ]
+        }
+        skip: $skip
+        first: $first
+        orderBy: "latestRequestSubmissionTime"
+        orderDirection: $orderDirection
+      ) {
+        id
+        latestRequestSubmissionTime
+        registryAddress
+        itemID
+        status
+        disputed
+        data
+        metadata {
+          key0
+          key1
+          key2
+          key3
+          props {
+            value
+            type
+            label
+            description
+            isIdentifier
+          }
+        }
+        requests(first: 1, orderBy: submissionTime, orderDirection: desc) {
+          disputed
+          disputeID
+          submissionTime
+          resolved
+          requester
+          challenger
+          resolutionTime
+          deposit
+          rounds(first: 1, orderBy: creationTime, orderDirection: desc) {
+            appealPeriodStart
+            appealPeriodEnd
+            ruling
+            hasPaidRequester
+            hasPaidChallenger
+            amountPaidRequester
+            amountPaidChallenger
+          }
+        }
       }
     }
-    requests(first: 1, orderBy: submissionTime, orderDirection: desc) {
-      disputed
-      disputeID
-      submissionTime
-      resolved
-      requester
-      challenger
-      resolutionTime
-      deposit
-      rounds(first: 1, orderBy: creationTime, orderDirection: desc) {
-        appealPeriodStart
-        appealPeriodEnd
-        ruling
-        hasPaidRequester
-        hasPaidChallenger
-        amountPaidRequester
-        amountPaidChallenger
-      }
-    }
-  }
-}
   `
 
   const result = (await request({
