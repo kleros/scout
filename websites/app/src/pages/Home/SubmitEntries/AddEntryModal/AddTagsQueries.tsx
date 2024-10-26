@@ -44,7 +44,7 @@ const AddTagsQueries: React.FC = () => {
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', ':' +  'Tags_Queries'],
     queryFn: () => ({ /* validation logic */ }),
-    // enabled: Boolean(GithubRepository) || Boolean(commitHash) || Boolean(evmChainID) || Boolean(description),
+    enabled: Boolean(GithubRepository) || Boolean(commitHash) || Boolean(evmChainId) || Boolean(description),
   });
 
   const { data: countsData } = useQuery({

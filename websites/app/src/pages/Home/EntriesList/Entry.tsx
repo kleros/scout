@@ -173,9 +173,13 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
         bounty={item.requests[0].deposit}
       />
       <CardContent>
-        <strong>
-          <AddressDisplay address={item?.metadata?.key0 || ''} />
-        </strong>
+        {item.registryAddress === registryMap.Tags_Queries ? (
+          <AddressDisplay address={`eip155:${item?.metadata?.key2}` || ''} />
+        ) :
+          <strong>
+            <AddressDisplay address={item?.metadata?.key0 || ''} />
+          </strong>
+        }
         {item.registryAddress === registryMap.Single_Tags && (
           <>
             <div>{item?.metadata?.key2}</div>
@@ -191,14 +195,13 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
         )}
         {item.registryAddress === registryMap.Tags_Queries && (
           <>
-            <div>{item?.metadata?.key2}</div>
-            <div>{item?.metadata?.key1}</div>
+            <div><b><u>{item?.metadata?.props?.[1]?.value}</u></b></div>
             <StyledWebsiteAnchor
-              href={item?.metadata?.key3}
+              href={`https://gitpod.io/#${item?.metadata?.key0}`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {item?.metadata?.key3}
+              {item?.metadata?.key0}
             </StyledWebsiteAnchor>
           </>
         )}

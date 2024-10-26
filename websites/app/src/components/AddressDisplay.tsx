@@ -39,12 +39,14 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
   return (
     <Container>
       <StyledSpan bgColor={bgColor}>{reference?.label}</StyledSpan>
-      <StyledAddressA
-        target="_blank"
-        href={`https://${reference?.explorer}/address/${parts?.[2]}`}
-      >
-        {truncateAddress(parts?.[2])}
-      </StyledAddressA>
+      {parts?.[2] && (
+        <StyledAddressA
+          target="_blank"
+          href={`https://${reference?.explorer}/address/${parts?.[2]}`}
+        >
+          {truncateAddress(parts?.[2])}
+        </StyledAddressA>
+      )}
     </Container>
   )
 }

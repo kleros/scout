@@ -102,12 +102,17 @@ export const fetchItems = async (
     return []
   }
 
-  const networkQueryObject = `{or: [${network
-    .map(
-      (chainId) =>
-        `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`
-    )
-    .join(',')}]},`
+  // Only include network filtering if we're not querying Tags_Queries
+  const shouldIncludeNetworkFilter = !registry.includes('Tags_Queries')
+  
+  const networkQueryObject = shouldIncludeNetworkFilter && network.length > 0
+    ? `{or: [${network
+        .map(
+          (chainId) =>
+            `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`
+        )
+        .join(',')}]},`
+    : ''
 
   const textFilterObject = `{or: [
     {metadata_: {key0_contains_nocase: $text}},
@@ -133,8 +138,8 @@ export const fetchItems = async (
         {status_in: $status},
         {disputed_in: $disputed},
         # network section, dynamically generated.
-            # only use if needed
-        ${network.length === 0 ? '' : networkQueryObject}
+        # only use if needed and not querying Tags_Queries
+        ${networkQueryObject}
         # text filtering
         ${text === '' ? '' : textFilterObject}
       ]

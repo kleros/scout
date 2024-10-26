@@ -95,7 +95,7 @@ const Item: React.FC<IItem> = ({ name, subItems }) => {
   return (
     <>
       <StyledItem key={name} onClick={() => handleItemClick(name)} {...{isSelected}}>
-        {displayName}
+        {displayName.replace('_', ' ')}
         {name === 'Tags' && (
           <FilterDropdownIconWrapper open={isExpanded}>
             <DownDirectionIcon />
@@ -109,7 +109,7 @@ const Item: React.FC<IItem> = ({ name, subItems }) => {
               onClick={(e) => handleSubItemClick(subItem.name)}
               isSelected={searchParams.get('registry') === subItem.name}
             >
-              {subItem.name}
+              {subItem.name.replace('_', ' ')}
             </StyledItem>
           ))}
         </StyledDropdown>
