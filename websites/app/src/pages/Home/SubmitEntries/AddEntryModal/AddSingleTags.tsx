@@ -133,7 +133,7 @@ const AddAddressTag: React.FC = () => {
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Single_Tags', projectName, publicNameTag, website],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Single_Tags', undefined, projectName, publicNameTag, website),
+    queryFn: () => getAddressValidationIssue(network.value, 'Single_Tags', debouncedAddress, undefined, projectName, publicNameTag, website),
     enabled: Boolean(debouncedAddress) || Boolean(projectName) || Boolean(publicNameTag) || Boolean(website),
   });
 

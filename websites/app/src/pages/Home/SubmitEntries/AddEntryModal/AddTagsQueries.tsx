@@ -17,9 +17,43 @@ import {
   ExpectedPayouts,
   PayoutsContainer,
   Divider,
-  SubmissionButton
+  SubmissionButton,
+  ErrorMessage
 } from './index';
 import { fetchItemCounts, FocusedRegistry } from 'utils/itemCounts';
+import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate';
+import { getIPFSPath } from 'utils/getIPFSPath';
+import ipfsPublish from 'utils/ipfsPublish';
+import { registryMap } from 'utils/fetchItems'; 
+import { DepositParams } from 'utils/fetchRegistryDeposits';
+import getAddressValidationIssue from 'utils/validateAddress';
+
+const columns = [
+  {
+    "type": "text",
+    "label": "Commit hash",
+    "description": "The hash of the specific commit for this repository to be referenced.",
+    "isIdentifier": true
+  },
+  {
+    "type": "long text",
+    "label": "Description",
+    "description": "A field used to describe the range of contracts being curated here, specifying (if applicable) the version, type and purpose of the contracts that are returned. ",
+    "isIdentifier": false
+  },
+  {
+    "type": "number",
+    "label": "EVM Chain ID",
+    "description": "The integer EVM Chain ID of the chain of the contracts being retrieved by the function in this module.",
+    "isIdentifier": true
+  },
+  {
+    "type": "link",
+    "label": "Github Repository URL",
+    "description": "The URL of the repository containing the function that returns the Contract Tags.  The repository name must be in the kebab case (hyphen-case).",
+    "isIdentifier": true
+  }
+]
 
 const AddTagsQueries: React.FC = () => {
   const [formData, setFormData] = useLocalStorage('addTagsQueriesForm', {
@@ -42,8 +76,8 @@ const AddTagsQueries: React.FC = () => {
   }, [GithubRepository, commitHash, evmChainId, description]);
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', ':' +  'Tags_Queries'],
-    queryFn: () => ({ /* validation logic */ }),
+    queryKey: ['addressissues', evmChainId, 'Tags_Queries', GithubRepository],
+    queryFn: () => getAddressValidationIssue(evmChainId, 'Tags_Queries', undefined, undefined, undefined, undefined, GithubRepository, undefined),
     enabled: Boolean(GithubRepository) || Boolean(commitHash) || Boolean(evmChainId) || Boolean(description),
   });
 
@@ -61,7 +95,25 @@ const AddTagsQueries: React.FC = () => {
 
 
   const submitTagsQueries = async () => {
-    console.log('Submitting Tags Queries:', { GithubRepository, commitHash, evmChainId, description });
+    const values = {
+      'Commit hash': commitHash,
+      'Description': description,
+      'EVM Chain ID': evmChainId,
+      'Github Repository URL': GithubRepository,
+    }
+    const item = {
+      columns,
+      values,
+    }
+    const enc = new TextEncoder()
+    const fileData = enc.encode(JSON.stringify(item))
+    const ipfsObject = await ipfsPublish('item.json', fileData)
+    const ipfsPath = getIPFSPath(ipfsObject)
+    await initiateTransactionToCurate(
+      registryMap.Tags_Queries,
+      countsData?.Tags_Queries.deposits as DepositParams,
+      ipfsPath
+    )
     clearLocalStorage('addTagsQueriesForm');
   };
 
@@ -111,6 +163,9 @@ const AddTagsQueries: React.FC = () => {
         value={GithubRepository}
         onChange={(e) => setGithubRepository(e.target.value)}
       />
+      {addressIssuesData?.link && (
+        <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
+      )}
       Commit Hash
       <StyledTextInput
         placeholder="e.g. c8baafd"

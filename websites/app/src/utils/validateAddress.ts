@@ -69,8 +69,8 @@ const getDupesInRegistry = async (
 // null
 const getAddressValidationIssue = async (
   chainId: string,
-  address: string,
   registry: string,
+  address?: string,
   domain?: string,
   projectName?: string,
   publicNameTag?: string,
@@ -124,7 +124,7 @@ const getAddressValidationIssue = async (
   const tagRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
 
   if (link && !tagRegex.test(link)) {
-    result.link = { message: 'Invalid website format for Tags. Must start with http(s):// and include a valid domain', severity: 'error' };
+    result.link = { message: 'Invalid website format. Must start with http(s):// and include a valid domain', severity: 'error' };
   }
 
   return Object.keys(result).length > 0 ? result : null;
