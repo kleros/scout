@@ -8,10 +8,8 @@ import { ClosedButtonContainer } from 'pages/Home';
 import {
   AddContainer,
   AddHeader,
-  AddSubtitle,
   AddTitle,
   CloseButton,
-  StyledGoogleFormAnchor,
   StyledTextInput,
   SubmitButton,
   ExpectedPayouts,
@@ -128,18 +126,7 @@ const AddTagsQueries: React.FC = () => {
   return (
     <AddContainer>
       <AddHeader>
-        <div>
-          <AddTitle>Submit Address Tags Query</AddTitle>
-          <AddSubtitle>
-            Want to suggest an entry without any deposit?{' '}
-            <StyledGoogleFormAnchor
-              target="_blank"
-              href="https://docs.google.com/forms/d/e/1FAIpQLSdTwlrcbbPOkSCMKuUj42d_koSAEkWjMLz5hhTc5lB6aGCO9w/viewform"
-            >
-              Click here
-            </StyledGoogleFormAnchor>
-          </AddSubtitle>
-        </div>
+        <AddTitle>Submit Address Tags Query</AddTitle>
         {registry && (
           <SubmissionButton
             onClick={() => {
