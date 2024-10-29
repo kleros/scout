@@ -211,8 +211,11 @@ const StyledButton = styled.button`
 `;
 
 export const StyledGitpodLink = styled.a`
-  color: grey;
+  color: white;
   text-decoration: none;
+  background-color: dimgrey;
+  padding: 2px 6px;
+  border-radius: 6px;
 
   &:hover {
     text-decoration: underline;
