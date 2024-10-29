@@ -199,7 +199,7 @@ const AddCDN: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Single_Tags"
+        registry="CDN"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -226,10 +226,10 @@ const AddCDN: React.FC = () => {
         </SubmitButton>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Single_Tags']?.deposits
+          {countsData?.CDN?.deposits
             ? formatEther(
-              countsData['Single_Tags'].deposits.arbitrationCost +
-              countsData['Tags_Queries'].deposits.submissionBaseDeposit
+              countsData.CDN.deposits.arbitrationCost +
+              countsData.CDN.deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}{' | '}Expected Reward: $12
         </ExpectedPayouts>

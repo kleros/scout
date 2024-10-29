@@ -197,7 +197,7 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
           <>
             <div><b><u>{item?.metadata?.props?.[1]?.value}</u></b></div>
             <StyledWebsiteAnchor
-              href={`https://gitpod.io/#${item?.metadata?.key0}`}
+              href={`${item?.metadata?.key0.replace('.git', '')}/commit/${item?.metadata?.key1}`}
               target="_blank"
               rel="noopener noreferrer"
             >

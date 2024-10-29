@@ -58,7 +58,12 @@ interface IItem {
 const Item: React.FC<IItem> = ({ name, subItems }) => {
   let [searchParams, setSearchParams] = useSearchParams()
   const [isExpanded, setIsExpanded] = useState(false)
-  const [displayName, setDisplayName] = useState(name)
+  const [displayName, setDisplayName] = useState(() => {
+    if (name === 'Tags') {
+      return searchParams.get('registry') || 'Single_Tags';
+    }
+    return name;
+  });
   const isSelected = (searchParams.get('registry')) === displayName || 
                      (name === 'Tags' && ['Single_Tags', 'Tags_Queries'].includes(searchParams.get('registry') || ''))
   const dropdownRef = React.useRef<HTMLDivElement>(null);

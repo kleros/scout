@@ -219,7 +219,7 @@ const AddToken: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Single_Tags"
+        registry="Tokens"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -266,10 +266,10 @@ const AddToken: React.FC = () => {
         </SubmitButton>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Single_Tags']?.deposits
+          {countsData?.Tokens?.deposits
             ? formatEther(
-              countsData['Single_Tags'].deposits.arbitrationCost +
-              countsData['Single_Tags'].deposits.submissionBaseDeposit
+              countsData.Tokens.deposits.arbitrationCost +
+              countsData.Tokens.deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}{' | '}Expected Reward: $12
         </ExpectedPayouts>
