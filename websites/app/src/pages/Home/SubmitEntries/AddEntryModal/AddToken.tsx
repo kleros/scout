@@ -132,7 +132,7 @@ const AddToken: React.FC = () => {
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'Tokens', undefined, name, undefined, undefined, symbol),
+    queryFn: () => getAddressValidationIssue(network.value, 'Tokens', debouncedAddress, undefined, name, undefined, undefined, symbol),
     enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol),
   });
 
@@ -219,7 +219,7 @@ const AddToken: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Tags"
+        registry="Tokens"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -266,10 +266,10 @@ const AddToken: React.FC = () => {
         </SubmitButton>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.Tags?.deposits
+          {countsData?.Tokens?.deposits
             ? formatEther(
-              countsData.Tags.deposits.arbitrationCost +
-              countsData.Tags.deposits.submissionBaseDeposit
+              countsData.Tokens.deposits.arbitrationCost +
+              countsData.Tokens.deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}{' | '}Expected Reward: $12
         </ExpectedPayouts>

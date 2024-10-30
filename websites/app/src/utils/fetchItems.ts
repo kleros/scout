@@ -2,13 +2,15 @@ import { gql, request } from 'graphql-request'
 import { ITEMS_PER_PAGE } from 'pages/Home'
 
 export const registryMap = {
-  Tags: '0x66260c69d03837016d88c9877e61e08ef74c59f2',
+  Single_Tags: '0x66260c69d03837016d88c9877e61e08ef74c59f2',
+  Tags_Queries: '0xae6aaed5434244be3699c56e7ebc828194f26dc3',
   CDN: '0x957a53a994860be4750810131d9c876b2f52d6e1',
   Tokens: '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
 }
 
 export const revRegistryMap = {
-  '0x66260c69d03837016d88c9877e61e08ef74c59f2': 'Tags',
+  '0x66260c69d03837016d88c9877e61e08ef74c59f2': 'Single_Tags',
+  '0xae6aaed5434244be3699c56e7ebc828194f26dc3': 'Tags_Queries',
   '0x957a53a994860be4750810131d9c876b2f52d6e1': 'CDN',
   '0xee1502e29795ef6c2d60f8d7120596abe3bad990': 'Tokens',
 }
@@ -100,12 +102,20 @@ export const fetchItems = async (
     return []
   }
 
-  const networkQueryObject = `{or: [${network
-    .map(
-      (chainId) =>
-        `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`
-    )
-    .join(',')}]},`
+  const isTagsQueriesRegistry = registry.includes('Tags_Queries')
+  
+  // Network filtering logic based on registry type
+  const networkQueryObject = network.length > 0
+    ? isTagsQueriesRegistry
+      // For Tags_Queries, filter using key2
+      ? `{or: [${network
+          .map((chainId) => `{metadata_: {key2: "${chainId}"}}`)
+          .join(',')}]},`
+      // For other registries, filter using key0
+      : `{or: [${network
+          .map((chainId) => `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`)
+          .join(',')}]},`
+    : ''
 
   const textFilterObject = `{or: [
     {metadata_: {key0_contains_nocase: $text}},
@@ -116,73 +126,70 @@ export const fetchItems = async (
 
   const query = gql`
     query (
-  $registry: [String!]!
-  $status: [String!]!
-  $disputed: [Boolean!]!
-  $text: String!
-  $skip: Int!
-  $first: Int!
-  $orderDirection: OrderDirection!
-) {
-  litems(
-    where: {
-      and: [
-        {registry_in: $registry},
-        {status_in: $status},
-        {disputed_in: $disputed},
-        # network section, dynamically generated.
-            # only use if needed
-        ${network.length === 0 ? '' : networkQueryObject}
-        # text filtering
-        ${text === '' ? '' : textFilterObject}
-      ]
-    }
-    skip: $skip
-    first: $first
-    orderBy: "latestRequestSubmissionTime"
-    orderDirection: $orderDirection
-  ) {
-    id
-    latestRequestSubmissionTime
-    registryAddress
-    itemID
-    status
-    disputed
-    data
-    metadata {
-      key0
-      key1
-      key2
-      key3
-      props {
-        value
-        type
-        label
-        description
-        isIdentifier
+      $registry: [String!]!
+      $status: [String!]!
+      $disputed: [Boolean!]!
+      $text: String!
+      $skip: Int!
+      $first: Int!
+      $orderDirection: OrderDirection!
+    ) {
+      litems(
+        where: {
+          and: [
+            {registry_in: $registry},
+            {status_in: $status},
+            {disputed_in: $disputed},
+            ${networkQueryObject}
+            ${text === '' ? '' : textFilterObject}
+          ]
+        }
+        skip: $skip
+        first: $first
+        orderBy: "latestRequestSubmissionTime"
+        orderDirection: $orderDirection
+      ) {
+        id
+        latestRequestSubmissionTime
+        registryAddress
+        itemID
+        status
+        disputed
+        data
+        metadata {
+          key0
+          key1
+          key2
+          key3
+          props {
+            value
+            type
+            label
+            description
+            isIdentifier
+          }
+        }
+        requests(first: 1, orderBy: submissionTime, orderDirection: desc) {
+          disputed
+          disputeID
+          submissionTime
+          resolved
+          requester
+          challenger
+          resolutionTime
+          deposit
+          rounds(first: 1, orderBy: creationTime, orderDirection: desc) {
+            appealPeriodStart
+            appealPeriodEnd
+            ruling
+            hasPaidRequester
+            hasPaidChallenger
+            amountPaidRequester
+            amountPaidChallenger
+          }
+        }
       }
     }
-    requests(first: 1, orderBy: submissionTime, orderDirection: desc) {
-      disputed
-      disputeID
-      submissionTime
-      resolved
-      requester
-      challenger
-      resolutionTime
-      deposit
-      rounds(first: 1, orderBy: creationTime, orderDirection: desc) {
-        appealPeriodStart
-        appealPeriodEnd
-        ruling
-        hasPaidRequester
-        hasPaidChallenger
-        amountPaidRequester
-        amountPaidChallenger
-      }
-    }
-  }
-}
   `
 
   const result = (await request({

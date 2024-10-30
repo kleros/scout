@@ -124,7 +124,7 @@ const AddCDN: React.FC = () => {
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', domain],
-    queryFn: () => getAddressValidationIssue(network.value, debouncedAddress, 'CDN', domain),
+    queryFn: () => getAddressValidationIssue(network.value, 'CDN', debouncedAddress, domain),
     enabled: Boolean(debouncedAddress) || Boolean(domain),
   });
 
@@ -199,7 +199,7 @@ const AddCDN: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Tags"
+        registry="CDN"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -226,10 +226,10 @@ const AddCDN: React.FC = () => {
         </SubmitButton>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.Tags?.deposits
+          {countsData?.CDN?.deposits
             ? formatEther(
-              countsData.Tags.deposits.arbitrationCost +
-              countsData.Tags.deposits.submissionBaseDeposit
+              countsData.CDN.deposits.arbitrationCost +
+              countsData.CDN.deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}{' | '}Expected Reward: $12
         </ExpectedPayouts>

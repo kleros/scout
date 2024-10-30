@@ -9,15 +9,17 @@ import { useChallengePeriodDuration } from 'hooks/countdown';
 import { registryMap } from 'utils/fetchItems';
 
 const useRegistryDurations = () => {
-  const tagsDuration = useChallengePeriodDuration(registryMap.Tags);
+  const singleTagsDuration = useChallengePeriodDuration(registryMap.Single_Tags);
+  const tagsQueriesDuration = useChallengePeriodDuration(registryMap.Tags_Queries);
   const tokensDuration = useChallengePeriodDuration(registryMap.Tokens);
   const cdnDuration = useChallengePeriodDuration(registryMap.CDN);
 
   return useMemo(() => ({
-    [registryMap.Tags]: tagsDuration,
+    [registryMap.Single_Tags]: singleTagsDuration,
+    [registryMap.Tags_Queries]: tagsQueriesDuration,
     [registryMap.Tokens]: tokensDuration,
     [registryMap.CDN]: cdnDuration,
-  }), [tagsDuration, tokensDuration, cdnDuration]);
+  }), [singleTagsDuration, tagsQueriesDuration, tokensDuration, cdnDuration]);
 };
 
 const EntriesContainer = styled.div`

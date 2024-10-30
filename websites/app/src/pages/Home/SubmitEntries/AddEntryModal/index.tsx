@@ -3,7 +3,8 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams } from 'react-router-dom'
-import AddAddressTag from './AddTag'
+import AddAddressTag from './AddSingleTags'
+import AddTagsQueries from './AddTagsQueries'
 import AddToken from './AddToken'
 import AddCDN from './AddCDN'
 import { StyledCloseButton } from 'pages/Home'
@@ -215,8 +216,10 @@ const AddEntryModal: React.FC = () => {
   return (
     <ModalOverlay>
       <ModalContainer ref={containerRef} >
-        {addingItemToRegistry === 'Tags' ? (
+        {addingItemToRegistry === 'Single_Tags' ? (
           <AddAddressTag />
+        ) : addingItemToRegistry === 'Tags_Queries' ? (
+          <AddTagsQueries />
         ) : addingItemToRegistry === 'CDN' ? (
           <AddCDN />
         ) : addingItemToRegistry === 'Tokens' ? (

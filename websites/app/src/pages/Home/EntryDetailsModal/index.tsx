@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 import { useQuery } from '@tanstack/react-query'
-import { renderValue } from 'utils/renderValue'
+import { renderValue, StyledWebsiteAnchor } from 'utils/renderValue'
 import { statusColorMap } from 'utils/colorMappings'
 import { fetchArbitrationCost } from 'utils/fetchArbitrationCost'
 import { fetchItemCounts } from 'utils/itemCounts'
@@ -22,6 +22,7 @@ import AttachmentIcon from "svgs/icons/attachment.svg";
 import { useScrollTop } from 'hooks/useScrollTop'
 import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
 import { useChallengePeriodDuration } from 'hooks/countdown'
+import AddressDisplay from 'components/AddressDisplay'
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -209,17 +210,26 @@ const StyledButton = styled.button`
   )}
 `;
 
+export const StyledGitpodLink = styled.a`
+  color: white;
+  text-decoration: none;
+  background-color: dimgrey;
+  padding: 2px 6px;
+  border-radius: 6px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`
+
 const DetailsModal: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('')
 
   const scrollTop = useScrollTop();
-  
-  const itemDetailsId = useMemo(
-    () => searchParams.get('itemdetails'),
-    [searchParams]
-  )
+
+  const itemDetailsId = useMemo(() => searchParams.get('itemdetails'), [searchParams])
 
   const { isLoading: detailsLoading, data: detailsData } = useQuery({
     queryKey: ['details', itemDetailsId || ''],
@@ -227,10 +237,7 @@ const DetailsModal: React.FC = () => {
     staleTime: Infinity,
   })
 
-  // the registry can be fetched directly from itemDetailsId.
-  const registryParsedFromItemId = itemDetailsId
-    ? itemDetailsId.split('@')[1]
-    : ''
+  const registryParsedFromItemId = useMemo(() => itemDetailsId ? itemDetailsId.split('@')[1] : '', [itemDetailsId])
 
   const challengePeriodDuration = useChallengePeriodDuration(registryParsedFromItemId)
   const challengeRemainingTime = useChallengeRemainingTime(detailsData?.requests[0]?.submissionTime, detailsData?.disputed, challengePeriodDuration)
@@ -313,6 +320,8 @@ const DetailsModal: React.FC = () => {
       </a>
     )
   }
+  
+  const isTagsQueries = useMemo(() => searchParams.get('registry') === 'Tags_Queries', [searchParams])
 
   return (
     <ModalOverlay>
@@ -323,7 +332,7 @@ const DetailsModal: React.FC = () => {
           <>
             {/* ConfirmationBox Modal */}
             {isConfirmationOpen && (
-              <ConfirmationBox {...{evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData}} />
+              <ConfirmationBox {...{ evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData }} />
             )}
 
             {/* DETAILS */}
@@ -331,9 +340,7 @@ const DetailsModal: React.FC = () => {
               <Header>
                 <EntryDetailsHeader>Entry details</EntryDetailsHeader>
                 <StatusSpan status={detailsData.status}>
-                  {detailsData?.disputed
-                    ? 'Challenged'
-                    : getStatusLabel(detailsData.status)}
+                  {detailsData?.disputed ? 'Challenged' : getStatusLabel(detailsData.status)}
                 </StatusSpan>
                 {!detailsData.disputed ? (
                   <StatusButton
@@ -344,10 +351,8 @@ const DetailsModal: React.FC = () => {
                     status={detailsData.status}
                   >
                     {detailsData.status === 'Registered' && `Remove entry`}
-                    {detailsData.status === 'RegistrationRequested' &&
-                      'Challenge entry'}
-                    {detailsData.status === 'ClearingRequested' &&
-                      'Challenge removal'}
+                    {detailsData.status === 'RegistrationRequested' && 'Challenge entry'}
+                    {detailsData.status === 'ClearingRequested' && 'Challenge removal'}
                     {' — ' + formattedDepositCost}
                   </StatusButton>
                 ) : (
@@ -355,20 +360,50 @@ const DetailsModal: React.FC = () => {
                 )}
               </Header>
               <EntryDetailsContainer>
-                {detailsData?.metadata?.props &&
+                {detailsData?.metadata?.props && !isTagsQueries &&
                   detailsData?.metadata?.props.map(({ label, value }) => (
                     <LabelAndValue key={label}>
                       <strong>{label}:</strong> {renderValue(label, value)}
                     </LabelAndValue>
                   ))}
-                <LabelAndValue style={{color: "#CD9DFF"}}>
+                {detailsData?.metadata?.props && isTagsQueries && (
+                  <>
+                    <LabelAndValue>
+                      <strong>{detailsData?.metadata?.props?.[1]?.label}:</strong> {detailsData?.metadata?.props?.[1]?.value}
+                    </LabelAndValue>
+                    <LabelAndValue>
+                      <strong>{detailsData?.metadata?.props?.[3]?.label}:</strong>
+                      <StyledWebsiteAnchor
+                        href={`${detailsData?.metadata?.props?.[3]?.value.replace('.git', '')}/commit/${detailsData?.metadata?.props?.[0]?.value}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {detailsData?.metadata?.props?.[3]?.value}
+                      </StyledWebsiteAnchor>
+                      <StyledGitpodLink
+                        href="https://gitpod.io/#https://github.com/gmkung/kleros-atq-trustless-retrieval.git"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Test on Gitpod
+                      </StyledGitpodLink>
+                    </LabelAndValue>
+                    <LabelAndValue>
+                      <strong>{detailsData?.metadata?.props?.[0]?.label}:</strong> {detailsData?.metadata?.props?.[0]?.value}
+                    </LabelAndValue>
+                    <LabelAndValue>
+                      <strong>{detailsData?.metadata?.props?.[2]?.label}:</strong> {detailsData?.metadata?.key2} <AddressDisplay address={`eip155:${detailsData?.metadata?.key2}` || ''} />
+                    </LabelAndValue>
+                  </>
+                )}
+                <LabelAndValue style={{ color: "#CD9DFF" }}>
                   <strong>Submitted by:</strong> {detailsData?.requests[0].requester}
                 </LabelAndValue>
-                <LabelAndValue style={{color: "#CD9DFF"}}>
+                <LabelAndValue style={{ color: "#CD9DFF" }}>
                   <strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}
                 </LabelAndValue>
                 {formattedChallengeRemainingTime && (
-                  <LabelAndValue style={{color: "#CD9DFF"}}>
+                  <LabelAndValue style={{ color: "#CD9DFF" }}>
                     <strong>Challenge Period ends in:</strong> {formattedChallengeRemainingTime}
                   </LabelAndValue>
                 )}
@@ -400,18 +435,18 @@ const DetailsModal: React.FC = () => {
                         </StyledReactMarkdown>
                       </EvidenceDescription>
                       {evidence?.metadata?.fileURI ? (
-                          <StyledButton
-                            onClick={() => {
-                              if (evidence.metadata?.fileURI) {
-                                setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` });
-                                scrollTop();
-                              }
-                            }}
-                          >
-                            <AttachmentIcon />
-                            View Attached File
-                          </StyledButton>
-                        ) : null}
+                        <StyledButton
+                          onClick={() => {
+                            if (evidence.metadata?.fileURI) {
+                              setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` });
+                              scrollTop();
+                            }
+                          }}
+                        >
+                          <AttachmentIcon />
+                          View Attached File
+                        </StyledButton>
+                      ) : null}
                       <EvidenceField>
                         <strong>Time:</strong>{' '}
                         {formatTimestamp(Number(evidence.timestamp), true)}
