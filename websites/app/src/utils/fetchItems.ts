@@ -1,5 +1,6 @@
 import { gql, request } from 'graphql-request'
 import { ITEMS_PER_PAGE } from 'pages/Home'
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 
 export const registryMap = {
   Single_Tags: '0x66260c69d03837016d88c9877e61e08ef74c59f2',
@@ -193,7 +194,7 @@ export const fetchItems = async (
   `
 
   const result = (await request({
-    url: 'https://api.studio.thegraph.com/query/61738/legacy-curate-gnosis/version/latest',
+    url: SUBGRAPH_GNOSIS_ENDPOINT,
     document: query,
     variables: {
       registry: registry.map((r) => registryMap[r]),
