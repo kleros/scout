@@ -60,7 +60,11 @@ const Item: React.FC<IItem> = ({ name, subItems }) => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [displayName, setDisplayName] = useState(() => {
     if (name === 'Tags') {
-      return searchParams.get('registry') || 'Single_Tags';
+      const registry = searchParams.get('registry');
+      if (registry && ['Single_Tags', 'Tags_Queries'].includes(registry)) {
+        return registry;
+      }
+      return 'Single_Tags';
     }
     return name;
   });
