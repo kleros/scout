@@ -148,10 +148,11 @@ const RewardSection: React.FC = () => (
             <FormulaBox>
               <FormulaText>The calculation of rewards will look like this</FormulaText>
               <Formula>
-                reward per submission<FormulaSpan> = (1/2 * (</FormulaSpan>reward_pool<FormulaSpan> / </FormulaSpan>total_submissions<FormulaSpan>)) + 
-                (1/2 * </FormulaSpan>reward_pool<FormulaSpan> * (</FormulaSpan>txns_with_contract<FormulaSpan> / </FormulaSpan>total_txns_with_all_contracts<FormulaSpan>))</FormulaSpan>
+                reward per submission<FormulaSpan> = </FormulaSpan>
+                reward_pool<FormulaSpan> * ((1 / (2 * </FormulaSpan>total_submissions<FormulaSpan>)) + (</FormulaSpan>
+                txns_with_contract<FormulaSpan> / (2 * </FormulaSpan>total_txns_with_all_contracts<FormulaSpan>)))</FormulaSpan>
               </Formula>
-          </FormulaBox>
+            </FormulaBox>
             <Text>Points to note:</Text>
             <List>
                 <li>There is a 1000 PNK cap on reward per submission.</li>
