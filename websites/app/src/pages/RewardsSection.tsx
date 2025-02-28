@@ -146,11 +146,12 @@ const RewardSection: React.FC = () => (
                 <li>Increased number of submissions.</li>
             </List>
             <FormulaBox>
-                <FormulaText>The calculation of rewards will look like this</FormulaText>
-                <Formula>
-                    reward per submission<FormulaSpan> = (1/2*(</FormulaSpan>reward_pool<FormulaSpan>/</FormulaSpan>total_submissions<FormulaSpan> )) +
-                    (1/2*(</FormulaSpan>txns_with_contract<FormulaSpan>*</FormulaSpan>total_txns_with_all_contracts<FormulaSpan>))</FormulaSpan>
-                </Formula>
+              <FormulaText>The calculation of rewards will look like this</FormulaText>
+              <Formula>
+                reward per submission<FormulaSpan> = </FormulaSpan>
+                reward_pool<FormulaSpan> * ((1 / (2 * </FormulaSpan>total_submissions<FormulaSpan>)) + (</FormulaSpan>
+                txns_with_contract<FormulaSpan> / (2 * </FormulaSpan>total_txns_with_all_contracts<FormulaSpan>)))</FormulaSpan>
+              </Formula>
             </FormulaBox>
             <Text>Points to note:</Text>
             <List>
