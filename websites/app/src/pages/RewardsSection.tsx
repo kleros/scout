@@ -157,7 +157,7 @@ const RewardSection: React.FC = () => (
             <List>
                 <li>There is a 1000 PNK cap on reward per submission.</li>
                 <li>
-                    Contracts from 10 chains qualify for rewards. They are: <br />
+                    Contracts from 8 chains qualify for rewards. They are: <br />
                     Solana, Base Mainnet, Scroll, zkSync, Avalance C-Chain, Gnosis Chain, Celo, Fantom.
                 </li>
                 <li>For the latest news about incentives, check our{" "}
