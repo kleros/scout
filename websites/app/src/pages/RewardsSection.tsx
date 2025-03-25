@@ -162,7 +162,7 @@ const RewardSection: React.FC = () => (
                 </li>
                 <li>For the latest news about incentives, check our{" "}
                     <a href="https://blog.kleros.io/" target="_blank" rel="noopener noreferrer">Blog</a> or{" "}
-                    <a href="https://t.me/KlerosCurate" target="_blank" rel="noopener noreferrer">Telegram channel</li>
+                    <a href="https://t.me/KlerosCurate" target="_blank" rel="noopener noreferrer">Telegram channel</a></li>
             </List>
         </div>
     </Section>
