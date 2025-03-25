@@ -108,7 +108,7 @@ const RewardSection: React.FC = () => (
         <Grid>
             <Title>Reward Pool & Avg. Rewards</Title>
             <StatBox borderLeft={true}>
-                <StatNumber>$8000</StatNumber>
+                <StatNumber>300k PNK</StatNumber>
                 <StatLabel>MONTHLY REWARD POOL</StatLabel>
             </StatBox>
             <StatBox>
@@ -128,7 +128,7 @@ const RewardSection: React.FC = () => (
         <div>
             <Title>Contribute to Kleros Scout and earn rewards!</Title>
             <Text>
-                The reward pool consists of 300,000 PNK (~$7680 as of June 25, 2024) for submitters. Here is how the
+                The reward pool consists of 300,000 PNK (~$4300 as of March 23rd, 2025) for submitters. Here is how the
                 reward pool is allocated to the three registries across different chains.
             </Text>
             <List>
@@ -158,8 +158,11 @@ const RewardSection: React.FC = () => (
                 <li>There is a 1000 PNK cap on reward per submission.</li>
                 <li>
                     Contracts from 10 chains qualify for rewards. They are: <br />
-                    Ethereum Mainnet, Arbitrum One, Optimism, Binance Smart Chain, zkSync, Avalance C-Chain, Gnosis Chain, Celo, Base Mainnet, Fantom Opera.
+                    Solana, Base Mainnet, Scroll, zkSync, Avalance C-Chain, Gnosis Chain, Celo, Fantom.
                 </li>
+                <li>For the latest news about incentives, check our{" "}
+                    <a href="https://blog.kleros.io/" target="_blank" rel="noopener noreferrer">Blog</a> or{" "}
+                    <a href="https://t.me/KlerosCurate" target="_blank" rel="noopener noreferrer">Telegram channel</li>
             </List>
         </div>
     </Section>
