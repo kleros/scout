@@ -62,7 +62,7 @@ export const StyledAddressInput = styled.input`
 `
 
 const networkOptions = relevantNetworks.map((n) => ({
-  value: 'eip155:' + n.chainId,
+  value: `${n.namespace}:${n.chainId}`,
   label: n.name,
 }))
 

@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useSearchParams, createSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { fetchItems } from 'utils/fetchItems'
+import { fetchItems, relevantNetworks } from 'utils/fetchItems'
 import { fetchItemCounts } from 'utils/itemCounts'
 import Navbar from './Navbar'
 import RewardsPage from '../RewardsSection'
@@ -224,7 +224,7 @@ const Home: React.FC = () => {
     ) {
       const newSearchParams = createSearchParams({
         registry: registry.length === 0 ? ['Single_Tags'] : registry,
-        network: network.length === 0 ? ['1', '100', '137', '56', '42161', '10', '43114', '534352', '42220', '8453', '250', '324'] : network,
+        network: network.length === 0 ? relevantNetworks.map(n => n.chainId) : network,
         status:
           status.length === 0
             ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']

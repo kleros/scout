@@ -2,6 +2,26 @@ import { isAddress } from 'ethers'
 import request, { gql } from 'graphql-request'
 import { registryMap } from './fetchItems'
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
+import { PublicKey } from '@solana/web3.js'
+import { relevantNetworks } from 'utils/fetchItems'
+
+const isSolanaAddress = (value: string) => {
+  try {
+    new PublicKey(value)
+    return true
+  } catch {
+    return false
+  }
+}
+
+const isValidAddressForChain = (chainId: string, address: string): boolean => {
+  const network = relevantNetworks.find(n => `${n.namespace}:${n.chainId}` === chainId)
+
+  if (!network) return false
+  if (network.namespace === 'solana') return isSolanaAddress(address)
+  if (network.namespace === 'eip155') return isAddress(address)
+  return false
+}
 
 export interface Issue {
   address?: {
@@ -80,9 +100,9 @@ const getAddressValidationIssue = async (
 ): Promise<Issue | null> => {
   let result: Issue = {};
 
-  // check its an address. we dont check checksum.
-  if (address && !isAddress(address)) {
-    result.address = { message: 'Not a valid EVM address', severity: 'error' };
+  // Validate the address based on the chainId
+  if (address && !isValidAddressForChain(chainId, address)) {
+    result.address = { message: 'Invalid address for the specified chain', severity: 'error' };
   }
 
   // check its not a dupe.

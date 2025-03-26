@@ -199,7 +199,7 @@ const ChallengeStatus: React.FC = React.memo(() => {
 
 const Networks: React.FC = React.memo(() => {
   const [networks, toggleNetwork] = useFilterState('network');
-  const options = relevantNetworks.map(n => ({ value: String(n.chainId), label: n.name }));
+  const options = relevantNetworks.map(n => ({ value: n.chainId, label: n.name }));
   return <FilterDropdown label="Networks" options={options} selectedValues={networks} onToggle={toggleNetwork} />;
 });
 
