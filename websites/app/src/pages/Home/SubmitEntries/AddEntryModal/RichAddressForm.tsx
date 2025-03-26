@@ -2,7 +2,7 @@ import React, { SetStateAction, Dispatch } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import Select from 'react-select'
-import { relevantNetworks } from 'utils/fetchItems'
+import { chains } from 'utils/chains'
 import { StyledWholeField } from './index'
 
 const StyledAddressDiv = styled.div`
@@ -61,9 +61,9 @@ export const StyledAddressInput = styled.input`
   )}
 `
 
-const networkOptions = relevantNetworks.map((n) => ({
-  value: `${n.namespace}:${n.chainId}`,
-  label: n.name,
+const networkOptions = chains.map((chain) => ({
+  value: `${chain.namespace}:${chain.id}`,
+  label: chain.name,
 }))
 
 export interface NetworkOption {

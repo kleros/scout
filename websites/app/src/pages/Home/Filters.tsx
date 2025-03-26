@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams } from 'react-router-dom'
-import { relevantNetworks } from 'utils/fetchItems'
+import { chains } from 'utils/chains'
 import DownDirectionIcon from 'tsx:svgs/icons/down-direction.svg'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 
@@ -199,7 +199,7 @@ const ChallengeStatus: React.FC = React.memo(() => {
 
 const Networks: React.FC = React.memo(() => {
   const [networks, toggleNetwork] = useFilterState('network');
-  const options = relevantNetworks.map(n => ({ value: n.chainId, label: n.name }));
+  const options = chains.map(chain => ({ value: chain.id, label: chain.name }));
   return <FilterDropdown label="Networks" options={options} selectedValues={networks} onToggle={toggleNetwork} />;
 });
 

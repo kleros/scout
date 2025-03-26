@@ -16,22 +16,6 @@ export const revRegistryMap = {
   '0xee1502e29795ef6c2d60f8d7120596abe3bad990': 'Tokens',
 }
 
-export const relevantNetworks: { namespace: string; chainId: string; name: string }[] = [
-  { namespace: 'eip155', chainId: '1', name: 'Mainnet' },
-  { namespace: 'eip155', chainId: '100', name: 'Gnosis' },
-  { namespace: 'eip155', chainId: '137', name: 'Polygon' },
-  { namespace: 'eip155', chainId: '56', name: 'BSC' },
-  { namespace: 'solana', chainId: '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp', name: 'Solana' },
-  { namespace: 'eip155', chainId: '42161', name: 'Arbitrum One' },
-  { namespace: 'eip155', chainId: '534352', name: 'Scroll' },
-  { namespace: 'eip155', chainId: '10', name: 'Optimism' },
-  { namespace: 'eip155', chainId: '43114', name: 'Avalanche C-Chain' },
-  { namespace: 'eip155', chainId: '42220', name: 'Celo Mainnet' },
-  { namespace: 'eip155', chainId: '8453', name: 'Base Mainnet' },
-  { namespace: 'eip155', chainId: '250', name: 'Fantom Opera' },
-  { namespace: 'eip155', chainId: '324', name: 'zkSync' }
-]
-
 export interface GraphItem {
   id: string
   latestRequestSubmissionTime: string

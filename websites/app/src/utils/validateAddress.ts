@@ -3,7 +3,7 @@ import request, { gql } from 'graphql-request'
 import { registryMap } from './fetchItems'
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 import { PublicKey } from '@solana/web3.js'
-import { relevantNetworks } from 'utils/fetchItems'
+import { chains } from 'utils/chains'
 
 const isSolanaAddress = (value: string) => {
   try {
@@ -15,7 +15,7 @@ const isSolanaAddress = (value: string) => {
 }
 
 const isValidAddressForChain = (chainId: string, address: string): boolean => {
-  const network = relevantNetworks.find(n => `${n.namespace}:${n.chainId}` === chainId)
+  const network = chains.find(chain => `${chain.namespace}:${chain.id}` === chainId)
 
   if (!network) return false
   if (network.namespace === 'solana') return isSolanaAddress(address)

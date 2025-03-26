@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { references } from 'utils/chains'
+import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
 
 const Container = styled.div`
@@ -31,8 +31,8 @@ interface IAddressDisplay {
 const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
   const parts = address?.split(':')
   const keyForReference = `${parts?.[0]}:${parts?.[1]}`
-  const reference = references.find(
-    (ref) => `${ref.namespaceId}:${ref.id}` === keyForReference
+  const reference = chains.find(
+    (ref) => `${ref.namespace}:${ref.id}` === keyForReference
   )
   const bgColor = chainColorMap[keyForReference] || '#a0aec0'
 
