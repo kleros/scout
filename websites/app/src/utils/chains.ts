@@ -1,3 +1,8 @@
+export const getNamespaceForChainId = (chainId: string) => {
+  const chain = chains.find((c) => c.id === chainId);
+  return chain?.namespace;
+};
+
 export const chains = [
   {
     id: '1',
@@ -26,6 +31,14 @@ export const chains = [
     name: 'Polygon',
     label: 'MATIC',
     explorer: 'polygonscan.com',
+  },
+  {
+    deprecated: true,
+    id: '4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ',
+    namespace: 'solana',
+    name: 'Solana',
+    label: 'SOL',
+    explorer: 'solscan.io',
   },
   {
     id: '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
