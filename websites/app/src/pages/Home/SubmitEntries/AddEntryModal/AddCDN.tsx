@@ -29,7 +29,7 @@ import {
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
-import { references } from 'utils/chains'
+import { chains } from 'utils/chains'
 
 const columns = [
   {
@@ -82,8 +82,8 @@ const AddCDN: React.FC = () => {
       const networkIdentifier = caip10AddressParam.substring(0, separatorIndex);
       const walletAddress = caip10AddressParam.substring(separatorIndex + 1);
   
-      const networkLabel = references.find(
-        (reference) => `${reference.namespaceId}:${reference.id}` === networkIdentifier
+      const networkLabel = chains.find(
+        (reference) => `${reference.namespace}:${reference.id}` === networkIdentifier
       )?.label;
   
       const networkOption = {
