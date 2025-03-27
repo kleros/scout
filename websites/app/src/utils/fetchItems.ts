@@ -1,6 +1,7 @@
 import { gql, request } from 'graphql-request'
 import { ITEMS_PER_PAGE } from 'pages/Home'
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
+import { getNamespaceForChainId } from './chains';
 
 export const registryMap = {
   Single_Tags: '0x66260c69d03837016d88c9877e61e08ef74c59f2',
@@ -98,9 +99,15 @@ export const fetchItems = async (
           .map((chainId) => `{metadata_: {key2: "${chainId}"}}`)
           .join(',')}]},`
       // For other registries, filter using key0
-      : `{or: [${network
-          .map((chainId) => `{metadata_: {key0_starts_with_nocase: "eip155:${chainId}:"}}`)
-          .join(',')}]},`
+    : `{or: [${network
+      .map((chainId) => {
+        const namespace = getNamespaceForChainId(chainId);
+        if (namespace === 'solana') {
+          return `{metadata_: {key0_starts_with_nocase: "solana:"}}`;
+        }
+        return `{metadata_: {key0_starts_with_nocase: "${namespace}:${chainId}"}}`
+      })
+        .join(',')}]},`
     : ''
 
   const textFilterObject = `{or: [

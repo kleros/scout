@@ -61,10 +61,12 @@ export const StyledAddressInput = styled.input`
   )}
 `
 
-const networkOptions = chains.map((chain) => ({
-  value: `${chain.namespace}:${chain.id}`,
-  label: chain.name,
-}))
+const networkOptions = chains
+  .filter((chain) => !chain.deprecated)
+  .map((chain) => ({
+    value: `${chain.namespace}:${chain.id}`,
+    label: chain.name,
+  }));
 
 export interface NetworkOption {
   value: string

@@ -225,7 +225,7 @@ const Home: React.FC = () => {
     ) {
       const newSearchParams = createSearchParams({
         registry: registry.length === 0 ? ['Single_Tags'] : registry,
-        network: network.length === 0 ? chains.map(chain => chain.id) : network,
+        network: network.length === 0 ? chains.filter(c => !c.deprecated).map(c => c.id) : network,
         status:
           status.length === 0
             ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']
