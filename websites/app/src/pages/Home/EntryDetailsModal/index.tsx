@@ -1,28 +1,28 @@
-import React, { useMemo, useRef, useState } from 'react'
-import styled, { css } from 'styled-components'
-import { landscapeStyle } from 'styles/landscapeStyle'
-import { responsiveSize } from 'styles/responsiveSize'
-import ReactMarkdown from 'react-markdown'
-import { useSearchParams } from 'react-router-dom'
-import { formatEther } from 'ethers'
-import { useFocusOutside } from 'hooks/useFocusOutside'
-import { useQuery } from '@tanstack/react-query'
-import { renderValue, StyledWebsiteAnchor } from 'utils/renderValue'
-import { statusColorMap } from 'utils/colorMappings'
-import { fetchArbitrationCost } from 'utils/fetchArbitrationCost'
-import { fetchItemCounts } from 'utils/itemCounts'
-import { revRegistryMap } from 'utils/fetchItems'
-import { fetchItemDetails } from 'utils/itemDetails'
-import { formatTimestamp } from 'utils/formatTimestamp'
-import { getStatusLabel } from 'utils/getStatusLabel'
-import LoadingItems from '../LoadingItems'
-import ConfirmationBox from './ConfirmationBox'
-import { SubmitButton } from '../SubmitEntries/AddEntryModal'
+import React, { useMemo, useRef, useState } from 'react';
+import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
+import { responsiveSize } from 'styles/responsiveSize';
+import ReactMarkdown from 'react-markdown';
+import { useSearchParams } from 'react-router-dom';
+import { formatEther } from 'ethers';
+import { useFocusOutside } from 'hooks/useFocusOutside';
+import { useQuery } from '@tanstack/react-query';
+import { renderValue, StyledWebsiteAnchor } from 'utils/renderValue';
+import { statusColorMap } from 'utils/colorMappings';
+import { fetchArbitrationCost } from 'utils/fetchArbitrationCost';
+import { fetchItemCounts } from 'utils/itemCounts';
+import { revRegistryMap } from 'utils/fetchItems';
+import { fetchItemDetails } from 'utils/itemDetails';
+import { formatTimestamp } from 'utils/formatTimestamp';
+import { getStatusLabel } from 'utils/getStatusLabel';
+import LoadingItems from '../LoadingItems';
+import ConfirmationBox from './ConfirmationBox';
+import { SubmitButton } from '../SubmitEntries/AddEntryModal';
 import AttachmentIcon from "svgs/icons/attachment.svg";
-import { useScrollTop } from 'hooks/useScrollTop'
-import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
-import { useChallengePeriodDuration } from 'hooks/countdown'
-import AddressDisplay from 'components/AddressDisplay'
+import { useScrollTop } from 'hooks/useScrollTop';
+import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown';
+import { useChallengePeriodDuration } from 'hooks/countdown';
+import AddressDisplay from 'components/AddressDisplay';
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -35,7 +35,7 @@ export const ModalOverlay = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 0;
-`
+`;
 
 const ModalContainer = styled.div`
   display: flex;
@@ -52,17 +52,17 @@ const ModalContainer = styled.div`
   word-break: break-word;
 
   ${landscapeStyle(
-    () => css`
+  () => css`
       width: 52%;
     `
-  )}
-`
+)}
+`;
 
 const EntryDetailsHeader = styled.h1`
   margin: 0;
-`
+`;
 
-const StatusButton = styled.button<{ status?: string }>`
+const StatusButton = styled.button<{ status?: string; }>`
   background-color: #cd9dff;
   color: #380c65;
   padding: 12px 24px;
@@ -84,23 +84,23 @@ const StatusButton = styled.button<{ status?: string }>`
   }
 
   ${landscapeStyle(
-    () => css`
+  () => css`
       padding: 12px 20px;
     `
-  )}
-`
+)}
+`;
 
 const DetailsContent = styled.div`
   display: flex;
   flex-direction: column;
   padding: ${responsiveSize(16, 24)};
-`
+`;
 
 const EvidenceSection = styled.div`
   gap: 16px;
-`
+`;
 
-const StatusSpan = styled.span<{ status: string }>`
+const StatusSpan = styled.span<{ status: string; }>`
   display: flex;
   padding: 4px 12px;
   font-size: 16px;
@@ -108,7 +108,7 @@ const StatusSpan = styled.span<{ status: string }>`
   border-radius: 4px;
   background-color: ${({ status }) => statusColorMap[status]};
   height: 20px;
-`
+`;
 const Header = styled.div`
   display: flex;
   font-size: 20px;
@@ -118,7 +118,7 @@ const Header = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: ${responsiveSize(32, 16)};
-`
+`;
 
 const EntryDetailsContainer = styled.div`
   display: flex;
@@ -132,7 +132,7 @@ const EntryDetailsContainer = styled.div`
   img {
     width: 100px !important;
   }
-`
+`;
 
 const EvidenceSectionHeader = styled.div`
   display: flex;
@@ -141,12 +141,12 @@ const EvidenceSectionHeader = styled.div`
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
-`
+`;
 
 const EvidenceHeader = styled.h2`
   font-size: 20px;
   margin: 0;
-`
+`;
 
 const Evidence = styled.div`
   padding: 12px;
@@ -155,7 +155,7 @@ const Evidence = styled.div`
   font-family: serif;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 16px;
-`
+`;
 
 const EvidenceField = styled.div`
   margin: 8px 0;
@@ -164,23 +164,23 @@ const EvidenceField = styled.div`
   flex-wrap: wrap;
   flex-direction: row;
   word-break: break-all;
-`
+`;
 
 const EvidenceDescription = styled(EvidenceField)`
   flex-direction: column;
   word-break: break-word;
-`
+`;
 
 const NoEvidenceText = styled.div`
   color: #a0aec0;
   font-style: italic;
-`
+`;
 
 const StyledReactMarkdown = styled(ReactMarkdown)`
   p {
     margin: 4px 0;
   }
-`
+`;
 
 const LabelAndValue = styled.div`
   display: flex;
@@ -188,7 +188,7 @@ const LabelAndValue = styled.div`
   gap: 4px;
   align-items: center;
   width: 100%;
-`
+`;
 
 const StyledButton = styled.button`
   height: fit-content;
@@ -201,13 +201,13 @@ const StyledButton = styled.button`
   padding: 0;
   gap: ${responsiveSize(5, 6)};
   ${landscapeStyle(
-    () => css`
+  () => css`
       > svg {
         width: 16px;
         fill: white;
       }
     `
-  )}
+)}
 `;
 
 export const StyledGitpodLink = styled.a`
@@ -220,39 +220,39 @@ export const StyledGitpodLink = styled.a`
   &:hover {
     text-decoration: underline;
   }
-`
+`;
 
 const DetailsModal: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
-  const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('');
 
   const scrollTop = useScrollTop();
 
-  const itemDetailsId = useMemo(() => searchParams.get('itemdetails'), [searchParams])
+  const itemDetailsId = useMemo(() => searchParams.get('itemdetails'), [searchParams]);
 
   const { isLoading: detailsLoading, data: detailsData } = useQuery({
     queryKey: ['details', itemDetailsId || ''],
     queryFn: () => fetchItemDetails(itemDetailsId || ''),
     staleTime: Infinity,
-  })
+  });
 
-  const registryParsedFromItemId = useMemo(() => itemDetailsId ? itemDetailsId.split('@')[1] : '', [itemDetailsId])
+  const registryParsedFromItemId = useMemo(() => itemDetailsId ? itemDetailsId.split('@')[1] : '', [itemDetailsId]);
 
-  const challengePeriodDuration = useChallengePeriodDuration(registryParsedFromItemId)
-  const challengeRemainingTime = useChallengeRemainingTime(detailsData?.requests[0]?.submissionTime, detailsData?.disputed, challengePeriodDuration)
-  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
+  const challengePeriodDuration = useChallengePeriodDuration(registryParsedFromItemId);
+  const challengeRemainingTime = useChallengeRemainingTime(detailsData?.requests[0]?.submissionTime, detailsData?.disputed, challengePeriodDuration);
+  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2);
 
   const { data: countsData } = useQuery({
     queryKey: ['counts'],
     queryFn: () => fetchItemCounts(),
     staleTime: Infinity,
-  })
+  });
 
   const deposits = useMemo(() => {
-    if (!countsData) return undefined
-    return countsData[revRegistryMap[registryParsedFromItemId]].deposits
-  }, [countsData, registryParsedFromItemId])
+    if (!countsData) return undefined;
+    return countsData[revRegistryMap[registryParsedFromItemId]].deposits;
+  }, [countsData, registryParsedFromItemId]);
 
   // get arbitrationCost, keyed by arbitrator and arbitratorExtraData
   const { data: arbitrationCostData } = useQuery({
@@ -267,61 +267,60 @@ const DetailsModal: React.FC = () => {
         detailsData?.requests?.[0].arbitratorExtraData || ''
       ),
     staleTime: Infinity,
-  })
+  });
 
   const evidences = useMemo(() => {
-    if (!detailsData) return []
+    if (!detailsData) return [];
     return detailsData.requests
       .map((r) => r.evidenceGroup.evidences)
       .flat(1)
-      .sort((a, b) => Number(a.timestamp) - Number(b.timestamp))
-  }, [detailsData])
+      .sort((a, b) => Number(a.timestamp) - Number(b.timestamp));
+  }, [detailsData]);
 
   const closeModal = () => {
     setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      newParams.delete('itemdetails')
-      return newParams
-    })
-    setIsConfirmationOpen(false)
-  }
+      const prevParams = prev.toString();
+      const newParams = new URLSearchParams(prevParams);
+      newParams.delete('itemdetails');
+      return newParams;
+    });
+    setIsConfirmationOpen(false);
+  };
 
-  const containerRef = useRef(null)
-  useFocusOutside(containerRef, () => closeModal())
+  const containerRef = useRef(null);
+  useFocusOutside(containerRef, () => closeModal());
 
   const formattedDepositCost = useMemo(() => {
-    if (!detailsData || !deposits || arbitrationCostData === undefined)
-      return '??? xDAI'
-    let sum = 0n
+    if (!detailsData || !deposits || arbitrationCostData === undefined) return '??? xDAI';
+    let sum = 0n;
     if (detailsData.status === 'Registered') {
-      sum = arbitrationCostData + deposits.removalBaseDeposit
+      sum = arbitrationCostData + deposits.removalBaseDeposit;
     } else if (detailsData.status === 'RegistrationRequested') {
-      sum = arbitrationCostData + deposits.submissionChallengeBaseDeposit
+      sum = arbitrationCostData + deposits.submissionChallengeBaseDeposit;
     } else if (detailsData.status === 'ClearingRequested') {
-      sum = arbitrationCostData + deposits.removalChallengeBaseDeposit
+      sum = arbitrationCostData + deposits.removalChallengeBaseDeposit;
     }
-    return `${Number(formatEther(sum))} xDAI`
-  }, [detailsData, deposits, arbitrationCostData])
+    return `${Number(formatEther(sum))} xDAI`;
+  }, [detailsData, deposits, arbitrationCostData]);
 
   const AppealButton = () => {
-    const [searchParams] = useSearchParams()
-    const itemDetails = searchParams.get('itemdetails')
-
-    if (!itemDetails) return null
-
-    const [itemId, contractAddress] = itemDetails.split('@')
-
-    const redirectUrl = `https://curate.kleros.io/tcr/100/${contractAddress}/${itemId}`
-
+    const [searchParams] = useSearchParams();
+    const itemDetails = searchParams.get('itemdetails');
+    if (!itemDetails) return null;
+    const [itemId, contractAddress] = itemDetails.split('@');
+    const redirectUrl = `https://curate.kleros.io/tcr/100/${contractAddress}/${itemId}`;
     return (
       <a href={redirectUrl} target="_blank" rel="noopener noreferrer">
         <StatusButton>Appeal decision on Curate</StatusButton>
       </a>
-    )
-  }
-  
-  const isTagsQueries = useMemo(() => searchParams.get('registry') === 'Tags_Queries', [searchParams])
+    );
+  };
+
+  const isTagsQueries = useMemo(() => searchParams.get('registry') === 'Tags_Queries', [searchParams]);
+
+  const getPropValue = (label: string) => {
+    return detailsData?.metadata?.props?.find((prop) => prop.label === label)?.value || '';
+  };
 
   return (
     <ModalOverlay>
@@ -330,9 +329,10 @@ const DetailsModal: React.FC = () => {
           <LoadingItems />
         ) : (
           <>
-            {/* ConfirmationBox Modal */}
             {isConfirmationOpen && (
-              <ConfirmationBox {...{ evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData }} />
+              <ConfirmationBox
+                {...{ evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData }}
+              />
             )}
 
             {/* DETAILS */}
@@ -345,8 +345,8 @@ const DetailsModal: React.FC = () => {
                 {!detailsData.disputed ? (
                   <StatusButton
                     onClick={() => {
-                      setIsConfirmationOpen(true)
-                      setEvidenceConfirmationType(detailsData.status)
+                      setIsConfirmationOpen(true);
+                      setEvidenceConfirmationType(detailsData.status);
                     }}
                     status={detailsData.status}
                   >
@@ -366,19 +366,19 @@ const DetailsModal: React.FC = () => {
                       <strong>{label}:</strong> {renderValue(label, value)}
                     </LabelAndValue>
                   ))}
-                {detailsData?.metadata?.props && isTagsQueries && (
+                {isTagsQueries && (
                   <>
                     <LabelAndValue>
-                      <strong>{detailsData?.metadata?.props?.[1]?.label}:</strong> {detailsData?.metadata?.props?.[1]?.value}
+                      <strong>Description:</strong> {getPropValue('Description')}
                     </LabelAndValue>
                     <LabelAndValue>
-                      <strong>{detailsData?.metadata?.props?.[3]?.label}:</strong>
+                      <strong>Github Repository URL:</strong>
                       <StyledWebsiteAnchor
-                        href={`${detailsData?.metadata?.props?.[3]?.value.replace('.git', '')}/commit/${detailsData?.metadata?.props?.[0]?.value}`}
+                        href={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {detailsData?.metadata?.props?.[3]?.value}
+                        {getPropValue('Github Repository URL')}
                       </StyledWebsiteAnchor>
                       <StyledGitpodLink
                         href="https://gitpod.io/#https://github.com/gmkung/kleros-atq-trustless-retrieval.git"
@@ -389,21 +389,21 @@ const DetailsModal: React.FC = () => {
                       </StyledGitpodLink>
                     </LabelAndValue>
                     <LabelAndValue>
-                      <strong>{detailsData?.metadata?.props?.[0]?.label}:</strong> {detailsData?.metadata?.props?.[0]?.value}
+                      <strong>Commit hash:</strong> {getPropValue('Commit hash')}
                     </LabelAndValue>
                     <LabelAndValue>
-                      <strong>{detailsData?.metadata?.props?.[2]?.label}:</strong> {detailsData?.metadata?.key2} <AddressDisplay address={`eip155:${detailsData?.metadata?.key2}` || ''} />
+                      <strong>EVM Chain ID:</strong> {getPropValue('EVM Chain ID')} <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
                     </LabelAndValue>
                   </>
                 )}
-                <LabelAndValue style={{ color: "#CD9DFF" }}>
+                <LabelAndValue style={{ color: '#CD9DFF' }}>
                   <strong>Submitted by:</strong> {detailsData?.requests[0].requester}
                 </LabelAndValue>
-                <LabelAndValue style={{ color: "#CD9DFF" }}>
+                <LabelAndValue style={{ color: '#CD9DFF' }}>
                   <strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}
                 </LabelAndValue>
                 {formattedChallengeRemainingTime && (
-                  <LabelAndValue style={{ color: "#CD9DFF" }}>
+                  <LabelAndValue style={{ color: '#CD9DFF' }}>
                     <strong>Challenge Period ends in:</strong> {formattedChallengeRemainingTime}
                   </LabelAndValue>
                 )}
@@ -414,8 +414,8 @@ const DetailsModal: React.FC = () => {
                   <EvidenceHeader>Evidences</EvidenceHeader>
                   <SubmitButton
                     onClick={() => {
-                      setIsConfirmationOpen(true)
-                      setEvidenceConfirmationType('Evidence')
+                      setIsConfirmationOpen(true);
+                      setEvidenceConfirmationType('Evidence');
                     }}
                   >
                     Submit Evidence
@@ -430,9 +430,7 @@ const DetailsModal: React.FC = () => {
                       </EvidenceField>
                       <EvidenceDescription>
                         <strong>Description:</strong>
-                        <StyledReactMarkdown>
-                          {evidence?.metadata?.description || ''}
-                        </StyledReactMarkdown>
+                        <StyledReactMarkdown>{evidence?.metadata?.description || ''}</StyledReactMarkdown>
                       </EvidenceDescription>
                       {evidence?.metadata?.fileURI ? (
                         <StyledButton
@@ -448,8 +446,7 @@ const DetailsModal: React.FC = () => {
                         </StyledButton>
                       ) : null}
                       <EvidenceField>
-                        <strong>Time:</strong>{' '}
-                        {formatTimestamp(Number(evidence.timestamp), true)}
+                        <strong>Time:</strong> {formatTimestamp(Number(evidence.timestamp), true)}
                       </EvidenceField>
                       <EvidenceField>
                         <strong>Party:</strong> {evidence.party}
@@ -465,7 +462,7 @@ const DetailsModal: React.FC = () => {
         )}
       </ModalContainer>
     </ModalOverlay>
-  )
-}
+  );
+};
 
-export default DetailsModal
+export default DetailsModal;
