@@ -127,100 +127,90 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   )
 })
 
-const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, challengePeriodDuration: number | null }) => {
-  const [imgLoaded, setImgLoaded] = useState(false)
-  const [, setSearchParams] = useSearchParams()
-  const scrollTop = useScrollTop()
-  
-  const challengeRemainingTime = useChallengeRemainingTime(item.requests[0]?.submissionTime, item.disputed, challengePeriodDuration)
-  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
+const Entry = React.memo(
+  ({ item, challengePeriodDuration }: { item: GraphItem; challengePeriodDuration: number | null }) => {
+    const [imgLoaded, setImgLoaded] = useState(false);
+    const [, setSearchParams] = useSearchParams();
+    const scrollTop = useScrollTop();
 
-  const handleEntryDetailsClick = useCallback(() => {
-    setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      newParams.append('itemdetails', item.id)
-      return newParams
-    })
-  }, [setSearchParams, item.id])
+    const challengeRemainingTime = useChallengeRemainingTime(
+      item.requests[0]?.submissionTime,
+      item.disputed,
+      challengePeriodDuration
+    );
+    const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2);
 
-  const tokenLogoURI = useMemo(() => 
-    item.registryAddress === registryMap.Tokens &&
-    `https://cdn.kleros.link${
-      (item?.metadata?.props?.find((prop) => prop.label === 'Logo') as Prop)
-        ?.value
-    }`,
-    [item]
-  )
+    const handleEntryDetailsClick = useCallback(() => {
+      setSearchParams((prev) => {
+        const prevParams = prev.toString();
+        const newParams = new URLSearchParams(prevParams);
+        newParams.append('itemdetails', item.id);
+        return newParams;
+      });
+    }, [setSearchParams, item.id]);
 
-  const visualProofURI = useMemo(() => 
-    item.registryAddress === registryMap.CDN &&
-    `https://cdn.kleros.link${
-      (
-        item?.metadata?.props?.find(
-          (prop) => prop.label === 'Visual proof'
-        ) as Prop
-      )?.value
-    }`,
-    [item]
-  )
+    const getPropValue = (label: string) => {
+      return item?.metadata?.props?.find((prop) => prop.label === label)?.value || '';
+    };
 
-  return (
-    <Card>
-      <Status
-        status={item.status}
-        disputed={item.disputed}
-        bounty={item.requests[0].deposit}
-      />
-      <CardContent>
-        {item.registryAddress === registryMap.Tags_Queries ? (
-          <AddressDisplay address={`eip155:${item?.metadata?.key2}` || ''} />
-        ) :
-          <strong>
-            <AddressDisplay address={item?.metadata?.key0 || ''} />
-          </strong>
-        }
-        {item.registryAddress === registryMap.Single_Tags && (
-          <>
-            <div>{item?.metadata?.key2}</div>
-            <div>{item?.metadata?.key1}</div>
-            <StyledWebsiteAnchor
-              href={item?.metadata?.key3}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {item?.metadata?.key3}
-            </StyledWebsiteAnchor>
-          </>
-        )}
-        {item.registryAddress === registryMap.Tags_Queries && (
-          <>
-            <div><b><u>{item?.metadata?.props?.[1]?.value}</u></b></div>
-            <StyledWebsiteAnchor
-              href={`${item?.metadata?.key0.replace('.git', '')}/commit/${item?.metadata?.key1}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {item?.metadata?.key0}
-            </StyledWebsiteAnchor>
-          </>
-        )}
-        {item.registryAddress === registryMap.Tokens && (
-          <>
-            {item?.metadata?.props &&
-              item.metadata?.props.find((prop) => prop.label === 'Logo') && (
+    return (
+      <Card>
+        <Status
+          status={item.status}
+          disputed={item.disputed}
+          bounty={item.requests[0].deposit}
+        />
+        <CardContent>
+          {item.registryAddress === registryMap.Tags_Queries && (
+            <>
+              <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
+              <div>
+                  <>{getPropValue('Description')}</>
+              </div>
+              <b>
+                <StyledWebsiteAnchor
+                href={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                >
+                  {getPropValue('Github Repository URL')}
+                </StyledWebsiteAnchor>
+              </b>
+            </>
+          )}
+          {item.registryAddress === registryMap.Single_Tags && (
+            <>
+              <strong>
+                <AddressDisplay address={getPropValue('Contract Address')} />
+              </strong>
+              <div>{getPropValue('Project Name')}</div>
+              <div>{getPropValue('Public Name Tag')}</div>
+              <StyledWebsiteAnchor
+                href={getPropValue('UI/Website Link')}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {getPropValue('UI/Website Link')}
+              </StyledWebsiteAnchor>
+            </>
+          )}
+          {item.registryAddress === registryMap.Tokens && (
+            <>
+              <strong>
+                <AddressDisplay address={getPropValue('Address')} />
+              </strong>
+              {getPropValue('Logo') && (
                 <StyledButton
                   onClick={() => {
-                    if (tokenLogoURI) {
-                      setSearchParams({ attachment: tokenLogoURI });
-                      scrollTop();
-                    }
+                    const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`;
+                    setSearchParams({ attachment: tokenLogoURI });
+                    scrollTop();
                   }}
                 >
                   <TokenLogoWrapper>
                     {!imgLoaded && <Skeleton height={100} width={100} />}
                     <img
-                      src={tokenLogoURI || undefined}
+                      src={`https://cdn.kleros.link${getPropValue('Logo')}`}
                       alt="Logo"
                       onLoad={() => setImgLoaded(true)}
                       style={{ display: imgLoaded ? 'block' : 'none' }}
@@ -228,52 +218,54 @@ const Entry = React.memo(({ item, challengePeriodDuration }: { item: GraphItem, 
                   </TokenLogoWrapper>
                 </StyledButton>
               )}
-            <div>{item?.metadata?.key2}</div>
-            <div>{item?.metadata?.key1}</div>
-          </>
-        )}
-        {item.registryAddress === registryMap.CDN && (
-          <>
-            <StyledWebsiteAnchor
-              href={`https://${item?.metadata?.key1}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {item?.metadata?.key1}
-            </StyledWebsiteAnchor>
-            {item?.metadata?.props &&
-              item?.metadata?.props.find(
-                (prop) => prop.label === 'Visual proof'
-              ) && (
+              <div>{getPropValue('Symbol')}</div>
+              <div>{getPropValue('Name')}</div> 
+            </>
+          )}
+          {item.registryAddress === registryMap.CDN && (
+            <>
+              <strong>
+                <AddressDisplay address={getPropValue('Contract address')} />
+              </strong>
+              <StyledWebsiteAnchor
+                href={`https://${getPropValue('Domain name')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {getPropValue('Domain name')}
+              </StyledWebsiteAnchor>
+              {getPropValue('Visual proof') && (
                 <StyledButton
                   onClick={() => {
-                    if (visualProofURI) {
-                      setSearchParams({ attachment: visualProofURI });
-                      scrollTop();
-                    }
+                    const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`;
+                    setSearchParams({ attachment: visualProofURI });
+                    scrollTop();
                   }}
                 >
                   {!imgLoaded && <Skeleton height={100} width={150} />}
                   <VisualProofWrapper
-                    src={visualProofURI || undefined}
+                    src={`https://cdn.kleros.link${getPropValue('Visual proof')}`}
                     alt="Visual proof"
                     onLoad={() => setImgLoaded(true)}
                     style={{ display: imgLoaded ? '' : 'none' }}
                   />
                 </StyledButton>
               )}
-          </>
-        )}
-        <div style={{color: "#CD9DFF"}}>Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}</div>
-        {formattedChallengeRemainingTime && (
-          <div style={{color: "#CD9DFF"}}>Finalises in {formattedChallengeRemainingTime}</div>
-        )}
-        <DetailsButton onClick={handleEntryDetailsClick}>
-          Details
-        </DetailsButton>
-      </CardContent>
-    </Card>
-  )
-})
+            </>
+          )}
+          <div style={{ color: '#CD9DFF' }}>
+            Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}
+          </div>
+          {formattedChallengeRemainingTime && (
+            <div style={{ color: '#CD9DFF' }}>
+              Finalises in {formattedChallengeRemainingTime}
+            </div>
+          )}
+          <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
+        </CardContent>
+      </Card>
+    );
+  }
+);
 
-export default Entry
+export default Entry;
