@@ -94,10 +94,10 @@ export const fetchItems = async (
   // Network filtering logic based on registry type
   const networkQueryObject = network.length > 0
     ? isTagsQueriesRegistry
-      // For Tags_Queries, filter using key2
+      // For Tags_Queries, filter using key2 or key1
       ? `{or: [${network
-          .map((chainId) => `{metadata_: {key2: "${chainId}"}}`)
-          .join(',')}]},`
+        .map((chainId) => `{or: [{metadata_: {key2: "${chainId}"}}, {metadata_: {key1: "${chainId}"}}]}`)
+        .join(',')}]},`    
       // For other registries, filter using key0
     : `{or: [${network
       .map((chainId) => {
