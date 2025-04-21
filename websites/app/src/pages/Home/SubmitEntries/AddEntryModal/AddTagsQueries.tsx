@@ -28,28 +28,28 @@ import getAddressValidationIssue from 'utils/validateAddress';
 
 const columns = [
   {
-    "type": "text",
-    "label": "Commit hash",
-    "description": "The hash of the specific commit for this repository to be referenced.",
-    "isIdentifier": true
-  },
-  {
-    "type": "long text",
-    "label": "Description",
-    "description": "A field used to describe the range of contracts being curated here, specifying (if applicable) the version, type and purpose of the contracts that are returned. ",
-    "isIdentifier": false
-  },
-  {
-    "type": "number",
-    "label": "EVM Chain ID",
-    "description": "The integer EVM Chain ID of the chain of the contracts being retrieved by the function in this module.",
-    "isIdentifier": true
-  },
-  {
-    "type": "link",
     "label": "Github Repository URL",
     "description": "The URL of the repository containing the function that returns the Contract Tags.  The repository name must be in the kebab case (hyphen-case).",
+    "type": "link",
     "isIdentifier": true
+  },
+  {
+    "label": "Commit hash",
+    "description": "The hash of the specific commit for this repository to be referenced.",
+    "type": "text",
+    "isIdentifier": true
+  },
+  {
+    "label": "EVM Chain ID",
+    "description": "The integer EVM Chain ID of the chain of the contracts being retrieved by the function in this module.",
+    "type": "number",
+    "isIdentifier": true
+  },
+  {
+    "label": "Description",
+    "description": "A field used to describe the range of contracts being curated here, specifying (if applicable) the version, type and purpose of the contracts that are returned. ",
+    "type": "long text",
+    "isIdentifier": false
   }
 ]
 
@@ -94,10 +94,10 @@ const AddTagsQueries: React.FC = () => {
 
   const submitTagsQueries = async () => {
     const values = {
-      'Commit hash': commitHash,
-      'Description': description,
-      'EVM Chain ID': evmChainId,
       'Github Repository URL': GithubRepository,
+      'Commit hash': commitHash,
+      'EVM Chain ID': evmChainId,
+      'Description': description,
     }
     const item = {
       columns,
