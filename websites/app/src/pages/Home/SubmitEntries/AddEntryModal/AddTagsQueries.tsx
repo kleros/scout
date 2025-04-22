@@ -28,40 +28,40 @@ import getAddressValidationIssue from 'utils/validateAddress';
 
 const columns = [
   {
-    "type": "text",
-    "label": "Commit hash",
-    "description": "The hash of the specific commit for this repository to be referenced.",
-    "isIdentifier": true
-  },
-  {
-    "type": "long text",
-    "label": "Description",
-    "description": "A field used to describe the range of contracts being curated here, specifying (if applicable) the version, type and purpose of the contracts that are returned. ",
-    "isIdentifier": false
-  },
-  {
-    "type": "number",
-    "label": "EVM Chain ID",
-    "description": "The integer EVM Chain ID of the chain of the contracts being retrieved by the function in this module.",
-    "isIdentifier": true
-  },
-  {
-    "type": "link",
     "label": "Github Repository URL",
     "description": "The URL of the repository containing the function that returns the Contract Tags.  The repository name must be in the kebab case (hyphen-case).",
+    "type": "link",
     "isIdentifier": true
+  },
+  {
+    "label": "Commit hash",
+    "description": "The hash of the specific commit for this repository to be referenced.",
+    "type": "text",
+    "isIdentifier": true
+  },
+  {
+    "label": "EVM Chain ID",
+    "description": "The integer EVM Chain ID of the chain of the contracts being retrieved by the function in this module.",
+    "type": "number",
+    "isIdentifier": true
+  },
+  {
+    "label": "Description",
+    "description": "A field used to describe the range of contracts being curated here, specifying (if applicable) the version, type and purpose of the contracts that are returned. ",
+    "type": "long text",
+    "isIdentifier": false
   }
 ]
 
 const AddTagsQueries: React.FC = () => {
   const [formData, setFormData] = useLocalStorage('addTagsQueriesForm', {
-    GithubRepository: '',
+    githubRepository: '',
     commitHash: '',
     evmChainId: '',
     description: '',
   });
 
-  const [GithubRepository, setGithubRepository] = useState<string>(formData.GithubRepository);
+  const [githubRepository, setGithubRepository] = useState<string>(formData.githubRepository);
   const [commitHash, setCommitHash] = useState<string>(formData.commitHash);
   const [evmChainId, setEvmChainId] = useState<string>(formData.evmChainId);
   const [description, setDescription] = useState<string>(formData.description);
@@ -70,13 +70,13 @@ const AddTagsQueries: React.FC = () => {
   const scrollTop = useScrollTop();
 
   useEffect(() => {
-    setFormData({ GithubRepository, commitHash, evmChainId, description });
-  }, [GithubRepository, commitHash, evmChainId, description]);
+    setFormData({ githubRepository, commitHash, evmChainId, description });
+  }, [githubRepository, commitHash, evmChainId, description]);
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', evmChainId, 'Tags_Queries', GithubRepository],
-    queryFn: () => getAddressValidationIssue(evmChainId, 'Tags_Queries', undefined, undefined, undefined, undefined, GithubRepository, undefined),
-    enabled: Boolean(GithubRepository) || Boolean(commitHash) || Boolean(evmChainId) || Boolean(description),
+    queryKey: ['addressissues', evmChainId, 'Tags_Queries', githubRepository],
+    queryFn: () => getAddressValidationIssue(evmChainId, 'Tags_Queries', undefined, undefined, undefined, undefined, githubRepository, undefined),
+    enabled: Boolean(githubRepository) || Boolean(commitHash) || Boolean(evmChainId) || Boolean(description),
   });
 
   const { data: countsData } = useQuery({
@@ -94,10 +94,10 @@ const AddTagsQueries: React.FC = () => {
 
   const submitTagsQueries = async () => {
     const values = {
+      'Github Repository URL': githubRepository,
       'Commit hash': commitHash,
-      'Description': description,
       'EVM Chain ID': evmChainId,
-      'Github Repository URL': GithubRepository,
+      'Description': description,
     }
     const item = {
       columns,
@@ -120,8 +120,8 @@ const AddTagsQueries: React.FC = () => {
   };
 
   const submittingDisabled = useMemo(() => {
-    return Boolean(!GithubRepository || !commitHash || !evmChainId || !description || !!addressIssuesData || addressIssuesLoading);
-  }, [GithubRepository, commitHash, evmChainId, description, addressIssuesData, addressIssuesLoading]);
+    return Boolean(!githubRepository || !commitHash || !evmChainId || !description || !!addressIssuesData || addressIssuesLoading);
+  }, [githubRepository, commitHash, evmChainId, description, addressIssuesData, addressIssuesLoading]);
 
   return (
     <AddContainer>
@@ -147,7 +147,7 @@ const AddTagsQueries: React.FC = () => {
       Github Repository
       <StyledTextInput
         placeholder="e.g. https://github.com/kleros/scout-snap.git"
-        value={GithubRepository}
+        value={githubRepository}
         onChange={(e) => setGithubRepository(e.target.value)}
       />
       {addressIssuesData?.link && (
