@@ -66,7 +66,7 @@ export const renderValue = (key, value) => {
     return String(parseInt(value))
   }
 
-  if (['Domain name', 'UI/Website Link'].includes(key) && value) {
+  if (['Domain name', 'UI/Website Link', 'Website'].includes(key) && value) {
     const href =
       value.startsWith('http://') || value.startsWith('https://')
         ? value

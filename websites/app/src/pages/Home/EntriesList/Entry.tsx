@@ -220,6 +220,13 @@ const Entry = React.memo(
               )}
               <div>{getPropValue('Symbol')}</div>
               <div>{getPropValue('Name')}</div> 
+              {getPropValue('Website') ? <StyledWebsiteAnchor
+                href={getPropValue('Website')}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {getPropValue('Website')}
+              </StyledWebsiteAnchor> : null}
             </>
           )}
           {item.registryAddress === registryMap.CDN && (

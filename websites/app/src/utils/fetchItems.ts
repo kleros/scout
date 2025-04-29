@@ -34,6 +34,7 @@ export interface GraphItem {
     key1: string
     key2: string
     key3: string
+    key4: string
     props: Prop[]
   } | null
   requests: Request[]
@@ -115,6 +116,7 @@ export const fetchItems = async (
     {metadata_: {key1_contains_nocase: $text}},
     {metadata_: {key2_contains_nocase: $text}},
     {metadata_: {key3_contains_nocase: $text}},
+    {metadata_: {key4_contains_nocase: $text}},
   ]}`
 
   const query = gql`
@@ -154,6 +156,7 @@ export const fetchItems = async (
           key1
           key2
           key3
+          key4
           props {
             value
             type

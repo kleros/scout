@@ -62,6 +62,12 @@ const columns = [
     type: 'image',
     isIdentifier: false,
   },
+  {
+    label: "Website",
+    description: "The URL of the token project's official website. Its primary source for documentation, token specifications, and team information (e.g. https://chain.link).",
+    type: "link",
+    isIdentifier: true
+  }
 ]
 
 const AddToken: React.FC = () => {
@@ -72,6 +78,7 @@ const AddToken: React.FC = () => {
     name: '',
     symbol: '',
     path: '',
+    website: '',
   });
 
   const [network, setNetwork] = useState<NetworkOption>(formData.network);
@@ -80,6 +87,7 @@ const AddToken: React.FC = () => {
   const [name, setName] = useState<string>(formData.name);
   const [symbol, setSymbol] = useState<string>(formData.symbol);
   const [path, setPath] = useState<string>(formData.path);
+  const [website, setWebsite] = useState<string>(formData.website);
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
@@ -91,6 +99,7 @@ const AddToken: React.FC = () => {
     const decimalsParam = searchParams.get('decimals');
     const nameParam = searchParams.get('name');
     const symbolParam = searchParams.get('symbol');
+    const websiteParam = searchParams.get('website');
   
     if (caip10AddressParam) {
       const separatorIndex = caip10AddressParam.lastIndexOf(':');
@@ -112,11 +121,12 @@ const AddToken: React.FC = () => {
     if (decimalsParam) setDecimals(decimalsParam);
     if (nameParam) setName(nameParam);
     if (symbolParam) setSymbol(symbolParam);
+    if (websiteParam) setSymbol(websiteParam);
   }, [searchParams]);
 
   useEffect(() => {
-    setFormData({ network, address, decimals, name, symbol, path });
-  }, [network, address, decimals, name, symbol, path]);
+    setFormData({ network, address, decimals, name, symbol, path, website });
+  }, [network, address, decimals, name, symbol, path, website]);
 
   useDebounce(
     () => {
@@ -131,9 +141,9 @@ const AddToken: React.FC = () => {
   }, [network.value, debouncedAddress])
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol],
-    queryFn: () => getAddressValidationIssue(network.value, 'Tokens', debouncedAddress, undefined, name, undefined, undefined, symbol),
-    enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol),
+    queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol, website],
+    queryFn: () => getAddressValidationIssue(network.value, 'Tokens', debouncedAddress, undefined, name, undefined, website, symbol),
+    enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol) || Boolean(website),
   });
 
   const {
@@ -157,6 +167,7 @@ const AddToken: React.FC = () => {
       Symbol: symbol,
       Decimals: decimals,
       Logo: path,
+      Website: website,
     }
     const item = {
       columns,
@@ -179,8 +190,8 @@ const AddToken: React.FC = () => {
   }
 
   const submittingDisabled = useMemo(() => {
-    return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || imageError);
-  }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, imageError]);
+    return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || !website || imageError);
+  }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, website, imageError]);
 
   return (
     <AddContainer>
@@ -260,6 +271,15 @@ const AddToken: React.FC = () => {
         {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
+      Website
+      <StyledTextInput
+        placeholder="e.g. https://kleros.io"
+        value={website}
+        onChange={(e) => setWebsite(e.target.value)}
+      />
+      {addressIssuesData?.link && (
+        <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
+      )}
       <PayoutsContainer>
         <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
           Submit
