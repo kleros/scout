@@ -103,13 +103,13 @@ export const chains = [
     label: 'zkSync',
     explorer: 'era.zksync.network',
   },
-  // {
-  //   id: 'bip122',
-  //   namespace: 'bip122',
-  //   name: 'Bitcoin',
-  //   label: 'BTC',
-  //   explorer: 'blockchair.com/bitcoin'
-  // },
+  {
+    id: '000000000019d6689c085ae165831e93',
+    namespaceId: 'bip122',
+    name: 'Bitcoin',
+    label: 'BTC',
+    explorer: 'mempool.space'
+  },
   {
     id: '1284',
     namespace: 'eip155',
