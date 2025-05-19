@@ -106,6 +106,12 @@ export const fetchItems = async (
         if (namespace === 'solana') {
           return `{metadata_: {key0_starts_with_nocase: "solana:"}}`;
         }
+
+        if (!namespace) {
+          // unspecified chain: display it
+          return `{metadata_: {key0_contains_nocase: ":${chainId}:"}}`
+        }
+
         return `{metadata_: {key0_starts_with_nocase: "${namespace}:${chainId}:"}}`
       })
         .join(',')}]},`
