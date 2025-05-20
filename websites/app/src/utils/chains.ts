@@ -94,7 +94,7 @@ export const chains = [
     namespace: 'eip155',
     name: 'Fantom Opera',
     label: 'FTM',
-    explorer: 'ftmscan.com',
+    explorer: 'explorer.fantom.network',
   },
   {
     id: '324',
@@ -102,5 +102,75 @@ export const chains = [
     name: 'zkSync',
     label: 'zkSync',
     explorer: 'era.zksync.network',
+  },
+  {
+    id: '000000000019d6689c085ae165831e93',
+    namespace: 'bip122',
+    name: 'Bitcoin',
+    label: 'BTC',
+    explorer: 'mempool.space'
+  },
+  {
+    id: '1284',
+    namespace: 'eip155',
+    name: 'Moonbeam',
+    label: 'GLMR',
+    explorer: 'moonscan.io',
+  },
+  {
+    id: '59144',
+    namespace: 'eip155',
+    name: 'Linea',
+    label: 'LINEA',
+    explorer: 'lineascan.build',
+  },
+  {
+    id: '1285',
+    namespace: 'eip155',
+    name: 'Moonriver',
+    label: 'MOVR',
+    explorer: 'moonriver.moonscan.io',
+  },
+  {
+    id: '25',
+    namespace: 'eip155',
+    name: 'Cronos Mainnet',
+    label: 'CRO',
+    explorer: 'cronoscan.com',
+  },
+  {
+    id: '199',
+    namespace: 'eip155',
+    name: 'BitTorrent Chain Mainnet',
+    label: 'BTT',
+    explorer: 'bttcscan.com',
+  },
+  {
+    id: '1101',
+    namespace: 'eip155',
+    name: 'Polygon zkEVM',
+    label: 'zkEVM',
+    explorer: 'zkevm.polygonscan.com',
+  },
+  {
+    id: '1111',
+    namespace: 'eip155',
+    name: 'WEMIX3.0 Mainnet',
+    label: 'WEMIX',
+    explorer: 'wemixscan.com',
+  },
+  {
+    id: '146',
+    namespace: 'eip155',
+    name: 'Sonic',
+    label: 'SONIC',
+    explorer: 'sonicscan.org',
+  },
+  {
+    id: "81457",
+    namespace: "eip155",
+    name: "Blast",
+    label: "BLAST",
+    explorer: "blastscan.io"
   }
 ]
