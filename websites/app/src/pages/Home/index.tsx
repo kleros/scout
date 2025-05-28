@@ -204,7 +204,7 @@ const Home: React.FC = () => {
 
   // If missing search params, insert defaults.
   useEffect(() => {
-    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment')) {
+    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment' || searchParams.get('itemdetails' )) {
       return
     }
     
