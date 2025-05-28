@@ -185,7 +185,7 @@ const StyledReactMarkdown = styled(ReactMarkdown)`
 const LabelAndValue = styled.div`
   display: flex;
   flex-direction: row;
-  gap: 4px;
+  gap: 8px;
   align-items: center;
   width: 100%;
 `;

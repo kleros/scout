@@ -3,9 +3,7 @@ import styled from 'styled-components'
 import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
 
-const Container = styled.div`
-  margin-top: 4px;
-`
+const Container = styled.div``
 
 const StyledSpan = styled.span<{ bgColor: string }>`
   padding: 1px 4px;
