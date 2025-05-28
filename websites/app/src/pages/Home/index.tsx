@@ -204,7 +204,7 @@ const Home: React.FC = () => {
 
   // If missing search params, insert defaults.
   useEffect(() => {
-    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment') || searchParams.get('itemdetails' )) {
+    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment') || searchParams.get('itemdetails')) {
       return
     }
     
@@ -243,6 +243,8 @@ const Home: React.FC = () => {
       ? Math.ceil(currentItemCount / ITEMS_PER_PAGE)
       : null // in complex query, cannot provide this information
 
+  const isItemDetailsOpen = searchParams.get('itemdetails');
+
   return (
     <Container>
       <Navbar />
@@ -252,22 +254,26 @@ const Home: React.FC = () => {
         <EvidenceAttachmentDisplay />
       ) : (
         <>
-          <SearchAndRegistryDetailsAndSubmitContainer>
-            <Search />
-            <RegistryDetailsAndSubmitContainer>
-              <RegistryDetails />
-              <SubmitButton />
-            </RegistryDetailsAndSubmitContainer>
-          </SearchAndRegistryDetailsAndSubmitContainer>
+          {!isItemDetailsOpen && (
+            <>
+              <SearchAndRegistryDetailsAndSubmitContainer>
+                <Search />
+                <RegistryDetailsAndSubmitContainer>
+                  <RegistryDetails />
+                  <SubmitButton />
+                </RegistryDetailsAndSubmitContainer>
+              </SearchAndRegistryDetailsAndSubmitContainer>
 
-          <Filters />
+              <Filters />
 
-          {searchLoading || !searchData ? (
-            <LoadingItems />
-          ) : (
-            <EntriesList {...{searchData}} />
+              {searchLoading || !searchData ? (
+                <LoadingItems />
+              ) : (
+                <EntriesList {...{ searchData }} />
+              )}
+              <Pagination {...{ totalPages }} />
+            </>
           )}
-          <Pagination {...{totalPages}} />
 
           {isDetailsModalOpen && <DetailsModal />}
           {isRegistryDetailsModalOpen && <RegistryDetailsModal />}

@@ -155,6 +155,7 @@ const Entry = React.memo(
         newParams.append('itemdetails', item.id);
         return newParams;
       });
+      scrollTop();
     }, [setSearchParams, item.id]);
 
     const getPropValue = (label: string) => {
