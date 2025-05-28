@@ -90,6 +90,14 @@ const StyledButton = styled.button`
   padding: 0;
 `;
 
+const LabelAndValue = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+`;
+
 const readableStatusMap = {
   Registered: 'Registered',
   Absent: 'Removed',
@@ -163,7 +171,10 @@ const Entry = React.memo(
         <CardContent>
           {item.registryAddress === registryMap.Tags_Queries && (
             <>
-              <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
+              <LabelAndValue>
+                {getPropValue('EVM Chain ID')} 
+                <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
+              </LabelAndValue>
               <div>
                   <>{getPropValue('Description')}</>
               </div>

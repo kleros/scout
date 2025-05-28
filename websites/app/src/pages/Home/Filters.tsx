@@ -199,9 +199,13 @@ const ChallengeStatus: React.FC = React.memo(() => {
 
 const Networks: React.FC = React.memo(() => {
   const [networks, toggleNetwork] = useFilterState('network');
-  const options = chains
+  const definedChainOptions = chains
     .filter((chain) => !chain.deprecated)
     .map((chain) => ({ value: chain.id, label: chain.name }));
+  const options = [
+    ...definedChainOptions,
+    { value: 'unknown', label: 'Unknown chains' }
+  ];
   return <FilterDropdown label="Networks" options={options} selectedValues={networks} onToggle={toggleNetwork} />;
 });
 
