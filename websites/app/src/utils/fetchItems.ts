@@ -151,8 +151,8 @@ export const fetchItems = async (
             {registry_in: $registry},
             {status_in: $status},
             {disputed_in: $disputed},
-            ${networkQueryObject ? networkQueryObject : '{}'},
-            ${textFilterObject ? textFilterObject : '{}'}
+            ${networkQueryObject},
+            ${text === '' ? '' : textFilterObject}
           ]
         }
         skip: $skip
