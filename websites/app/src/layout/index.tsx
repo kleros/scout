@@ -1,15 +1,18 @@
 import React, { useRef } from "react";
 import styled from "styled-components";
-
 import "overlayscrollbars/styles/overlayscrollbars.css";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import { Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-
 import { OverlayScrollContext } from "context/OverlayScrollContext";
-
+import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 import Header from "./Header";
+
+const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
+  height: 100vh;
+  width: 100vw;
+`;
 
 const Container = styled.div`
   display: flex;
@@ -18,20 +21,20 @@ const Container = styled.div`
   width: 100%;
 `;
 
-const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
-  height: 100vh;
-  width: 100vw;
-`;
-
-const StyledToastContainer = styled(ToastContainer)`
-  padding: 16px;
-  padding-top: 70px;
-`;
-
-const OutletContainer = styled.div`
+const ContentArea = styled.div`
   display: flex;
   flex: 1;
   background-color: ${({ theme }) => theme.lightBackground};
+`;
+
+const OutletContainer = styled.div`
+  flex: 1;
+  display: flex;
+`;
+
+const Notifications = styled(ToastContainer)`
+  padding: 16px;
+  padding-top: 70px;
 `;
 
 const Layout: React.FC = () => {
@@ -42,11 +45,13 @@ const Layout: React.FC = () => {
       <StyledOverlayScrollbarsComponent ref={containerRef} options={{ showNativeOverlaidScrollbars: true }}>
         <Container>
           <Header />
-          <StyledToastContainer />
-          <OutletContainer>
-            <Outlet />
-          </OutletContainer>
-
+          <Notifications />
+          <ContentArea>
+            <Sidebar />
+            <OutletContainer>
+              <Outlet />
+            </OutletContainer>
+          </ContentArea>
           <Footer />
         </Container>
       </StyledOverlayScrollbarsComponent>

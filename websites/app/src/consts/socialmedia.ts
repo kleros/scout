@@ -8,11 +8,11 @@ import XLogo from "svgs/socialmedia/x.svg";
 export const socialmedia = {
   telegram: {
     icon: TelegramLogo,
-    url: "https://t.me/kleros",
+    url: "https://t.me/KlerosCurate",
   },
   x: {
     icon: XLogo,
-    url: "https://x.com/kleros_io",
+    url: "https://x.com/KlerosCurate",
   },
   discord: {
     icon: DiscordLogo,
@@ -24,7 +24,7 @@ export const socialmedia = {
   },
   github: {
     icon: GithubLogo,
-    url: "https://github.com/kleros",
+    url: "https://github.com/kleros/scout",
   },
   linkedin: {
     icon: LinkedinLogo,

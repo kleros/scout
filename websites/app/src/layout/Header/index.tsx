@@ -14,6 +14,7 @@ const Container = styled.div`
   background-color: ${({ theme }) => (theme.name === "dark" ? `${theme.lightGrey}` : theme.primaryPurple)};
   backdrop-filter: ${({ theme }) => (theme.name === "dark" ? "blur(12px)" : "none")};
   -webkit-backdrop-filter: ${({ theme }) => (theme.name === "dark" ? "blur(12px)" : "none")}; // Safari support
+  border-bottom: 1px solid ${({ theme }) => theme.white}29;
 `;
 
 const HeaderContainer = styled.div`

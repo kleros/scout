@@ -92,7 +92,7 @@ const ITEMS = [
   {
     text: "Give Feedback",
     Icon: Chat,
-    url: "https://github.com/kleros/scout/issues",
+    url: "https://forms.gle/Qnr9QwqRjaYMyB3t6",
   },
   {
     text: "App Guide",
