@@ -1,4 +1,37 @@
-import { darkTheme as componentsDarkTheme } from "@kleros/ui-components-library";
+const componentsDarkTheme = {
+  klerosUIComponentsName: "dark",
+  klerosUIComponentsPrimaryPurple: "#7E1BD4",
+  klerosUIComponentsSecondaryPurple: "#B45FFF",
+  klerosUIComponentsMediumPurple: "#390F6C",
+  klerosUIComponentsLightPurple: "#FCFBFF",
+  klerosUIComponentsPrimaryBlue: "#6CC5FF",
+  klerosUIComponentsSecondaryBlue: "#A5DBFF",
+  klerosUIComponentsMediumBlue: "#2E206C",
+  klerosUIComponentsLightBlue: "#2A1260",
+  klerosUIComponentsPrimaryText: "#DAF0FF",
+  klerosUIComponentsSecondaryText: "#BEBEC5",
+  klerosUIComponentsStroke: "#FFFFFF29",
+  klerosUIComponentsLightGrey: "#262B3A",
+
+  klerosUIComponentsWhiteBackground: "#220050",
+  klerosUIComponentsLightBackground: "#1B2030",
+
+  klerosUIComponentsDefaultShadow: "#00000000",
+  klerosUIComponentsHoveredShadow: "#42498f80",
+
+  klerosUIComponentsSuccess: "#65DC7F",
+  klerosUIComponentsSuccessLight: "#32355B",
+  klerosUIComponentsWarning: "#FFC46B",
+  klerosUIComponentsWarningLight: "#451F54",
+  klerosUIComponentsError: "#FF5A78",
+  klerosUIComponentsErrorLight: "#360652",
+  klerosUIComponentsTint: "#DDB6FF",
+  klerosUIComponentsTintMedium: "#401D6C",
+  klerosUIComponentsTintPurple: "#2F0960",
+
+  klerosUIComponentsTransitionSpeed: "0.25s",
+};
+
 
 export const darkTheme = {
   ...componentsDarkTheme,

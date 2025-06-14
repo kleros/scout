@@ -10,7 +10,7 @@ import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
-import { ClosedButtonContainer } from 'pages/Home'
+import { ClosedButtonContainer } from '~src/pages/Registries'
 import {
   AddContainer,
   AddHeader,

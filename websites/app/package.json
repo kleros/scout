@@ -1,5 +1,5 @@
 {
-  "name": "@kleros/perma-curate",
+  "name": "@kleros/scout",
   "homepage": "./",
   "source": "src/index.html",
   "version": "0.1.0",
@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@cyntler/react-doc-viewer": "^1.16.3",
-    "@kleros/ui-components-library": "^2.20.0",
     "@kleros/kleros-app": "^2.0.2",
+    "@kleros/ui-components-library": "^3.4.5",
     "@reown/appkit": "^1.7.1",
     "@reown/appkit-adapter-wagmi": "^1.7.1",
     "@scure/base": "^1.2.5",
@@ -48,8 +48,9 @@
     "overlayscrollbars-react": "^0.5.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "react-loading-skeleton": "^3.4.0",
     "react-error-boundary": "^4.1.2",
+    "react-identicons": "^1.2.5",
+    "react-loading-skeleton": "^3.4.0",
     "react-markdown": "^8.0.7",
     "react-modal": "^3.15.1",
     "react-router-dom": "^6.3.0",
@@ -59,8 +60,7 @@
     "react-use": "^17.4.0",
     "styled-components": "^5.3.9",
     "viem": "^2.24.1",
-    "wagmi": "^2.14.15",
-    "react-identicons": "^1.2.5"
+    "wagmi": "^2.14.15"
   },
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.12.1",

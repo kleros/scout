@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatEther } from 'ethers';
 import { useSearchParams } from 'react-router-dom';
 import { useScrollTop } from 'hooks/useScrollTop';
-import { ClosedButtonContainer } from 'pages/Home';
+import { ClosedButtonContainer } from '~src/pages/Registries';
 import {
   AddContainer,
   AddHeader,

@@ -5,7 +5,7 @@ import { responsiveSize } from 'styles/responsiveSize'
 import { performEvidenceBasedRequest } from 'utils/performEvidenceBasedRequest'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
-import { StyledCloseButton, ClosedButtonContainer } from 'pages/Home'
+import { StyledCloseButton, ClosedButtonContainer } from '~src/pages/Registries'
 import { ModalOverlay } from './index'
 import { GraphItemDetails } from 'utils/itemDetails'
 

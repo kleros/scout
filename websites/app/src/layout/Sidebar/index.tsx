@@ -84,11 +84,11 @@ const Sidebar: React.FC = () => {
         <ArrowIcon />
       </Toggle>
       <NavItemsContainer>
-        <NavItem to="/dashboard" icon={HomeIcon} label="Home" collapsed={collapsed} />
-        <NavItem to="/activity" icon={ActivityIcon} label="My Activity" collapsed={collapsed} />
-        <NavItem to="/rewards" icon={RewardsIcon} label="Active Rewards" collapsed={collapsed} />
-        <NavItem to="/guide" icon={BookIcon} label="Quick Guide" collapsed={collapsed} />
-        <NavItem to="/juror" icon={PNKIcon} label="Earn as a Juror" collapsed={collapsed} />
+        <NavItem to="/dashboard/home" icon={HomeIcon} label="Home" collapsed={collapsed} />
+        <NavItem to="/dashboard/activity" icon={ActivityIcon} label="My Activity" collapsed={collapsed} />
+        <NavItem to="/dashboard/rewards" icon={RewardsIcon} label="Active Rewards" collapsed={collapsed} />
+        <NavItem to="/dashboard/guide" icon={BookIcon} label="Quick Guide" collapsed={collapsed} />
+        <NavItem to="/dashboard/juror" icon={PNKIcon} label="Earn as a Juror" collapsed={collapsed} />
       </NavItemsContainer>
     </Container>
   );

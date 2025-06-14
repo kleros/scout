@@ -7,7 +7,7 @@ import AddAddressTag from './AddSingleTags'
 import AddTagsQueries from './AddTagsQueries'
 import AddToken from './AddToken'
 import AddCDN from './AddCDN'
-import { StyledCloseButton } from 'pages/Home'
+import { StyledCloseButton } from '~src/pages/Registries'
 
 const ModalOverlay = styled.div`
   position: fixed;

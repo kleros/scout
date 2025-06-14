@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { GraphItem } from 'utils/fetchItems'
 import Entry from './Entry'
-import { ITEMS_PER_PAGE } from 'pages/Home'
+import { ITEMS_PER_PAGE } from '~src/pages/Registries'
 import { useMemo } from 'react';
 import { useChallengePeriodDuration } from 'hooks/countdown';
 import { registryMap } from 'utils/fetchItems';

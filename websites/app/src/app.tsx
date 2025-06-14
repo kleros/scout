@@ -28,9 +28,9 @@ const App: React.FC = () => {
   const containerRef = useRef(null);
 
   return (
-    <OverlayScrollContext.Provider value={containerRef}>
-      <StyledOverlayScrollbarsComponent ref={containerRef} options={{ showNativeOverlaidScrollbars: true }}>
-        <StyledComponentsProvider>
+    <StyledComponentsProvider>
+      <OverlayScrollContext.Provider value={containerRef}>
+        <StyledOverlayScrollbarsComponent ref={containerRef} options={{ showNativeOverlaidScrollbars: true }}>
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Web3Provider>
               <QueryClientProvider client={queryClient}>
@@ -38,7 +38,7 @@ const App: React.FC = () => {
                   <Routes>
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Navigate to="dashboard" replace />} />
-                      <Route path="dashboard" element={<Dashboard />} />
+                      <Route path="dashboard/*" element={<Dashboard />} />
                       <Route path="*" element={<h1>Page not found</h1>} />
                     </Route>
                   </Routes>
@@ -46,9 +46,9 @@ const App: React.FC = () => {
               </QueryClientProvider>
             </Web3Provider>
           </ErrorBoundary>
-        </StyledComponentsProvider>
-      </StyledOverlayScrollbarsComponent>
-    </OverlayScrollContext.Provider>
+        </StyledOverlayScrollbarsComponent>
+      </OverlayScrollContext.Provider>
+    </StyledComponentsProvider>
   );
 };
 
