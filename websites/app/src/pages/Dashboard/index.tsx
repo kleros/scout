@@ -9,19 +9,11 @@ import Guide from './Guide'
 import Juror from './Juror'
 import ScrollTop from 'components/ScrollTop'
 
-const Container = styled.div`
-  padding: 24px;
-`
-
-const Header = styled.h1`
-  font-size: 24px;
-  margin-bottom: 16px;
-`
+const Container = styled.div``
 
 const Dashboard: React.FC = () => {
   return (
     <Container>
-      <Header>Dashboard</Header>
       <Routes>
         <Route path="home" element={<Home />} />
         <Route path="activity" element={<Activity />} />

@@ -15,7 +15,7 @@ const Container = styled.div<{ collapsed: boolean }>`
   width: ${({ collapsed }) => (collapsed ? "64px" : "256px")};
   transition: width 0.25s ease;
   background-color: ${({ theme }) => (theme.name === "dark" ? theme.lightGrey : theme.primaryPurple)};
-  height: calc(100vh - 128px);
+  min-height: 100%;
   position: relative;
 
   ${landscapeStyle(

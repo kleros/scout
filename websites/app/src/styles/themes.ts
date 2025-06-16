@@ -10,6 +10,7 @@ const componentsDarkTheme = {
   klerosUIComponentsLightBlue: "#2A1260",
   klerosUIComponentsPrimaryText: "#DAF0FF",
   klerosUIComponentsSecondaryText: "#BEBEC5",
+  klerosUIComponentsTertiaryText: "#989AA0",
   klerosUIComponentsStroke: "#FFFFFF29",
   klerosUIComponentsLightGrey: "#262B3A",
 
@@ -28,6 +29,7 @@ const componentsDarkTheme = {
   klerosUIComponentsTint: "#DDB6FF",
   klerosUIComponentsTintMedium: "#401D6C",
   klerosUIComponentsTintPurple: "#2F0960",
+  klerosUIComponentsTintYellow: "#FFE16B",
 
   klerosUIComponentsTransitionSpeed: "0.25s",
 };
@@ -50,6 +52,7 @@ export const darkTheme = {
   mediumBlue: "#2E206C",
   primaryText: "#DAF0FF",
   secondaryText: "#BEBEC5",
+  tertiaryText: "#989AA0",
   stroke: "#FFFFFF29",
   lightGrey: "#262B3A",
 
@@ -71,6 +74,7 @@ export const darkTheme = {
   tint: "#DDB6FF",
   tintMedium: "#401D6C",
   tintPurple: "#2F0960",
+  tintYellow: "#FFE16B",
 
   transitionSpeed: "0.25s",
 

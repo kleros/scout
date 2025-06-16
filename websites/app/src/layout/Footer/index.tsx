@@ -12,10 +12,10 @@ import LightButton from "components/LightButton";
 import { ExternalLink } from "components/ExternalLink";
 
 const Container = styled.div`
-  height: 114px;
+  display: flex;
+  min-height: 114px;
   width: 100%;
   background-color: ${({ theme }) => (theme.name === "dark" ? theme.lightGrey : theme.primaryPurple)};
-  display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -24,7 +24,7 @@ const Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      height: 64px;
+      min-height: 64px;
       flex-direction: row;
       justify-content: space-between;
       padding: 0 32px;

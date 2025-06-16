@@ -1,29 +1,40 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
+import { landscapeStyle } from "styles/landscapeStyle";
+
+import BookCircleIcon from "svgs/icons/book-circle.svg";
+import BountiesIcon from "svgs/icons/bounties.svg";
+import RewardsIcon from "svgs/icons/rewards.svg";
+import DocumentationIcon from "svgs/icons/documentation.svg";
+import WarningOutlineIcon from "svgs/icons/warning-outline.svg";
 
 const Container = styled.div`
-  background: #0e111a;
-  color: #ffffff;
+  color: ${({ theme }) => theme.white};
   min-height: 100vh;
-  padding: 32px;
+  padding: 32px 32px 64px;
   font-family: "Inter", sans-serif;
+  background: ${({ theme }) => theme.lightBackground};
+
+  ${landscapeStyle(
+    () => css`
+      padding: 80px 0 100px 48px; 
+    `
+  )}
 `;
 
 const Header = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 32px;
-`;
+  gap: 16px;
 
-const HeaderIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  background: #282d3d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 16px;
+  svg {
+    min-width: 64px;
+    min-height: 64px;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
 `;
 
 const Title = styled.h1`
@@ -33,50 +44,55 @@ const Title = styled.h1`
 
 const Subtitle = styled.p`
   margin: 4px 0 0 0;
-  color: #9fa5c0;
+  color: ${({ theme }) => theme.secondaryText};
 `;
 
 const CardRow = styled.div`
   display: flex;
-  gap: 24px;
+  flex-direction: row;
+  gap: 16px;
   margin-top: 32px;
   margin-bottom: 48px;
+  flex-wrap: wrap;
 `;
 
 const InfoCard = styled.div`
-  flex: 1;
-  padding: 24px;
-  background: #1e2230;
-  border-radius: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  padding: 24px;
+  align-items: center;
+  max-width: 600px;
+  background: ${({ theme }) => theme.lightGrey};
+  border-radius: 12px;
+  flex-direction: row;
+  gap: 16px;
+
+  svg {
+    min-width: 64px;
+    min-height: 64px;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
 `;
 
-const CardIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: #34394e;
+const CardTitleAndDescription = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
 `;
 
 const CardTitle = styled.h2`
-  font-size: 18px;
+  font-size: 16px;
   margin: 0;
+  color: ${({ theme }) => theme.secondaryText};
 `;
 
 const CardDescription = styled.p`
-  color: #c3c7d6;
+  color: ${({ theme }) => theme.tertiaryText};
   margin: 0;
+  font-size: 14px;
 `;
 
 const Frame = styled.div`
-  border: 2px solid #00aaff;
-  border-radius: 8px;
-  padding: 24px;
   margin-bottom: 48px;
 `;
 
@@ -85,75 +101,72 @@ const SectionContainer = styled.div`
 `;
 
 const SectionHeader = styled.h3`
-  font-size: 20px;
+  font-size: 16px;
   margin: 0 0 16px 0;
 `;
 
 const SectionSteps = styled.ol`
-  margin: 0 0 16px 20px;
+  margin: 0 0 16px 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
 `;
 
-const StepItem = styled.li`
-  line-height: 1.4;
+const FooterText = styled.label`
+  color: ${({ theme }) => theme.tertiaryText};
 `;
 
-const AttentionBox = styled.div`
-  background: #2d1e1e;
-  color: #ffb84d;
-  padding: 12px 16px;
-  border-left: 4px solid #ffb84d;
-  border-radius: 4px;
+const StepItem = styled.label`
+  line-height: 1.2;
+  color: ${({ theme }) => theme.secondaryText};
+`;
+
+const AttentionContainer = styled.div`
+  display: flex;
+  color: ${({ theme }) => theme.tintYellow};
+  font-size: 14px;
   margin-bottom: 16px;
+  gap: 8px;
+
+  svg {
+    min-width: 16px;
+    min-height: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
 `;
 
-const Footer = styled.div`
-  margin-top: 64px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const FooterIcon = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  background: #282d3d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const FooterLink = styled.a`
-  color: #00aaff;
-  text-decoration: none;
+const AttentionLabel = styled.label`
+  color: ${({ theme }) => theme.tintYellow};
 `;
 
 const SubmittingEntry = () => (
   <SectionContainer>
     <SectionHeader>Submitting an Entry</SectionHeader>
     <SectionSteps>
-      <StepItem>Go to Kleros Scout.</StepItem>
-      <StepItem>Connect your crypto wallet.</StepItem>
+      <StepItem>1. Go to Kleros Scout.</StepItem>
+      <StepItem>2. Connect your crypto wallet.</StepItem>
       <StepItem>
-        Click the dropdown menu “Lists” and select the correct registry (e.g.,
+        3. Click the dropdown menu “Lists” and select the correct registry (e.g.,
         “Tokens”).
       </StepItem>
-      <StepItem>Check the policy and ensure you meet all requirements.</StepItem>
-      <StepItem>Click “Submit Entry” and fill out the necessary info.</StepItem>
+      <StepItem>4. Check the policy and ensure you meet all requirements.</StepItem>
+      <StepItem>5. Click “Submit Entry” and fill out the necessary info.</StepItem>
       <StepItem>
-        Press “Submit” and confirm the transaction on your wallet to place the
+        6. Press “Submit” and confirm the transaction on your wallet to place the
         deposit.
       </StepItem>
     </SectionSteps>
-    <AttentionBox>Attention: Non‑compliant submissions risk losing deposits.</AttentionBox>
-    <p>
+    <AttentionContainer>
+      <WarningOutlineIcon />
+      <AttentionLabel>Attention: Non‑compliant submissions risk losing deposits.</AttentionLabel>
+    </AttentionContainer>
+    <FooterText>
       If your submission passes verification, you’ll get your deposit back. Be
       sure to check if you also qualify for a reward.
-    </p>
+    </FooterText>
   </SectionContainer>
 );
 
@@ -161,21 +174,24 @@ const ChallengingSubmission = () => (
   <SectionContainer>
     <SectionHeader>Challenging a Suspicious Submission</SectionHeader>
     <SectionSteps>
-      <StepItem>Go to Kleros Scout.</StepItem>
-      <StepItem>Connect your crypto wallet.</StepItem>
-      <StepItem>Find a submission that looks inconsistent.</StepItem>
-      <StepItem>Click “Details,” then “Challenge Entry.”</StepItem>
-      <StepItem>Provide your evidence in the form (e.g., mismatch data).</StepItem>
+      <StepItem>1. Go to Kleros Scout.</StepItem>
+      <StepItem>2. Connect your crypto wallet.</StepItem>
+      <StepItem>3. Find a submission that looks inconsistent.</StepItem>
+      <StepItem>4. Click “Details,” then “Challenge Entry.”</StepItem>
+      <StepItem>5. Provide your evidence in the form (e.g., mismatch data).</StepItem>
       <StepItem>
-        Press “Confirm” and accept the transaction on your wallet to place the
+        6. Press “Confirm” and accept the transaction on your wallet to place the
         deposit.
       </StepItem>
     </SectionSteps>
-    <AttentionBox>Attention: Invalid challenges lose the deposit.</AttentionBox>
-    <p>
+    <AttentionContainer>
+      <WarningOutlineIcon />
+      <AttentionLabel>Attention: Non‑compliant submissions risk losing deposits.</AttentionLabel>
+    </AttentionContainer>
+    <FooterText>
       If your submission passes verification, you’ll get your deposit back. Be
       sure to check if you also qualify for a reward.
-    </p>
+    </FooterText>
   </SectionContainer>
 );
 
@@ -183,11 +199,11 @@ const ChallengePhase = () => (
   <SectionContainer>
     <SectionHeader>Submission in Challenge Phase</SectionHeader>
     <SectionSteps>
-      <StepItem>Go to the specific entry under dispute.</StepItem>
-      <StepItem>Press “Details,” then “Submit Evidence.”</StepItem>
-      <StepItem>Fill in the form with your supporting proofs.</StepItem>
+      <StepItem>1. Go to the specific entry under dispute.</StepItem>
+      <StepItem>2. Press “Details,” then “Submit Evidence.”</StepItem>
+      <StepItem>3. Fill in the form with your supporting proofs.</StepItem>
       <StepItem>
-        Complete the transaction to finalize your evidence submission.
+        4. Complete the transaction to finalize your evidence submission.
       </StepItem>
     </SectionSteps>
   </SectionContainer>
@@ -196,7 +212,7 @@ const ChallengePhase = () => (
 const QuickGuidePage: React.FC = () => (
   <Container>
     <Header>
-      <HeaderIcon />
+      <BookCircleIcon />
       <div>
         <Title>Quick Guide</Title>
         <Subtitle>
@@ -207,20 +223,24 @@ const QuickGuidePage: React.FC = () => (
 
     <CardRow>
       <InfoCard>
-        <CardIcon />
-        <CardTitle>Bounties</CardTitle>
-        <CardDescription>
-          Find and challenge suspicious submissions. If you win the challenge,
-          you’ll always earn a bounty!
-        </CardDescription>
+        <BountiesIcon />
+        <CardTitleAndDescription>
+          <CardTitle>Bounties</CardTitle>
+          <CardDescription>
+            Find and challenge suspicious submissions. If you win the challenge,
+            you’ll always earn a bounty!
+          </CardDescription>
+        </CardTitleAndDescription>
       </InfoCard>
       <InfoCard>
-        <CardIcon />
-        <CardTitle>Rewards</CardTitle>
-        <CardDescription>
-          Explore active reward plans and submit compliant entries to earn
-          rewards.
-        </CardDescription>
+        <RewardsIcon />
+        <CardTitleAndDescription>
+          <CardTitle>Rewards</CardTitle>
+          <CardDescription>
+            Explore active reward plans and submit compliant entries to earn
+            rewards.
+          </CardDescription>
+        </CardTitleAndDescription>
       </InfoCard>
     </CardRow>
 
@@ -230,10 +250,15 @@ const QuickGuidePage: React.FC = () => (
       <ChallengePhase />
     </Frame>
 
-    <Footer>
-      <FooterIcon />
-      <FooterLink href="#">Documentation</FooterLink>
-    </Footer>
+    <InfoCard>
+      <DocumentationIcon />
+      <CardTitleAndDescription>
+        <CardTitle>Documentation</CardTitle>
+        <CardDescription>
+          For more details check the full documentation.
+        </CardDescription>
+      </CardTitleAndDescription>
+    </InfoCard>
   </Container>
 );
 
