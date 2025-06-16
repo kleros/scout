@@ -9,7 +9,7 @@ import DocumentationIcon from "svgs/icons/documentation.svg";
 import WarningOutlineIcon from "svgs/icons/warning-outline.svg";
 
 const Container = styled.div`
-  color: ${({ theme }) => theme.white};
+  color: ${({ theme }) => theme.primaryText};
   min-height: 100vh;
   padding: 32px 32px 64px;
   font-family: "Inter", sans-serif;
@@ -61,10 +61,12 @@ const InfoCard = styled.div`
   padding: 24px;
   align-items: center;
   max-width: 600px;
-  background: ${({ theme }) => theme.lightGrey};
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
   border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.lightGrey};
   flex-direction: row;
   gap: 16px;
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
 
   svg {
     min-width: 64px;
