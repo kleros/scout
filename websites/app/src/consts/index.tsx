@@ -1,1 +1,1 @@
-export const SUBGRAPH_GNOSIS_ENDPOINT = "https://api.studio.thegraph.com/query/61738/legacy-curate-gnosis/version/latest"
+export const SUBGRAPH_GNOSIS_ENDPOINT = "https://gateway.thegraph.com/api/b3d13124a4eec5a58826542dd0f460c5/subgraphs/id/9hHo5MpjpC1JqfD3BsgFnojGurXRHTrHWcUcZPPCo6m8"
