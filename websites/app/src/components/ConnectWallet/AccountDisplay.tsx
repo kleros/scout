@@ -17,7 +17,6 @@ const Container = styled.div`
   justify-content: space-between;
   height: auto;
   gap: 8px;
-  align-items: center;
   background-color: ${({ theme }) => theme.whiteBackground};
   padding: 0px;
   cursor: pointer;

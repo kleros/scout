@@ -14,7 +14,7 @@ const componentsDarkTheme = {
   klerosUIComponentsStroke: "#FFFFFF29",
   klerosUIComponentsLightGrey: "#262B3A",
 
-  klerosUIComponentsWhiteBackground: "#220050",
+  klerosUIComponentsWhiteBackground: "#1B2030",
   klerosUIComponentsLightBackground: "#1B2030",
 
   klerosUIComponentsDefaultShadow: "#00000000",
@@ -56,7 +56,7 @@ export const darkTheme = {
   stroke: "#FFFFFF29",
   lightGrey: "#262B3A",
 
-  whiteBackground: "#220050",
+  whiteBackground: "#1B2030",
   lightBackground: "#1B2030",
 
   defaultShadow: "#00000000",

@@ -88,7 +88,7 @@ const Sidebar: React.FC = () => {
         <NavItem to="/dashboard/activity" icon={ActivityIcon} label="My Activity" collapsed={collapsed} />
         <NavItem to="/dashboard/rewards" icon={RewardsIcon} label="Active Rewards" collapsed={collapsed} />
         <NavItem to="/dashboard/guide" icon={BookIcon} label="Quick Guide" collapsed={collapsed} />
-        <NavItem to="/dashboard/juror" icon={PNKIcon} label="Earn as a Juror" collapsed={collapsed} />
+        {/* <NavItem to="/dashboard/juror" icon={PNKIcon} label="Earn as a Juror" collapsed={collapsed} /> */}
       </NavItemsContainer>
     </Container>
   );

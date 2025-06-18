@@ -1,10 +1,14 @@
 import React from "react";
 import styled from "styled-components";
-
 import { useToggle } from "react-use";
+import { useNavigate } from "react-router-dom";
 import { useAccount } from "wagmi";
 
 import KlerosSolutionsIcon from "svgs/menu-icons/kleros-solutions.svg";
+import HomeIcon from "svgs/sidebar/home.svg";
+import ActivityIcon from "svgs/sidebar/activity.svg";
+import RewardsIcon from "svgs/sidebar/rewards.svg";
+import BookIcon from "svgs/sidebar/book.svg";
 
 import { useLockOverlayScroll } from "hooks/useLockOverlayScroll";
 
@@ -21,7 +25,7 @@ import Help from "./Menu/Help";
 import Settings from "./Menu/Settings";
 import { DisconnectWalletButton } from "./Menu/Settings/General";
 
-const Wrapper = styled.div<{ isOpen: boolean }>`
+const Wrapper = styled.div<{ isOpen: boolean; }>`
   visibility: ${({ isOpen }) => (isOpen ? "visible" : "hidden")};
   position: absolute;
   top: 100%;
@@ -35,7 +39,7 @@ const StyledOverlay = styled(Overlay)`
   top: unset;
 `;
 
-const Container = styled.div<{ isOpen: boolean }>`
+const Container = styled.div<{ isOpen: boolean; }>`
   position: absolute;
   top: 0;
   left: 0;
@@ -70,6 +74,12 @@ const DisconnectWalletButtonContainer = styled.div`
   align-items: center;
 `;
 
+const SidebarContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
 export interface ISettings {
   toggleIsSettingsOpen: () => void;
   initialTab?: number;
@@ -84,11 +94,12 @@ export interface IDappList {
 }
 
 const NavBar: React.FC = () => {
+  const navigate = useNavigate();
   const { isConnected } = useAccount();
   const [isDappListOpen, toggleIsDappListOpen] = useToggle(false);
   const [isHelpOpen, toggleIsHelpOpen] = useToggle(false);
   const [isSettingsOpen, toggleIsSettingsOpen] = useToggle(false);
-  const { isOpen } = useOpenContext();
+  const { isOpen, toggleIsOpen } = useOpenContext();
   useLockOverlayScroll(isOpen);
 
   return (
@@ -106,6 +117,45 @@ const NavBar: React.FC = () => {
             />
             <hr />
             <Explore isMobileNavbar={true} />
+            <hr />
+            <SidebarContainer>
+              <LightButton
+                isMobileNavbar={true}
+                text="Home"
+                onClick={() => {
+                  navigate("/dashboard/home")
+                  toggleIsOpen();
+                }}
+                Icon={HomeIcon}
+              />
+              <LightButton
+                isMobileNavbar={true}
+                text="My Activity"
+                onClick={() => {
+                  navigate("/dashboard/activity")
+                  toggleIsOpen();
+                }}
+                Icon={ActivityIcon}
+              />
+              <LightButton
+                isMobileNavbar={true}
+                text="Active Rewards"
+                onClick={() => {
+                  navigate("/dashboard/rewards")
+                  toggleIsOpen();
+                }}
+                Icon={RewardsIcon}
+              />
+              <LightButton
+                isMobileNavbar={true}
+                text="Quick Guide"
+                onClick={() => {
+                  navigate("/dashboard/guide")
+                  toggleIsOpen();
+                }}
+                Icon={BookIcon}
+              />
+            </SidebarContainer>
             <hr />
             <WalletContainer>
               <ConnectWallet />
