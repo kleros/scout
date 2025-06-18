@@ -1,5 +1,5 @@
 import { gql, request } from 'graphql-request';
-import { ITEMS_PER_PAGE } from 'pages/Home';
+import { ITEMS_PER_PAGE } from '~src/pages/Registries';
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 import { chains, getNamespaceForChainId } from './chains';
 
