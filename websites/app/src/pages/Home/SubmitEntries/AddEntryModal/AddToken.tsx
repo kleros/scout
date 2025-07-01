@@ -121,7 +121,7 @@ const AddToken: React.FC = () => {
     if (decimalsParam) setDecimals(decimalsParam);
     if (nameParam) setName(nameParam);
     if (symbolParam) setSymbol(symbolParam);
-    if (websiteParam) setSymbol(websiteParam);
+    if (websiteParam) setWebsite(websiteParam);
   }, [searchParams]);
 
   useEffect(() => {
@@ -140,10 +140,31 @@ const AddToken: React.FC = () => {
     return network.value + ':' + debouncedAddress
   }, [network.value, debouncedAddress])
 
+  const cacheKey = `addressIssues:${networkAddressKey}:${name}:${symbol}:${website}`
+
+  const cachedIssues = useMemo(() => {
+    const cached = localStorage.getItem(cacheKey)
+    return cached ? JSON.parse(cached) : null
+  }, [cacheKey])
+
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol, website],
-    queryFn: () => getAddressValidationIssue(network.value, 'Tokens', debouncedAddress, undefined, name, undefined, website, symbol),
+    queryFn: async () => {
+      const res = await getAddressValidationIssue(
+        network.value,
+        'Tokens',
+        debouncedAddress,
+        undefined,
+        name,
+        undefined,
+        website,
+        symbol
+      )
+      localStorage.setItem(cacheKey, JSON.stringify(res))
+      return res
+    },
     enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol) || Boolean(website),
+    placeholderData: cachedIssues,
   });
 
   const {
