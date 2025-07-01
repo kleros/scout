@@ -144,7 +144,14 @@ const AddToken: React.FC = () => {
 
   const cachedIssues = useMemo(() => {
     const cached = localStorage.getItem(cacheKey)
-    return cached ? JSON.parse(cached) : null
+    if (!cached) return null
+  
+    try {
+      return JSON.parse(cached)
+    } catch {
+      localStorage.removeItem(cacheKey)
+      return null
+    }
   }, [cacheKey])
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
