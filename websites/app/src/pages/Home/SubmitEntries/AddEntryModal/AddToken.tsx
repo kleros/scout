@@ -214,8 +214,6 @@ const AddToken: React.FC = () => {
     return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || !website || imageError);
   }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, website, imageError]);
 
-  console.log({submittingDisabled, address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, website, imageError})
-
   return (
     <AddContainer>
       <AddHeader>
