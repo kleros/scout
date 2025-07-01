@@ -2,6 +2,7 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
+import { isPngFile } from 'utils/pngValidation'
 import UploadIcon from 'tsx:svgs/icons/upload.svg'
 
 const StyledLabel = styled.label`
@@ -38,11 +39,19 @@ const ImageUpload: React.FC<{
 }> = ({ path, setPath, setImageError, registry }) => {
   const [imageFile, setImageFile] = useState<File | null>(null)
 
-  const validateImage = (file: File): string | null => {
+  const validateImage = async (file: File): Promise<string | null> => {
     if (registry === 'Tokens') {
-      if (!file.type.startsWith('image/png')) {
+      // Check file extension and MIME type first (basic validation)
+      if (!file.type.startsWith('image/png') && !file.name.toLowerCase().endsWith('.png')) {
         return 'Only PNG images are allowed for Tokens registry.'
       }
+      
+      // Check actual file content to ensure it's a real PNG file
+      const isActuallyPng = await isPngFile(file)
+      if (!isActuallyPng) {
+        return 'Invalid PNG file. The file content does not match PNG format specifications.'
+      }
+      
       if (file.size > 4 * 1024 * 1024) {
         return 'Image size should not exceed 4MB.'
       }
@@ -53,7 +62,7 @@ const ImageUpload: React.FC<{
   useEffect(() => {
     if (!imageFile) return
     const uploadImageToIPFS = async () => {
-      const error = validateImage(imageFile)
+      const error = await validateImage(imageFile)
       if (error) {
         setImageError(error)
         return
