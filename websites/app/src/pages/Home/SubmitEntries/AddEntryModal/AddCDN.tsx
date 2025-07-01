@@ -122,10 +122,24 @@ const AddCDN: React.FC = () => {
     return countsData[registryLabel]
   }, [searchParams, countsData])
 
+  const networkAddressKey = network.value + ':' + debouncedAddress
+
+  const cacheKey = `addressIssues:${networkAddressKey}:${domain}`
+  
+  const cachedIssues = useMemo(() => {
+    const cached = localStorage.getItem(cacheKey)
+    return cached ? JSON.parse(cached) : null
+  }, [cacheKey])
+  
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'CDN', domain],
-    queryFn: () => getAddressValidationIssue(network.value, 'CDN', debouncedAddress, domain),
+    queryKey: ['addressissues', networkAddressKey, 'CDN', domain],
+    queryFn: async () => {
+      const res = await getAddressValidationIssue(network.value, 'CDN', debouncedAddress, domain)
+      localStorage.setItem(cacheKey, JSON.stringify(res))
+      return res
+    },
     enabled: Boolean(debouncedAddress) || Boolean(domain),
+    placeholderData: cachedIssues,
   });
 
   useEffect(() => {
