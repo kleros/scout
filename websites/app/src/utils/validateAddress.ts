@@ -121,8 +121,7 @@ const getDupesInRegistry = async (
   return items.length
 }
 
-// null
-const getAddressValidationIssue = async (
+export const getAddressValidationIssue = async (
   chainId: string,
   registry: string,
   address?: string,
@@ -132,54 +131,48 @@ const getAddressValidationIssue = async (
   link?: string,
   symbol?: string
 ): Promise<Issue | null> => {
-  let result: Issue = {};
+  const result: Issue = {}
 
-  // Validate the address based on the chainId
   if (address && !isValidAddressForChain(chainId, address)) {
-    result.address = { message: 'Invalid address for the specified chain', severity: 'error' };
+    result.address = { message: 'Invalid address for the specified chain', severity: 'error' }
   }
 
-  // check its not a dupe.
-  const ndupes = await getDupesInRegistry(
-    chainId + ':' + address,
-    registryMap[registry],
-    domain
-  );
+  if (publicNameTag && publicNameTag.length > 50) {
+    result.publicNameTag = { message: 'Public Name Tag too long (max 50 characters)', severity: 'error' }
+  }
+
+  if (projectName && projectName !== projectName.trim()) {
+    result.projectName = { message: 'Project name has leading or trailing whitespace', severity: 'warn' }
+  }
+
+  if (registry === 'Tokens' && projectName && projectName.length > 40) {
+    result.projectName = { message: 'Public Name too long (max 40 characters)', severity: 'warn' }
+  }
+
+  if (registry === 'Tokens' && symbol && symbol.length > 20) {
+    result.symbol = { message: 'Symbol too long (max 20 characters)', severity: 'warn' }
+  }
+
+  if (publicNameTag && publicNameTag !== publicNameTag.trim()) {
+    result.publicNameTag = { message: 'Public Name Tag has leading or trailing whitespace', severity: 'warn' }
+  }
+
+  const cdnRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
+  if (domain && !cdnRegex.test(domain)) {
+    result.domain = { message: 'Invalid website format for CDN. Must be a valid domain', severity: 'error' }
+  }
+
+  const tagRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
+  if (link && !tagRegex.test(link)) {
+    result.link = { message: 'Invalid website format. Must start with http(s):// and include a valid domain', severity: 'error' }
+  }
+
+  if (Object.keys(result).length > 0) return result
+
+  const ndupes = await getDupesInRegistry(chainId + ':' + address, registryMap[registry], domain)
 
   if (ndupes > 0) {
-    result.domain = { message: 'Duplicate submission', severity: 'error' };
-  }
-
-  if (publicNameTag && publicNameTag?.length > 50) {
-    result.publicNameTag = { message: 'Public Name Tag too long (max 50 characters)', severity: 'error' };
-  }
-
-  if (projectName && (projectName !== projectName.trim())) {
-    result.projectName = { message: 'Project name has leading or trailing whitespace', severity: 'warn' };
-  }
-
-  if (registry === "Tokens" && projectName && projectName.length > 40) {
-    result.projectName = { message: 'Public Name too long (max 40 characters)', severity: 'warn' };
-  }
-
-  if (registry === "Tokens" && symbol && symbol.length > 20) {
-    result.symbol = { message: 'Symbol too long (max 20 characters)', severity: 'warn' };
-  }
-
-  if (publicNameTag && (publicNameTag !== publicNameTag.trim())) {
-    result.publicNameTag = { message: 'Public Name Tag has leading or trailing whitespace', severity: 'warn' };
-  }
-
-  const cdnRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
-
-  if (domain && !cdnRegex.test(domain)) {
-    result.domain = { message: 'Invalid website format for CDN. Must be a valid domain', severity: 'error' };
-  }
-
-  const tagRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/;
-
-  if (link && !tagRegex.test(link)) {
-    result.link = { message: 'Invalid website format. Must start with http(s):// and include a valid domain', severity: 'error' };
+    result.domain = { message: 'Duplicate submission', severity: 'error' }
   }
 
   return Object.keys(result).length > 0 ? result : null;
