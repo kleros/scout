@@ -73,11 +73,39 @@ const AddTagsQueries: React.FC = () => {
     setFormData({ githubRepository, commitHash, evmChainId, description });
   }, [githubRepository, commitHash, evmChainId, description]);
 
+  const cacheKey = `addressIssues:${evmChainId}:${githubRepository}`
+
+  const cachedIssues = useMemo(() => {
+    const cached = localStorage.getItem(cacheKey)
+    if (!cached) return null
+  
+    try {
+      return JSON.parse(cached)
+    } catch {
+      localStorage.removeItem(cacheKey)
+      return null
+    }
+  }, [cacheKey])
+  
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
     queryKey: ['addressissues', evmChainId, 'Tags_Queries', githubRepository],
-    queryFn: () => getAddressValidationIssue(evmChainId, 'Tags_Queries', undefined, undefined, undefined, undefined, githubRepository, undefined),
+    queryFn: async () => {
+      const res = await getAddressValidationIssue(
+        evmChainId,
+        'Tags_Queries',
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        githubRepository,
+        undefined
+      )
+      localStorage.setItem(cacheKey, JSON.stringify(res))
+      return res
+    },
     enabled: Boolean(githubRepository) || Boolean(commitHash) || Boolean(evmChainId) || Boolean(description),
-  });
+    placeholderData: cachedIssues,
+  })
 
   const { data: countsData } = useQuery({
     queryKey: ['counts'],

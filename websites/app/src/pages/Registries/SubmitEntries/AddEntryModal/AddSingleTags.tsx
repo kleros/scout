@@ -131,10 +131,39 @@ const AddAddressTag: React.FC = () => {
     [address]
   )
 
+  const networkAddressKey = network.value + ':' + debouncedAddress
+
+  const cacheKey = `addressIssues:${networkAddressKey}:${projectName}:${publicNameTag}:${website}`
+  
+  const cachedIssues = useMemo(() => {
+    const cached = localStorage.getItem(cacheKey)
+    if (!cached) return null
+  
+    try {
+      return JSON.parse(cached)
+    } catch {
+      localStorage.removeItem(cacheKey)
+      return null
+    }
+  }, [cacheKey])
+  
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', network.value + ':' + debouncedAddress, 'Single_Tags', projectName, publicNameTag, website],
-    queryFn: () => getAddressValidationIssue(network.value, 'Single_Tags', debouncedAddress, undefined, projectName, publicNameTag, website),
+    queryKey: ['addressissues', networkAddressKey, 'Single_Tags', projectName, publicNameTag, website],
+    queryFn: async () => {
+      const res = await getAddressValidationIssue(
+        network.value,
+        'Single_Tags',
+        debouncedAddress,
+        undefined,
+        projectName,
+        publicNameTag,
+        website
+      )
+      localStorage.setItem(cacheKey, JSON.stringify(res))
+      return res
+    },
     enabled: Boolean(debouncedAddress) || Boolean(projectName) || Boolean(publicNameTag) || Boolean(website),
+    placeholderData: cachedIssues,
   });
 
   const {
