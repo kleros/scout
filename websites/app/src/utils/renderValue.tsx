@@ -18,10 +18,10 @@ const StyledButton = styled.button`
 
 export const StyledWebsiteAnchor = styled.a`
   color: #fff;
-  text-decoration: none;
+  text-decoration: underline;
 
   &:hover {
-    text-decoration: underline;
+    color: #e6e6e6;
   }
 `
 

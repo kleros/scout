@@ -1,9 +1,23 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import styled, { css } from "styled-components";
 import { landscapeStyle } from "styles/landscapeStyle";
+import { Tabs as TabsComponent } from "@kleros/ui-components-library";
+import { useNavigate, useLocation } from "react-router-dom";
+import ActivityIcon from "svgs/icons/activity.svg";
+import SubmissionsIcon from "svgs/icons/submissions.svg";
 
-// import ActivityIcon from "svgs/icons/activity.svg";
-// import SubmissionsIcon from "svgs/icons/submissions.svg";
+const StyledTabs = styled(TabsComponent)`
+  width: 100%;
+  margin-top: 24px;
+  > * {
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 14px;
+    > svg {
+      margin-right: 8px !important;
+    }
+  }
+`;
 
 const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
@@ -85,26 +99,64 @@ const StatValue = styled.span`
   font-weight: 600;
 `;
 
-const Activity: React.FC<{ submissions: number }> = ({ submissions }) => (
-  <Container>
-    <Header>
-      {/* <ActivityIcon /> */}
-      <div>
-        <Title>My Activity</Title>
-        <Subtitle>Follow up your submissions, challenges, and other interactions with Scout.</Subtitle>
-      </div>
-    </Header>
+const TABS = [
+  { key: "ongoing", text: "Ongoing", path: "ongoing" },
+  { key: "past",    text: "Past", path: "past"  },
+];
 
-    <CardRow>
-      <StatCard>
-        {/* <SubmissionsIcon /> */}
-        <StatInfo>
-          <StatLabel>Submissions</StatLabel>
-          <StatValue>61</StatValue>
-        </StatInfo>
-      </StatCard>
-    </CardRow>
-  </Container>
-);
+const Activity: React.FC<{ submissions: number }> = ({ submissions }) => {
+  const navigate = useNavigate();
+  const currentPathName = useLocation().pathname.split("/").at(-1);
+  const [currentTab, setCurrentTab] = useState(() => {
+    const idx = TABS.findIndex(({ path }) => path === currentPathName);
+    return idx > -1 ? idx : 0;
+  });
+  useEffect(() => {
+    const idx = TABS.findIndex(({ path }) => path === currentPathName);
+    setCurrentTab(idx > -1 ? idx : 0);
+  }, [currentPathName]);
+  const tabs = useMemo(() => [...TABS], []);
+  return (
+    <Container>
+      <Header>
+        <ActivityIcon />
+        <div>
+          <Title>My Activity</Title>
+          <Subtitle>Follow up your submissions, challenges, and other interactions with Scout.</Subtitle>
+        </div>
+      </Header>
+      <StyledTabs
+        currentValue={currentTab}
+        items={tabs}
+        callback={(n: number) => {
+          setCurrentTab(n);
+          navigate(tabs[n].path);
+        }}
+      />
+      {currentTab === 0 && (
+        <CardRow>
+          <StatCard>
+            <SubmissionsIcon />
+            <StatInfo>
+              <StatLabel>Submissions</StatLabel>
+              <StatValue>61</StatValue>
+            </StatInfo>
+          </StatCard>
+        </CardRow>
+      )}
+      {currentTab === 1 && (
+        <CardRow>
+          <StatCard>
+            <SubmissionsIcon />
+            <StatInfo>
+              <StatLabel>Past Submissions</StatLabel>
+              <StatValue>{submissions}</StatValue>
+            </StatInfo>
+          </StatCard>
+        </CardRow>
+      )}
+    </Container>
+  );
+};
 
 export default Activity;

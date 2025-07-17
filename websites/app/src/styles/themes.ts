@@ -58,6 +58,7 @@ export const darkTheme = {
 
   whiteBackground: "#1B2030",
   lightBackground: "#1B2030",
+  backgroundTwo: "#363947",
 
   defaultShadow: "#00000000",
   hoveredShadow: "#42498f80",

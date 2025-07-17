@@ -7,16 +7,24 @@ import HomeIcon from "svgs/sidebar/home.svg";
 import ActivityIcon from "svgs/sidebar/activity.svg";
 import RewardsIcon from "svgs/sidebar/rewards.svg";
 import BookIcon from "svgs/sidebar/book.svg";
-import PNKIcon from "svgs/sidebar/pnk.svg";
+
+const HEADER_HEIGHT = 64;
+
+const Rail = styled.div`
+  width: 64px;
+`;
 
 const Container = styled.div<{ collapsed: boolean }>`
   display: none;
-  flex-direction: column;
+  position: fixed;
+  top: ${HEADER_HEIGHT}px;
+  left: 0;
+  bottom: 0;
   width: ${({ collapsed }) => (collapsed ? "64px" : "256px")};
   transition: width 0.25s ease;
-  background-color: ${({ theme }) => (theme.name === "dark" ? theme.lightGrey : theme.primaryPurple)};
-  min-height: 100%;
-  position: relative;
+  flex-direction: column;
+  background-color: ${({ theme }) => theme.lightGrey};
+  z-index: 1;
 
   ${landscapeStyle(
     () => css`
@@ -31,7 +39,7 @@ const Container = styled.div<{ collapsed: boolean }>`
     right: 0;
     width: 1px;
     height: 100%;
-    background: linear-gradient(to bottom, #FFFFFF29, #FFFFFF00);
+    background: linear-gradient(to bottom, #ffffff29, #ffffff00);
     pointer-events: none;
   }
 `;
@@ -45,52 +53,56 @@ const Toggle = styled.button<{ collapsed: boolean }>`
   background: none;
   border: none;
   cursor: pointer;
-  transform: ${({ collapsed }) => (collapsed ? "rotate(0deg)" : "rotate(180deg)")};
   margin: 16px 0 24px;
-
+  transform: ${({ collapsed }) => (collapsed ? "rotate(0deg)" : "rotate(180deg)")};
   svg {
     width: 32px;
     height: 32px;
     flex-shrink: 0;
     fill: ${({ theme }) => theme.white}BA;
   }
+
   :hover svg {
     fill: ${({ theme }) => theme.white};
   }
 `;
 
-const NavItemsContainer = styled.div`
+const NavItems = styled.div`
   display: flex;
   flex-direction: column;
 `;
 
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
-  const sidebarRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (!collapsed && sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+    const close = (e: MouseEvent) => {
+      if (!collapsed && ref.current && !ref.current.contains(e.target as Node)) {
         setCollapsed(true);
       }
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
   }, [collapsed]);
 
+  const handleNavClick = () => setCollapsed(true);
+
   return (
-    <Container ref={sidebarRef} collapsed={collapsed}>
-      <Toggle onClick={() => setCollapsed(!collapsed)} collapsed={collapsed}>
-        <ArrowIcon />
-      </Toggle>
-      <NavItemsContainer>
-        <NavItem to="/dashboard/home" icon={HomeIcon} label="Home" collapsed={collapsed} />
-        <NavItem to="/dashboard/activity" icon={ActivityIcon} label="My Activity" collapsed={collapsed} />
-        <NavItem to="/dashboard/rewards" icon={RewardsIcon} label="Active Rewards" collapsed={collapsed} />
-        <NavItem to="/dashboard/guide" icon={BookIcon} label="Quick Guide" collapsed={collapsed} />
-        {/* <NavItem to="/dashboard/juror" icon={PNKIcon} label="Earn as a Juror" collapsed={collapsed} /> */}
-      </NavItemsContainer>
-    </Container>
+    <>
+      <Rail />
+      <Container ref={ref} collapsed={collapsed}>
+        <Toggle collapsed={collapsed} onClick={() => setCollapsed(!collapsed)}>
+          <ArrowIcon />
+        </Toggle>
+        <NavItems>
+          <NavItem to="/dashboard/home" icon={HomeIcon} label="Home" collapsed={collapsed} onClick={handleNavClick} />
+          <NavItem to="/dashboard/activity" icon={ActivityIcon} label="My Activity" collapsed={collapsed} onClick={handleNavClick} />
+          <NavItem to="/dashboard/rewards" icon={RewardsIcon} label="Active Rewards" collapsed={collapsed} onClick={handleNavClick} />
+          <NavItem to="/dashboard/guide" icon={BookIcon} label="Quick Guide" collapsed={collapsed} onClick={handleNavClick} />
+        </NavItems>
+      </Container>
+    </>
   );
 };
 

@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
 import { isPngFile } from 'utils/pngValidation'
-import UploadIcon from 'tsx:svgs/icons/upload.svg'
+import UploadIcon from 'svgs/icons/upload.svg'
 
 const StyledLabel = styled.label`
   cursor: pointer;

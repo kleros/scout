@@ -4,7 +4,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
-import SearchIcon from 'tsx:svgs/icons/search.svg'
+import SearchIcon from 'svgs/icons/search.svg'
 
 const Container = styled.div`
   display: flex;
@@ -89,7 +89,7 @@ const Search: React.FC = () => {
         type="text"
         value={searchTerm}
         onChange={(e) => changeSearchTerm(e.target.value)}
-        placeholder="Search with keywords, ethereum address, etc."
+        placeholder="Search with keywords, address, etc."
       />
     </Container>
   )

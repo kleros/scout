@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo } from 'react'
-import styled, { css } from 'styled-components'
-import { landscapeStyle } from 'styles/landscapeStyle'
+import styled from 'styled-components'
 import { useSearchParams, createSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchItems } from 'utils/fetchItems'
 import { chains } from 'utils/chains'
 import { fetchItemCounts } from 'utils/itemCounts'
-import Navbar from './Navbar'
 import RewardsPage from '../RewardsSection'
 import RegistryDetails from './RegistryDetails'
 import SubmitButton from './SubmitButton'
@@ -18,14 +16,13 @@ import DetailsModal from './EntryDetailsModal'
 import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal'
 import Filters from './Filters'
 import AddEntryModal from './SubmitEntries/AddEntryModal'
-import CloseIcon from 'tsx:svgs/icons/close.svg'
+import CloseIcon from 'svgs/icons/close.svg'
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #08020e;
   min-height: 100vh;
   color: white;
   padding-bottom: 48px;
@@ -36,18 +33,10 @@ const SearchAndRegistryDetailsAndSubmitContainer = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  background: #08020e;
   color: white;
-  width: 84vw;
   margin-bottom: 24px;
   gap: 16px;
   flex-wrap: wrap;
-
-  ${landscapeStyle(
-    () => css`
-      width: 80%;
-    `
-  )}
 `
 
 const RegistryDetailsAndSubmitContainer = styled.div`
@@ -56,13 +45,6 @@ const RegistryDetailsAndSubmitContainer = styled.div`
   gap: 24px;
   flex-wrap: wrap;
   justify-content: space-between;
-  width: 100%;
-
-  ${landscapeStyle(
-    () => css`
-      width: auto;
-    `
-  )}
 `
 
 export const StyledCloseButton = styled(CloseIcon)`
@@ -247,7 +229,6 @@ const Home: React.FC = () => {
 
   return (
     <Container>
-      <Navbar />
       {showRewardsPage ? (
         <RewardsPage />
       ) : isAttachmentOpen ? (

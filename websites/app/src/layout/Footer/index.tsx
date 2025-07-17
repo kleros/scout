@@ -21,6 +21,7 @@ const Container = styled.div`
   align-items: center;
   padding: 8px;
   gap: 16px;
+  z-index: 1;
 
   ${landscapeStyle(
     () => css`

@@ -25,7 +25,7 @@ const useRegistryDurations = () => {
 const EntriesContainer = styled.div`
   width: 80%;
   display: grid;
-  gap: 20px 40px;
+  gap: 16px;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   justify-content: center;
   overflow-x: hidden;

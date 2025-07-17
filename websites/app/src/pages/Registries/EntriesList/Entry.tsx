@@ -1,9 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import { useSearchParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
-import { GraphItem, Prop, registryMap } from 'utils/fetchItems'
+import { GraphItem, registryMap } from 'utils/fetchItems'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 import { useScrollTop } from 'hooks/useScrollTop'
@@ -11,26 +11,31 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
 
 const Card = styled.div`
-  background-color: #321c49;
-  border-radius: 12px;
   color: white;
   font-family: 'Oxanium', sans-serif;
   box-sizing: border-box;
   word-break: break-word;
+  border: 1px solid ${({ theme }) => theme.backgroundTwo};
+  border-radius: 12px;
+
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `
 
 const CardStatus = styled.div<{ status: string }>`
   text-align: center;
-  font-weight: bold;
-  padding: 15px 20px;
-  margin-bottom: 10px;
-  border-bottom: 2px solid #5A2393;
+  font-weight: 400;
+  padding: 14px 20px 12px;
+  background-color: ${({ theme }) => theme.lightBackground};
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 
   &:before {
     content: '';
     display: inline-block;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     margin-bottom: 0px;
     background-color: ${({ status }) =>
       ({
@@ -46,13 +51,22 @@ const CardStatus = styled.div<{ status: string }>`
 `
 
 const CardContent = styled.div`
+  flex: 1;
+
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(153, 153, 153, 0.08) 100%
+  );
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 8px;
-  padding-bottom: 20px;
+  gap: 8px;
+  padding: 16px 8px 16px;
   align-items: center;
+
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 `
 
 const TokenLogoWrapper = styled.div`
@@ -62,27 +76,40 @@ const TokenLogoWrapper = styled.div`
 `
 
 const VisualProofWrapper = styled.img`
-    object-fit: cover;
-    align-self: stretch;
-    width: 90%;
+  object-fit: cover;
+  align-self: stretch;
+  width: 90%;
 `
 
 const DetailsButton = styled.button`
-  background-color: #3a2154;
+  position: relative;
   font-family: 'Oxanium', sans-serif;
-  border-radius: 8px;
-  border: 2px solid #fff;
-  color: #fff;
-  cursor: pointer;
-  width: 140px;
-  height: 32px;
+  padding: 10px 20px;
   font-size: 16px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
   transition: transform 100ms ease-in-out, box-shadow 150ms ease-in-out;
+
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: 9999px;
+    background: linear-gradient(270deg, #1C3CF1 0%, #8B5CF6 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
 
   &:active {
     transform: scale(0.97);
   }
 `
+
 const StyledButton = styled.button`
   cursor: pointer;
   background: none;
@@ -272,15 +299,15 @@ const Entry = React.memo(
               )}
             </>
           )}
-          <div style={{ color: '#CD9DFF' }}>
+          <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
+          <div style={{ color: '#CD9DFF', fontSize: '14px' }}>
             Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}
           </div>
           {formattedChallengeRemainingTime && (
-            <div style={{ color: '#CD9DFF' }}>
+            <div style={{ color: '#CD9DFF', fontSize: '14px' }}>
               Finalises in {formattedChallengeRemainingTime}
             </div>
           )}
-          <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
         </CardContent>
       </Card>
     );

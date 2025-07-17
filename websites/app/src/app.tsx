@@ -16,6 +16,7 @@ const Dashboard = lazy(() => import('pages/Dashboard'));
 import Web3Provider from "context/Web3Provider";
 
 import ErrorFallback from "./components/ErrorFallback";
+import Registries from './pages/Registries/';
 
 const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   height: 100vh;
@@ -39,6 +40,7 @@ const App: React.FC = () => {
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Navigate to="dashboard" replace />} />
                       <Route path="dashboard/*" element={<Dashboard />} />
+                      <Route path="registry/*" element={<Registries />} />
                       <Route path="*" element={<h1>Page not found</h1>} />
                     </Route>
                   </Routes>

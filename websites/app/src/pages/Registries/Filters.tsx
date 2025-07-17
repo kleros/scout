@@ -4,7 +4,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams } from 'react-router-dom'
 import { chains } from 'utils/chains'
-import DownDirectionIcon from 'tsx:svgs/icons/down-direction.svg'
+import DownDirectionIcon from 'svgs/icons/down-direction.svg'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 
 const FilterContainer = styled.div`

@@ -12,6 +12,7 @@ const Container = styled.div`
   padding: 32px 32px 64px;
   font-family: "Inter", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
+
   ${landscapeStyle(
     () => css`
       padding: 80px 0 100px 48px;

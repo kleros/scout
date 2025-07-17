@@ -51,10 +51,17 @@ interface Props {
   icon: React.FC<React.SVGProps<SVGSVGElement>>;
   label: string;
   collapsed: boolean;
+  onClick: () => void;
 }
 
-const NavItem: React.FC<Props> = ({ to, icon: Icon, label, collapsed }) => (
-  <Item to={to}>
+const NavItem: React.FC<Props> = ({
+  to,
+  icon: Icon,
+  label,
+  collapsed,
+  onClick,
+}) => (
+  <Item to={to} onClick={onClick}>
     <Icon />
     <Label collapsed={collapsed}>{label}</Label>
   </Item>

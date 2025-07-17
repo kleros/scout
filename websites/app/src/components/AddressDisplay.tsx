@@ -2,8 +2,11 @@ import React from 'react'
 import styled from 'styled-components'
 import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
+import { ExternalLink } from './ExternalLink';
 
-const Container = styled.div``
+const Container = styled.div`
+  margin-bottom: 8px;
+`
 
 const StyledSpan = styled.span<{ bgColor: string }>`
   padding: 1px 4px;
@@ -11,11 +14,6 @@ const StyledSpan = styled.span<{ bgColor: string }>`
   border-radius: 4px;
   background-color: ${(props) => props.bgColor};
   margin-right: 4px;
-`
-
-const StyledAddressA = styled.a`
-  text-decoration: underline;
-  color: #fff;
 `
 
 const truncateAddress = (addr: string) => {
@@ -38,12 +36,9 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
     <Container>
       <StyledSpan bgColor={bgColor}>{reference?.label}</StyledSpan>
       {parts?.[2] && (
-        <StyledAddressA
-          target="_blank"
-          href={`https://${reference?.explorer}/address/${parts?.[2]}`}
-        >
+        <ExternalLink to={`https://${reference?.explorer}/address/${parts?.[2]}`} target="_blank" rel="noreferrer">
           {truncateAddress(parts?.[2])}
-        </StyledAddressA>
+        </ExternalLink>
       )}
     </Container>
   )
