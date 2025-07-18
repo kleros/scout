@@ -99,7 +99,7 @@ const RemovableFilter = styled.div`
 `
 
 const STATUS_LABELS = {
-  'Registered': 'Registered',
+  'Registered': 'Included',
   'RegistrationRequested': 'Registration Requested',
   'ClearingRequested': 'Removal Requested',
   'Absent': 'Removed'

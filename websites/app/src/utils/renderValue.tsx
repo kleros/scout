@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton'
 import AddressDisplay from 'components/AddressDisplay'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
+import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
 const ImageContainer = styled.div`
   margin-left: 4px;
@@ -17,11 +18,13 @@ const StyledButton = styled.button`
 `;
 
 export const StyledWebsiteAnchor = styled.a`
-  color: #fff;
+  ${hoverShortTransitionTiming}
+  color: ${({ theme }) => theme.secondaryText};
   text-decoration: underline;
+  font-size: 14px;
 
   &:hover {
-    color: #e6e6e6;
+    color: ${({ theme }) => theme.primaryText};
   }
 `
 

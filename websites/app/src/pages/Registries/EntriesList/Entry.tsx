@@ -1,14 +1,16 @@
-import React, { useCallback, useState } from 'react'
-import styled from 'styled-components'
-import Skeleton from 'react-loading-skeleton'
-import { useSearchParams } from 'react-router-dom'
-import { formatEther } from 'ethers'
-import { GraphItem, registryMap } from 'utils/fetchItems'
-import { StyledWebsiteAnchor } from 'utils/renderValue'
-import AddressDisplay from 'components/AddressDisplay'
-import { useScrollTop } from 'hooks/useScrollTop'
-import { formatTimestamp } from 'utils/formatTimestamp'
-import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
+import React, { useCallback, useState } from 'react';
+import styled from 'styled-components';
+import Skeleton from 'react-loading-skeleton';
+import { useSearchParams } from 'react-router-dom';
+import { formatEther } from 'ethers';
+import { GraphItem, registryMap } from 'utils/fetchItems';
+import { StyledWebsiteAnchor } from 'utils/renderValue';
+import AddressDisplay from 'components/AddressDisplay';
+import { useScrollTop } from 'hooks/useScrollTop';
+import { formatTimestamp } from 'utils/formatTimestamp';
+import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown';
+import { Divider } from 'components/Divider';
+import { hoverLongTransitionTiming, hoverShortTransitionTiming } from 'styles/commonStyles';
 
 const Card = styled.div`
   color: white;
@@ -21,9 +23,9 @@ const Card = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
-`
+`;
 
-const CardStatus = styled.div<{ status: string }>`
+const CardStatus = styled.div<{ status: string; }>`
   text-align: center;
   font-weight: 400;
   padding: 14px 20px 12px;
@@ -38,20 +40,21 @@ const CardStatus = styled.div<{ status: string }>`
     height: 8px;
     margin-bottom: 0px;
     background-color: ${({ status }) =>
-      ({
-        Registered: '#90EE90',
-        'Registration Requested': '#FFEA00',
-        'Challenged Submission': '#E87B35',
-        'Challenged Removal': '#E87B35',
-        Removed: 'red',
-      }[status] || 'gray')};
+  ({
+    Included: '#90EE90',
+    'Registration Requested': '#FFEA00',
+    'Challenged Submission': '#E87B35',
+    'Challenged Removal': '#E87B35',
+    Removed: 'red',
+  }[status] || 'gray')};
     border-radius: 50%;
     margin-right: 10px;
   }
-`
+`;
 
 const CardContent = styled.div`
   flex: 1;
+  justify-content: space-between;
 
   background: linear-gradient(
     180deg,
@@ -62,31 +65,61 @@ const CardContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px 8px 16px;
+  padding: 16px 0 16px;
   align-items: center;
 
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-`
+`;
+
+const UpperCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px;
+`;
+
+const BottomCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 4px;
+`;
 
 const TokenLogoWrapper = styled.div`
+  ${hoverShortTransitionTiming}
   display: flex;
   height: 100px;
   justify-content: center;
-`
+
+  &:hover {
+    filter: brightness(0.8);
+  }
+`;
 
 const VisualProofWrapper = styled.img`
+  ${hoverShortTransitionTiming}
   object-fit: cover;
   align-self: stretch;
   width: 90%;
-`
+  margin-top: 8px;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.8);
+  }
+`;
 
 const DetailsButton = styled.button`
+  ${hoverLongTransitionTiming}
   position: relative;
+  margin: 8px 0;
   font-family: 'Oxanium', sans-serif;
   padding: 10px 20px;
-  font-size: 16px;
-  color: #fff;
+  font-size: 14px;
+  color: ${({ theme }) => theme.primaryText};
   background: transparent;
   border: none;
   cursor: pointer;
@@ -108,7 +141,12 @@ const DetailsButton = styled.button`
   &:active {
     transform: scale(0.97);
   }
-`
+
+  &:hover {
+    filter: brightness(1.2);
+    transform: scale(1.03);
+  }
+`;
 
 const StyledButton = styled.button`
   cursor: pointer;
@@ -125,17 +163,53 @@ const LabelAndValue = styled.div`
   justify-content: center;
 `;
 
+const ChainIdLabel = styled.label`
+  margin-bottom: 8px;
+`;
+
+const SymbolLabel = styled.label`
+  color: ${({ theme }) => theme.primaryText};
+  font-weight: 600;
+  font-size: 16px;
+  margin-top: 4px;
+`;
+
+const NameLabel = styled.label`
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 16px;
+`;
+
+const SubmittedLabel = styled.label`
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 12px;
+`;
+
+const StyledDivider = styled(Divider)`
+  margin-bottom: 8px;
+`;
+
+const TimersContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 0 8px;
+  gap: 4px;
+`;
+
+const WrappedWebsiteContainer = styled.div`
+  margin-top: -8px;
+`;
+
 const readableStatusMap = {
-  Registered: 'Registered',
+  Registered: 'Included',
   Absent: 'Removed',
   RegistrationRequested: 'Registration Requested',
   ClearingRequested: 'Removal Requested',
-}
+};
 
 const challengedStatusMap = {
   RegistrationRequested: 'Challenged Submission',
   ClearingRequested: 'Challenged Removal',
-}
+};
 
 interface StatusProps {
   status: 'Registered' | 'Absent' | 'RegistrationRequested' | 'ClearingRequested';
@@ -146,24 +220,24 @@ interface StatusProps {
 const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   const label = disputed
     ? challengedStatusMap[status]
-    : readableStatusMap[status]
+    : readableStatusMap[status];
 
   const readableBounty =
     (status === 'ClearingRequested' || status === 'RegistrationRequested') &&
-    !disputed
+      !disputed
       ? Number(formatEther(bounty))
-      : null
+      : null;
 
   return (
     <CardStatus status={label}>
       {label}
       {readableBounty ? ` — ${readableBounty} xDAI` : ''}
     </CardStatus>
-  )
-})
+  );
+});
 
 const Entry = React.memo(
-  ({ item, challengePeriodDuration }: { item: GraphItem; challengePeriodDuration: number | null }) => {
+  ({ item, challengePeriodDuration }: { item: GraphItem; challengePeriodDuration: number | null; }) => {
     const [imgLoaded, setImgLoaded] = useState(false);
     const [, setSearchParams] = useSearchParams();
     const scrollTop = useScrollTop();
@@ -197,117 +271,126 @@ const Entry = React.memo(
           bounty={item.requests[0].deposit}
         />
         <CardContent>
-          {item.registryAddress === registryMap.Tags_Queries && (
-            <>
-              <LabelAndValue>
-                {getPropValue('EVM Chain ID')} 
-                <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
-              </LabelAndValue>
-              <div>
+          <UpperCardContent>
+            {item.registryAddress === registryMap.Tags_Queries && (
+              <>
+                <LabelAndValue>
+                  <ChainIdLabel>{getPropValue('EVM Chain ID')} </ChainIdLabel>
+                  <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
+                </LabelAndValue>
+                <div>
                   <>{getPropValue('Description')}</>
-              </div>
-              <b>
+                </div>
+                <b>
+                  <StyledWebsiteAnchor
+                    href={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {getPropValue('Github Repository URL')}
+                  </StyledWebsiteAnchor>
+                </b>
+              </>
+            )}
+            {item.registryAddress === registryMap.Single_Tags && (
+              <>
+                <strong>
+                  <AddressDisplay address={getPropValue('Contract Address')} />
+                </strong>
+                <div>{getPropValue('Project Name')}</div>
+                <div>{getPropValue('Public Name Tag')}</div>
                 <StyledWebsiteAnchor
-                href={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                  href={getPropValue('UI/Website Link')}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  {getPropValue('Github Repository URL')}
+                  {getPropValue('UI/Website Link')}
                 </StyledWebsiteAnchor>
-              </b>
-            </>
-          )}
-          {item.registryAddress === registryMap.Single_Tags && (
-            <>
-              <strong>
-                <AddressDisplay address={getPropValue('Contract Address')} />
-              </strong>
-              <div>{getPropValue('Project Name')}</div>
-              <div>{getPropValue('Public Name Tag')}</div>
-              <StyledWebsiteAnchor
-                href={getPropValue('UI/Website Link')}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {getPropValue('UI/Website Link')}
-              </StyledWebsiteAnchor>
-            </>
-          )}
-          {item.registryAddress === registryMap.Tokens && (
-            <>
-              <strong>
+              </>
+            )}
+            {item.registryAddress === registryMap.Tokens && (
+              <>
                 <AddressDisplay address={getPropValue('Address')} />
-              </strong>
-              {getPropValue('Logo') && (
-                <StyledButton
-                  onClick={() => {
-                    const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`;
-                    setSearchParams({ attachment: tokenLogoURI });
-                    scrollTop();
-                  }}
+                {getPropValue('Logo') && (
+                  <StyledButton
+                    onClick={() => {
+                      const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`;
+                      setSearchParams({ attachment: tokenLogoURI });
+                      scrollTop();
+                    }}
+                  >
+                    <TokenLogoWrapper>
+                      {!imgLoaded && <Skeleton height={100} width={100} />}
+                      <img
+                        src={`https://cdn.kleros.link${getPropValue('Logo')}`}
+                        alt="Logo"
+                        onLoad={() => setImgLoaded(true)}
+                        style={{ display: imgLoaded ? 'block' : 'none' }}
+                      />
+                    </TokenLogoWrapper>
+                  </StyledButton>
+                )}
+                <SymbolLabel>{getPropValue('Symbol')}</SymbolLabel>
+                <NameLabel>{getPropValue('Name')}</NameLabel>
+                {getPropValue('Website') ? <StyledWebsiteAnchor
+                  href={getPropValue('Website')}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <TokenLogoWrapper>
-                    {!imgLoaded && <Skeleton height={100} width={100} />}
-                    <img
-                      src={`https://cdn.kleros.link${getPropValue('Logo')}`}
-                      alt="Logo"
-                      onLoad={() => setImgLoaded(true)}
-                      style={{ display: imgLoaded ? 'block' : 'none' }}
-                    />
-                  </TokenLogoWrapper>
-                </StyledButton>
-              )}
-              <div>{getPropValue('Symbol')}</div>
-              <div>{getPropValue('Name')}</div> 
-              {getPropValue('Website') ? <StyledWebsiteAnchor
-                href={getPropValue('Website')}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {getPropValue('Website')}
-              </StyledWebsiteAnchor> : null}
-            </>
-          )}
-          {item.registryAddress === registryMap.CDN && (
-            <>
-              <strong>
+                  {getPropValue('Website')}
+                </StyledWebsiteAnchor> : null}
+              </>
+            )}
+            {item.registryAddress === registryMap.CDN && (
+              <>
                 <AddressDisplay address={getPropValue('Contract address')} />
-              </strong>
-              <StyledWebsiteAnchor
-                href={`https://${getPropValue('Domain name')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {getPropValue('Domain name')}
-              </StyledWebsiteAnchor>
-              {getPropValue('Visual proof') && (
-                <StyledButton
-                  onClick={() => {
-                    const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`;
-                    setSearchParams({ attachment: visualProofURI });
-                    scrollTop();
-                  }}
-                >
-                  {!imgLoaded && <Skeleton height={100} width={150} />}
-                  <VisualProofWrapper
-                    src={`https://cdn.kleros.link${getPropValue('Visual proof')}`}
-                    alt="Visual proof"
-                    onLoad={() => setImgLoaded(true)}
-                    style={{ display: imgLoaded ? '' : 'none' }}
-                  />
-                </StyledButton>
+                <WrappedWebsiteContainer>
+                  <StyledWebsiteAnchor
+                    href={`https://${getPropValue('Domain name')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+
+                    {getPropValue('Domain name')}
+                  </StyledWebsiteAnchor>
+                </WrappedWebsiteContainer>
+                {getPropValue('Visual proof') && (
+                  <StyledButton
+                    onClick={() => {
+                      const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`;
+                      setSearchParams({ attachment: visualProofURI });
+                      scrollTop();
+                    }}
+                  >
+                    {!imgLoaded && <Skeleton height={100} width={150} />}
+                    <VisualProofWrapper
+                      src={`https://cdn.kleros.link${getPropValue('Visual proof')}`}
+                      alt="Visual proof"
+                      onLoad={() => setImgLoaded(true)}
+                      style={{ display: imgLoaded ? '' : 'none' }}
+                    />
+                  </StyledButton>
+                )}
+              </>
+            )}
+            <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
+          </UpperCardContent>
+          <BottomCardContent>
+            <StyledDivider />
+            <TimersContainer>
+              {item?.status !== "Registered" ? <SubmittedLabel>
+                Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}
+              </SubmittedLabel> : null}
+              {item?.status === "Registered" ? <SubmittedLabel>
+                Included on: {formatTimestamp(Number(item?.requests[0].resolutionTime), false)}
+              </SubmittedLabel> : null}
+              {formattedChallengeRemainingTime && (
+                <SubmittedLabel>
+                  Will be included in: {formattedChallengeRemainingTime}
+                </SubmittedLabel>
               )}
-            </>
-          )}
-          <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
-          <div style={{ color: '#CD9DFF', fontSize: '14px' }}>
-            Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}
-          </div>
-          {formattedChallengeRemainingTime && (
-            <div style={{ color: '#CD9DFF', fontSize: '14px' }}>
-              Finalises in {formattedChallengeRemainingTime}
-            </div>
-          )}
+            </TimersContainer>
+          </BottomCardContent>
         </CardContent>
       </Card>
     );

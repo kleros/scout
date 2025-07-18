@@ -74,7 +74,7 @@ export const darkTheme = {
   errorLight: "#360652",
   tint: "#DDB6FF",
   tintMedium: "#401D6C",
-  tintPurple: "#2F0960",
+  tintPurple: "#E5D6FF",
   tintYellow: "#FFE16B",
 
   transitionSpeed: "0.25s",

@@ -402,6 +402,10 @@ const DetailsModal: React.FC = () => {
                 <LabelAndValue style={{ color: '#CD9DFF' }}>
                   <strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}
                 </LabelAndValue>
+                {detailsData?.status === "Registered" ?
+                  <LabelAndValue style={{ color: '#CD9DFF' }}>
+                    <strong>Included on:</strong> {formatTimestamp(Number(detailsData?.requests[0].resolutionTime), true)}
+                  </LabelAndValue> : null}
                 {formattedChallengeRemainingTime && (
                   <LabelAndValue style={{ color: '#CD9DFF' }}>
                     <strong>Challenge Period ends in:</strong> {formattedChallengeRemainingTime}

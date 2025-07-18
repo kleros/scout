@@ -12,6 +12,8 @@ import Header from "./Header";
 const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   height: 100vh;
   width: 100vw;
+  background-color: ${({ theme }) => theme.lightGrey};
+
 `;
 
 const Container = styled.div`
