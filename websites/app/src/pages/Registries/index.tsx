@@ -1,23 +1,24 @@
-import React, { useEffect, useMemo } from 'react'
-import styled from 'styled-components'
-import { useSearchParams, createSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { fetchItems } from 'utils/fetchItems'
-import { chains } from 'utils/chains'
-import { fetchItemCounts } from 'utils/itemCounts'
-import RewardsPage from '../RewardsSection'
-import RegistryDetails from './RegistryDetails'
-import SubmitButton from './SubmitButton'
-import Search from './Search'
-import LoadingItems from './LoadingItems'
-import EntriesList from './EntriesList'
-import Pagination from './Pagination'
-import DetailsModal from './EntryDetailsModal'
-import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal'
-import Filters from './Filters'
-import AddEntryModal from './SubmitEntries/AddEntryModal'
-import CloseIcon from 'svgs/icons/close.svg'
-import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
+import React, { useEffect, useMemo } from 'react';
+import styled from 'styled-components';
+import { useSearchParams, createSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { fetchItems } from 'utils/fetchItems';
+import { chains } from 'utils/chains';
+import { fetchItemCounts } from 'utils/itemCounts';
+import RewardsPage from '../RewardsSection';
+// import RegistryDetails from './RegistryDetails';
+import SubmitButton from './SubmitButton';
+import Search from './Search';
+import LoadingItems from './LoadingItems';
+import EntriesList from './EntriesList';
+import Pagination from './Pagination';
+import DetailsModal from './EntryDetailsModal';
+import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
+// import Filters from './Filters';
+import AddEntryModal from './SubmitEntries/AddEntryModal';
+import CloseIcon from 'svgs/icons/close.svg';
+import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
+import PolicyButton from './PolicyButton';
 
 const Container = styled.div`
   display: flex;
@@ -26,26 +27,25 @@ const Container = styled.div`
   min-height: 100vh;
   color: white;
   padding-bottom: 48px;
-`
+`;
 
-const SearchAndRegistryDetailsAndSubmitContainer = styled.div`
+const ActionablesContainer = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+`;
+
+const SearchAndFiltersContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+`;
+
+const PolicyAndSubmitItemContainer = styled.div`
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  color: white;
-  margin-bottom: 24px;
-  gap: 16px;
-  flex-wrap: wrap;
-`
-
-const RegistryDetailsAndSubmitContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  gap: 24px;
-  flex-wrap: wrap;
-  justify-content: space-between;
-`
+`;
 
 export const StyledCloseButton = styled(CloseIcon)`
   display: flex;
@@ -55,18 +55,18 @@ export const StyledCloseButton = styled(CloseIcon)`
   color: #fff;
   font-size: 24px;
   cursor: pointer;
-`
+`;
 
 export const ClosedButtonContainer = styled.div`
   display: flex;
   width: 24px;
   height: 24px;
-`
+`;
 
-export const ITEMS_PER_PAGE = 20
+export const ITEMS_PER_PAGE = 20;
 
 const Home: React.FC = () => {
-  let [searchParams, setSearchParams] = useSearchParams()
+  let [searchParams, setSearchParams] = useSearchParams();
 
   const searchQueryKeys = useMemo(
     () => [
@@ -79,32 +79,32 @@ const Home: React.FC = () => {
       searchParams.get('orderDirection'),
     ],
     [searchParams]
-  )
+  );
 
   const isDetailsModalOpen = useMemo(
     () => !!searchParams.get('itemdetails'),
     [searchParams]
-  )
+  );
 
   const isRegistryDetailsModalOpen = useMemo(
     () => !!searchParams.get('registrydetails'),
     [searchParams]
-  )
+  );
 
   const isAddItemOpen = useMemo(
     () => !!searchParams.get('additem'),
     [searchParams]
-  )
+  );
 
   const showRewardsPage = useMemo(
     () => searchParams.get('page') === 'rewards',
     [searchParams]
-  )
+  );
 
   const isAttachmentOpen = useMemo(
     () => !!searchParams.get('attachment'),
     [searchParams]
-  )
+  );
 
   const {
     isLoading: searchLoading,
@@ -112,7 +112,7 @@ const Home: React.FC = () => {
   } = useQuery({
     queryKey: ['fetch', ...searchQueryKeys],
     queryFn: () => fetchItems(searchParams),
-  })
+  });
 
   const {
     isLoading: countsLoading,
@@ -121,15 +121,15 @@ const Home: React.FC = () => {
     queryKey: ['counts'],
     queryFn: () => fetchItemCounts(),
     staleTime: Infinity,
-  })
+  });
 
   const currentItemCount = useMemo(() => {
-    const registry = searchParams.getAll('registry')
-    const status = searchParams.getAll('status')
-    const disputed = searchParams.getAll('disputed')
-    const network = searchParams.getAll('network')
-    const text = searchParams.get('text')
-    const page = searchParams.get('page')
+    const registry = searchParams.getAll('registry');
+    const status = searchParams.getAll('status');
+    const disputed = searchParams.getAll('disputed');
+    const network = searchParams.getAll('network');
+    const text = searchParams.get('text');
+    const page = searchParams.get('page');
     if (
       countsLoading ||
       registry.length === 0 ||
@@ -139,7 +139,7 @@ const Home: React.FC = () => {
       !countsData
     ) {
       // defaults or counts unloaded yet
-      return undefined
+      return undefined;
     } else if (!text && network.length === 0) {
       // can use the subgraph category counts.
       const getCount = (registry: 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN') => {
@@ -163,40 +163,40 @@ const Home: React.FC = () => {
           (status.includes('ClearingRequested') && disputed.includes('true')
             ? countsData[registry].numberOfChallengedClearing
             : 0)
-        )
-      }
+        );
+      };
 
       const count =
         (registry.includes('Single_Tags') ? getCount('Single_Tags') : 0) +
         (registry.includes('Tags_Queries') ? getCount('Tags_Queries') : 0) +
         (registry.includes('CDN') ? getCount('CDN') : 0) +
-        (registry.includes('Tokens') ? getCount('Tokens') : 0)
-      return count
+        (registry.includes('Tokens') ? getCount('Tokens') : 0);
+      return count;
     } else {
       // complex query. can only be known if last query has >21 items.
       // o.w nullify.
-      if (!searchData || searchData.length > ITEMS_PER_PAGE) return null
+      if (!searchData || searchData.length > ITEMS_PER_PAGE) return null;
       else {
         // for each previous page, thats guaranteed 20 items
         // + remainder of last page
-        return searchData.length + (Number(page) - 1) * ITEMS_PER_PAGE
+        return searchData.length + (Number(page) - 1) * ITEMS_PER_PAGE;
       }
     }
-  }, [searchParams, countsData, countsLoading, searchData])
+  }, [searchParams, countsData, countsLoading, searchData]);
 
   // If missing search params, insert defaults.
   useEffect(() => {
     if (searchParams.get('page') === 'rewards' || searchParams.get('attachment') || searchParams.get('itemdetails')) {
-      return
+      return;
     }
-    
-    const registry = searchParams.getAll('registry')
-    const status = searchParams.getAll('status')
-    const disputed = searchParams.getAll('disputed')
-    const text = searchParams.get('text')
-    const page = searchParams.get('page')
-    const network = searchParams.getAll('network')
-    const orderDirection = searchParams.get('orderDirection')
+
+    const registry = searchParams.getAll('registry');
+    const status = searchParams.getAll('status');
+    const disputed = searchParams.getAll('disputed');
+    const text = searchParams.get('text');
+    const page = searchParams.get('page');
+    const network = searchParams.getAll('network');
+    const orderDirection = searchParams.get('orderDirection');
     if (
       registry.length === 0 ||
       status.length === 0 ||
@@ -215,15 +215,15 @@ const Home: React.FC = () => {
         disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
         page: page === null ? '1' : page,
         orderDirection: orderDirection === null ? 'desc' : orderDirection,
-      })
-      setSearchParams(newSearchParams)
+      });
+      setSearchParams(newSearchParams);
     }
-  }, [searchParams, setSearchParams])
+  }, [searchParams, setSearchParams]);
 
   const totalPages =
     currentItemCount !== null && currentItemCount !== undefined
       ? Math.ceil(currentItemCount / ITEMS_PER_PAGE)
-      : null // in complex query, cannot provide this information
+      : null; // in complex query, cannot provide this information
 
   const isItemDetailsOpen = searchParams.get('itemdetails');
 
@@ -237,16 +237,16 @@ const Home: React.FC = () => {
         <>
           {!isItemDetailsOpen && (
             <>
-              <SearchAndRegistryDetailsAndSubmitContainer>
-                <Search />
-                <RegistryDetailsAndSubmitContainer>
-                  <RegistryDetails />
+              <ActionablesContainer>
+                <SearchAndFiltersContainer>
+                  <Search />
+                  {/* <Filters /> */}
+                </SearchAndFiltersContainer>
+                <PolicyAndSubmitItemContainer>
+                  <PolicyButton />
                   <SubmitButton />
-                </RegistryDetailsAndSubmitContainer>
-              </SearchAndRegistryDetailsAndSubmitContainer>
-
-              <Filters />
-
+                </PolicyAndSubmitItemContainer>
+              </ActionablesContainer>
               {searchLoading || !searchData ? (
                 <LoadingItems />
               ) : (
@@ -262,7 +262,7 @@ const Home: React.FC = () => {
         </>
       )}
     </Container>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

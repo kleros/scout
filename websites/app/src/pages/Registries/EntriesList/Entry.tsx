@@ -277,7 +277,7 @@ const Entry = React.memo(
             {item.registryAddress === registryMap.Tags_Queries && (
               <>
                 <LabelAndValue>
-                  <ChainIdLabel>{getPropValue('EVM Chain ID')} </ChainIdLabel>
+                  <ChainIdLabel>Chain: {getPropValue('EVM Chain ID')} </ChainIdLabel>
                   <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
                 </LabelAndValue>
                 <div>

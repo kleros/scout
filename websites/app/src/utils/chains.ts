@@ -69,6 +69,20 @@ export const chains = [
     explorer: 'optimistic.etherscan.io',
   },
   {
+    id: '122',
+    namespace: 'eip155',
+    name: 'Fuse Mainnet',
+    label: 'FUSE',
+    explorer: 'explorer.fuse.io',
+  },
+  {
+    id: '288',
+    namespace: 'eip155',
+    name: 'Boba Network',
+    label: 'BOBA',
+    explorer: 'bobascan.com',
+  },
+  {
     id: '43114',
     namespace: 'eip155',
     name: 'Avalanche C-Chain',
@@ -123,6 +137,20 @@ export const chains = [
     name: 'Linea',
     label: 'LINEA',
     explorer: 'lineascan.build',
+  },
+  {
+    id: '1666600000',
+    namespace: 'eip155',
+    name: 'Harmony Shard 0',
+    label: 'Harmony',
+    explorer: 'explorer.harmony.one',
+  },
+  {
+    id: '1313161554',
+    namespace: 'eip155',
+    name: 'Aurora Mainnet',
+    label: 'Aurora',
+    explorer: 'explorer.mainnet.aurora.dev',
   },
   {
     id: '1285',

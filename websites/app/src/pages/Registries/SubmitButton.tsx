@@ -2,16 +2,21 @@ import React from 'react'
 import styled from 'styled-components'
 import { useSearchParams } from 'react-router-dom'
 import Button from 'components/Button'
+import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
 const StyledButton = styled(Button)`
+  ${hoverShortTransitionTiming}
   display: flex;
-  background: #cd9dff;
-  color: #380c65;
+  background: linear-gradient(270deg, #1C3CF1 0%, #8B5CF6 100%);
+  color: #fff;
+  font-size: 14px;
   font-family: 'Avenir', sans-serif;
+
   &:hover,
   active {
-    background: linear-gradient(145deg, #a188d6, #7e57c2);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    filter: brightness(0.9);
+    transform: scale(1.01);
   }
 `
 
@@ -30,7 +35,7 @@ const SubmitButton: React.FC = () => {
 
   return (
     <>
-      <StyledButton onClick={() => openModal()}>Submit entry</StyledButton>
+      <StyledButton onClick={() => openModal()}>Submit item</StyledButton>
     </>
   )
 }

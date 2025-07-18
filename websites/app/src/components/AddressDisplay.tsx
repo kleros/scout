@@ -42,9 +42,10 @@ const IconWrapper = styled.div`
 `
 
 const StyledSpan = styled.span<{ bgColor: string }>`
-  padding: 1px 4px;
+  padding: 4px 8px;
   color: white;
-  border-radius: 4px;
+  border-radius: 40px;
+  font-size: 16px;
   background-color: ${(props) => props.bgColor};
   margin-right: 8px;
 `
