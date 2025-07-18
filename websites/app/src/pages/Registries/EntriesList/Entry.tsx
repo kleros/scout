@@ -85,7 +85,8 @@ const BottomCardContent = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 `;
 
 const TokenLogoWrapper = styled.div`
@@ -117,6 +118,7 @@ const DetailsButton = styled.button`
   position: relative;
   margin: 8px 0;
   font-family: 'Oxanium', sans-serif;
+  width: 86px;
   padding: 10px 20px;
   font-size: 14px;
   color: ${({ theme }) => theme.primaryText};
@@ -373,9 +375,9 @@ const Entry = React.memo(
                 )}
               </>
             )}
-            <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
           </UpperCardContent>
           <BottomCardContent>
+            <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
             <StyledDivider />
             <TimersContainer>
               {item?.status !== "Registered" ? <SubmittedLabel>

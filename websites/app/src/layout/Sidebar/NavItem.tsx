@@ -1,8 +1,10 @@
 import React from "react";
 import styled, { css } from "styled-components";
 import { NavLink } from "react-router-dom";
+import { hoverShortTransitionTiming } from "styles/commonStyles";
 
 const Item = styled(NavLink)`
+  ${hoverShortTransitionTiming};
   display: flex;
   align-items: center;
   height: 48px;
