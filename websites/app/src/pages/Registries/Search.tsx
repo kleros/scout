@@ -19,7 +19,7 @@ const Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      width: 560px;
+      width: 630px;
     `
   )}
 
