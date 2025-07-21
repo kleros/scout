@@ -10,8 +10,8 @@ export const GlobalStyle = createGlobalStyle`
 
   .react-loading-skeleton {
     z-index: 0;
-    --base-color: ${({ theme }) => theme.klerosUIComponentsSkeletonBackground};
-    --highlight-color: ${({ theme }) => theme.klerosUIComponentsSkeletonHighlight};
+    --base-color: ${({ theme }) => theme.klerosUIComponentsSkeletonBackground}; !important;
+    --highlight-color: ${({ theme }) => theme.klerosUIComponentsSkeletonHighlight}; !important;
   }
 
   body {

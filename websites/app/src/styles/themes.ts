@@ -31,6 +31,9 @@ const componentsDarkTheme = {
   klerosUIComponentsTintPurple: "#2F0960",
   klerosUIComponentsTintYellow: "#FFE16B",
 
+  klerosUIComponentsSkeletonBackground: "#241B4F",
+  klerosUIComponentsSkeletonHighlight: "#4A3C78",
+
   klerosUIComponentsTransitionSpeed: "0.25s",
 };
 
@@ -79,8 +82,8 @@ export const darkTheme = {
 
   transitionSpeed: "0.25s",
 
-  skeletonBackground: "#3A2270",
-  skeletonHighlight: "#3E307C",
+  skeletonBackground: "#241B4F",
+  skeletonHighlight: "#4A3C78",
 
   paleCyan: "#ACFFFF",
   limeGreen: "#F3FFD9",
