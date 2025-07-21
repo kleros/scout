@@ -1,113 +1,75 @@
-import React, { useEffect, useState } from 'react'
-import styled, { css } from 'styled-components'
-import { landscapeStyle } from 'styles/landscapeStyle'
+import React from 'react'
+import styled from 'styled-components'
 import { useSearchParams } from 'react-router-dom'
 import Button from 'components/Button'
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 80%;
-  margin: 48px auto 0;
-  gap: 12px;
-  align-items: center;
-
-  ${landscapeStyle(
-    () => css`
-      justify-content: flex-end;
-    `
-  )}
-`
-
-const PageControls = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`
-
-const Input = styled.input`
-  display: flex;
-  width: 36px;
-  color: #fff;
-  background: #855caf;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  ::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    appearance: none;
-    -moz-appearance: textfield;
-  }
-`
-
-const Span = styled.span`
-  color: white;
-`
-
-const StyledButton = styled(Button)`
-  font-size: 16px;
-`
+import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
 interface IPagination {
   totalPages: number | null
 }
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  gap: 12px;
+  align-items: center;
+`
+
+const StyledButton = styled(Button)`
+  ${hoverShortTransitionTiming}
+  display: flex;
+  background: linear-gradient(270deg, #1C3CF1 0%, #8B5CF6 100%);
+  color: #fff;
+  font-size: 14px;
+  font-family: 'Avenir', sans-serif;
+  &:hover,
+  &:active {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    filter: brightness(0.9);
+    transform: scale(1.01);
+  }
+  &:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+    box-shadow: none;
+    filter: none;
+    transform: none;
+  }
+`
+
+const CurrentPage = styled.span`
+  font-size: 14px;
+  color: ${({ theme }) => theme.secondaryText};
+  border-radius: 8px;
+  text-align: center;
+`
+
 const Pagination: React.FC<IPagination> = ({ totalPages }) => {
-  let [searchParams, setSearchParams] = useSearchParams()
-  const page = Number(searchParams.get('page'))
-
-  const [pageInput, setPageInput] = useState<number>(page)
-
-  useEffect(() => {
-    setPageInput(Number(searchParams.get('page')))
-  }, [searchParams])
+  const [searchParams, setSearchParams] = useSearchParams()
+  const current = Number(searchParams.get('page')) > 0 ? Number(searchParams.get('page')) : 1
 
   const setCurrentPage = (page: number) => {
-    setSearchParams((prev) => {
+    const newPage = Math.max(1, page)
+    setSearchParams(prev => {
       const prevParams = prev.toString()
       const newParams = new URLSearchParams(prevParams)
-      newParams.delete('page')
-      newParams.append('page', String(page))
+      newParams.set('page', String(newPage))
       return newParams
     })
   }
+
+  const disablePrev = current <= 1
+  const disableNext = totalPages !== null ? current >= totalPages : false
+
   return (
     <Container>
-      <StyledButton
-        onClick={() => setCurrentPage(page - 1)}
-        disabled={page <= 1}
-        style={{ cursor: page <= 1 ? 'not-allowed' : 'pointer' }}
-      >
+      <StyledButton onClick={() => setCurrentPage(current - 1)} disabled={disablePrev}>
         Previous
       </StyledButton>
-      <PageControls>
-        <Input
-          type="number"
-          value={pageInput}
-          onChange={(e) =>
-            setPageInput(
-              Math.min(
-                Math.max(1, parseInt(e.target.value)),
-                totalPages || Infinity
-              )
-            )
-          }
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') setCurrentPage(pageInput)
-          }}
-        />
-        <Span>of {totalPages === null ? '50+' : totalPages}</Span>
-      </PageControls>
-      <StyledButton
-        onClick={() => setCurrentPage(page + 1)}
-        disabled={page >= (totalPages || Infinity)}
-        style={{
-          cursor: page >= (totalPages || Infinity) ? 'not-allowed' : 'pointer',
-        }}
-      >
+      <CurrentPage>Page {current}</CurrentPage>
+      <StyledButton onClick={() => setCurrentPage(current + 1)} disabled={disableNext}>
         Next
       </StyledButton>
     </Container>

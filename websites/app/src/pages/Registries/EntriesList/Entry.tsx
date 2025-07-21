@@ -28,7 +28,7 @@ const Card = styled.div`
 const CardStatus = styled.div<{ status: string; }>`
   text-align: center;
   font-weight: 400;
-  padding: 14px 20px 12px;
+  padding: 14px 12px 12px;
   background-color: ${({ theme }) => theme.lightBackground};
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
@@ -233,7 +233,7 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   return (
     <CardStatus status={label}>
       {label}
-      {readableBounty ? ` — ${readableBounty} xDAI` : ''}
+      {readableBounty ? ` — $${readableBounty} 💰` : ''}
     </CardStatus>
   );
 });

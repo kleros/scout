@@ -11,7 +11,14 @@ import BookIcon from "svgs/sidebar/book.svg";
 const HEADER_HEIGHT = 64;
 
 const Rail = styled.div`
-  width: 64px;
+  display: none;
+
+  ${landscapeStyle(
+    () => css`
+      display: flex;
+      width: 64px;
+    `
+  )};
 `;
 
 const Container = styled.div<{ collapsed: boolean }>`

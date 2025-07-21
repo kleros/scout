@@ -37,19 +37,20 @@ const PageInner = styled.div`
   width: 100%;
   max-width: ${MAX_WIDTH_LANDSCAPE};
   padding: 0 40px;
-  margin-top: 32px;
+  margin-top: 24px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
   z-index: 0;
 `;
 
 const FullWidthSection = styled.div`
-  width: 100%;
   display: flex;
+  width: 100%;
   flex-direction: column;
-  gap: 32px;
+  align-items: center;
+  gap: 24px;
 `;
 
 const ActionablesContainer = styled.div`
