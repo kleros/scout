@@ -16,7 +16,7 @@ const Dashboard: React.FC = () => {
     <Container>
       <Routes>
         <Route path="home" element={<Home />} />
-        <Route path="activity" element={<Activity />} />
+        <Route path="activity/*" element={<Activity />} />
         <Route path="rewards" element={<Rewards />} />
         <Route path="guide" element={<Guide />} />
         <Route path="juror" element={<Juror />} />

@@ -7,6 +7,7 @@ import HomeIcon from "svgs/sidebar/home.svg";
 import ActivityIcon from "svgs/sidebar/activity.svg";
 import RewardsIcon from "svgs/sidebar/rewards.svg";
 import BookIcon from "svgs/sidebar/book.svg";
+import { useAccount } from "wagmi";
 
 const HEADER_HEIGHT = 64;
 
@@ -82,6 +83,7 @@ const NavItems = styled.div`
 const Sidebar: React.FC = () => {
   const [collapsed, setCollapsed] = useState(true);
   const ref = useRef<HTMLDivElement>(null);
+  const { address: connectedAddress } = useAccount();
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -104,7 +106,7 @@ const Sidebar: React.FC = () => {
         </Toggle>
         <NavItems>
           <NavItem to="/dashboard/home" icon={HomeIcon} label="Home" collapsed={collapsed} onClick={handleNavClick} />
-          <NavItem to="/dashboard/activity" icon={ActivityIcon} label="My Activity" collapsed={collapsed} onClick={handleNavClick} />
+          <NavItem to={`/dashboard/activity?userAddress=${connectedAddress.toLowerCase()}`} icon={ActivityIcon} label="My Activity" collapsed={collapsed} onClick={handleNavClick} />
           <NavItem to="/dashboard/rewards" icon={RewardsIcon} label="Active Rewards" collapsed={collapsed} onClick={handleNavClick} />
           <NavItem to="/dashboard/guide" icon={BookIcon} label="Quick Guide" collapsed={collapsed} onClick={handleNavClick} />
         </NavItems>
