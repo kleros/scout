@@ -3,6 +3,22 @@ import styled from 'styled-components';
 import { useSearchParams } from 'react-router-dom';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
+import FiltersIcon from 'svgs/icons/filters.svg';
+import SortIcon from 'svgs/icons/sort.svg';
+
+import EthereumIcon from 'svgs/chains/ethereum.svg';
+import SolanaIcon from 'svgs/chains/solana.svg';
+import BaseIcon from 'svgs/chains/base.svg';
+import CeloIcon from 'svgs/chains/celo.svg';
+import ScrollIcon from 'svgs/chains/scroll.svg';
+import FantomIcon from 'svgs/chains/fantom.svg';
+import ZkSyncIcon from 'svgs/chains/zksync.svg';
+import GnosisIcon from 'svgs/chains/gnosis.svg';
+import PolygonIcon from 'svgs/chains/polygon.svg';
+import OptimismIcon from 'svgs/chains/optimism.svg';
+import ArbitrumIcon from 'svgs/chains/arbitrum.svg';
+import AvalancheIcon from 'svgs/chains/avalanche.svg';
+import BnbIcon from 'svgs/chains/bnb.svg';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -73,6 +89,15 @@ const SectionTitle = styled.h3`
   font-weight: 600;
   margin: 0;
   padding-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: white;
+  }
 `;
 
 const SectionGrid = styled.div`
@@ -99,6 +124,15 @@ const FilterGroupTitle = styled.h4`
   font-weight: 600;
   margin: 0;
   padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: #CD9DFF;
+  }
 `;
 
 const CheckboxGroup = styled.div`
@@ -120,6 +154,24 @@ const CheckboxItem = styled.label`
   &:hover {
     color: #CD9DFF;
   }
+`;
+
+const StatusCircle = styled.div<{ status: string }>`
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: ${({ status }) => {
+    switch (status) {
+      case 'Registered': return '#22c55e'; // green for included
+      case 'RegistrationRequested': return '#eab308'; // yellow for registration requested
+      case 'ClearingRequested': return '#f97316'; // orange for removal requested
+      case 'Absent': return '#ef4444'; // red for removed
+      case 'true': return '#ef4444'; // red for challenged
+      case 'false': return '#22c55e'; // green for unchallenged
+      default: return '#6b7280'; // gray for default
+    }
+  }};
 `;
 
 const Checkbox = styled.input.attrs({ type: 'checkbox' })`
@@ -149,6 +201,12 @@ const NetworkItem = styled.label`
   &:hover {
     background: #CD9DFF20;
     color: #CD9DFF;
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
   }
 `;
 
@@ -233,6 +291,26 @@ const CHALLENGE_STATUSES = [
   { value: 'false', label: 'Unchallenged' }
 ];
 
+// Chain icon mapping
+const getChainIcon = (chainId: string) => {
+  const iconMap = {
+    '1': EthereumIcon,
+    '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': SolanaIcon,
+    '8453': BaseIcon,
+    '42220': CeloIcon,
+    '534352': ScrollIcon,
+    '250': FantomIcon,
+    '324': ZkSyncIcon,
+    '100': GnosisIcon,
+    '137': PolygonIcon,
+    '10': OptimismIcon,
+    '42161': ArbitrumIcon,
+    '43114': AvalancheIcon,
+    '56': BnbIcon,
+  };
+  return iconMap[chainId] || null;
+};
+
 interface FilterModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -315,7 +393,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <SectionGrid>
             <FilterColumn>
               <FilterGroup>
-                <FilterGroupTitle>Verification Status</FilterGroupTitle>
+                <FilterGroupTitle>
+                  <FiltersIcon />
+                  Verification Status
+                </FilterGroupTitle>
                 <CheckboxGroup>
                   {REGISTRATION_STATUSES.map((status) => (
                     <CheckboxItem key={status}>
@@ -323,6 +404,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         checked={registrationStatuses.includes(status)}
                         onChange={() => handleStatusChange(status)}
                       />
+                      <StatusCircle status={status} />
                       {STATUS_LABELS[status]}
                     </CheckboxItem>
                   ))}
@@ -332,7 +414,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
             <FilterColumn>
               <FilterGroup>
-                <FilterGroupTitle>Challenge Status</FilterGroupTitle>
+                <FilterGroupTitle>
+                  <FiltersIcon />
+                  Challenge Status
+                </FilterGroupTitle>
                 <CheckboxGroup>
                   {CHALLENGE_STATUSES.map((challenge) => (
                     <CheckboxItem key={challenge.value}>
@@ -340,6 +425,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         checked={disputedValues.includes(challenge.value)}
                         onChange={() => handleDisputedChange(challenge.value)}
                       />
+                      <StatusCircle status={challenge.value} />
                       {challenge.label}
                     </CheckboxItem>
                   ))}
@@ -350,17 +436,24 @@ const FilterModal: React.FC<FilterModalProps> = ({
         </FilterSection>
 
         <FilterSection>
-          <SectionTitle>Networks</SectionTitle>
+          <SectionTitle>
+            <FiltersIcon />
+            Networks
+          </SectionTitle>
           <NetworkGrid>
-            {availableChains.map((chain) => (
-              <NetworkItem key={chain.id}>
-                <Checkbox
-                  checked={chainFilters.includes(chain.id)}
-                  onChange={() => handleNetworkChange(chain.id)}
-                />
-                {chain.name}
-              </NetworkItem>
-            ))}
+            {availableChains.map((chain) => {
+              const ChainIcon = getChainIcon(chain.id);
+              return (
+                <NetworkItem key={chain.id}>
+                  <Checkbox
+                    checked={chainFilters.includes(chain.id)}
+                    onChange={() => handleNetworkChange(chain.id)}
+                  />
+                  {ChainIcon && <ChainIcon />}
+                  {chain.name}
+                </NetworkItem>
+              );
+            })}
             <NetworkItem>
               <Checkbox
                 checked={chainFilters.includes('unknown')}
@@ -372,7 +465,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
         </FilterSection>
 
         <SortSection>
-          <SectionTitle>Sort by</SectionTitle>
+          <SectionTitle>
+            <SortIcon />
+            Sort by
+          </SectionTitle>
           <SortOptions>
             <SortOption>
               <RadioButton
@@ -396,8 +492,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
         </SortSection>
 
         <FooterButtons>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={onClose}>Apply</Button>
+          <Button onClick={onClose}>Close</Button>
         </FooterButtons>
       </ModalContainer>
     </ModalOverlay>

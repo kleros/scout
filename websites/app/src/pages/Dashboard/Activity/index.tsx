@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import styled, { css } from "styled-components";
+import styled, { css, createGlobalStyle } from "styled-components";
 import { landscapeStyle } from "styles/landscapeStyle";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
@@ -7,11 +7,15 @@ import ActivityIcon from "svgs/icons/activity.svg";
 import SubmissionsIcon from "svgs/icons/submissions.svg";
 import { useSubmitterStats } from "hooks/useSubmitterStats";
 import { commify } from "utils/commify";
+import { shortenAddress } from "utils/shortenAddress";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import ConnectWallet from "components/ConnectWallet";
 import OngoingSubmissions from "./OngoingSubmissions";
 import PastSubmissions from "./PastSubmissions";
+import { Copiable } from "@kleros/ui-components-library";
+import { ExternalLink } from "components/ExternalLink";
+import { DEFAULT_CHAIN, getChain } from "consts/chains";
 
 const Container = styled.div`
   display: flex;
@@ -36,8 +40,6 @@ const Header = styled.div`
   gap: 16px;
   margin-bottom: 32px;
   svg {
-    min-width: 64px;
-    min-height: 64px;
     width: 64px;
     height: 64px;
     flex-shrink: 0;
@@ -47,6 +49,47 @@ const Header = styled.div`
 const Title = styled.h1`
   font-size: 24px;
   margin: 0;
+`;
+
+const StyledExternalLink = styled(ExternalLink)`
+  color: ${({ theme }) => theme.primaryBlue};
+  font-size: 24px;
+  font-weight: 600;
+  
+  &:hover {
+    color: ${({ theme }) => theme.secondaryBlue};
+    text-decoration: underline;
+  }
+`;
+
+const TooltipGlobalStyle = createGlobalStyle`
+  .dark-tooltip {
+    background-color: ${({ theme }) => theme.darkBackground || '#1a1a2e'} !important;
+    color: ${({ theme }) => theme.primaryText || 'white'} !important;
+    border: 1px solid ${({ theme }) => theme.lightGrey || '#333'} !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+    border-radius: 4px !important;
+    z-index: 1000 !important;
+  }
+
+  svg {
+    min-height: 24px;
+    min-width: 24px;
+    margin-left: 6px;
+  }
+`;
+
+const StyledCopiable = styled(Copiable)`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -141,6 +184,11 @@ const Activity: React.FC = () => {
   const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
   const stats = data?.submitter;
+  
+  const addressExplorerLink = useMemo(() => {
+    if (!userAddress) return null;
+    return `${getChain(DEFAULT_CHAIN)?.blockExplorers?.default.url}/address/${userAddress}`;
+  }, [userAddress]);
   const navigate = useNavigate();
   const location = useLocation();
   const currentPathSegment = location.pathname.split("/").at(-1) || "";
@@ -188,14 +236,40 @@ const Activity: React.FC = () => {
 
   const shouldShowConnectWallet = !isConnected && !userAddress;
 
+  const renderAddressLink = (address: string) => (
+    <StyledCopiable 
+      copiableContent={address} 
+      info="Copy Address"
+      tooltipProps={{
+        place: "top",
+        className: "dark-tooltip"
+      }}
+    >
+      {addressExplorerLink ? (
+        <StyledExternalLink to={addressExplorerLink} target="_blank" rel="noopener noreferrer">
+          {shortenAddress(address)}
+        </StyledExternalLink>
+      ) : (
+        shortenAddress(address)
+      )}
+    </StyledCopiable>
+  );
+
   return (
     <Container>
+      <TooltipGlobalStyle />
       {!shouldShowConnectWallet ? (
         <>
           <Header>
             <ActivityIcon />
             <div>
-              <Title>My Activity</Title>
+              <Title>
+                {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase() 
+                  ? <>My Activity - {renderAddressLink(userAddress)}</>
+                  : userAddress 
+                  ? <>Activity - {renderAddressLink(userAddress)}</>
+                  : "My Activity"}
+              </Title>
               <Subtitle>Follow up your submissions, challenges, and other interactions with Scout.</Subtitle>
             </div>
           </Header>

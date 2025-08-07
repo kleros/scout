@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
+import FiltersIcon from 'svgs/icons/filters.svg';
 
 const Button = styled.button`
   ${hoverLongTransitionTiming}
@@ -30,14 +31,6 @@ const Button = styled.button`
   }
 `;
 
-const FilterIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-    <rect x="0" y="2" width="16" height="2" rx="1"/>
-    <rect x="0" y="7" width="12" height="2" rx="1"/>
-    <rect x="0" y="12" width="8" height="2" rx="1"/>
-  </svg>
-);
-
 interface FilterButtonProps {
   onClick: () => void;
 }
@@ -45,7 +38,7 @@ interface FilterButtonProps {
 const FilterButton: React.FC<FilterButtonProps> = ({ onClick }) => {
   return (
     <Button onClick={onClick}>
-      <FilterIcon />
+      <FiltersIcon />
       Filters
     </Button>
   );
