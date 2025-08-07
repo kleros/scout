@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useSearchParams, createSearchParams } from 'react-router-dom';
 import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
@@ -12,6 +12,8 @@ import Pagination from './Pagination';
 import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
 // import Filters from './Filters';
 import AddEntryModal from './SubmitEntries/AddEntryModal';
+import FilterModal from './FilterModal';
+import FilterButton from './FilterButton';
 import CloseIcon from 'svgs/icons/close.svg';
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
@@ -207,6 +209,8 @@ const Hero: React.FC<{ registryKey: string; }> = ({ registryKey }) => {
 
 const Home: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [chainFilters, setChainFilters] = useState<string[]>([]);
 
 
   const isRegistryDetailsModalOpen = useMemo(
@@ -223,7 +227,8 @@ const Home: React.FC = () => {
   );
 
   const { isLoading: searchLoading, data: searchData } = useItemsQuery({ 
-    searchParams 
+    searchParams,
+    chainFilters 
   });
 
   const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
@@ -232,7 +237,6 @@ const Home: React.FC = () => {
     const registry = searchParams.getAll('registry');
     const status = searchParams.getAll('status');
     const disputed = searchParams.getAll('disputed');
-    const network = searchParams.getAll('network');
     const text = searchParams.get('text');
     const page = searchParams.get('page');
     if (
@@ -244,7 +248,7 @@ const Home: React.FC = () => {
       !countsData
     ) {
       return undefined;
-    } else if (!text && network.length === 0) {
+    } else if (!text && chainFilters.length > 0) {
       const getCount = (r: 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN') => {
         return (
           (status.includes('Absent') && disputed.includes('false') ? countsData[r].numberOfAbsent : 0) +
@@ -265,7 +269,7 @@ const Home: React.FC = () => {
       if (!searchData || searchData.length > ITEMS_PER_PAGE) return null;
       return searchData.length + (Number(page) - 1) * ITEMS_PER_PAGE;
     }
-  }, [searchParams, countsData, countsLoading, searchData]);
+  }, [searchParams, countsData, countsLoading, searchData, chainFilters]);
 
   useEffect(() => {
     if (searchParams.get('page') === 'rewards' || searchParams.get('attachment') || searchParams.get('itemdetails')) {
@@ -275,27 +279,38 @@ const Home: React.FC = () => {
     const status = searchParams.getAll('status');
     const disputed = searchParams.getAll('disputed');
     const page = searchParams.get('page');
-    const network = searchParams.getAll('network');
     const orderDirection = searchParams.get('orderDirection');
+    const hasNetworkInUrl = searchParams.has('network');
+    
     if (
       registry.length === 0 ||
       status.length === 0 ||
       disputed.length === 0 ||
-      network.length === 0 ||
       orderDirection === null ||
-      page === null
+      page === null ||
+      hasNetworkInUrl
     ) {
       const newSearchParams = createSearchParams({
         registry: registry.length === 0 ? ['Single_Tags'] : registry,
-        network: network.length === 0 ? [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'] : network,
         status: status.length === 0 ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent'] : status,
         disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
         page: page === null ? '1' : page,
         orderDirection: orderDirection === null ? 'desc' : orderDirection
       });
+      const text = searchParams.get('text');
+      if (text) {
+        newSearchParams.set('text', text);
+      }
       setSearchParams(newSearchParams);
     }
   }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (chainFilters.length === 0) {
+      const defaultChains = [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'];
+      setChainFilters(defaultChains);
+    }
+  }, [chainFilters]);
 
   const totalPages =
     currentItemCount !== null && currentItemCount !== undefined
@@ -317,6 +332,7 @@ const Home: React.FC = () => {
                 <ActionablesContainer>
                   <SearchAndFiltersContainer>
                     <Search />
+                    <FilterButton onClick={() => setIsFilterModalOpen(true)} />
                   </SearchAndFiltersContainer>
                   <PolicyAndSubmitItemContainer>
                     <PolicyButton />
@@ -331,6 +347,12 @@ const Home: React.FC = () => {
             </PageInner>
           {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
           {isAddItemOpen && <AddEntryModal />}
+          <FilterModal 
+            isOpen={isFilterModalOpen}
+            onClose={() => setIsFilterModalOpen(false)}
+            chainFilters={chainFilters}
+            onChainFiltersChange={setChainFilters}
+          />
         </>
       )}
     </Container>

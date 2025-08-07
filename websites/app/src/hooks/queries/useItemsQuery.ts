@@ -8,16 +8,17 @@ import { chains, getNamespaceForChainId } from '../../utils/chains';
 
 interface UseItemsQueryParams {
   searchParams: URLSearchParams;
+  chainFilters?: string[];
   enabled?: boolean;
 }
 
-export const useItemsQuery = ({ searchParams, enabled = true }: UseItemsQueryParams) => {
+export const useItemsQuery = ({ searchParams, chainFilters = [], enabled = true }: UseItemsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher();
   
   const registry = searchParams.getAll('registry');
   const status = searchParams.getAll('status');
   const disputed = searchParams.getAll('disputed');
-  const network = searchParams.getAll('network');
+  const network = chainFilters;
   const text = searchParams.get('text') || '';
   const orderDirection = searchParams.get('orderDirection') || 'desc';
   const page = Number(searchParams.get('page')) || 1;
@@ -29,7 +30,7 @@ export const useItemsQuery = ({ searchParams, enabled = true }: UseItemsQueryPar
     page > 0;
 
   return useQuery({
-    queryKey: queryKeys.items(searchParams),
+    queryKey: [...queryKeys.items(searchParams), chainFilters],
     queryFn: async () => {
       if (!shouldFetch) return [];
 
