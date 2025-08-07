@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo } from "react";
 import styled, { css } from "styled-components";
 import { landscapeStyle } from "styles/landscapeStyle";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useAccount } from "wagmi";
 import ActivityIcon from "svgs/icons/activity.svg";
 import SubmissionsIcon from "svgs/icons/submissions.svg";
 import { useSubmitterStats } from "hooks/useSubmitterStats";
 import { commify } from "utils/commify";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
+import ConnectWallet from "components/ConnectWallet";
 import OngoingSubmissions from "./OngoingSubmissions";
 import PastSubmissions from "./PastSubmissions";
 
@@ -115,11 +117,28 @@ const StatValue = styled.span`
   font-weight: 600;
 `;
 
+const ConnectWalletContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: ${({ theme }) => theme.primaryText};
+  gap: 24px;
+  
+  hr {
+    width: 200px;
+    border: 1px solid ${({ theme }) => theme.lightGrey};
+    margin: 0;
+  }
+`;
+
 const PATHS = ["ongoing", "past"];
 
 const Activity: React.FC = () => {
+  const { isConnected, address: connectedAddress } = useAccount();
   const [searchParams] = useSearchParams();
-  const address = (searchParams.get("userAddress") || "").toLowerCase();
+  const userAddress = searchParams.get("userAddress");
+  const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
   const stats = data?.submitter;
   const navigate = useNavigate();
@@ -166,35 +185,48 @@ const Activity: React.FC = () => {
     params.set("page", "1");
     navigate(`${basePath}/${tabs[n].path}?${params.toString()}`);
   };
+
+  const shouldShowConnectWallet = !isConnected && !userAddress;
+
   return (
     <Container>
-      <Header>
-        <ActivityIcon />
-        <div>
-          <Title>My Activity</Title>
-          <Subtitle>Follow up your submissions, challenges, and other interactions with Scout.</Subtitle>
-        </div>
-      </Header>
-      <CardRow>
-        <StatCard>
-          <SubmissionsIcon />
-          <StatInfo>
-            <StatLabel>Total Submissions</StatLabel>
-            <StatValue>{isLoading ? <Skeleton width={70} height={40} /> : commify(totalSubmissions)}</StatValue>
-          </StatInfo>
-        </StatCard>
-      </CardRow>
-      <TabsWrapper>
-        {tabs.map((tab, i) => (
-          <TabButton key={tab.key} selected={i === currentTab} onClick={() => switchTab(i)}>
-            {tab.label}
-          </TabButton>
-        ))}
-      </TabsWrapper>
-      {currentTab === 0 ? (
-        <OngoingSubmissions totalItems={ongoingSubmissions} address={address} />
+      {!shouldShowConnectWallet ? (
+        <>
+          <Header>
+            <ActivityIcon />
+            <div>
+              <Title>My Activity</Title>
+              <Subtitle>Follow up your submissions, challenges, and other interactions with Scout.</Subtitle>
+            </div>
+          </Header>
+          <CardRow>
+            <StatCard>
+              <SubmissionsIcon />
+              <StatInfo>
+                <StatLabel>Total Submissions</StatLabel>
+                <StatValue>{isLoading ? <Skeleton width={70} height={40} /> : commify(totalSubmissions)}</StatValue>
+              </StatInfo>
+            </StatCard>
+          </CardRow>
+          <TabsWrapper>
+            {tabs.map((tab, i) => (
+              <TabButton key={tab.key} selected={i === currentTab} onClick={() => switchTab(i)}>
+                {tab.label}
+              </TabButton>
+            ))}
+          </TabsWrapper>
+          {currentTab === 0 ? (
+            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} />
+          ) : (
+            <PastSubmissions totalItems={pastSubmissions} address={address} />
+          )}
+        </>
       ) : (
-        <PastSubmissions totalItems={pastSubmissions} address={address} />
+        <ConnectWalletContainer>
+          <Title>Connect Your Wallet</Title>
+          <Subtitle>To see your activity, connect your wallet first</Subtitle>
+          <ConnectWallet />
+        </ConnectWalletContainer>
       )}
     </Container>
   );

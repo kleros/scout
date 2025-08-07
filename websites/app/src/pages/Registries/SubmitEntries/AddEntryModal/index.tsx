@@ -23,15 +23,32 @@ const ModalOverlay = styled.div`
 `
 
 const ModalContainer = styled.div`
-  background: #cd9eff1a;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(153, 153, 153, 0.08) 100%
+  );
   backdrop-filter: blur(50px);
-  border-radius: 12px;
+  border-radius: 20px;
   width: 84vw;
-  max-height: 85%;
-  overflow-y: auto;
+  max-height: 85vh;
   position: relative;
-  border: 2px solid #CD9DFF;
-  box-shadow: 0px 4px 8px 29px rgba(0, 0, 0, 0.25);
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #7186FF90 0%, #BEBEC590 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
 
   ${landscapeStyle(
     () => css`
@@ -40,37 +57,49 @@ const ModalContainer = styled.div`
   )}
 `
 
+const ModalContent = styled.div`
+  overflow-y: auto;
+  padding: ${responsiveSize(16, 32)};
+`
+
 export const AddContainer = styled.div`
   display: flex;
-  padding: ${responsiveSize(16, 32)};
   flex-direction: column;
   gap: 18px;
 `
 
 export const AddHeader = styled.div`
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 24px;
 `
 
 export const AddTitle = styled.div`
-  margin: 0;
-  margin-bottom: 4px;
-  font-size: 32px;
-  font-family: Avenir, sans-serif;
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
 `
 
 export const AddSubtitle = styled.div`
-  font-size: 16px;
-  opacity: 70%;
+  font-size: 14px;
+  opacity: 80%;
+  line-height: 1.4;
+  position: relative;
+  z-index: 1;
 `
 
 export const Divider = styled.div`
   height: 1px;
   width: 100%;
-  background: #CD9DFF; 
+  background: linear-gradient(90deg, transparent 0%, rgba(113, 134, 255, 0.5) 50%, transparent 100%);
+  position: relative;
+  z-index: 1;
 `
 
 export const StyledGoogleFormAnchor = styled.a`
@@ -88,52 +117,62 @@ export const StyledWholeField = styled.div`
 `
 
 export const SubmissionButton = styled.button`
-  border-radius: 4px;
-  border: 1px solid #333333;
-  color: #CD9DFF;
-  font-family: "Avenir", sans-serif;
-  text-decoration: none;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: "Inter", sans-serif;
   align-self: center;
-  padding: 0.75rem 1rem;
-  font-size: 16px;
-  background: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
 
   :hover {
-    text-decoration: underline;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(113, 134, 255, 0.5);
+    transform: translateY(-1px);
   }
-
 `
 
 export const StyledTextInput = styled.input`
   display: flex;
-  background: #333333;
-  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
   outline: none;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff;
-  border-radius: 12px;
-  font-size: 18px;
+  border-radius: 8px;
+  font-size: 16px;
   font-weight: 400;
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s ease;
+
+  &:focus {
+    border-color: rgba(113, 134, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(113, 134, 255, 0.1);
+  }
 
   ::placeholder {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 400;
-    color: #cd9dff;
-    opacity: 75%;
+    color: rgba(255, 255, 255, 0.6);
   }
 
   ${landscapeStyle(
     () => css`
       width: 95%;
-      padding-left: 24px;
+      padding-left: 20px;
     `
   )}
 `
 
 export const Buttons = styled.div`
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-between;
   margin-top: 20px;
@@ -141,30 +180,58 @@ export const Buttons = styled.div`
 `
 
 export const SubmitButton = styled.button`
-  background-color: #3182ce;
+  background: linear-gradient(135deg, #7186FF 0%, #9B59B6 100%);
   align-self: start;
   color: white;
-  padding: 12px 24px;
-  font-family: 'Oxanium', sans-serif;
+  padding: 14px 28px;
+  font-family: 'Inter', sans-serif;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(113, 134, 255, 0.3);
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #8B5FE6 0%, #A855F7 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover:before {
+    opacity: 1;
+  }
 
   &:hover {
-    background-color: #6f42c1;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(113, 134, 255, 0.4);
   }
 
   &:disabled {
-    background-color: #a092b1;
+    background: rgba(255, 255, 255, 0.1);
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  & > * {
+    position: relative;
+    z-index: 1;
   }
 
   ${landscapeStyle(
     () => css`
-      padding: 12px 48px;
+      padding: 14px 32px;
     `
   )}
 `
@@ -176,12 +243,14 @@ export const PayoutsContainer = styled.div`
 `
 
 export const ExpectedPayouts = styled.p`
-  font-family: "Avenir", sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 800;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
   align-self: center;
   margin: 0;
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
 `
 
 export const ErrorMessage = styled.div`
@@ -215,16 +284,18 @@ const AddEntryModal: React.FC = () => {
 
   return (
     <ModalOverlay>
-      <ModalContainer ref={containerRef} >
-        {addingItemToRegistry === 'Single_Tags' ? (
-          <AddAddressTag />
-        ) : addingItemToRegistry === 'Tags_Queries' ? (
-          <AddTagsQueries />
-        ) : addingItemToRegistry === 'CDN' ? (
-          <AddCDN />
-        ) : addingItemToRegistry === 'Tokens' ? (
-          <AddToken />
-        ) : null}
+      <ModalContainer ref={containerRef}>
+        <ModalContent>
+          {addingItemToRegistry === 'Single_Tags' ? (
+            <AddAddressTag />
+          ) : addingItemToRegistry === 'Tags_Queries' ? (
+            <AddTagsQueries />
+          ) : addingItemToRegistry === 'CDN' ? (
+            <AddCDN />
+          ) : addingItemToRegistry === 'Tokens' ? (
+            <AddToken />
+          ) : null}
+        </ModalContent>
       </ModalContainer>
     </ModalOverlay>
   )

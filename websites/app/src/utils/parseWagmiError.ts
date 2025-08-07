@@ -1,18 +1,19 @@
-import { type UseSimulateContractReturnType } from "wagmi";
-
-type ExtendedWagmiError = UseSimulateContractReturnType["error"] & { shortMessage?: string; metaMessages?: string[] };
+type ErrorWithMetaMessages = {
+  metaMessages?: string[];
+  shortMessage?: string;
+  message?: string;
+};
 
 /**
  * @param error
  * @description Tries to extract the human readable error message, otherwise reverts to error.message
  * @returns Human readable error if possible
  */
-export const parseWagmiError = (error: UseSimulateContractReturnType["error"]) => {
+export const parseWagmiError = (error: unknown) => {
   if (!error) return "";
-  const extError = error as ExtendedWagmiError;
-
-  const metaMessage = extError?.metaMessages?.[0];
-  const shortMessage = extError?.shortMessage;
-
-  return metaMessage ?? shortMessage ?? error.message;
+  
+  const { metaMessages, shortMessage, message } = error as ErrorWithMetaMessages;
+  const metaMessage = metaMessages?.[0];
+  
+  return metaMessage ?? shortMessage ?? message ?? "Unknown error";
 };

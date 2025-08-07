@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
-import { useQuery } from '@tanstack/react-query'
-import { formatEther } from 'ethers'
+import { formatEther } from 'viem'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
-import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
-import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
-import { DepositParams } from 'utils/fetchRegistryDeposits'
+import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions'
+import { useItemCountsQuery } from '../../../../hooks/queries'
+import { EnsureChain } from '../../../../components/EnsureChain'
+import { useQuery } from '@tanstack/react-query'
+import { FocusedRegistry } from '../../../../utils/itemCounts'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import { ClosedButtonContainer } from '~src/pages/Registries'
 import {
@@ -166,13 +167,7 @@ const AddAddressTag: React.FC = () => {
     placeholderData: cachedIssues,
   });
 
-  const {
-    data: countsData,
-  } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  })
+  const { data: countsData } = useItemCountsQuery()
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     const registryLabel = searchParams.get('registry')
@@ -180,7 +175,11 @@ const AddAddressTag: React.FC = () => {
     return countsData[registryLabel]
   }, [searchParams, countsData])
 
+  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+
   const submitAddressTag = async () => {
+    if (!countsData?.Single_Tags.deposits) return;
+    
     const values = {
       'Contract Address': `${network.value}:${address}`,
       'Public Name Tag': publicNameTag,
@@ -196,10 +195,11 @@ const AddAddressTag: React.FC = () => {
     const fileData = enc.encode(JSON.stringify(item))
     const ipfsObject = await ipfsPublish('item.json', fileData)
     const ipfsPath = getIPFSPath(ipfsObject)
-    await initiateTransactionToCurate(
-      registryMap.Single_Tags,
-      countsData?.Single_Tags.deposits as DepositParams,
-      ipfsPath
+    
+    await addItem(
+      registryMap.Single_Tags as `0x${string}`,
+      ipfsPath,
+      countsData.Single_Tags.deposits
     )
     clearLocalStorage('addTagForm');
   }
@@ -209,8 +209,8 @@ const AddAddressTag: React.FC = () => {
   }
 
     const submittingDisabled = useMemo(() => {
-      return Boolean(!address || !projectName || !publicNameTag || !publicNote || !website || !!addressIssuesData || addressIssuesLoading);
-    }, [address, projectName, publicNameTag, publicNote, website, addressIssuesData, addressIssuesLoading]);
+      return Boolean(!address || !projectName || !publicNameTag || !publicNote || !website || !!addressIssuesData || addressIssuesLoading || isSubmitting);
+    }, [address, projectName, publicNameTag, publicNote, website, addressIssuesData, addressIssuesLoading, isSubmitting]);
   
   return (
     <AddContainer>
@@ -288,9 +288,11 @@ const AddAddressTag: React.FC = () => {
         <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
       )}
       <PayoutsContainer>
-        <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
-          Submit
-        </SubmitButton>
+        <EnsureChain>
+          <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </SubmitButton>
+        </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
           {countsData?.['Single_Tags']?.deposits

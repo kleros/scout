@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
 import { useQuery } from '@tanstack/react-query'
-import { formatEther } from 'ethers'
+import { formatEther } from 'viem'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
-import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
-import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
-import { DepositParams } from 'utils/fetchRegistryDeposits'
+import { FocusedRegistry } from 'utils/itemCounts'
+import { useItemCountsQuery } from '../../../../hooks/queries'
+import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions'
+import { EnsureChain } from '../../../../components/EnsureChain'
 import { useDebounce } from 'react-use'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
@@ -174,13 +175,7 @@ const AddToken: React.FC = () => {
     placeholderData: cachedIssues,
   });
 
-  const {
-    data: countsData,
-  } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  })
+  const { data: countsData } = useItemCountsQuery()
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     const registryLabel = searchParams.get('registry')
@@ -188,7 +183,11 @@ const AddToken: React.FC = () => {
     return countsData[registryLabel]
   }, [searchParams, countsData])
 
+  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+
   const submitToken = async () => {
+    if (!countsData?.Tokens.deposits) return;
+    
     const values = {
       Address: `${network.value}:${address}`,
       Name: name,
@@ -205,10 +204,11 @@ const AddToken: React.FC = () => {
     const fileData = enc.encode(JSON.stringify(item))
     const ipfsObject = await ipfsPublish('item.json', fileData)
     const ipfsPath = getIPFSPath(ipfsObject)
-    await initiateTransactionToCurate(
-      '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
-      countsData?.Tokens.deposits as DepositParams,
-      ipfsPath
+    
+    await addItem(
+      '0xee1502e29795ef6c2d60f8d7120596abe3bad990' as `0x${string}`,
+      ipfsPath,
+      countsData.Tokens.deposits
     );
     clearLocalStorage('addTokenForm');
   }
@@ -218,8 +218,8 @@ const AddToken: React.FC = () => {
   }
 
   const submittingDisabled = useMemo(() => {
-    return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || !website || imageError);
-  }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, website, imageError]);
+    return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || !website || imageError || isSubmitting);
+  }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, website, imageError, isSubmitting]);
 
   return (
     <AddContainer>
@@ -309,9 +309,11 @@ const AddToken: React.FC = () => {
         <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
       )}
       <PayoutsContainer>
-        <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
-          Submit
-        </SubmitButton>
+        <EnsureChain>
+          <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </SubmitButton>
+        </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
           {countsData?.Tokens?.deposits

@@ -106,7 +106,7 @@ const Sidebar: React.FC = () => {
         </Toggle>
         <NavItems>
           <NavItem to="/dashboard/home" icon={HomeIcon} label="Home" collapsed={collapsed} onClick={handleNavClick} />
-          <NavItem to={`/dashboard/activity/ongoing?userAddress=${connectedAddress.toLowerCase()}`} icon={ActivityIcon} label="My Activity" collapsed={collapsed} onClick={handleNavClick} />
+          <NavItem to={`/dashboard/activity/ongoing${connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ''}`} icon={ActivityIcon} label="My Activity" collapsed={collapsed} onClick={handleNavClick} />
           <NavItem to="/dashboard/rewards" icon={RewardsIcon} label="Active Rewards" collapsed={collapsed} onClick={handleNavClick} />
           <NavItem to="/dashboard/guide" icon={BookIcon} label="Quick Guide" collapsed={collapsed} onClick={handleNavClick} />
         </NavItems>

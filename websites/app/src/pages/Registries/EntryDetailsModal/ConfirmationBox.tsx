@@ -2,12 +2,16 @@ import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
-import { performEvidenceBasedRequest } from 'utils/performEvidenceBasedRequest'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
 import { SubmitButton } from '../SubmitEntries/AddEntryModal'
 import { StyledCloseButton, ClosedButtonContainer } from '~src/pages/Registries'
 import { ModalOverlay } from './index'
 import { GraphItemDetails } from 'utils/itemDetails'
+import { useCurateInteractions } from '../../../hooks/contracts/useCurateInteractions'
+import { EnsureChain } from '../../../components/EnsureChain'
+import ipfsPublish from 'utils/ipfsPublish'
+import { getIPFSPath } from 'utils/getIPFSPath'
+import { Address } from 'viem'
 
 const Container = styled.div`
   position: fixed;
@@ -15,12 +19,18 @@ const Container = styled.div`
   left: 50%;
   transform: translate(-50%, -50%);
   width: 84vw;
-  background-color: #000;
-  border: 2px solid #CD9DFF;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(153, 153, 153, 0.08) 100%
+  );
+  border: 1px solid ${({ theme }) => theme.lightGrey};
   border-radius: 12px;
-  color: #fff;
+  color: ${({ theme }) => theme.primaryText};
   display: flex;
   flex-direction: column;
+  backdrop-filter: blur(50px);
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
 
   ${landscapeStyle(
     () => css`
@@ -47,21 +57,25 @@ const ConfirmationTitle = styled.h3`
 
 const TextArea = styled.textarea`
   width: 93%;
-  padding: 8px;
-  border: none;
+  padding: 12px;
+  border: 1px solid ${({ theme }) => theme.lightGrey};
   outline: none;
   overflow: auto;
-  border-radius: 4px;
-  background: #525252;
-  color: #fff;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: ${({ theme }) => theme.primaryText};
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  resize: vertical;
 
-  :active {
-    border: none;
+  &:focus {
+    border-color: ${({ theme }) => theme.primaryText};
+    box-shadow: 0 0 0 2px rgba(205, 157, 255, 0.2);
   }
 
-  -webkit-box-shadow: none;
-  -moz-box-shadow: none;
-  box-shadow: none;
+  &::placeholder {
+    color: ${({ theme }) => theme.secondaryText};
+  }
 
   ${landscapeStyle(
     () => css`
@@ -89,6 +103,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 }) => {
   const [evidenceTitle, setEvidenceTitle] = useState('')
   const [evidenceText, setEvidenceText] = useState('')
+  const { submitEvidence, challengeRequest, removeItem } = useCurateInteractions()
 
   return (
     <ModalOverlay>
@@ -127,25 +142,78 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             value={evidenceText}
             onChange={(e) => setEvidenceText(e.target.value)}
           ></TextArea>
-          <SubmitButton
-            onClick={async () => {
-              let result = false // a flag to check if the function execution was successful
-              result = await performEvidenceBasedRequest(
-                detailsData,
-                deposits as DepositParams,
-                arbitrationCostData as bigint,
-                evidenceTitle,
-                evidenceText,
-                evidenceConfirmationType
-              )
+          <EnsureChain>
+            <SubmitButton
+              onClick={async () => {
+                try {
+                  const evidenceObject = {
+                    title: evidenceTitle,
+                    description: evidenceText,
+                  }
+                  const enc = new TextEncoder()
+                  const fileData = enc.encode(JSON.stringify(evidenceObject))
+                  const ipfsObject = await ipfsPublish('evidence.json', fileData)
+                  const ipfsPath = getIPFSPath(ipfsObject)
 
-              if (result) {
-                setIsConfirmationOpen(false)
-              }
-            }}
-          >
-            Confirm
-          </SubmitButton>
+                  let result = false
+                  const registryAddress = detailsData.registryAddress as Address
+                  const itemId = detailsData.itemID
+                  const arbitrationCost = arbitrationCostData as bigint
+                  
+                  switch (evidenceConfirmationType) {
+                    case 'Evidence':
+                      await submitEvidence(registryAddress, itemId, ipfsPath)
+                      result = true
+                      break
+                    case 'RegistrationRequested':
+                      if (deposits?.submissionChallengeBaseDeposit) {
+                        await challengeRequest(
+                          registryAddress,
+                          itemId,
+                          ipfsPath,
+                          BigInt(deposits.submissionChallengeBaseDeposit),
+                          arbitrationCost
+                        )
+                        result = true
+                      }
+                      break
+                    case 'Registered':
+                      if (deposits?.removalBaseDeposit) {
+                        await removeItem(
+                          registryAddress,
+                          itemId,
+                          ipfsPath,
+                          deposits,
+                          arbitrationCost
+                        )
+                        result = true
+                      }
+                      break
+                    case 'ClearingRequested':
+                      if (deposits?.removalChallengeBaseDeposit) {
+                        await challengeRequest(
+                          registryAddress,
+                          itemId,
+                          ipfsPath,
+                          BigInt(deposits.removalChallengeBaseDeposit),
+                          arbitrationCost
+                        )
+                        result = true
+                      }
+                      break
+                  }
+                  
+                  if (result) {
+                    setIsConfirmationOpen(false)
+                  }
+                } catch (error) {
+                  console.error('Error performing action:', error)
+                }
+              }}
+            >
+              Confirm
+            </SubmitButton>
+          </EnsureChain>
         </InnerContainer>
       </Container>
     </ModalOverlay>

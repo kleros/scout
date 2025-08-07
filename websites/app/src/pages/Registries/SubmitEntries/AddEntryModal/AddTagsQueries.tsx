@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage';
 import { useQuery } from '@tanstack/react-query';
-import { formatEther } from 'ethers';
+import { formatEther } from 'viem';
 import { useSearchParams } from 'react-router-dom';
 import { useScrollTop } from 'hooks/useScrollTop';
 import { ClosedButtonContainer } from '~src/pages/Registries';
@@ -18,13 +18,14 @@ import {
   SubmissionButton,
   ErrorMessage
 } from './index';
-import { fetchItemCounts, FocusedRegistry } from 'utils/itemCounts';
-import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate';
+import { FocusedRegistry } from 'utils/itemCounts';
+import { useItemCountsQuery } from '../../../../hooks/queries';
+import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions';
 import { getIPFSPath } from 'utils/getIPFSPath';
 import ipfsPublish from 'utils/ipfsPublish';
 import { registryMap } from 'utils/fetchItems'; 
-import { DepositParams } from 'utils/fetchRegistryDeposits';
 import getAddressValidationIssue from 'utils/validateAddress';
+import { EnsureChain } from '../../../../components/EnsureChain';
 
 const columns = [
   {
@@ -107,11 +108,7 @@ const AddTagsQueries: React.FC = () => {
     placeholderData: cachedIssues,
   })
 
-  const { data: countsData } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  });
+  const { data: countsData } = useItemCountsQuery();
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     const registryLabel = searchParams.get('registry')
@@ -120,7 +117,11 @@ const AddTagsQueries: React.FC = () => {
   }, [searchParams, countsData])
 
 
+  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+
   const submitTagsQueries = async () => {
+    if (!countsData?.Tags_Queries.deposits) return;
+    
     const values = {
       'Github Repository URL': githubRepository,
       'Commit hash': commitHash,
@@ -135,10 +136,11 @@ const AddTagsQueries: React.FC = () => {
     const fileData = enc.encode(JSON.stringify(item))
     const ipfsObject = await ipfsPublish('item.json', fileData)
     const ipfsPath = getIPFSPath(ipfsObject)
-    await initiateTransactionToCurate(
-      registryMap.Tags_Queries,
-      countsData?.Tags_Queries.deposits as DepositParams,
-      ipfsPath
+    
+    await addItem(
+      registryMap.Tags_Queries as `0x${string}`,
+      ipfsPath,
+      countsData.Tags_Queries.deposits
     )
     clearLocalStorage('addTagsQueriesForm');
   };
@@ -148,8 +150,8 @@ const AddTagsQueries: React.FC = () => {
   };
 
   const submittingDisabled = useMemo(() => {
-    return Boolean(!githubRepository || !commitHash || !evmChainId || !description || !!addressIssuesData || addressIssuesLoading);
-  }, [githubRepository, commitHash, evmChainId, description, addressIssuesData, addressIssuesLoading]);
+    return Boolean(!githubRepository || !commitHash || !evmChainId || !description || !!addressIssuesData || addressIssuesLoading || isSubmitting);
+  }, [githubRepository, commitHash, evmChainId, description, addressIssuesData, addressIssuesLoading, isSubmitting]);
 
   return (
     <AddContainer>
@@ -200,9 +202,11 @@ const AddTagsQueries: React.FC = () => {
         onChange={(e) => setDescription(e.target.value)}
       />
       <PayoutsContainer>
-        <SubmitButton disabled={submittingDisabled} onClick={submitTagsQueries}>
-          Submit
-        </SubmitButton>
+        <EnsureChain>
+          <SubmitButton disabled={submittingDisabled} onClick={submitTagsQueries}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </SubmitButton>
+        </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
           {countsData?.['Tags_Queries']?.deposits

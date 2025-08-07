@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import Skeleton from 'react-loading-skeleton';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { formatEther } from 'ethers';
 import { GraphItem, registryMap } from 'utils/fetchItems';
 import { StyledWebsiteAnchor } from 'utils/renderValue';
@@ -241,7 +241,8 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
 const Entry = React.memo(
   ({ item, challengePeriodDuration }: { item: GraphItem; challengePeriodDuration: number | null; }) => {
     const [imgLoaded, setImgLoaded] = useState(false);
-    const [, setSearchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
     const scrollTop = useScrollTop();
 
     const challengeRemainingTime = useChallengeRemainingTime(
@@ -252,14 +253,8 @@ const Entry = React.memo(
     const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2);
 
     const handleEntryDetailsClick = useCallback(() => {
-      setSearchParams((prev) => {
-        const prevParams = prev.toString();
-        const newParams = new URLSearchParams(prevParams);
-        newParams.append('itemdetails', item.id);
-        return newParams;
-      });
-      scrollTop();
-    }, [setSearchParams, item.id]);
+      navigate(`/item/${item.id}?${searchParams.toString()}`);
+    }, [navigate, item.id, searchParams]);
 
     const getPropValue = (label: string) => {
       return item?.metadata?.props?.find((prop) => prop.label === label)?.value || '';

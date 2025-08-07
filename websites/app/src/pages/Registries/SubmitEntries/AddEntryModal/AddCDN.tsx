@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
 import { useQuery } from '@tanstack/react-query'
-import { formatEther } from 'ethers'
+import { formatEther } from 'viem'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
-import { initiateTransactionToCurate } from 'utils/initiateTransactionToCurate'
-import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
-import { DepositParams } from 'utils/fetchRegistryDeposits'
+import { FocusedRegistry } from 'utils/itemCounts'
+import { useItemCountsQuery } from '../../../../hooks/queries'
+import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions'
+import { EnsureChain } from '../../../../components/EnsureChain'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
 import { ClosedButtonContainer } from '~src/pages/Registries'
@@ -108,13 +109,7 @@ const AddCDN: React.FC = () => {
     [address]
   )
 
-  const {
-    data: countsData,
-  } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  })
+  const { data: countsData } = useItemCountsQuery()
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     const registryLabel = searchParams.get('registry')
@@ -153,7 +148,11 @@ const AddCDN: React.FC = () => {
     setFormData({ network, address, domain, path });
   }, [network, address, domain, path]);
 
+  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+
   const submitCDN = async () => {
+    if (!countsData?.CDN.deposits) return;
+    
     const values = {
       'Contract address': `${network.value}:${address}`,
       'Domain name': domain,
@@ -167,10 +166,11 @@ const AddCDN: React.FC = () => {
     const fileData = enc.encode(JSON.stringify(item))
     const ipfsObject = await ipfsPublish('item.json', fileData)
     const ipfsPath = getIPFSPath(ipfsObject)
-    await initiateTransactionToCurate(
-      '0x957a53a994860be4750810131d9c876b2f52d6e1',
-      countsData?.CDN.deposits as DepositParams,
-      ipfsPath
+    
+    await addItem(
+      '0x957a53a994860be4750810131d9c876b2f52d6e1' as `0x${string}`,
+      ipfsPath,
+      countsData.CDN.deposits
     );
     clearLocalStorage('addCDNForm');
   }
@@ -180,8 +180,8 @@ const AddCDN: React.FC = () => {
   }
 
   const submittingDisabled = useMemo(() => {
-    return Boolean(!address || !domain || !!addressIssuesData || !!addressIssuesLoading || !path || imageError);
-  }, [address, domain, addressIssuesData, addressIssuesLoading, path, imageError]);
+    return Boolean(!address || !domain || !!addressIssuesData || !!addressIssuesLoading || !path || imageError || isSubmitting);
+  }, [address, domain, addressIssuesData, addressIssuesLoading, path, imageError, isSubmitting]);
 
   return (
     <AddContainer>
@@ -242,9 +242,11 @@ const AddCDN: React.FC = () => {
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
       <PayoutsContainer>
-        <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
-          Submit
-        </SubmitButton>
+        <EnsureChain>
+          <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </SubmitButton>
+        </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
           {countsData?.CDN?.deposits

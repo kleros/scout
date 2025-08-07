@@ -1,17 +1,14 @@
 import React, { useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { useSearchParams, createSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { fetchItems } from 'utils/fetchItems';
+import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
 import { chains } from 'utils/chains';
-import { fetchItemCounts } from 'utils/itemCounts';
 // import RegistryDetails from './RegistryDetails';
 import SubmitButton from './SubmitButton';
 import Search from './Search';
 import LoadingItems from './LoadingItems';
 import EntriesList from './EntriesList';
 import Pagination from './Pagination';
-import DetailsModal from './EntryDetailsModal';
 import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
 // import Filters from './Filters';
 import AddEntryModal from './SubmitEntries/AddEntryModal';
@@ -211,23 +208,7 @@ const Hero: React.FC<{ registryKey: string; }> = ({ registryKey }) => {
 const Home: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const searchQueryKeys = useMemo(
-    () => [
-      searchParams.getAll('registry').toString(),
-      searchParams.getAll('status').toString(),
-      searchParams.getAll('disputed').toString(),
-      searchParams.getAll('network').toString(),
-      searchParams.get('text'),
-      searchParams.get('page'),
-      searchParams.get('orderDirection')
-    ],
-    [searchParams]
-  );
 
-  const isDetailsModalOpen = useMemo(
-    () => !!searchParams.get('itemdetails'),
-    [searchParams]
-  );
   const isRegistryDetailsModalOpen = useMemo(
     () => !!searchParams.get('registrydetails'),
     [searchParams]
@@ -241,16 +222,11 @@ const Home: React.FC = () => {
     [searchParams]
   );
 
-  const { isLoading: searchLoading, data: searchData } = useQuery({
-    queryKey: ['fetch', ...searchQueryKeys],
-    queryFn: () => fetchItems(searchParams)
+  const { isLoading: searchLoading, data: searchData } = useItemsQuery({ 
+    searchParams 
   });
 
-  const { isLoading: countsLoading, data: countsData } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity
-  });
+  const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
 
   const currentItemCount = useMemo(() => {
     const registry = searchParams.getAll('registry');
@@ -326,7 +302,6 @@ const Home: React.FC = () => {
       ? Math.ceil(currentItemCount / ITEMS_PER_PAGE)
       : null;
 
-  const isItemDetailsOpen = searchParams.get('itemdetails');
   const selectedRegistries = searchParams.getAll('registry');
   const singleRegistry = selectedRegistries.length === 1 ? selectedRegistries[0] : null;
 
@@ -336,8 +311,7 @@ const Home: React.FC = () => {
         <EvidenceAttachmentDisplay />
       ) : (
         <>
-          {!isItemDetailsOpen && (
-            <PageInner>
+          <PageInner>
               <FullWidthSection>
                 {singleRegistry && REGISTRY_INFO[singleRegistry] && <Hero registryKey={singleRegistry} />}
                 <ActionablesContainer>
@@ -355,8 +329,6 @@ const Home: React.FC = () => {
                 <Pagination totalPages={totalPages} />
               </FullWidthSection>
             </PageInner>
-          )}
-          {isDetailsModalOpen && <DetailsModal />}
           {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
           {isAddItemOpen && <AddEntryModal />}
         </>
