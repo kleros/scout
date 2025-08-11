@@ -1,6 +1,6 @@
 [build]
   publish = "dist"
-  command = "yarn run build"
+  command = "wagmi generate && yarn run build"
 
 [build.environment]
   NODE_VERSION = "20.18.3"
