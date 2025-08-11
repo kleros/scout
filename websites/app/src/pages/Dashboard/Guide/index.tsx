@@ -1,5 +1,6 @@
 import React from "react";
 import styled, { css } from "styled-components";
+import { useNavigate } from "react-router-dom";
 import { landscapeStyle } from "styles/landscapeStyle";
 
 import BookCircleIcon from "svgs/icons/book-circle.svg";
@@ -7,6 +8,7 @@ import BountiesIcon from "svgs/icons/bounties.svg";
 import RewardsIcon from "svgs/icons/rewards.svg";
 import DocumentationIcon from "svgs/icons/documentation.svg";
 import WarningOutlineIcon from "svgs/icons/warning-outline.svg";
+import { hoverShortTransitionTiming } from "styles/commonStyles";
 
 const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
@@ -75,6 +77,18 @@ const InfoCard = styled.div`
     height: 64px;
     flex-shrink: 0;
   }
+
+  ${hoverShortTransitionTiming}
+
+  &:hover {
+    transform: scale(1.02);
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
+  }
+`;
+
+const ClickableInfoCard = styled(InfoCard)`
+  cursor: pointer;
 `;
 
 const CardTitleAndDescription = styled.div`
@@ -211,40 +225,47 @@ const ChallengePhase = () => (
   </SectionContainer>
 );
 
-const QuickGuidePage: React.FC = () => (
-  <Container>
-    <Header>
-      <BookCircleIcon />
-      <div>
-        <Title>Quick Guide</Title>
-        <Subtitle>
-          Keep the community safe, earn bounties, and have fun in Kleros Scout!
-        </Subtitle>
-      </div>
-    </Header>
+const QuickGuidePage: React.FC = () => {
+  const navigate = useNavigate();
 
-    <CardRow>
-      <InfoCard>
-        <BountiesIcon />
-        <CardTitleAndDescription>
-          <CardTitle>Bounties</CardTitle>
-          <CardDescription>
-            Find and challenge suspicious submissions. If you win the challenge,
-            you’ll always earn a bounty!
-          </CardDescription>
-        </CardTitleAndDescription>
-      </InfoCard>
-      <InfoCard>
-        <RewardsIcon />
-        <CardTitleAndDescription>
-          <CardTitle>Rewards</CardTitle>
-          <CardDescription>
-            Explore active reward plans and submit compliant entries to earn
-            rewards.
-          </CardDescription>
-        </CardTitleAndDescription>
-      </InfoCard>
-    </CardRow>
+  const handleRewardsClick = () => {
+    navigate('/dashboard/rewards');
+  };
+
+  return (
+    <Container>
+      <Header>
+        <BookCircleIcon />
+        <div>
+          <Title>Quick Guide</Title>
+          <Subtitle>
+            Keep the community safe, earn bounties, and have fun in Kleros Scout!
+          </Subtitle>
+        </div>
+      </Header>
+
+      <CardRow>
+        <ClickableInfoCard onClick={handleRewardsClick}>
+          <BountiesIcon />
+          <CardTitleAndDescription>
+            <CardTitle>Bounties</CardTitle>
+            <CardDescription>
+              Find and challenge suspicious submissions. If you win the challenge,
+              you'll always earn a bounty!
+            </CardDescription>
+          </CardTitleAndDescription>
+        </ClickableInfoCard>
+        <ClickableInfoCard onClick={handleRewardsClick}>
+          <RewardsIcon />
+          <CardTitleAndDescription>
+            <CardTitle>Rewards</CardTitle>
+            <CardDescription>
+              Explore active reward plans and submit compliant entries to earn
+              rewards.
+            </CardDescription>
+          </CardTitleAndDescription>
+        </ClickableInfoCard>
+      </CardRow>
 
     <Frame>
       <SubmittingEntry />
@@ -252,7 +273,7 @@ const QuickGuidePage: React.FC = () => (
       <ChallengePhase />
     </Frame>
 
-    <InfoCard>
+    <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
       <DocumentationIcon />
       <CardTitleAndDescription>
         <CardTitle>Documentation</CardTitle>
@@ -260,8 +281,9 @@ const QuickGuidePage: React.FC = () => (
           For more details check the full documentation.
         </CardDescription>
       </CardTitleAndDescription>
-    </InfoCard>
-  </Container>
-);
+    </ClickableInfoCard>
+    </Container>
+  );
+};
 
 export default QuickGuidePage;

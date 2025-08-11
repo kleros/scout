@@ -74,7 +74,7 @@ const TooltipGlobalStyle = createGlobalStyle`
     z-index: 1000 !important;
   }
 
-  svg {
+  .dark-tooltip svg {
     min-height: 24px;
     min-width: 24px;
     margin-left: 6px;

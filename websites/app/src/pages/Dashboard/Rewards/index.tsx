@@ -1,6 +1,8 @@
 import React from "react";
 import styled, { css } from "styled-components";
+import { useNavigate } from "react-router-dom";
 import { landscapeStyle } from "styles/landscapeStyle";
+import { hoverShortTransitionTiming } from "styles/commonStyles";
 
 import ActiveRewards from "svgs/icons/active-rewards.svg";
 import CalendarIcon from "svgs/icons/calendar.svg";
@@ -61,6 +63,15 @@ const Card = styled.div`
   justify-content: space-between;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transform: scale(1);
+  ${hoverShortTransitionTiming}
+
+  &:hover {
+    transform: scale(1.02);
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
+  }
 
   ${landscapeStyle(
     () => css`
@@ -145,15 +156,18 @@ const Divider = styled.div`
 const rewards = [
   {
     title: "Token Collection Verification",
-    description: "Verify the authenticity of new tokens and earn rewards"
+    description: "Verify the authenticity of new tokens and earn rewards",
+    registryKey: "Tokens"
   },
   {
     title: "Address Tag Collection Verification",
-    description: "Verify the authenticity of new contract address tags and earn rewards"
+    description: "Verify the authenticity of new contract address tags and earn rewards",
+    registryKey: "Single_Tags"
   },
   {
     title: "Contract Domain Name Collection Verification",
-    description: "Verify the authenticity of new contract domain name submissions and earn rewards"
+    description: "Verify the authenticity of new contract domain name submissions and earn rewards",
+    registryKey: "CDN"
   }
 ];
 
@@ -165,8 +179,8 @@ const getCurrentMonthDeadline = () => {
 
 const currentMonthDeadline = getCurrentMonthDeadline();
 
-const RewardCard = ({ title, description }) => (
-  <Card>
+const RewardCard = ({ title, description, onClick }) => (
+  <Card onClick={onClick}>
     <TopSide>
       <NewBadge>NEW</NewBadge>
       <CardTitle>{title}</CardTitle>
@@ -188,21 +202,34 @@ const RewardCard = ({ title, description }) => (
   </Card>
 );
 
-const RewardsPage = () => (
-  <Container>
-    <Header>
-      <ActiveRewards />
-      <div>
-        <Title>Active Rewards</Title>
-        <Subtitle>Participate and earn rewards for your contributions</Subtitle>
-      </div>
-    </Header>
-    <CardsContainer>
-      {rewards.map(r => (
-        <RewardCard key={r.title} title={r.title} description={r.description} />
-      ))}
-    </CardsContainer>
-  </Container>
-);
+const RewardsPage = () => {
+  const navigate = useNavigate();
+
+  const handleCardClick = (registryKey: string) => {
+    navigate(`/registry?registry=${registryKey}&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
+  };
+
+  return (
+    <Container>
+      <Header>
+        <ActiveRewards />
+        <div>
+          <Title>Active Rewards</Title>
+          <Subtitle>Participate and earn rewards for your contributions</Subtitle>
+        </div>
+      </Header>
+      <CardsContainer>
+        {rewards.map(r => (
+          <RewardCard 
+            key={r.title} 
+            title={r.title} 
+            description={r.description} 
+            onClick={() => handleCardClick(r.registryKey)}
+          />
+        ))}
+      </CardsContainer>
+    </Container>
+  );
+};
 
 export default RewardsPage;
