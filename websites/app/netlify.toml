@@ -1,0 +1,25 @@
+[build]
+  base = "websites/app"
+  publish = "websites/app/dist"
+  command = "yarn run build"
+
+[build.environment]
+  NODE_VERSION = "20.18.3"
+  NPM_FLAGS = "--legacy-peer-deps"
+
+[[plugins]]
+  package = "@netlify/plugin-build"
+
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  pretty_urls = true

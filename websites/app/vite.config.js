@@ -5,6 +5,10 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   root: "src",
+  define: {
+    global: 'globalThis',
+    'process.env': {},
+  },
   build: {
     outDir: "../dist",
     rollupOptions: {
@@ -27,6 +31,10 @@ export default defineConfig({
     }),
     nodePolyfills({
       include: ["fs", "stream", "process"],
+      globals: {
+        process: true,
+        Buffer: true,
+      },
     }),
   ],
 });
