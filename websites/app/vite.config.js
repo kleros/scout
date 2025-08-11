@@ -26,7 +26,7 @@ export default defineConfig({
       ignoreConfigErrors: true,
     }),
     nodePolyfills({
-      include: ["fs", "stream"],
+      include: ["fs", "stream", "process"],
     }),
   ],
 });
