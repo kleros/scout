@@ -11,10 +11,15 @@ const ImageContainer = styled.div`
 `
 
 const StyledButton = styled.button`
+  ${hoverShortTransitionTiming}
   cursor: pointer;
   background: none;
   border: none;
   padding: 0;
+
+  &:hover {
+    filter: brightness(0.8);
+  }
 `;
 
 export const StyledWebsiteAnchor = styled.a`

@@ -226,8 +226,15 @@ const ItemCard = ({ item }: { item: any }) => {
   const onView = () => {
     const params = new URLSearchParams();
     params.set("registry", registryName);
-    params.set("itemdetails", item.id);
-    navigate(`/registry?${params.toString()}`);
+    params.set("status", "Registered");
+    params.set("status", "RegistrationRequested");
+    params.set("status", "ClearingRequested");
+    params.set("status", "Absent");
+    params.set("disputed", "true");
+    params.set("disputed", "false");
+    params.set("page", "1");
+    params.set("orderDirection", "desc");
+    navigate(`/item/${item.id}?${params.toString()}`);
     scrollTop();
   };
 

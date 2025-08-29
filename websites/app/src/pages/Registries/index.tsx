@@ -3,14 +3,12 @@ import styled from 'styled-components';
 import { useSearchParams, createSearchParams } from 'react-router-dom';
 import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
 import { chains } from 'utils/chains';
-// import RegistryDetails from './RegistryDetails';
 import SubmitButton from './SubmitButton';
 import Search from './Search';
 import LoadingItems from './LoadingItems';
 import EntriesList from './EntriesList';
 import Pagination from './Pagination';
 import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
-// import Filters from './Filters';
 import AddEntryModal from './SubmitEntries/AddEntryModal';
 import FilterModal from './FilterModal';
 import FilterButton from './FilterButton';
@@ -323,7 +321,9 @@ const Home: React.FC = () => {
   return (
     <Container>
       {isAttachmentOpen ? (
-        <EvidenceAttachmentDisplay />
+        <PageInner>
+          <EvidenceAttachmentDisplay />
+        </PageInner>
       ) : (
         <>
           <PageInner>

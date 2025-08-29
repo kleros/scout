@@ -13,9 +13,13 @@ import "react-loading-skeleton/dist/skeleton.css";
 import ConnectWallet from "components/ConnectWallet";
 import OngoingSubmissions from "./OngoingSubmissions";
 import PastSubmissions from "./PastSubmissions";
+import FilterButton from "./FilterButton";
+import FilterModal from "./FilterModal";
+import ActivitySearchBar from "./SearchBar";
 import { Copiable } from "@kleros/ui-components-library";
 import { ExternalLink } from "components/ExternalLink";
 import { DEFAULT_CHAIN, getChain } from "consts/chains";
+import { chains } from "utils/chains";
 
 const Container = styled.div`
   display: flex;
@@ -28,7 +32,7 @@ const Container = styled.div`
   ${landscapeStyle(
     () => css`
       padding: 80px 0 100px 48px;
-      width: calc(100vw - 200px);
+      width: calc(100vw - 120px);
     `
   )}
 `;
@@ -175,6 +179,14 @@ const ConnectWalletContainer = styled.div`
   }
 `;
 
+const FilterControlsContainer = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+`;
+
 const PATHS = ["ongoing", "past"];
 
 const Activity: React.FC = () => {
@@ -184,6 +196,14 @@ const Activity: React.FC = () => {
   const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
   const stats = data?.submitter;
+  
+  // Filter modal state
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  // Initialize chain filters with all available chains by default
+  const [chainFilters, setChainFilters] = useState<string[]>(() => {
+    const availableChains = chains.filter(chain => !chain.deprecated).map(chain => chain.id);
+    return [...availableChains, 'unknown']; // Include all chains + unknown by default
+  });
   
   const addressExplorerLink = useMemo(() => {
     if (!userAddress) return null;
@@ -289,10 +309,14 @@ const Activity: React.FC = () => {
               </TabButton>
             ))}
           </TabsWrapper>
+          <FilterControlsContainer>
+            <ActivitySearchBar />
+            <FilterButton onClick={() => setIsFilterModalOpen(true)} />
+          </FilterControlsContainer>
           {currentTab === 0 ? (
-            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} />
+            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} chainFilters={chainFilters} />
           ) : (
-            <PastSubmissions totalItems={pastSubmissions} address={address} />
+            <PastSubmissions totalItems={pastSubmissions} address={address} chainFilters={chainFilters} />
           )}
         </>
       ) : (
@@ -302,6 +326,14 @@ const Activity: React.FC = () => {
           <ConnectWallet />
         </ConnectWalletContainer>
       )}
+      
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        chainFilters={chainFilters}
+        onChainFiltersChange={setChainFilters}
+        userAddress={address}
+      />
     </Container>
   );
 };

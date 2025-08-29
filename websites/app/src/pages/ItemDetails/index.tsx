@@ -7,7 +7,6 @@ import { landscapeStyle } from 'styles/landscapeStyle';
 import { responsiveSize } from 'styles/responsiveSize';
 import ReactMarkdown from 'react-markdown';
 import { renderValue, StyledWebsiteAnchor } from 'utils/renderValue';
-import { statusColorMap } from 'utils/colorMappings';
 import { fetchArbitrationCost } from 'utils/fetchArbitrationCost';
 import { fetchItemCounts } from 'utils/itemCounts';
 import { revRegistryMap } from 'utils/fetchItems';
@@ -23,6 +22,7 @@ import { useChallengePeriodDuration } from 'hooks/countdown';
 import AddressDisplay from 'components/AddressDisplay';
 import { useScrollTop } from 'hooks/useScrollTop';
 import ArrowLeftIcon from "assets/svgs/icons/arrow-left.svg";
+import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 
 const Container = styled.div`
   display: flex;
@@ -32,10 +32,11 @@ const Container = styled.div`
   padding: 32px 32px 64px;
   font-family: "Inter", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
+
   ${landscapeStyle(
     () => css`
       padding: 80px 0 100px 48px;
-      width: calc(100vw - 200px);
+      width: calc(100vw - 120px);
     `
   )}
 `;
@@ -137,13 +138,48 @@ const StatusButton = styled.button<{ status?: string; }>`
 `;
 
 const StatusSpan = styled.span<{ status: string; }>`
-  display: flex;
-  padding: 4px 12px;
-  font-size: 16px;
-  color: white;
-  border-radius: 4px;
-  background-color: ${({ status }) => statusColorMap[status]};
-  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ status }) => {
+    const colors = {
+      'Registered': '#48BB78',
+      'RegistrationRequested': '#ED8936', 
+      'ClearingRequested': '#D69E2E',
+      'Absent': '#718096',
+    };
+    return colors[status] || '#718096';
+  }};
+  border-radius: 20px;
+  border: 2px solid ${({ status }) => {
+    const colors = {
+      'Registered': '#48BB78',
+      'RegistrationRequested': '#ED8936', 
+      'ClearingRequested': '#D69E2E',
+      'Absent': '#718096',
+    };
+    return colors[status] || '#718096';
+  }};
+  background: transparent;
+
+  &:after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: ${({ status }) => {
+      const colors = {
+        'Registered': '#48BB78',
+        'RegistrationRequested': '#ED8936', 
+        'ClearingRequested': '#D69E2E',
+        'Absent': '#718096',
+      };
+      return colors[status] || '#718096';
+    }};
+  }
 `;
 
 const ItemHeader = styled.div`
@@ -166,8 +202,17 @@ const EntryDetailsContainer = styled.div`
   gap: 16px;
   flex-wrap: wrap;
 
+  button img,
   img {
     width: 100px !important;
+    cursor: pointer;
+  }
+
+  button {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
   }
 `;
 
@@ -274,6 +319,11 @@ const ItemDetails: React.FC = () => {
 
   const scrollTop = useScrollTop();
 
+  const isAttachmentOpen = useMemo(
+    () => !!searchParams.get('attachment'),
+    [searchParams]
+  );
+
   const { isLoading: detailsLoading, data: detailsData } = useQuery({
     queryKey: ['details', itemId || ''],
     queryFn: () => fetchItemDetails(itemId || ''),
@@ -371,13 +421,17 @@ const ItemDetails: React.FC = () => {
 
   return (
     <Container>
-      {isConfirmationOpen && (
-        <ConfirmationBox
-          {...{ evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData }}
-        />
-      )}
+      {isAttachmentOpen ? (
+        <EvidenceAttachmentDisplay />
+      ) : (
+        <>
+          {isConfirmationOpen && (
+            <ConfirmationBox
+              {...{ evidenceConfirmationType, isConfirmationOpen, setIsConfirmationOpen, detailsData, deposits, arbitrationCostData }}
+            />
+          )}
 
-      <Header>
+          <Header>
         <BackButton onClick={handleBackClick}>
           <ArrowLeftIcon />
           Return
@@ -529,6 +583,8 @@ const ItemDetails: React.FC = () => {
           </EvidenceSection>
         )}
       </ContentWrapper>
+        </>
+      )}
     </Container>
   );
 };

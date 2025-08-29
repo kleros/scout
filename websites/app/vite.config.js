@@ -9,6 +9,37 @@ export default defineConfig({
     global: 'globalThis',
     'process.env': {},
   },
+  server: {
+    proxy: {
+      '/api/dapplooker/public': {
+        target: 'https://analytics.dapplooker.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/dapplooker\/public/, ''),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      },
+      '/api/dapplooker': {
+        target: 'https://api.dapplooker.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/dapplooker/, ''),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      },
+      '/api/thegraph': {
+        target: 'https://api.studio.thegraph.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/thegraph/, ''),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      },
+    },
+  },
   build: {
     outDir: "../dist",
     rollupOptions: {
