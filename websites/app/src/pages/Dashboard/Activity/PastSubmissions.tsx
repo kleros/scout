@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Skeleton from "react-loading-skeleton";
-import { SUBGRAPH_GNOSIS_ENDPOINT } from "consts/index";
 import ItemCard from "./ItemCard";
 import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useScrollTop } from "hooks/useScrollTop";
@@ -87,7 +86,7 @@ const PastSubmissions: React.FC<Props> = ({ totalItems, address, chainFilters = 
     enabled: !!queryAddress,
     queryFn: async () => {
       const fetchSize = Math.max(1000, currentPage * itemsPerPage);
-      const res = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
+      const res = await fetch(import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

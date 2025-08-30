@@ -1,7 +1,6 @@
 import { isAddress } from 'ethers'
 import request, { gql } from 'graphql-request'
 import { registryMap } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 import { PublicKey } from '@solana/web3.js'
 import { chains } from 'utils/chains'
 import bs58check from 'bs58check'
@@ -110,7 +109,7 @@ const getDupesInRegistry = async (
   `
 
   const result = (await request({
-    url: SUBGRAPH_GNOSIS_ENDPOINT,
+    url: import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT,
     document: query,
     variables: {
       registry: registryAddress,

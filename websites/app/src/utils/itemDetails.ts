@@ -1,6 +1,5 @@
 import request, { gql } from 'graphql-request'
 import { Prop, Request } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 
 export interface GraphEvidence {
   party: string
@@ -124,7 +123,7 @@ export const fetchItemDetails = async (
     }
   `
   const result = (await request({
-    url: SUBGRAPH_GNOSIS_ENDPOINT,
+    url: import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT,
     document: query,
     variables: {
       id: itemId,
