@@ -1,6 +1,7 @@
 import { gql, request } from 'graphql-request';
 import { ITEMS_PER_PAGE } from '~src/pages/Registries';
 import { chains, getNamespaceForChainId } from './chains';
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts';
 
 export const registryMap = {
   Single_Tags: '0x66260c69d03837016d88c9877e61e08ef74c59f2',
@@ -217,7 +218,7 @@ export const fetchItems = async (
   }
 
   const result = (await request({
-    url: import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT,
+    url: SUBGRAPH_GNOSIS_ENDPOINT,
     document: query,
     variables,
   })) as any;

@@ -7,7 +7,6 @@ export default defineConfig({
   root: "src",
   define: {
     global: 'globalThis',
-    'process.env': {},
   },
   server: {
     proxy: {

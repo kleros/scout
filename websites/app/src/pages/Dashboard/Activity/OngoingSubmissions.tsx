@@ -6,6 +6,7 @@ import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useScrollTop } from "hooks/useScrollTop";
 import { StyledPagination } from "components/StyledPagination";
 import { chains, getNamespaceForChainId } from "utils/chains";
+import { SUBGRAPH_GNOSIS_ENDPOINT } from "consts";
 
 const QUERY = `
   query OngoingItems(
@@ -89,7 +90,7 @@ const OngoingSubmissions: React.FC<Props> = ({ totalItems, address, chainFilters
       // Fetch more items to properly calculate filtered totals
       // We'll fetch up to 1000 items and handle pagination client-side
       const fetchSize = Math.max(1000, currentPage * itemsPerPage);
-      const res = await fetch(import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT, {
+      const res = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,4 +1,5 @@
 import { request, RequestDocument } from 'graphql-request';
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts';
 
 interface BatchedRequest {
   id: string;
@@ -58,7 +59,7 @@ class GraphQLBatcher {
       const firstRequest = requestGroup[0];
       try {
         const data = await request({
-          url: import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT,
+          url: SUBGRAPH_GNOSIS_ENDPOINT,
           document: firstRequest.document,
           variables: firstRequest.variables,
         });

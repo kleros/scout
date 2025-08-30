@@ -23,6 +23,7 @@ import { useScrollTop } from 'hooks/useScrollTop';
 import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown';
 import { useChallengePeriodDuration } from 'hooks/countdown';
 import AddressDisplay from 'components/AddressDisplay';
+import SubmittedByLink from 'components/SubmittedByLink';
 
 export const ModalOverlay = styled.div`
   position: fixed;
@@ -397,7 +398,7 @@ const DetailsModal: React.FC = () => {
                   </>
                 )}
                 <LabelAndValue style={{ color: '#CD9DFF' }}>
-                  <strong>Submitted by:</strong> {detailsData?.requests[0].requester}
+                  <strong>Submitted by:</strong> <SubmittedByLink address={detailsData?.requests[0].requester} />
                 </LabelAndValue>
                 <LabelAndValue style={{ color: '#CD9DFF' }}>
                   <strong>Submitted on:</strong> {formatTimestamp(Number(detailsData?.requests[0].submissionTime), true)}

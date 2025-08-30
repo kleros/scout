@@ -5,6 +5,7 @@ import { PublicKey } from '@solana/web3.js'
 import { chains } from 'utils/chains'
 import bs58check from 'bs58check'
 import { bech32, bech32m } from '@scure/base'
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
 
 const isSolanaAddress = (value: string) => {
   try {
@@ -109,7 +110,7 @@ const getDupesInRegistry = async (
   `
 
   const result = (await request({
-    url: import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT,
+    url: SUBGRAPH_GNOSIS_ENDPOINT,
     document: query,
     variables: {
       registry: registryAddress,

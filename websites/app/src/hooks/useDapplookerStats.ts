@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { gql } from 'graphql-request';
 import { useGraphqlBatcher } from './queries/useGraphqlBatcher';
 import { registryMap } from '../utils/fetchItems';
+import { DAPPLOOKER_API_KEY } from 'consts';
 
 type ChainName = 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base';
 
@@ -74,7 +75,6 @@ interface DapplookerStatsData {
   }[];
 }
 
-const DAPPLOOKER_API_KEY = import.meta.env.REACT_APP_DAPPLOOKER_API_KEY as string;
 const DASHBOARD_ID = 'f5dcef21-ad65-4671-a930-58d3ec67f6a2';
 
 const CHAIN_PREFIXES: Record<string, ChainName> = {
@@ -705,7 +705,7 @@ export const useDapplookerStats = () => {
       try {
         console.log('🚀 Starting stats fetch...');
         console.log('🔍 All import.meta.env:', import.meta.env);
-        console.log('🔍 REACT_APP_DAPPLOOKER_API_KEY value:', import.meta.env.REACT_APP_DAPPLOOKER_API_KEY);
+        console.log('🔍 REACT_APP_DAPPLOOKER_API_KEY value:', DAPPLOOKER_API_KEY);
         console.log('📍 DAPPLOOKER_API_KEY present:', !!DAPPLOOKER_API_KEY);
         console.log('📍 Dashboard ID:', DASHBOARD_ID);
         

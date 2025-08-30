@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { gql } from 'graphql-request';
+import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT } from 'consts';
 
 interface KlerosDispute {
   id: string;
@@ -48,7 +49,7 @@ const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
   try {
     console.log('🚀 Fetching Kleros disputes from xDAI Curation Court...');
     
-    const response = await fetch(import.meta.env.REACT_APP_SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, {
+    const response = await fetch(SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
