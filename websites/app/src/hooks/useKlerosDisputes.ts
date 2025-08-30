@@ -35,8 +35,6 @@ const KLEROS_DISPUTES_QUERY = gql`
   }
 `;
 
-const KLEROS_GNOSIS_ENDPOINT = '/api/thegraph/query/61738/kleros-display-gnosis/version/latest';
-
 // xDAI Curation Court ID
 const XDAI_CURATION_COURT_ID = '1';
 
@@ -50,7 +48,7 @@ const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
   try {
     console.log('🚀 Fetching Kleros disputes from xDAI Curation Court...');
     
-    const response = await fetch(KLEROS_GNOSIS_ENDPOINT, {
+    const response = await fetch(import.meta.env.REACT_APP_KLEROS_GNOSIS_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
