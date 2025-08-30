@@ -261,9 +261,9 @@ export const LatestDisputes: React.FC = () => {
   }, [disputeGroups.length]);
 
   const handleCardClick = useCallback((dispute: KlerosDispute) => {
-    // Open Kleros Court interface for this dispute
-    const klerosCourtUrl = `https://court.kleros.io/cases/${dispute.id}`;
-    window.open(klerosCourtUrl, '_blank');
+    // Open Klerosboard interface for this dispute
+    const klerosboardUrl = `https://klerosboard.com/100/cases/${dispute.disputeIDNumber}`;
+    window.open(klerosboardUrl, '_blank');
   }, []);
 
   const handleDotClick = useCallback((index: number) => {
@@ -348,7 +348,7 @@ export const LatestDisputes: React.FC = () => {
                     <span>{periodName}: {timeAgo}</span>
                   </DeadlineSection>
                   <FollowUpButton>
-                    View on Court
+                    View Case
                   </FollowUpButton>
                 </RightSection>
               </DisputeCard>

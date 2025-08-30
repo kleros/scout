@@ -59,7 +59,7 @@ const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
         query: KLEROS_DISPUTES_QUERY,
         variables: {
           first,
-          orderBy: 'lastPeriodChangeTs',
+          orderBy: 'disputeIDNumber',
           orderDirection: 'desc',
           court: XDAI_CURATION_COURT_ID,
         },
