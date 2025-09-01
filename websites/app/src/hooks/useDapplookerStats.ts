@@ -103,18 +103,33 @@ const EMPTY_STATS: DapplookerStatsData = {
   chainRanking: []
 };
 
-const CURATE_STATS_QUERY = gql`
-  query CurateStats {
-    lregistries {
-      id
-      numberOfRegistered
-      numberOfAbsent
-      numberOfRegistrationRequested
-      numberOfClearingRequested
-      numberOfChallengedRegistrations
-      numberOfChallengedClearing
-    }
-    litems(first: 1000, orderBy: latestRequestSubmissionTime, orderDirection: desc) {
+const getCurateStatsQuery = () => {
+  const thirtyDaysAgo = Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000);
+  
+  return gql`
+    query CurateStats {
+      lregistries(
+        where: { id_in: [
+          "0x66260c69d03837016d88c9877e61e08ef74c59f2",
+          "0xae6aaed5434244be3699c56e7ebc828194f26dc3",
+          "0x957a53a994860be4750810131d9c876b2f52d6e1",
+          "0xee1502e29795ef6c2d60f8d7120596abe3bad990"
+        ]}
+      ) {
+        id
+        numberOfRegistered
+        numberOfAbsent
+        numberOfRegistrationRequested
+        numberOfClearingRequested
+        numberOfChallengedRegistrations
+        numberOfChallengedClearing
+      }
+      litems(
+        first: 1000, 
+        orderBy: latestRequestSubmissionTime, 
+        orderDirection: desc,
+        where: { latestRequestSubmissionTime_gt: "${thirtyDaysAgo}" }
+      ) {
       id
       status
       disputed
@@ -136,7 +151,8 @@ const CURATE_STATS_QUERY = gql`
       }
     }
   }
-`;
+  `;
+};
 
 // Query to get curator statistics
 const CURATOR_STATS_QUERY = gql`
@@ -150,19 +166,6 @@ const CURATOR_STATS_QUERY = gql`
   }
 `;
 
-// Chart UUIDs from your dashboard - we'll need to get these from the actual dashboard
-// For now, using the dashboard ID as a placeholder but we need individual chart UUIDs
-const CHART_UUIDS = {
-  TOTAL_ASSETS_VERIFIED: DASHBOARD_ID, // This needs to be the specific chart UUID
-  TOTAL_SUBMISSIONS: DASHBOARD_ID,
-  TOTAL_CURATORS: DASHBOARD_ID,
-  TOKENS_STATS: DASHBOARD_ID,
-  CDN_STATS: DASHBOARD_ID,
-  SINGLE_TAGS_STATS: DASHBOARD_ID,
-  TAG_QUERIES_STATS: DASHBOARD_ID,
-  SUBMISSIONS_VS_DISPUTES: DASHBOARD_ID,
-  CHAIN_RANKING: DASHBOARD_ID,
-};
 
 const getCardType = (cardName: string): string => {
   if (cardName.includes('curators')) return 'curators';
@@ -181,19 +184,9 @@ const fetchDapplookerData = async (graphqlBatcher: any): Promise<DapplookerStats
   }
 
   try {
-    console.log('🔑 Using Dapplooker API with Key:', DAPPLOOKER_API_KEY);
-    
-    // Step 1: Get dashboard structure to find chart IDs
-    console.log('🔍 Getting dashboard structure...');
-    
-    // Try different API endpoint patterns
-    let dashboardResponse;
-    
-    // First try the correct Metabase public API endpoint
     const apiUrl = `/api/dapplooker/public/api/public/dashboard/${DASHBOARD_ID}`;
-    console.log('🌐 Calling API URL:', apiUrl);
     
-    dashboardResponse = await fetch(apiUrl, {
+    let dashboardResponse = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -201,17 +194,8 @@ const fetchDapplookerData = async (graphqlBatcher: any): Promise<DapplookerStats
       },
     });
     
-    console.log('📡 Response status:', dashboardResponse.status);
-    console.log('📡 Response headers:', Object.fromEntries(dashboardResponse.headers.entries()));
-    
-    // If the public API endpoint fails, try alternative endpoints
     if (!dashboardResponse.ok) {
-      console.warn(`Dashboard API failed with status: ${dashboardResponse.status}`);
-      
-      // Try Metabase public dashboard API endpoint
-      console.log('🔄 Trying Metabase public dashboard API endpoint...');
       const fallbackUrl = `/api/dapplooker/public/api/public/dashboard/${DASHBOARD_ID}`;
-      console.log('🌐 Fallback API URL:', fallbackUrl);
       
       dashboardResponse = await fetch(fallbackUrl, {
         method: 'GET',
@@ -220,51 +204,35 @@ const fetchDapplookerData = async (graphqlBatcher: any): Promise<DapplookerStats
           'Content-Type': 'application/json',
         },
       });
-      
-      console.log('📡 Fallback Response status:', dashboardResponse.status);
-      console.log('📡 Fallback Response headers:', Object.fromEntries(dashboardResponse.headers.entries()));
     }
 
     if (dashboardResponse.ok) {
       const responseText = await dashboardResponse.text();
-      console.log('📋 Raw dashboard response:', responseText);
       
       let dashboardInfo;
       try {
         dashboardInfo = JSON.parse(responseText);
-        console.log('📋 Parsed dashboard structure:', dashboardInfo);
       } catch (jsonError) {
-        console.error('❌ Failed to parse dashboard JSON:', jsonError);
-        console.log('📋 Response content type:', dashboardResponse.headers.get('content-type'));
         return null;
       }
       
-      // Extract and fetch card data from dashboard
       if (dashboardInfo.ordered_cards && Array.isArray(dashboardInfo.ordered_cards)) {
-        console.log('📊 Processing', dashboardInfo.ordered_cards.length, 'cards from dashboard');
-        
-        // Extract key metric cards
         const cardDataPromises = [];
         
         for (const cardWrapper of dashboardInfo.ordered_cards) {
           const card = cardWrapper.card;
           if (!card?.id || !card?.name) continue;
           
-          console.log('📊 Found card:', card.name, '(ID:', card.id + ')');
-          
-          // Get all relevant cards for dashboard data
           const cardName = card.name.toLowerCase();
           const isRelevantCard = 
-            card.display === 'scalar' || // Scalar metrics
-            cardName.includes('chain ranking') || // Chain ranking data
-            cardName.includes('tokens v2 - submission') || // Token registry stats
-            cardName.includes('cdn v2 - submission') || // CDN registry stats 
-            cardName.includes('address tags v2 - submission') || // Single tags stats
-            cardName.includes('3x security registries - stacked by registry'); // Tag queries stats
+            card.display === 'scalar' ||
+            cardName.includes('chain ranking') ||
+            cardName.includes('tokens v2 - submission') ||
+            cardName.includes('cdn v2 - submission') ||
+            cardName.includes('address tags v2 - submission') ||
+            cardName.includes('3x security registries - stacked by registry');
             
           if (isRelevantCard) {
-            console.log('📊 Found relevant card:', card.name, 'ID:', card.id, 'Type:', card.display);
-            
             cardDataPromises.push(Promise.resolve({
               id: card.id,
               name: card.name,
@@ -275,258 +243,23 @@ const fetchDapplookerData = async (graphqlBatcher: any): Promise<DapplookerStats
         }
         
         if (cardDataPromises.length > 0) {
-          console.log('🔄 Fetching data for', cardDataPromises.length, 'cards...');
           const cardResults = await Promise.all(cardDataPromises);
           const validCardResults = cardResults.filter(Boolean);
           
-          console.log('✅ Successfully fetched data for', validCardResults.length, 'cards');
-          console.log('📊 Card results:', validCardResults);
-          
           if (validCardResults.length > 0) {
-            // Get real data from subgraph to populate the Dapplooker structure
-            console.log('📊 Getting real data from subgraph for Dapplooker cards...');
-            const subgraphData = await fetchKlerosSubgraphData(graphqlBatcher);
-            return processMetabaseCardDataWithRealData(validCardResults, subgraphData);
+            return await fetchKlerosSubgraphData(graphqlBatcher);
           }
         }
       }
-    } else {
-      const errorText = await dashboardResponse.text();
-      console.warn(`Dashboard API failed: ${dashboardResponse.status} - ${errorText}`);
     }
     
-    console.warn('⚠️ Could not get meaningful data from dashboard');
     return null;
     
   } catch (error) {
-    console.error('❌ Dapplooker API error:', error);
     return null;
   }
 };
 
-const processMetabaseCardDataWithRealData = (cardResults: any[], subgraphData: DapplookerStatsData): DapplookerStatsData | null => {
-  try {
-    console.log('🔍 Processing Metabase cards with real subgraph data');
-    console.log('📊 Subgraph data summary:', {
-      totalSubmissions: subgraphData.totalSubmissions,
-      totalCurators: subgraphData.totalCurators,
-      totalAssetsVerified: subgraphData.totalAssetsVerified
-    });
-    console.log('📊 Dapplooker cards found:', cardResults.map(c => `${c.name} (${c.cardType})`));
-    
-    // Verify we have the right cards for mapping
-    const foundCardTypes = cardResults.map(c => c.cardType);
-    const expectedCards = ['curators', 'totalSubmissions', 'chainRanking', 'tokens', 'cdn', 'singleTags', 'tagQueries'];
-    const missingCards = expectedCards.filter(card => !foundCardTypes.includes(card));
-    
-    if (missingCards.length > 0) {
-      console.warn('⚠️ Missing expected cards:', missingCards);
-    }
-    
-    // Use the real subgraph data but maintain the Dapplooker structure
-    const stats: DapplookerStatsData = {
-      ...subgraphData, // Use all real data from subgraph
-    };
-    
-    console.log('✅ Using real subgraph data with Dapplooker card validation');
-    console.log('✅ Final stats summary:', {
-      totalSubmissions: stats.totalSubmissions,
-      totalCurators: stats.totalCurators,
-      totalAssetsVerified: stats.totalAssetsVerified,
-      registries: {
-        tokens: stats.tokens.assetsVerified,
-        cdn: stats.cdn.assetsVerified,
-        singleTags: stats.singleTags.assetsVerified,
-        tagQueries: stats.tagQueries.assetsVerified
-      }
-    });
-    
-    return stats;
-    
-  } catch (error) {
-    console.error('Error processing Metabase card data with real data:', error);
-    return null;
-  }
-};
-
-const processMetabaseCardData = (cardResults: any[]): DapplookerStatsData | null => {
-  try {
-    console.log('🔍 Processing Metabase card data:', cardResults);
-    
-    let totalSubmissions = 0;
-    let totalCurators = 0;
-    let bounties = 0;
-    
-    // Extract values from scalar cards
-    cardResults.forEach(cardResult => {
-      const { name, estimatedValue } = cardResult;
-      const cardName = name.toLowerCase();
-      
-      console.log(`📊 ${name}: ${estimatedValue}`);
-      
-      if (cardName.includes('total submissions')) {
-        totalSubmissions = estimatedValue;
-      } else if (cardName.includes('curators')) {
-        totalCurators = estimatedValue;
-      } else if (cardName.includes('bounties')) {
-        bounties = estimatedValue;
-      }
-    });
-    
-    // Build stats object
-    const stats: DapplookerStatsData = {
-      totalAssetsVerified: totalSubmissions, // Using submissions as verified for now
-      totalSubmissions,
-      totalCurators,
-      tokens: {
-        assetsVerified: Math.floor(totalSubmissions * 0.3), // Estimate
-        assetsVerifiedChange: Math.floor(totalSubmissions * 0.05),
-      },
-      cdn: {
-        assetsVerified: Math.floor(totalSubmissions * 0.25), // Estimate
-        assetsVerifiedChange: Math.floor(totalSubmissions * 0.03),
-      },
-      singleTags: {
-        assetsVerified: Math.floor(totalSubmissions * 0.2), // Estimate
-        assetsVerifiedChange: Math.floor(totalSubmissions * 0.02),
-      },
-      tagQueries: {
-        assetsVerified: Math.floor(totalSubmissions * 0.25), // Estimate
-        assetsVerifiedChange: Math.floor(totalSubmissions * 0.04),
-      },
-      submissionsVsDisputes: {
-        submissions: Array.from({ length: 7 }, () => Math.floor(Math.random() * 20)),
-        disputes: Array.from({ length: 7 }, () => Math.floor(Math.random() * 5)),
-        dates: generateDateRange(7).map(d => d.toLocaleDateString('en', { month: 'short', day: 'numeric' }))
-      },
-      chainRanking: [
-        { rank: 1, chain: 'ethereum', items: Math.floor(totalSubmissions * 0.4) },
-        { rank: 2, chain: 'polygon', items: Math.floor(totalSubmissions * 0.3) },
-        { rank: 3, chain: 'arbitrum', items: Math.floor(totalSubmissions * 0.15) },
-        { rank: 4, chain: 'optimism', items: Math.floor(totalSubmissions * 0.1) },
-        { rank: 5, chain: 'base', items: Math.floor(totalSubmissions * 0.05) },
-      ]
-    };
-    
-    console.log('✅ Processed Metabase stats:', stats);
-    return stats;
-    
-  } catch (error) {
-    console.error('Error processing Metabase card data:', error);
-    return null;
-  }
-};
-
-const processApiResponse = (apiData: unknown): DapplookerStatsData | null => {
-  try {
-    if (!apiData || typeof apiData !== 'object') {
-      console.warn('Invalid Dapplooker API response format');
-      return null;
-    }
-
-    const data = apiData as Record<string, any>;
-    console.log('🔍 Dapplooker API response:', data);
-
-    // Handle Metabase dashboard structure
-    const orderedCards = data.ordered_cards || [];
-    const widgets = data.widgets || data.charts || orderedCards;
-    const metrics = data.metrics || {};
-    
-    if (!Array.isArray(widgets) && Object.keys(metrics).length === 0) {
-      console.warn('No widgets or metrics found in Dapplooker response');
-      return null;
-    }
-    
-    console.log('📊 Found widgets/cards:', widgets.length);
-
-    // Extract metrics from Metabase cards
-    let totalAssetsVerified = 0;
-    let totalSubmissions = 0; 
-    let totalCurators = 0;
-    
-    // Find specific cards by name/id
-    const findCardByName = (name: string) => 
-      orderedCards.find((card: any) => card.card?.name?.toLowerCase().includes(name.toLowerCase()));
-    
-    // Look for scalar cards with specific metrics
-    const submissionsCard = findCardByName('total submissions');
-    const curatorsCard = findCardByName('curators'); 
-    
-    console.log('📊 Found submissions card:', submissionsCard?.card?.name);
-    console.log('📊 Found curators card:', curatorsCard?.card?.name);
-
-    // Initialize stats with fallback values
-    const stats: DapplookerStatsData = {
-      totalAssetsVerified: extractMetric(data, ['total_assets_verified', 'totalAssetsVerified', 'verified_assets']) || totalAssetsVerified,
-      totalSubmissions: extractMetric(data, ['total_submissions', 'totalSubmissions', 'submissions']) || totalSubmissions,
-      totalCurators: extractMetric(data, ['total_curators', 'totalCurators', 'curators']) || totalCurators,
-      tokens: {
-        assetsVerified: extractMetric(data, ['tokens_verified', 'tokens.verified']) || 0,
-        assetsVerifiedChange: extractMetric(data, ['tokens_submissions', 'tokens.submissions']) || 0,
-      },
-      cdn: {
-        assetsVerified: extractMetric(data, ['cdn_verified', 'cdn.verified']) || 0,
-        assetsVerifiedChange: extractMetric(data, ['cdn_submissions', 'cdn.submissions']) || 0,
-      },
-      singleTags: {
-        assetsVerified: extractMetric(data, ['single_tags_verified', 'singleTags.verified']) || 0,
-        assetsVerifiedChange: extractMetric(data, ['single_tags_submissions', 'singleTags.submissions']) || 0,
-      },
-      tagQueries: {
-        assetsVerified: extractMetric(data, ['tag_queries_verified', 'tagQueries.verified']) || 0,
-        assetsVerifiedChange: extractMetric(data, ['tag_queries_submissions', 'tagQueries.submissions']) || 0,
-      },
-      submissionsVsDisputes: {
-        submissions: extractArrayMetric(data, ['submissions_timeline', 'daily_submissions']) || [],
-        disputes: extractArrayMetric(data, ['disputes_timeline', 'daily_disputes']) || [],
-        dates: extractArrayMetric(data, ['dates_timeline', 'timeline_dates']) || [],
-      },
-      chainRanking: extractChainRanking(data) || [],
-    };
-
-    console.log('✅ Processed Dapplooker stats:', stats);
-    return stats;
-  } catch (error) {
-    console.error('Error processing Dapplooker API response:', error);
-    return null;
-  }
-};
-
-const extractMetric = (data: Record<string, any>, keys: string[]): number | null => {
-  for (const key of keys) {
-    const value = getNestedValue(data, key);
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const parsed = parseInt(value, 10);
-      if (!isNaN(parsed)) return parsed;
-    }
-  }
-  return null;
-};
-
-const extractArrayMetric = (data: Record<string, any>, keys: string[]): any[] | null => {
-  for (const key of keys) {
-    const value = getNestedValue(data, key);
-    if (Array.isArray(value)) return value;
-  }
-  return null;
-};
-
-const extractChainRanking = (data: Record<string, any>): { rank: number; chain: string; items: number; }[] | null => {
-  const chainData = getNestedValue(data, 'chain_ranking') || getNestedValue(data, 'chainRanking');
-  if (Array.isArray(chainData)) {
-    return chainData.slice(0, 5).map((item: any, index: number) => ({
-      rank: index + 1,
-      chain: item.chain || item.name || 'Unknown',
-      items: item.items || item.count || 0,
-    }));
-  }
-  return null;
-};
-
-const getNestedValue = (obj: Record<string, any>, path: string): any => {
-  return path.split('.').reduce((current, key) => current?.[key], obj);
-};
 
 const getChainFromKey = (key0: string): ChainName | null => {
   for (const [prefix, chain] of Object.entries(CHAIN_PREFIXES)) {
@@ -633,15 +366,10 @@ const fetchKlerosSubgraphData = async (graphqlBatcher: any): Promise<DapplookerS
   const statsRequestId = `stats-${Date.now()}-${Math.random()}`;
   const curatorRequestId = `curator-${Date.now()}-${Math.random()}`;
   
-  console.log('🔄 Fetching subgraph data...');
-  
   const [statsResult, curatorResult] = await Promise.all([
-    graphqlBatcher.request(statsRequestId, CURATE_STATS_QUERY) as Promise<SubgraphResponse>,
+    graphqlBatcher.request(statsRequestId, getCurateStatsQuery()) as Promise<SubgraphResponse>,
     graphqlBatcher.request(curatorRequestId, CURATOR_STATS_QUERY) as Promise<{ litems: ItemData[] }>
   ]);
-    
-  console.log('📊 Stats result:', { registries: statsResult?.lregistries?.length, items: statsResult?.litems?.length });
-  console.log('👥 Curator result:', { items: curatorResult?.litems?.length });
     
   const registries = statsResult.lregistries || [];
   const items = statsResult.litems || [];
@@ -703,30 +431,15 @@ export const useDapplookerStats = () => {
     queryKey: ['dapplooker-stats'],
     queryFn: async (): Promise<DapplookerStatsData> => {
       try {
-        console.log('🚀 Starting stats fetch...');
-        console.log('🔍 All import.meta.env:', import.meta.env);
-        console.log('🔍 REACT_APP_DAPPLOOKER_API_KEY value:', DAPPLOOKER_API_KEY);
-        console.log('📍 DAPPLOOKER_API_KEY present:', !!DAPPLOOKER_API_KEY);
-        console.log('📍 Dashboard ID:', DASHBOARD_ID);
-        
-        // Use enhanced data fetch (subgraph primary + optional Dapplooker validation)
         if (DAPPLOOKER_API_KEY) {
-          console.log('🔄 Attempting enhanced data fetch with Dapplooker validation...');
           const enhancedData = await fetchDapplookerData(graphqlBatcher);
           if (enhancedData) {
-            console.log('✅ Using enhanced data (subgraph + Dapplooker validation)');
             return enhancedData;
           }
-        } else {
-          console.log('⚠️ No DAPPLOOKER_API_KEY, using subgraph only');
-          return await fetchKlerosSubgraphData(graphqlBatcher);
         }
         
-        // Fallback to subgraph
-        console.log('🔄 Using subgraph fallback...');
         return await fetchKlerosSubgraphData(graphqlBatcher);
       } catch (error) {
-        console.error('❌ Error fetching dashboard stats:', error);
         return EMPTY_STATS;
       }
     },

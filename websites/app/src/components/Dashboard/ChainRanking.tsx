@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 
 import EthereumIcon from 'svgs/chains/ethereum.svg';
 import PolygonIcon from 'svgs/chains/polygon.svg';
@@ -19,7 +20,7 @@ const fadeInUp = keyframes`
 `;
 
 const Container = styled.div`
-  padding: clamp(16px, 3vw, 24px);
+  padding: 16px;
   border-radius: 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
@@ -28,31 +29,35 @@ const Container = styled.div`
   transition: all 0.3s ease;
   animation: ${fadeInUp} 0.6s ease-out;
   
+  ${landscapeStyle(
+    () => css`
+      padding: 24px;
+    `
+  )}
+  
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
   }
-
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
 `;
 
 const Title = styled.h3`
-  font-size: clamp(16px, 3vw, 18px);
+  font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
-  margin: 0 0 clamp(16px, 3vh, 24px) 0;
+  margin: 0 0 16px 0;
   letter-spacing: -0.3px;
   background: linear-gradient(135deg, #7d4bff 0%, #485fff 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
-  @media (max-width: 768px) {
-    font-size: 16px;
-    margin-bottom: 16px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 18px;
+      margin-bottom: 24px;
+    `
+  )}
 `;
 
 const RankingList = styled.div`
@@ -151,7 +156,7 @@ export const ChainRanking: React.FC<ChainRankingProps> = ({ data }) => {
 
   return (
     <Container>
-      <Title>Chain Ranking</Title>
+      <Title>Chain Ranking (Last 30 Days)</Title>
       <RankingList>
         {rankedData.map((item) => (
           <RankingItem key={item.chain}>

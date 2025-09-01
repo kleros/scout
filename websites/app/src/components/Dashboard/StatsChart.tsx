@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, AreaChart, Area, Tooltip, Legend } from 'recharts';
-import styled, { useTheme, keyframes } from 'styled-components';
+import styled, { useTheme, keyframes, css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 
 const fadeIn = keyframes`
   from {
@@ -14,8 +15,8 @@ const fadeIn = keyframes`
 `;
 
 const ChartContainer = styled.div`
-  padding: clamp(16px, 3vw, 24px);
-  border-radius: 16px;
+  padding: 16px;
+  border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
@@ -23,22 +24,24 @@ const ChartContainer = styled.div`
   transition: all 0.3s ease;
   animation: ${fadeIn} 0.6s ease-out;
   
+  ${landscapeStyle(
+    () => css`
+      padding: 24px;
+      border-radius: 16px;
+    `
+  )}
+  
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
   }
-
-  @media (max-width: 768px) {
-    padding: 16px;
-    border-radius: 12px;
-  }
 `;
 
 const ChartTitle = styled.h3`
-  font-size: clamp(16px, 3vw, 18px);
+  font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
-  margin: 0 0 clamp(16px, 3vh, 24px) 0;
+  margin: 0 0 16px 0;
   text-align: center;
   letter-spacing: -0.3px;
   background: linear-gradient(135deg, #7d4bff 0%, #485fff 100%);
@@ -46,23 +49,27 @@ const ChartTitle = styled.h3`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
-  @media (max-width: 768px) {
-    font-size: 16px;
-    margin-bottom: 16px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 18px;
+      margin-bottom: 24px;
+    `
+  )}
 `;
 
 const ChartWrapper = styled.div`
-  height: clamp(250px, 30vh, 300px);
+  height: 250px;
   width: 100%;
   position: relative;
   
+  ${landscapeStyle(
+    () => css`
+      height: 300px;
+    `
+  )}
+  
   .recharts-wrapper {
     transition: all 0.3s ease;
-  }
-
-  @media (max-width: 768px) {
-    height: 250px;
   }
 `;
 

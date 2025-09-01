@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { useNavigate } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
 import { revRegistryMap } from 'utils/fetchItems';
@@ -106,14 +107,24 @@ const ActivityCard = styled.div`
 const FirstLine = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 12px;
 `;
 
 const LeftSection = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
+  min-width: 0;
+  
+  ${landscapeStyle(
+    () => css`
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+    `
+  )}
 `;
 
 const SecondLine = styled.div`
@@ -128,6 +139,17 @@ const ActivityName = styled.h3`
   color: ${({ theme }) => theme.primaryText};
   margin: 0;
   line-height: 1.3;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  
+  ${landscapeStyle(
+    () => css`
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    `
+  )}
 `;
 
 
@@ -142,8 +164,17 @@ const ActivityType = styled.span`
 
 const RegistryType = styled.span`
   color: ${({ theme }) => theme.secondaryText};
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
+  flex-shrink: 0;
+  margin-top: 2px;
+  
+  ${landscapeStyle(
+    () => css`
+      font-size: 14px;
+      margin-top: 0;
+    `
+  )}
 `;
 
 const TimeInfo = styled.div`
@@ -163,7 +194,18 @@ const TimeInfo = styled.div`
 const RightSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 4px;
+  
+  ${landscapeStyle(
+    () => css`
+      gap: 8px;
+      margin-top: 0;
+    `
+  )}
 `;
 
 const ChainIcon = styled.div`
@@ -185,7 +227,6 @@ const StatusIcon = styled.div<{ status: string }>`
   background: ${({ status }) => ACTIVITY_COLORS[status as keyof typeof ACTIVITY_COLORS] || ACTIVITY_COLORS.default};
   flex-shrink: 0;
 `;
-
 
 const ViewButton = styled.div`
   display: flex;

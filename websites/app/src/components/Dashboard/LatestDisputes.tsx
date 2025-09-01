@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { useKlerosDisputes, getDisputePeriodName, formatDisputeDeadline } from 'hooks/useKlerosDisputes';
 
 import DisputeResolverIcon from 'assets/svgs/icons/dispute-resolver.svg';
@@ -11,7 +12,7 @@ const DOT_COLORS = {
 } as const;
 
 const Container = styled.div`
-  padding: clamp(16px, 3vw, 24px);
+  padding: 16px;
   border-radius: 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
@@ -19,13 +20,15 @@ const Container = styled.div`
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   
+  ${landscapeStyle(
+    () => css`
+      padding: 24px;
+    `
+  )}
+  
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0px 8px 32px rgba(231, 123, 53, 0.1);
-  }
-
-  @media (max-width: 768px) {
-    padding: 16px;
   }
 `;
 
@@ -37,7 +40,7 @@ const Header = styled.div`
 `;
 
 const Title = styled.h3`
-  font-size: clamp(16px, 3vw, 18px);
+  font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
   margin: 0;
@@ -47,9 +50,11 @@ const Title = styled.h3`
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 
-  @media (max-width: 768px) {
-    font-size: 16px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 18px;
+    `
+  )}
 `;
 
 const DisputesList = styled.div`
@@ -59,11 +64,7 @@ const DisputesList = styled.div`
 `;
 
 const DisputeCard = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  margin-bottom: 12px;
+  padding: 20px;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
@@ -75,10 +76,13 @@ const DisputeCard = styled.div`
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     border-color: ${({ theme }) => theme.primary};
   }
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
+`;
+
+const CardContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 `;
 
 const LeftSection = styled.div`
@@ -86,10 +90,10 @@ const LeftSection = styled.div`
   align-items: center;
   gap: 12px;
   flex: 1;
-  min-width: 0; /* Allow text truncation */
+  min-width: 0;
 `;
 
-const ScalesIconWrapper = styled.div`
+const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -108,50 +112,35 @@ const ScalesIconWrapper = styled.div`
 const CaseInfo = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  flex: 1;
+  min-width: 0;
 `;
 
 const CaseNumber = styled.div`
   font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
-  margin-bottom: 2px;
   line-height: 1.2;
+  margin-bottom: 4px;
 `;
 
-const CourtName = styled.div`
-  font-size: 13px;
-  color: ${({ theme }) => theme.secondaryText};
-  font-weight: 500;
-  line-height: 1.2;
-`;
-
-const RightSection = styled.div`
+const TimeInfo = styled.div`
   display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-`;
-
-const DeadlineSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 6px;
   color: ${({ theme }) => theme.secondaryText};
   font-size: 13px;
   font-weight: 500;
-  white-space: nowrap;
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
     opacity: 0.8;
+    margin-top: 1px;
   }
 `;
 
-const FollowUpButton = styled.button`
+const ViewButton = styled.button`
   background: none;
   border: 1px solid ${({ theme }) => theme.primaryText};
   border-radius: 20px;
@@ -162,6 +151,7 @@ const FollowUpButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
   
   &:hover {
     background: ${({ theme }) => theme.primaryText};
@@ -228,15 +218,9 @@ const EmptyState = styled.div`
 
 export const LatestDisputes: React.FC = () => {
   const [currentGroup, setCurrentGroup] = useState<number>(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: disputes = [], isLoading, error } = useKlerosDisputes(9);
-
-  console.log('📈 LatestDisputes render:', { 
-    disputesCount: disputes.length, 
-    isLoading, 
-    error, 
-    disputes: disputes.slice(0, 3) // Log first 3 for debugging
-  });
 
   const disputeGroups = useMemo(() => {
     if (!disputes.length) return [];
@@ -250,15 +234,26 @@ export const LatestDisputes: React.FC = () => {
     return groups;
   }, [disputes]);
 
-  useEffect(() => {
+  const startCarousel = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
     if (disputeGroups.length <= 1) return;
     
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setCurrentGroup((prev) => (prev + 1) % disputeGroups.length);
     }, CAROUSEL_INTERVAL);
-
-    return () => clearInterval(interval);
   }, [disputeGroups.length]);
+
+  useEffect(() => {
+    startCarousel();
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [startCarousel]);
 
   const handleCardClick = useCallback((dispute: KlerosDispute) => {
     // Open Klerosboard interface for this dispute
@@ -268,8 +263,8 @@ export const LatestDisputes: React.FC = () => {
 
   const handleDotClick = useCallback((index: number) => {
     setCurrentGroup(index);
-  }, []);
-
+    startCarousel(); // Reset timer when user manually changes group
+  }, [startCarousel]);
 
   if (isLoading) {
     return (
@@ -287,7 +282,6 @@ export const LatestDisputes: React.FC = () => {
   }
 
   if (error) {
-    console.error('❌ Error loading disputes:', error);
     return (
       <Container>
         <Header>
@@ -303,7 +297,6 @@ export const LatestDisputes: React.FC = () => {
   }
 
   if (!disputeGroups.length) {
-    console.warn('⚠️ No dispute groups to display. Raw disputes:', disputes);
     return (
       <Container>
         <Header>
@@ -334,23 +327,23 @@ export const LatestDisputes: React.FC = () => {
             
             return (
               <DisputeCard key={dispute.id} onClick={() => handleCardClick(dispute)}>
-                <LeftSection>
-                  <ScalesIconWrapper>
-                    <DisputeResolverIcon />
-                  </ScalesIconWrapper>
-                  <CaseInfo>
-                    <CaseNumber>Case #{dispute.disputeIDNumber}</CaseNumber>
-                  </CaseInfo>
-                </LeftSection>
-                <RightSection>
-                  <DeadlineSection>
-                    <HourglassIcon />
-                    <span>{periodName}: {timeAgo}</span>
-                  </DeadlineSection>
-                  <FollowUpButton>
+                <CardContent>
+                  <LeftSection>
+                    <IconWrapper>
+                      <DisputeResolverIcon />
+                    </IconWrapper>
+                    <CaseInfo>
+                      <CaseNumber>Case #{dispute.disputeIDNumber}</CaseNumber>
+                      <TimeInfo>
+                        <HourglassIcon />
+                        <span>{periodName}: {timeAgo}</span>
+                      </TimeInfo>
+                    </CaseInfo>
+                  </LeftSection>
+                  <ViewButton>
                     View Case
-                  </FollowUpButton>
-                </RightSection>
+                  </ViewButton>
+                </CardContent>
               </DisputeCard>
             );
           })}

@@ -57,25 +57,36 @@ const Card = styled.div`
       min-width: clamp(250px, 30vw, 300px);
     `
   )}
-
-  @media (max-width: 768px) {
-    min-width: unset;
-    padding: 16px;
-  }
 `;
 
 const Header = styled.div`
   display: flex;
   align-items: center;
-  gap: clamp(12px, 2vw, 16px);
-  margin-bottom: clamp(12px, 2vh, 16px);
+  gap: 12px;
+  margin-bottom: 12px;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 16px;
+      margin-bottom: 16px;
+    `
+  )}
 
   svg {
-    min-width: clamp(40px, 6vw, 48px);
-    min-height: clamp(40px, 6vw, 48px);
-    width: clamp(40px, 6vw, 48px);
-    height: clamp(40px, 6vw, 48px);
+    min-width: 40px;
+    min-height: 40px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
+    
+    ${landscapeStyle(
+      () => css`
+        min-width: 48px;
+        min-height: 48px;
+        width: 48px;
+        height: 48px;
+      `
+    )}
     
     path, circle {
       fill: ${({ theme }) => theme.primary};
@@ -84,39 +95,50 @@ const Header = styled.div`
 `;
 
 const Title = styled.h3`
-  font-size: clamp(14px, 2.5vw, 16px);
+  font-size: 14px;
   font-weight: 600;
   margin: 0;
   color: ${({ theme }) => theme.primaryText};
   letter-spacing: -0.2px;
   line-height: 1.2;
 
-  @media (max-width: 768px) {
-    font-size: 14px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 16px;
+    `
+  )}
 `;
 
 const MainValue = styled.div`
-  font-size: clamp(24px, 4vw, 32px);
+  font-size: 24px;
   font-weight: 700;
   color: ${({ theme }) => theme.primaryText};
-  margin-bottom: clamp(6px, 1vh, 8px);
+  margin-bottom: 6px;
   letter-spacing: -1px;
   transition: all 0.3s ease;
 
-  @media (max-width: 768px) {
-    font-size: 24px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 32px;
+      margin-bottom: 8px;
+    `
+  )}
 `;
 
 const ChangeIndicator = styled.div<{ positive?: boolean }>`
   display: flex;
   align-items: center;
-  font-size: clamp(12px, 2vw, 14px);
+  font-size: 12px;
   color: ${({ theme, positive }) => 
     positive ? theme.successText || SUCCESS_COLOR : theme.secondaryText};
   font-weight: 500;
   transition: all 0.3s ease;
+  
+  ${landscapeStyle(
+    () => css`
+      font-size: 14px;
+    `
+  )}
   
   &::before {
     content: '▲';
@@ -132,22 +154,21 @@ const ChangeIndicator = styled.div<{ positive?: boolean }>`
   &:hover {
     transform: scale(1.05);
   }
-
-  @media (max-width: 768px) {
-    font-size: 12px;
-  }
 `;
 
 const SecondaryValue = styled.div`
-  font-size: clamp(12px, 2vw, 14px);
+  font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
-  margin-top: clamp(6px, 1vh, 8px);
+  margin-top: 6px;
   opacity: 0.8;
   transition: opacity 0.3s ease;
 
-  @media (max-width: 768px) {
-    font-size: 12px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 14px;
+      margin-top: 8px;
+    `
+  )}
 `;
 
 interface StatCardProps {

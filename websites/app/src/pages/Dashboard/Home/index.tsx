@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import Skeleton from 'react-loading-skeleton';
@@ -6,16 +6,16 @@ import 'react-loading-skeleton/dist/skeleton.css';
 
 import { useDapplookerStats } from 'hooks/useDapplookerStats';
 import { StatCard } from 'components/Dashboard/StatCard';
+import { RegistryCard } from 'components/Dashboard/RegistryCard';
 import { StatsChart } from 'components/Dashboard/StatsChart';
 import { ChainRanking } from 'components/Dashboard/ChainRanking';
 import { ActiveRewardsCarousel } from 'components/Dashboard/ActiveRewardsCarousel';
 import { RecentActivity } from 'components/Dashboard/RecentActivity';
 import { LatestDisputes } from 'components/Dashboard/LatestDisputes';
 
-import HomeIcon from 'svgs/sidebar/home.svg';
 import SubmissionsIcon from 'svgs/icons/submissions.svg';
-import ActiveRewardsIcon from 'svgs/icons/active-rewards.svg';
-
+import AssetsVerifiedIcon from 'svgs/icons/assets-verified.svg';
+import CuratorsIcon from 'svgs/icons/curators.svg';
 
 const Container = styled.div`
   display: flex;
@@ -95,6 +95,19 @@ const StatsGrid = styled.div`
   )}
 `;
 
+const RegistryGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    `
+  )}
+`;
+
 const ChartSection = styled.div`
   --index: 2;
 `;
@@ -111,6 +124,50 @@ const BottomGrid = styled.div`
       gap: 24px;
     `
   )}
+  
+  /* Ensure children maintain equal width */
+  > * {
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  padding: 24px;
+  border: 1px solid ${({ theme }) => theme.lightGrey};
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+`;
+
+const SkeletonTitle = styled(Skeleton)`
+  margin-bottom: 24px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const ChainRankingLoadingItem = styled.div<{ $isLast?: boolean }>`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: ${({ $isLast }) => $isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.1)'};
+`;
+
+const ChainRankingLoadingLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const IndexedWrapper = styled.div<{ $index: number }>`
+  --index: ${({ $index }) => $index};
+`;
+
+const ChildIndexedWrapper = styled.div<{ $childIndex: number }>`
+  --child-index: ${({ $childIndex }) => $childIndex};
 `;
 
 interface IHome {}
@@ -118,212 +175,136 @@ interface IHome {}
 const Home: React.FC<IHome> = () => {
   const { data: stats, isLoading } = useDapplookerStats();
 
-  // Success effect for data loading
-  useEffect(() => {
-    if (stats && stats.totalAssetsVerified > 0) {
-      console.log('✅ Dashboard data loaded successfully!');
-    }
-  }, [stats]);
-
-  // Transform chart data
-  const chartData = stats?.submissionsVsDisputes ? 
-    stats.submissionsVsDisputes.dates.map((date, index) => ({
+  const chartData = useMemo(() => {
+    if (!stats?.submissionsVsDisputes) return [];
+    
+    return stats.submissionsVsDisputes.dates.map((date, index) => ({
       name: date,
       submissions: stats.submissionsVsDisputes.submissions[index],
       disputes: stats.submissionsVsDisputes.disputes[index],
-    })) : [];
-
-  const renderSkeletonContent = () => (
-    <MainGrid>
-      <LeftColumn>
-        <StatsGrid>
-          <StatCard
-            icon={<SubmissionsIcon />}
-            title="Total Assets Verified"
-            mainValue={<Skeleton width={80} height={32} />}
-            changeValue={<Skeleton width={120} height={16} />}
-            changeLabel="(all time)"
-          />
-          
-          <StatCard
-            icon={<ActiveRewardsIcon />}
-            title="Curators"
-            mainValue={<Skeleton width={60} height={32} />}
-            changeValue={<Skeleton width={100} height={16} />}
-            changeLabel="(all time)"
-          />
-        </StatsGrid>
-        
-        <StatsGrid>
-          <StatCard
-            icon={<SubmissionsIcon />}
-            title="Tokens"
-            mainValue={<Skeleton width={70} height={32} />}
-            changeValue={<Skeleton width={40} height={16} />}
-            secondaryValue="Assets verified"
-          />
-          
-          <StatCard
-            icon={<SubmissionsIcon />}
-            title="CDN"
-            mainValue={<Skeleton width={70} height={32} />}
-            changeValue={<Skeleton width={40} height={16} />}
-            secondaryValue="Assets verified"
-          />
-          
-          <StatCard
-            icon={<SubmissionsIcon />}
-            title="Single Tags"
-            mainValue={<Skeleton width={70} height={32} />}
-            changeValue={<Skeleton width={40} height={16} />}
-            secondaryValue="Assets verified"
-          />
-          
-          <StatCard
-            icon={<SubmissionsIcon />}
-            title="Tag Queries"
-            mainValue={<Skeleton width={70} height={32} />}
-            changeValue={<Skeleton width={40} height={16} />}
-            secondaryValue="Assets verified"
-          />
-        </StatsGrid>
-        
-        <ChartSection>
-          <div style={{ padding: '24px', border: `1px solid var(--theme-lightGrey)`, borderRadius: '12px', background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%)' }}>
-            <Skeleton height={24} width={200} style={{ marginBottom: '16px' }} />
-            <Skeleton height={200} />
-          </div>
-        </ChartSection>
-        
-        <BottomGrid>
-          <div style={{ padding: '24px', border: `1px solid var(--theme-lightGrey)`, borderRadius: '12px', background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%)' }}>
-            <Skeleton height={24} width={150} style={{ marginBottom: '16px' }} />
-            <Skeleton height={120} />
-          </div>
-          
-          <div style={{ padding: '24px', border: `1px solid var(--theme-lightGrey)`, borderRadius: '12px', background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%)' }}>
-            <Skeleton height={24} width={150} style={{ marginBottom: '16px' }} />
-            <Skeleton height={120} />
-          </div>
-        </BottomGrid>
-      </LeftColumn>
-      
-      <RightColumn>
-        <div style={{ padding: '24px', border: `1px solid var(--theme-lightGrey)`, borderRadius: '12px', background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%)', marginBottom: '32px' }}>
-          <Skeleton height={24} width={150} style={{ marginBottom: '16px' }} />
-          <Skeleton height={200} />
-        </div>
-        <div style={{ padding: '24px', border: `1px solid var(--theme-lightGrey)`, borderRadius: '12px', background: 'linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%)' }}>
-          <Skeleton height={24} width={120} style={{ marginBottom: '16px' }} />
-          <Skeleton height={150} />
-        </div>
-      </RightColumn>
-    </MainGrid>
-  );
+    }));
+  }, [stats]);
 
   return (
     <Container>
       <Header>
-        <HomeIcon />
         <div>
           <Title>Decentralized Asset Verification platform</Title>
           <Subtitle>Keep Web3 secure. Earn rewards by adding, checking, and challenging submissions.</Subtitle>
         </div>
       </Header>
       
-      {isLoading ? renderSkeletonContent() : (
       <MainGrid>
         <LeftColumn>
           <StatsGrid>
-            <StatCard
-              icon={<SubmissionsIcon />}
-              title="Total Assets Verified"
-              mainValue={stats?.totalAssetsVerified || 0}
-              changeValue={stats?.totalSubmissions || 0}
-              changeLabel="(total submissions)"
-              style={{ '--index': 0 } as React.CSSProperties}
-            />
+            <IndexedWrapper $index={0}>
+              <StatCard
+                icon={<AssetsVerifiedIcon />}
+                title="Total Assets Verified"
+                mainValue={isLoading ? <Skeleton width={80} height={32} /> : (stats?.totalAssetsVerified || 0)}
+              />
+            </IndexedWrapper>
             
-            <StatCard
-              icon={<ActiveRewardsIcon />}
-              title="Curators"
-              mainValue={stats?.totalCurators || 0}
-              changeValue={stats?.totalCurators || 0}
-              changeLabel="(lifetime total)"
-              style={{ '--index': 1 } as React.CSSProperties}
-            />
+            <IndexedWrapper $index={1}>
+              <StatCard
+                icon={<CuratorsIcon />}
+                title="Curators"
+                mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.totalCurators || 0)}
+              />
+            </IndexedWrapper>
           </StatsGrid>
           
-          <StatsGrid>
-            <StatCard
-              icon={<SubmissionsIcon />}
-              title="Tokens"
-              mainValue={stats?.tokens?.assetsVerified || 0}
-              changeValue={stats?.tokens?.assetsVerifiedChange || 0}
-              secondaryValue="Assets verified"
-              style={{ '--index': 0 } as React.CSSProperties}
-            />
+          <RegistryGrid>
+            <IndexedWrapper $index={0}>
+              <RegistryCard
+                icon={<SubmissionsIcon />}
+                title="Tokens"
+                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.tokens?.assetsVerified || 0)}
+                secondaryValue="Assets Verified"
+                registryKey="Tokens"
+              />
+            </IndexedWrapper>
             
-            <StatCard
-              icon={<SubmissionsIcon />}
-              title="CDN"
-              mainValue={stats?.cdn?.assetsVerified || 0}
-              changeValue={stats?.cdn?.assetsVerifiedChange || 0}
-              secondaryValue="Assets verified"
-              style={{ '--index': 1 } as React.CSSProperties}
-            />
+            <IndexedWrapper $index={1}>
+              <RegistryCard
+                icon={<SubmissionsIcon />}
+                title="CDN"
+                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.cdn?.assetsVerified || 0)}
+                secondaryValue="Assets Verified"
+                registryKey="CDN"
+              />
+            </IndexedWrapper>
             
-            <StatCard
-              icon={<SubmissionsIcon />}
-              title="Single Tags"
-              mainValue={stats?.singleTags?.assetsVerified || 0}
-              changeValue={stats?.singleTags?.assetsVerifiedChange || 0}
-              secondaryValue="Assets verified"
-              style={{ '--index': 2 } as React.CSSProperties}
-            />
+            <IndexedWrapper $index={2}>
+              <RegistryCard
+                icon={<SubmissionsIcon />}
+                title="Single Tags"
+                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.singleTags?.assetsVerified || 0)}
+                secondaryValue="Assets Verified"
+                registryKey="Single_Tags"
+              />
+            </IndexedWrapper>
             
-            <StatCard
-              icon={<SubmissionsIcon />}
-              title="Tag Queries"
-              mainValue={stats?.tagQueries?.assetsVerified || 0}
-              changeValue={stats?.tagQueries?.assetsVerifiedChange || 0}
-              secondaryValue="Assets verified"
-              style={{ '--index': 3 } as React.CSSProperties}
-            />
-          </StatsGrid>
+            <IndexedWrapper $index={3}>
+              <RegistryCard
+                icon={<SubmissionsIcon />}
+                title="Tag Queries"
+                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.tagQueries?.assetsVerified || 0)}
+                secondaryValue="Assets Verified"
+                registryKey="Tags_Queries"
+              />
+            </IndexedWrapper>
+          </RegistryGrid>
           
-          {chartData.length > 0 && (
-            <ChartSection>
+          <ChartSection>
+            {!isLoading && chartData.length > 0 ? (
               <StatsChart 
                 data={chartData} 
                 title="Submissions vs. Disputes (Daily)"
               />
-            </ChartSection>
-          )}
+            ) : (
+              <LoadingContainer>
+                <SkeletonTitle height={24} width={250} />
+                <Skeleton height={300} />
+              </LoadingContainer>
+            )}
+          </ChartSection>
           
           <BottomGrid>
-            {stats?.chainRanking && (
-              <div style={{ '--child-index': 0 } as React.CSSProperties}>
+            <ChildIndexedWrapper $childIndex={0}>
+              {!isLoading && stats?.chainRanking ? (
                 <ChainRanking data={stats.chainRanking} />
-              </div>
-            )}
+              ) : (
+                <LoadingContainer>
+                  <Skeleton height={18} width={200} style={{ marginBottom: '24px' }} />
+                  {[...Array(5)].map((_, i) => (
+                    <ChainRankingLoadingItem key={i} $isLast={i === 4}>
+                      <ChainRankingLoadingLeft>
+                        <Skeleton width={32} height={16} />
+                        <Skeleton circle width={32} height={32} />
+                      </ChainRankingLoadingLeft>
+                      <Skeleton width={80} height={16} />
+                    </ChainRankingLoadingItem>
+                  ))}
+                </LoadingContainer>
+              )}
+            </ChildIndexedWrapper>
             
-            <div style={{ '--child-index': 1 } as React.CSSProperties}>
+            <ChildIndexedWrapper $childIndex={1}>
               <LatestDisputes />
-            </div>
+            </ChildIndexedWrapper>
           </BottomGrid>
         </LeftColumn>
         
         <RightColumn>
-          <div style={{ '--index': 0 } as React.CSSProperties}>
+          <IndexedWrapper $index={0}>
             <ActiveRewardsCarousel />
-          </div>
-          <div style={{ '--index': 1 } as React.CSSProperties}>
+          </IndexedWrapper>
+          <IndexedWrapper $index={1}>
             <RecentActivity />
-          </div>
+          </IndexedWrapper>
         </RightColumn>
       </MainGrid>
-      )}
     </Container>
   );
 };
