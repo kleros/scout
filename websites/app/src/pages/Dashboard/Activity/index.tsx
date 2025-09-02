@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import styled, { css, createGlobalStyle } from "styled-components";
 import { landscapeStyle } from "styles/landscapeStyle";
-import { responsiveSize } from "styles/responsiveSize";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ActivityIcon from "svgs/icons/activity.svg";
@@ -31,9 +30,11 @@ const Container = styled.div`
   padding: 32px 16px 64px;
   font-family: "Inter", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
+
   ${landscapeStyle(
     () => css`
-      padding: 48px ${responsiveSize(0, 48)} 60px;
+      padding: 48px 0 60px 48px;
+      width: calc(100vw - 120px);
     `
   )}
 `;
@@ -292,7 +293,11 @@ const Activity: React.FC = () => {
                   ? <>Activity - {renderAddressLink(userAddress)}</>
                   : "My Activity"}
               </Title>
-              <Subtitle>Follow up your submissions, challenges, and other interactions with Scout.</Subtitle>
+              <Subtitle>
+                {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase() 
+                  ? "Follow up your submissions, challenges, and other interactions with Scout."
+                  : "Follow up on submissions, challenges, and other interactions with Scout."}
+              </Subtitle>
             </div>
           </Header>
           <CardRow>
