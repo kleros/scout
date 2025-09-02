@@ -2,6 +2,7 @@ import React from "react";
 import styled, { css } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { landscapeStyle } from "styles/landscapeStyle";
+import { responsiveSize } from "styles/responsiveSize";
 
 import BookCircleIcon from "svgs/icons/book-circle.svg";
 import BountiesIcon from "svgs/icons/bounties.svg";
@@ -9,17 +10,18 @@ import RewardsIcon from "svgs/icons/rewards.svg";
 import DocumentationIcon from "svgs/icons/documentation.svg";
 import WarningOutlineIcon from "svgs/icons/warning-outline.svg";
 import { hoverShortTransitionTiming } from "styles/commonStyles";
+import ScrollTop from "components/ScrollTop";
 
 const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   min-height: 100vh;
-  padding: 32px 32px 64px;
+  padding: 32px 16px 64px;
   font-family: "Inter", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
 
   ${landscapeStyle(
     () => css`
-      padding: 80px 0 100px 48px; 
+      padding: 48px ${responsiveSize(0, 48)} 60px; 
     `
   )}
 `;
@@ -234,6 +236,7 @@ const QuickGuidePage: React.FC = () => {
 
   return (
     <Container>
+      <ScrollTop />
       <Header>
         <BookCircleIcon />
         <div>

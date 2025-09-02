@@ -47,7 +47,6 @@ const CACHE_CONFIG = {
 
 const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
   try {
-    console.log('🚀 Fetching Kleros disputes from xDAI Curation Court...');
     
     const response = await fetch(SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, {
       method: 'POST',
@@ -66,28 +65,21 @@ const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
       }),
     });
 
-    console.log('📡 Response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Response error:', errorText);
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
     const result: { data: KlerosDisputesResponse } = await response.json();
-    console.log('📋 Full response:', result);
     
     if (!result.data?.disputes) {
-      console.warn('⚠️ No disputes data in response:', result);
       return [];
     }
 
-    console.log('✅ Found', result.data.disputes.length, 'disputes from xDAI Curation Court');
-    console.log('📊 Disputes data:', result.data.disputes);
     
     return result.data.disputes;
   } catch (error) {
-    console.error('❌ Error fetching Kleros disputes:', error);
     throw error;
   }
 };

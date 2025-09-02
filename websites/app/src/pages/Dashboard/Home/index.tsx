@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import styled, { css } from 'styled-components';
-import { landscapeStyle } from 'styles/landscapeStyle';
+import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle';
+import { responsiveSize } from 'styles/responsiveSize';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
@@ -16,20 +17,23 @@ import { LatestDisputes } from 'components/Dashboard/LatestDisputes';
 import SubmissionsIcon from 'svgs/icons/submissions.svg';
 import AssetsVerifiedIcon from 'svgs/icons/assets-verified.svg';
 import CuratorsIcon from 'svgs/icons/curators.svg';
+import ScrollTop from 'components/ScrollTop';
 
 const Container = styled.div`
+  width: 100%;
+  background-color: ${({ theme }) => theme.lightBackground};
+  padding: 32px 16px 40px;
+  max-width: ${MAX_WIDTH_LANDSCAPE};
+  margin: 0 auto;
+  min-height: 100vh;
+  color: ${({ theme }) => theme.primaryText};
+  font-family: "Inter", sans-serif;
   display: flex;
   flex-direction: column;
-  color: ${({ theme }) => theme.primaryText};
-  min-height: 100vh;
-  padding: 32px 32px 64px;
-  font-family: "Inter", sans-serif;
-  background: ${({ theme }) => theme.lightBackground};
 
   ${landscapeStyle(
     () => css`
-      padding: 80px 0 100px 48px;
-      width: calc(100vw - 120px);
+      padding: 48px ${responsiveSize(0, 48)} 60px;
     `
   )}
 `;
@@ -62,12 +66,16 @@ const MainGrid = styled.div`
   grid-template-columns: 1fr;
   gap: 24px;
   
-  ${landscapeStyle(
-    () => css`
-      grid-template-columns: 2fr 1fr;
-      gap: 32px;
-    `
-  )}
+  @media (min-width: 900px) and (max-width: 1200px) {
+    /* Tablet: single column but larger gap */
+    gap: 40px;
+  }
+  
+  @media (min-width: 1201px) {
+    /* Desktop: two columns */
+    grid-template-columns: 1fr 400px;
+    gap: 32px;
+  }
 `;
 
 const LeftColumn = styled.div`
@@ -80,6 +88,8 @@ const RightColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%;
+  min-width: 0;
 `;
 
 const StatsGrid = styled.div`
@@ -125,27 +135,38 @@ const BottomGrid = styled.div`
     `
   )}
   
-  /* Ensure children maintain equal width */
+  /* Ensure children maintain stable dimensions */
   > * {
     min-width: 0;
-    width: 100%;
     overflow: hidden;
   }
 `;
 
 const LoadingContainer = styled.div`
-  padding: 24px;
+  padding: 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(10px);
+  
+  ${landscapeStyle(
+    () => css`
+      padding: 24px;
+    `
+  )}
 `;
 
 const SkeletonTitle = styled(Skeleton)`
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   margin-left: auto;
   margin-right: auto;
+  
+  ${landscapeStyle(
+    () => css`
+      margin-bottom: 24px;
+    `
+  )}
 `;
 
 const ChainRankingLoadingItem = styled.div<{ $isLast?: boolean }>`
@@ -160,6 +181,16 @@ const ChainRankingLoadingLeft = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+`;
+
+const ChartSkeleton = styled(Skeleton)`
+  height: 250px;
+  
+  ${landscapeStyle(
+    () => css`
+      height: 300px;
+    `
+  )}
 `;
 
 const IndexedWrapper = styled.div<{ $index: number }>`
@@ -187,6 +218,7 @@ const Home: React.FC<IHome> = () => {
 
   return (
     <Container>
+      <ScrollTop />
       <Header>
         <div>
           <Title>Decentralized Asset Verification platform</Title>
@@ -264,8 +296,8 @@ const Home: React.FC<IHome> = () => {
               />
             ) : (
               <LoadingContainer>
-                <SkeletonTitle height={24} width={250} />
-                <Skeleton height={300} />
+                <SkeletonTitle height={16} width={250} />
+                <ChartSkeleton />
               </LoadingContainer>
             )}
           </ChartSection>
@@ -276,7 +308,7 @@ const Home: React.FC<IHome> = () => {
                 <ChainRanking data={stats.chainRanking} />
               ) : (
                 <LoadingContainer>
-                  <Skeleton height={18} width={200} style={{ marginBottom: '24px' }} />
+                  <SkeletonTitle height={16} width={200} />
                   {[...Array(5)].map((_, i) => (
                     <ChainRankingLoadingItem key={i} $isLast={i === 4}>
                       <ChainRankingLoadingLeft>

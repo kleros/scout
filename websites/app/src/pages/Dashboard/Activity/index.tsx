@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import styled, { css, createGlobalStyle } from "styled-components";
 import { landscapeStyle } from "styles/landscapeStyle";
+import { responsiveSize } from "styles/responsiveSize";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ActivityIcon from "svgs/icons/activity.svg";
@@ -20,19 +21,19 @@ import { Copiable } from "@kleros/ui-components-library";
 import { ExternalLink } from "components/ExternalLink";
 import { DEFAULT_CHAIN, getChain } from "consts/chains";
 import { chains } from "utils/chains";
+import ScrollTop from "components/ScrollTop";
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   color: ${({ theme }) => theme.primaryText};
   min-height: 100vh;
-  padding: 32px 32px 64px;
+  padding: 32px 16px 64px;
   font-family: "Inter", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
   ${landscapeStyle(
     () => css`
-      padding: 80px 0 100px 48px;
-      width: calc(100vw - 120px);
+      padding: 48px ${responsiveSize(0, 48)} 60px;
     `
   )}
 `;
@@ -277,6 +278,7 @@ const Activity: React.FC = () => {
 
   return (
     <Container>
+      <ScrollTop />
       <TooltipGlobalStyle />
       {!shouldShowConnectWallet ? (
         <>

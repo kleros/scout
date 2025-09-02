@@ -19,6 +19,8 @@ const Container = styled.div`
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
+  width: 100%;
+  min-width: 0;
   
   ${landscapeStyle(
     () => css`
@@ -93,27 +95,13 @@ const LeftSection = styled.div`
   min-width: 0;
 `;
 
-const IconWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  
-  svg {
-    width: 16px;
-    height: 16px;
-    color: ${({ theme }) => theme.primaryText};
-    opacity: 0.8;
-  }
-`;
 
 const CaseInfo = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
   gap: 4px;
+  flex-wrap: wrap;
 `;
 
 const CaseNumber = styled.div`
@@ -123,6 +111,10 @@ const CaseNumber = styled.div`
   line-height: 1.2;
   margin-bottom: 4px;
   gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 `;
 
 const TimeInfo = styled.div`
@@ -132,6 +124,7 @@ const TimeInfo = styled.div`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 13px;
   font-weight: 500;
+  max-width: 140px;
   
   svg {
     width: 14px;

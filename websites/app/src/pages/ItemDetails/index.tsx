@@ -30,14 +30,13 @@ const Container = styled.div`
   flex-direction: column;
   color: ${({ theme }) => theme.primaryText};
   min-height: 100vh;
-  padding: 32px 32px 64px;
+  padding: 32px 16px 64px;
   font-family: "Inter", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
 
   ${landscapeStyle(
     () => css`
-      padding: 80px 0 100px 48px;
-      width: calc(100vw - 120px);
+      padding: 48px ${responsiveSize(0, 48)} 60px;
     `
   )}
 `;

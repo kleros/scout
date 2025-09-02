@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { useSearchParams, createSearchParams } from 'react-router-dom';
 import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
 import { chains } from 'utils/chains';
@@ -16,26 +16,31 @@ import CloseIcon from 'svgs/icons/close.svg';
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
 import HeroShadowSVG from 'svgs/header/hero-shadow.svg';
-import { MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle';
+import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle';
+import { responsiveSize } from 'styles/responsiveSize';
 
 const Container = styled.div`
-  position: relative;
+  width: 100%;
+  background-color: ${({ theme }) => theme.lightBackground};
+  padding: 32px 16px 40px;
+  max-width: ${MAX_WIDTH_LANDSCAPE};
+  margin: 0 auto;
+  min-height: 100vh;
+  color: ${({ theme }) => theme.primaryText};
+  font-family: "Inter", sans-serif;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  min-height: 100vh;
-  color: white;
-  padding-bottom: 48px;
-  width: 100%;
+
+  ${landscapeStyle(
+    () => css`
+      padding: 48px ${responsiveSize(0, 48)} 60px;
+    `
+  )}
 `;
 
 const PageInner = styled.div`
   position: relative;
   width: 100%;
-  max-width: ${MAX_WIDTH_LANDSCAPE};
-  padding: 0 40px;
-  margin-top: 24px;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 24px;

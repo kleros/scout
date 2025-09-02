@@ -34,10 +34,13 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background: #cd9eff1a;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(153, 153, 153, 0.08) 100%
+  );
   backdrop-filter: blur(50px);
-  border: 2px solid #CD9DFF;
-  border-radius: 16px;
+  border-radius: 20px;
   width: 90vw;
   max-width: 800px;
   max-height: 90vh;
@@ -46,18 +49,33 @@ const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: relative;
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+
+  &:before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #7186FF90 0%, #BEBEC590 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+  }
 `;
 
 const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #CD9DFF40;
+  border-bottom: 1px solid rgba(113, 134, 255, 0.3);
   padding-bottom: 20px;
 `;
 
 const ModalTitle = styled.h2`
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   font-size: 20px;
   font-weight: 600;
   margin: 0;
@@ -66,14 +84,14 @@ const ModalTitle = styled.h2`
 const CloseButton = styled.button`
   background: none;
   border: none;
-  color: #CD9DFF;
+  color: ${({ theme }) => theme.secondaryText};
   font-size: 24px;
   cursor: pointer;
   padding: 4px;
   transition: color 0.2s;
   
   &:hover {
-    color: white;
+    color: ${({ theme }) => theme.primaryText};
   }
 `;
 
@@ -84,7 +102,7 @@ const FilterSection = styled.div`
 `;
 
 const SectionTitle = styled.h3`
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   font-size: 16px;
   font-weight: 600;
   margin: 0;
@@ -96,7 +114,7 @@ const SectionTitle = styled.h3`
   svg {
     width: 16px;
     height: 16px;
-    fill: white;
+    fill: ${({ theme }) => theme.primaryText};
   }
 `;
 
@@ -119,7 +137,7 @@ const FilterGroup = styled.div`
 `;
 
 const FilterGroupTitle = styled.h4`
-  color: #CD9DFF;
+  color: ${({ theme }) => theme.accent};
   font-size: 14px;
   font-weight: 600;
   margin: 0;
@@ -131,7 +149,7 @@ const FilterGroupTitle = styled.h4`
   svg {
     width: 14px;
     height: 14px;
-    fill: #CD9DFF;
+    fill: ${({ theme }) => theme.accent};
   }
 `;
 
@@ -145,14 +163,14 @@ const CheckboxItem = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   font-size: 14px;
   cursor: pointer;
   padding: 4px 0;
   transition: color 0.2s;
   
   &:hover {
-    color: #CD9DFF;
+    color: ${({ theme }) => theme.accent};
   }
 `;
 
@@ -177,7 +195,7 @@ const StatusCircle = styled.div<{ status: string }>`
 const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   width: 16px;
   height: 16px;
-  accent-color: #CD9DFF;
+  accent-color: ${({ theme }) => theme.accent};
 `;
 
 const NetworkGrid = styled.div`
@@ -191,7 +209,7 @@ const NetworkItem = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   font-size: 14px;
   cursor: pointer;
   padding: 6px 8px;
@@ -199,8 +217,8 @@ const NetworkItem = styled.label`
   transition: all 0.2s;
   
   &:hover {
-    background: #CD9DFF20;
-    color: #CD9DFF;
+    background: ${({ theme }) => theme.lightGrey};
+    color: ${({ theme }) => theme.accent};
   }
   
   svg {
@@ -225,7 +243,7 @@ const SortOption = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   font-size: 14px;
   cursor: pointer;
 `;
@@ -233,7 +251,7 @@ const SortOption = styled.label`
 const RadioButton = styled.input.attrs({ type: 'radio' })`
   width: 16px;
   height: 16px;
-  accent-color: #CD9DFF;
+  accent-color: ${({ theme }) => theme.accent};
 `;
 
 const FooterButtons = styled.div`
@@ -241,7 +259,7 @@ const FooterButtons = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
-  border-top: 1px solid #CD9DFF40;
+  border-top: 1px solid rgba(113, 134, 255, 0.3);
 `;
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
@@ -253,25 +271,25 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   border: 1px solid;
   transition: all 0.2s;
   
-  ${({ variant = 'secondary' }) => variant === 'primary' 
+  ${({ variant = 'secondary', theme }) => variant === 'primary' 
     ? `
-      background: #CD9DFF;
-      color: #1a1a2e;
-      border-color: #CD9DFF;
+      background: ${theme.accent};
+      color: ${theme.lightBackground};
+      border-color: ${theme.accent};
       
       &:hover {
-        background: #b88ae6;
-        border-color: #b88ae6;
+        background: ${theme.primary};
+        border-color: ${theme.primary};
       }
     `
     : `
       background: transparent;
-      color: #CD9DFF;
-      border-color: #CD9DFF;
+      color: ${theme.accent};
+      border-color: ${theme.accent};
       
       &:hover {
-        background: #CD9DFF20;
-        color: white;
+        background: ${theme.lightGrey};
+        color: ${theme.primaryText};
       }
     `
   }
