@@ -64,7 +64,7 @@ const DisputesList = styled.div`
 `;
 
 const DisputeCard = styled.div`
-  padding: 20px;
+  padding: 16px 12px;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
@@ -113,6 +113,7 @@ const CaseInfo = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: 4px;
 `;
 
 const CaseNumber = styled.div`
@@ -121,6 +122,7 @@ const CaseNumber = styled.div`
   color: ${({ theme }) => theme.primaryText};
   line-height: 1.2;
   margin-bottom: 4px;
+  gap: 8px;
 `;
 
 const TimeInfo = styled.div`
@@ -192,6 +194,17 @@ const LoadingCard = styled.div`
     50% { opacity: 0.7; }
   }
 `;
+
+const StyledDisputeResolverIcon = styled(DisputeResolverIcon)`
+  width: 16px;
+  height: 16px;
+`
+
+const CaseHeader = styled.div`
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+`
 
 interface KlerosDispute {
   id: string;
@@ -329,11 +342,13 @@ export const LatestDisputes: React.FC = () => {
               <DisputeCard key={dispute.id} onClick={() => handleCardClick(dispute)}>
                 <CardContent>
                   <LeftSection>
-                    <IconWrapper>
-                      <DisputeResolverIcon />
-                    </IconWrapper>
                     <CaseInfo>
-                      <CaseNumber>Case #{dispute.disputeIDNumber}</CaseNumber>
+                      <CaseHeader>
+                        <StyledDisputeResolverIcon />
+                        <CaseNumber>
+                          Case #{dispute.disputeIDNumber}
+                        </CaseNumber>
+                      </CaseHeader>
                       <TimeInfo>
                         <HourglassIcon />
                         <span>{periodName}: {timeAgo}</span>
