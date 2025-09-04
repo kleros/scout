@@ -191,9 +191,12 @@ const FilterControlsContainer = styled.div`
 
 const PATHS = ["ongoing", "past"];
 
+const REGISTRATION_STATUSES = ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent'];
+const CHALLENGE_STATUSES = ['true', 'false'];
+
 const Activity: React.FC = () => {
   const { isConnected, address: connectedAddress } = useAccount();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const userAddress = searchParams.get("userAddress");
   const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
@@ -206,6 +209,21 @@ const Activity: React.FC = () => {
     const availableChains = chains.filter(chain => !chain.deprecated).map(chain => chain.id);
     return [...availableChains, 'unknown']; // Include all chains + unknown by default
   });
+
+  // Initialize URL params with all statuses/disputed values for Activity page
+  useEffect(() => {
+    if (address && searchParams.getAll('status').length === 0 && searchParams.getAll('disputed').length === 0) {
+      const newParams = new URLSearchParams(searchParams);
+      
+      // Add all registration statuses
+      REGISTRATION_STATUSES.forEach(status => newParams.append('status', status));
+      // Add all challenge statuses  
+      CHALLENGE_STATUSES.forEach(challengeValue => newParams.append('disputed', challengeValue));
+      
+      // Preserve existing params like userAddress, page, etc.
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [address, searchParams, setSearchParams]);
   
   const addressExplorerLink = useMemo(() => {
     if (!userAddress) return null;

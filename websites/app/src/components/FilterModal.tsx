@@ -359,54 +359,58 @@ const FilterModal: React.FC<FilterModalProps> = ({
   useFocusOutside(modalRef, () => onClose());
 
   const registrationStatuses = useMemo(() => {
-    const statuses = searchParams.getAll('status');
-    // For Activity page with userAddress, default to all statuses if none selected
-    // For Registries page without userAddress, use what's in URL or empty array
-    return userAddress && statuses.length === 0 ? REGISTRATION_STATUSES : statuses;
-  }, [searchParams, userAddress]);
+    return searchParams.getAll('status');
+  }, [searchParams]);
 
   const disputedValues = useMemo(() => {
-    const disputed = searchParams.getAll('disputed');
-    // For Activity page with userAddress, default to all values if none selected
-    // For Registries page without userAddress, use what's in URL or empty array
-    return userAddress && disputed.length === 0 ? ['true', 'false'] : disputed;
-  }, [searchParams, userAddress]);
+    return searchParams.getAll('disputed');
+  }, [searchParams]);
 
   const orderDirection = useMemo(() => searchParams.get('orderDirection') || 'desc', [searchParams]);
 
   const handleStatusChange = useCallback((status: string) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
-      if (registrationStatuses.includes(status)) {
-        newParams.delete('status', status);
+      const currentStatuses = newParams.getAll('status');
+      
+      if (currentStatuses.includes(status)) {
+        // Remove this status - rebuild the list without it
+        newParams.delete('status');
+        currentStatuses.filter(s => s !== status).forEach(s => newParams.append('status', s));
       } else {
+        // Add this status
         newParams.append('status', status);
       }
+      
       newParams.set('page', '1');
-      // Maintain userAddress filter if present
       if (userAddress) {
         newParams.set('userAddress', userAddress);
       }
       return newParams;
     }, { replace: true });
-  }, [setSearchParams, registrationStatuses, userAddress]);
+  }, [setSearchParams, userAddress]);
 
   const handleDisputedChange = useCallback((disputed: string) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
-      if (disputedValues.includes(disputed)) {
-        newParams.delete('disputed', disputed);
+      const currentDisputed = newParams.getAll('disputed');
+      
+      if (currentDisputed.includes(disputed)) {
+        // Remove this disputed value - rebuild the list without it
+        newParams.delete('disputed');
+        currentDisputed.filter(d => d !== disputed).forEach(d => newParams.append('disputed', d));
       } else {
+        // Add this disputed value
         newParams.append('disputed', disputed);
       }
+      
       newParams.set('page', '1');
-      // Maintain userAddress filter if present
       if (userAddress) {
         newParams.set('userAddress', userAddress);
       }
       return newParams;
     }, { replace: true });
-  }, [setSearchParams, disputedValues, userAddress]);
+  }, [setSearchParams, userAddress]);
 
   const handleNetworkChange = useCallback((networkId: string) => {
     const newChainFilters = chainFilters.includes(networkId)
