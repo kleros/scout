@@ -397,7 +397,7 @@ const fetchKlerosSubgraphData = async (graphqlBatcher: any): Promise<DapplookerS
   });
   
   // Generate time series data
-  const last7Days = generateDateRange(7);
+  const last7Days = generateDateRange(30);
   const submissionsData = last7Days.map(date => filterItemsByDate(items, date));
   const disputesData = last7Days.map(date => filterItemsByDate(items, date, true));
   const chainRanking = calculateChainRanking(items);
