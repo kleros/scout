@@ -1,7 +1,7 @@
 import { gql, request } from 'graphql-request'
 import { DepositParams, fetchRegistryDeposits } from './fetchRegistryDeposits'
 import { registryMap } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
 
 export interface RegistryMetadata {
   address: string

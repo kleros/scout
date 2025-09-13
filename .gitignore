@@ -130,6 +130,9 @@ dist
 # Serverless Webpack directories
 .webpack/
 
+# generated code
+websites/app/src/hooks/contracts/generated.ts
+
 # Optional stylelint cache
 .stylelintcache
 

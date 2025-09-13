@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 
@@ -53,9 +53,9 @@ const StyledButton = styled.button`
 const Header: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleReturn = () => {
+  const handleReturn = useCallback(() => {
     navigate(-1);
-  };
+  }, [navigate]);
 
   return (
     <Container>

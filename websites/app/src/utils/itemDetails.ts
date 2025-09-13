@@ -1,6 +1,6 @@
 import request, { gql } from 'graphql-request'
 import { Prop, Request } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
 
 export interface GraphEvidence {
   party: string

@@ -5,7 +5,7 @@ export const getStatusLabel = (status: string): string => {
     case 'ClearingRequested':
       return 'Removing'
     case 'Registered':
-      return 'Registered'
+      return 'Included'
     case 'Absent':
       return 'Removed'
     default:

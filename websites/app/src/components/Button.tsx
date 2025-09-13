@@ -9,7 +9,7 @@ const Button = styled.button`
   font-weight: bold;
   padding: 8px ${responsiveSize(8, 20)};
   border: none;
-  border-radius: 12px;
+  border-radius: 9999px;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 

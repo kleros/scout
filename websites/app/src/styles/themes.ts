@@ -1,0 +1,90 @@
+const componentsDarkTheme = {
+  klerosUIComponentsName: "dark",
+  klerosUIComponentsPrimaryPurple: "#7E1BD4",
+  klerosUIComponentsSecondaryPurple: "#C5ABFF",
+  klerosUIComponentsMediumPurple: "#390F6C",
+  klerosUIComponentsLightPurple: "#FCFBFF",
+  klerosUIComponentsPrimaryBlue: "#6CC5FF",
+  klerosUIComponentsSecondaryBlue: "#7186FF",
+  klerosUIComponentsMediumBlue: "#2E206C",
+  klerosUIComponentsLightBlue: "#2A1260",
+  klerosUIComponentsPrimaryText: "#FFFFFF",
+  klerosUIComponentsSecondaryText: "#BEBEC5",
+  klerosUIComponentsTertiaryText: "#989AA0",
+  klerosUIComponentsStroke: "#FFFFFF29",
+  klerosUIComponentsLightGrey: "#262B3A",
+
+  klerosUIComponentsWhiteBackground: "#1B2030",
+  klerosUIComponentsLightBackground: "#1B2030",
+
+  klerosUIComponentsDefaultShadow: "#00000000",
+  klerosUIComponentsHoveredShadow: "#42498f80",
+
+  klerosUIComponentsSuccess: "#65DC7F",
+  klerosUIComponentsSuccessLight: "#32355B",
+  klerosUIComponentsWarning: "#FFC46B",
+  klerosUIComponentsWarningLight: "#451F54",
+  klerosUIComponentsError: "#FF5A78",
+  klerosUIComponentsErrorLight: "#360652",
+  klerosUIComponentsTint: "#DDB6FF",
+  klerosUIComponentsTintMedium: "#401D6C",
+  klerosUIComponentsTintPurple: "#2F0960",
+  klerosUIComponentsTintYellow: "#FFE16B",
+
+  klerosUIComponentsSkeletonBackground: "#30285B",
+  klerosUIComponentsSkeletonHighlight: "#52438A",
+
+  klerosUIComponentsTransitionSpeed: "0.25s",
+};
+
+
+export const darkTheme = {
+  ...componentsDarkTheme,
+  name: "dark",
+  white: "#FFFFFF",
+  black: "#000000",
+  primaryPurple: "#7E1BD4",
+  secondaryPurple: "#C5ABFF",
+  darkPurple: "#220050",
+  mediumPurple: "#390F6C",
+  lightPurple: "#FCFBFF",
+  violetPurple: "#6A1DCD",
+  lavenderPurple: "#BB72FF",
+  primaryBlue: "#6CC5FF",
+  secondaryBlue: "#7186FF",
+  mediumBlue: "#2E206C",
+  primaryText: "#FFFFFF",
+  secondaryText: "#BEBEC5",
+  tertiaryText: "#989AA0",
+  stroke: "#FFFFFF29",
+  lightGrey: "#262B3A",
+
+  whiteBackground: "#1B2030",
+  lightBackground: "#1B2030",
+  backgroundTwo: "#363947",
+
+  defaultShadow: "#00000000",
+  hoveredShadow: "#42498f80",
+  whiteLowOpacitySubtle: "#FFFFFF0F",
+  whiteLowOpacityStrong: "#FFFFFF24",
+  blackLowOpacity: "#00000080",
+
+  success: "#65DC7F",
+  successLight: "#32355B",
+  warning: "#FFC46B",
+  warningLight: "#451F54",
+  error: "#FF5A78",
+  errorLight: "#360652",
+  tint: "#DDB6FF",
+  tintMedium: "#401D6C",
+  tintPurple: "#E5D6FF",
+  tintYellow: "#FFE16B",
+
+  transitionSpeed: "0.25s",
+
+  skeletonBackground: "#30285B",
+  skeletonHighlight: "#52438A",
+
+  paleCyan: "#ACFFFF",
+  limeGreen: "#F3FFD9",
+};
