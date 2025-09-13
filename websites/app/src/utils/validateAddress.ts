@@ -1,11 +1,11 @@
 import { isAddress } from 'ethers'
 import request, { gql } from 'graphql-request'
 import { registryMap } from './fetchItems'
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 import { PublicKey } from '@solana/web3.js'
 import { chains } from 'utils/chains'
 import bs58check from 'bs58check'
 import { bech32, bech32m } from '@scure/base'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
 
 const isSolanaAddress = (value: string) => {
   try {
@@ -53,7 +53,10 @@ const isValidAddressForChain = (chainId: string, address: string): boolean => {
   if (!network) return false
   if (network.namespace === 'solana') return isSolanaAddress(address)
   if (network.namespace === 'bip122') return isBip122Address(address)
-  if (network.namespace === 'eip155') return isAddress(address)
+  if (network.namespace === 'eip155') {
+    if (!address.startsWith('0x')) return false
+    return isAddress(address)
+  }
   return false
 }
 
@@ -98,7 +101,7 @@ const getDupesInRegistry = async (
       litems(
         where: {
           registry: $registry,
-          status_in: ["Registered", "ClearingRequested"],
+          status_in: ["Registered", "ClearingRequested", "RegistrationRequested"],
           metadata_ : { key0_contains_nocase: $richAddress,
             ${domain ? `key1_starts_with_nocase: "${domain}"` : ''}
               },
@@ -121,6 +124,44 @@ const getDupesInRegistry = async (
   return items.length
 }
 
+const getTokenDupesWithWebsiteCheck = async (
+  richAddress: string,
+  registryAddress: string
+): Promise<number> => {
+  const query = gql`
+    query ($registry: String!, $richAddress: String!) {
+      litems(
+        where: {
+          registry: $registry,
+          status_in: ["Registered", "ClearingRequested", "RegistrationRequested"],
+          metadata_ : { key0_contains_nocase: $richAddress },
+        }
+      ) {
+        id
+        metadata {
+          key3
+        }
+      }
+    }
+  `
+
+  const result = (await request({
+    url: SUBGRAPH_GNOSIS_ENDPOINT,
+    document: query,
+    variables: {
+      registry: registryAddress,
+      richAddress,
+    },
+  })) as any
+  
+  // Only count duplicates if existing entries have a website (key3)
+  const duplicatesWithWebsite = result.litems.filter((item: any) => 
+    item.metadata?.key3 && item.metadata.key3.trim() !== ''
+  )
+  
+  return duplicatesWithWebsite.length
+}
+
 export const getAddressValidationIssue = async (
   chainId: string,
   registry: string,
@@ -134,7 +175,16 @@ export const getAddressValidationIssue = async (
   const result: Issue = {}
 
   if (address && !isValidAddressForChain(chainId, address)) {
-    result.address = { message: 'Invalid address for the specified chain', severity: 'error' }
+    const network = chains.find(chain => `${chain.namespace}:${chain.id}` === chainId)
+    let message = 'Invalid address for the specified chain'
+    
+    if (network?.namespace === 'eip155' && !address.startsWith('0x')) {
+      message = 'Address must start with "0x" prefix for Ethereum-like chains'
+    } else if (network?.namespace === 'eip155' && address.startsWith('0x') && !isAddress(address)) {
+      message = 'Invalid Ethereum address format'
+    }
+    
+    result.address = { message, severity: 'error' }
   }
 
   if (publicNameTag && publicNameTag.length > 50) {
@@ -169,10 +219,20 @@ export const getAddressValidationIssue = async (
 
   if (Object.keys(result).length > 0) return result
 
-  const ndupes = await getDupesInRegistry(chainId + ':' + address, registryMap[registry], domain)
+  // Check for duplicates based on registry type
+  if (registry === 'Single_Tags' || registry === 'CDN') {
+    const ndupes = await getDupesInRegistry(chainId + ':' + address, registryMap[registry], domain)
 
-  if (ndupes > 0) {
-    result.domain = { message: 'Duplicate submission', severity: 'error' }
+    if (ndupes > 0) {
+      result.domain = { message: 'Duplicate submission', severity: 'error' }
+    }
+  } else if (registry === 'Tokens') {
+    // For tokens, only consider it a duplicate if any of the existing entries have a website
+    const ndupes = await getTokenDupesWithWebsiteCheck(chainId + ':' + address, registryMap[registry])
+
+    if (ndupes > 0) {
+      result.domain = { message: 'Duplicate submission - token with website already exists', severity: 'error' }
+    }
   }
 
   return Object.keys(result).length > 0 ? result : null;
