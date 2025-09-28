@@ -168,18 +168,71 @@ const CheckboxGroup = styled.div`
   gap: 8px;
 `;
 
-const CheckboxItem = styled.label`
+const GroupHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+`;
+
+const ActionButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.accent};
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.7;
+
+  &:hover {
+    background: ${({ theme }) => theme.lightGrey};
+    opacity: 1;
+  }
+`;
+
+const CheckboxItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: ${({ theme }) => theme.primaryText};
+  font-size: 14px;
+  padding: 4px 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.accent};
+
+    .only-button {
+      opacity: 1;
+    }
+  }
+`;
+
+const CheckboxLabel = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${({ theme }) => theme.primaryText};
-  font-size: 14px;
   cursor: pointer;
-  padding: 4px 0;
-  transition: color 0.2s;
-  
+  flex: 1;
+`;
+
+const OnlyButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.accent};
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0;
+
   &:hover {
-    color: ${({ theme }) => theme.accent};
+    background: ${({ theme }) => theme.lightGrey};
   }
 `;
 
@@ -214,22 +267,33 @@ const NetworkGrid = styled.div`
   margin-top: 8px;
 `;
 
-const NetworkItem = styled.label`
+const NetworkItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   color: ${({ theme }) => theme.primaryText};
   font-size: 14px;
-  cursor: pointer;
   padding: 6px 8px;
   border-radius: 8px;
   transition: all 0.2s;
-  
+
   &:hover {
     background: ${({ theme }) => theme.lightGrey};
     color: ${({ theme }) => theme.accent};
+
+    .only-button {
+      opacity: 1;
+    }
   }
-  
+`;
+
+const NetworkLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 1;
+
   svg {
     width: 16px;
     height: 16px;
@@ -432,9 +496,70 @@ const FilterModal: React.FC<FilterModalProps> = ({
     });
   }, [setSearchParams, userAddress]);
 
+  const handleStatusOnly = useCallback((selectedStatus: string) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.delete('status');
+      newParams.append('status', selectedStatus);
+      newParams.set('page', '1');
+      if (userAddress) {
+        newParams.set('userAddress', userAddress);
+      }
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams, userAddress]);
+
+  const handleStatusAll = useCallback(() => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.delete('status');
+      REGISTRATION_STATUSES.forEach(status => newParams.append('status', status));
+      newParams.set('page', '1');
+      if (userAddress) {
+        newParams.set('userAddress', userAddress);
+      }
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams, userAddress]);
+
+  const handleDisputedOnly = useCallback((selectedDisputed: string) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.delete('disputed');
+      newParams.append('disputed', selectedDisputed);
+      newParams.set('page', '1');
+      if (userAddress) {
+        newParams.set('userAddress', userAddress);
+      }
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams, userAddress]);
+
+  const handleDisputedAll = useCallback(() => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.delete('disputed');
+      CHALLENGE_STATUSES.forEach(challenge => newParams.append('disputed', challenge.value));
+      newParams.set('page', '1');
+      if (userAddress) {
+        newParams.set('userAddress', userAddress);
+      }
+      return newParams;
+    }, { replace: true });
+  }, [setSearchParams, userAddress]);
+
+  const handleNetworkOnly = useCallback((selectedNetworkId: string) => {
+    onChainFiltersChange([selectedNetworkId]);
+  }, [onChainFiltersChange]);
+
   const availableChains = useMemo(() => {
     return chains.filter(chain => !chain.deprecated);
   }, []);
+
+  const handleNetworkAll = useCallback(() => {
+    const allChainIds = [...availableChains.map(chain => chain.id), 'unknown'];
+    onChainFiltersChange(allChainIds);
+  }, [onChainFiltersChange, availableChains]);
 
   if (!isOpen) return null;
 
@@ -451,19 +576,33 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <SectionGrid>
             <FilterColumn>
               <FilterGroup>
-                <FilterGroupTitle>
-                  <FiltersIcon />
-                  Verification Status
-                </FilterGroupTitle>
+                <GroupHeader>
+                  <FilterGroupTitle>
+                    <FiltersIcon />
+                    Verification Status
+                  </FilterGroupTitle>
+                  <ActionButton onClick={handleStatusAll}>
+                    All
+                  </ActionButton>
+                </GroupHeader>
                 <CheckboxGroup>
                   {REGISTRATION_STATUSES.map((status) => (
                     <CheckboxItem key={status}>
-                      <Checkbox
-                        checked={registrationStatuses.includes(status)}
-                        onChange={() => handleStatusChange(status)}
-                      />
-                      <StatusCircle status={status} />
-                      {STATUS_LABELS[status]}
+                      <CheckboxLabel>
+                        <Checkbox
+                          checked={registrationStatuses.includes(status)}
+                          onChange={() => handleStatusChange(status)}
+                        />
+                        <StatusCircle status={status} />
+                        {STATUS_LABELS[status]}
+                      </CheckboxLabel>
+                      <OnlyButton
+                        className="only-button"
+                        onClick={() => handleStatusOnly(status)}
+                        type="button"
+                      >
+                        Only
+                      </OnlyButton>
                     </CheckboxItem>
                   ))}
                 </CheckboxGroup>
@@ -472,19 +611,33 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
             <FilterColumn>
               <FilterGroup>
-                <FilterGroupTitle>
-                  <FiltersIcon />
-                  Challenge Status
-                </FilterGroupTitle>
+                <GroupHeader>
+                  <FilterGroupTitle>
+                    <FiltersIcon />
+                    Challenge Status
+                  </FilterGroupTitle>
+                  <ActionButton onClick={handleDisputedAll}>
+                    All
+                  </ActionButton>
+                </GroupHeader>
                 <CheckboxGroup>
                   {CHALLENGE_STATUSES.map((challenge) => (
                     <CheckboxItem key={challenge.value}>
-                      <Checkbox
-                        checked={disputedValues.includes(challenge.value)}
-                        onChange={() => handleDisputedChange(challenge.value)}
-                      />
-                      <StatusCircle status={challenge.value} />
-                      {challenge.label}
+                      <CheckboxLabel>
+                        <Checkbox
+                          checked={disputedValues.includes(challenge.value)}
+                          onChange={() => handleDisputedChange(challenge.value)}
+                        />
+                        <StatusCircle status={challenge.value} />
+                        {challenge.label}
+                      </CheckboxLabel>
+                      <OnlyButton
+                        className="only-button"
+                        onClick={() => handleDisputedOnly(challenge.value)}
+                        type="button"
+                      >
+                        Only
+                      </OnlyButton>
                     </CheckboxItem>
                   ))}
                 </CheckboxGroup>
@@ -494,30 +647,53 @@ const FilterModal: React.FC<FilterModalProps> = ({
         </FilterSection>
 
         <FilterSection>
-          <SectionTitle>
-            <FiltersIcon />
-            Networks
-          </SectionTitle>
+          <GroupHeader>
+            <SectionTitle>
+              <FiltersIcon />
+              Networks
+            </SectionTitle>
+            <ActionButton onClick={handleNetworkAll}>
+              All
+            </ActionButton>
+          </GroupHeader>
           <NetworkGrid>
             {availableChains.map((chain) => {
               const ChainIcon = getChainIcon(chain.id);
               return (
                 <NetworkItem key={chain.id}>
-                  <Checkbox
-                    checked={chainFilters.includes(chain.id)}
-                    onChange={() => handleNetworkChange(chain.id)}
-                  />
-                  {ChainIcon && <ChainIcon />}
-                  {chain.name}
+                  <NetworkLabel>
+                    <Checkbox
+                      checked={chainFilters.includes(chain.id)}
+                      onChange={() => handleNetworkChange(chain.id)}
+                    />
+                    {ChainIcon && <ChainIcon />}
+                    {chain.name}
+                  </NetworkLabel>
+                  <OnlyButton
+                    className="only-button"
+                    onClick={() => handleNetworkOnly(chain.id)}
+                    type="button"
+                  >
+                    Only
+                  </OnlyButton>
                 </NetworkItem>
               );
             })}
             <NetworkItem>
-              <Checkbox
-                checked={chainFilters.includes('unknown')}
-                onChange={() => handleNetworkChange('unknown')}
-              />
-              Unknown chains
+              <NetworkLabel>
+                <Checkbox
+                  checked={chainFilters.includes('unknown')}
+                  onChange={() => handleNetworkChange('unknown')}
+                />
+                Unknown chains
+              </NetworkLabel>
+              <OnlyButton
+                className="only-button"
+                onClick={() => handleNetworkOnly('unknown')}
+                type="button"
+              >
+                Only
+              </OnlyButton>
             </NetworkItem>
           </NetworkGrid>
         </FilterSection>
