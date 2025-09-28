@@ -44,6 +44,7 @@
     "graphql": "^16.8.1",
     "graphql-request": "^6.1.0",
     "humanize-duration": "^3.32.1",
+    "json-2-csv": "^5.5.9",
     "overlayscrollbars": "^2.3.0",
     "overlayscrollbars-react": "^0.5.2",
     "react": "^18.0.0",

@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components';
 import { useSearchParams, createSearchParams } from 'react-router-dom';
 import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
 import { chains } from 'utils/chains';
+import { registryMap } from 'utils/fetchItems';
 import SubmitButton from './SubmitButton';
 import Search from './Search';
 import LoadingItems from './LoadingItems';
@@ -15,6 +16,8 @@ import FilterButton from './FilterButton';
 import CloseIcon from 'svgs/icons/close.svg';
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
+import ExportButton from './ExportButton';
+import ExportModal from './ExportModal';
 import HeroShadowSVG from 'svgs/header/hero-shadow.svg';
 import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle';
 import { responsiveSize } from 'styles/responsiveSize';
@@ -213,6 +216,7 @@ const Hero: React.FC<{ registryKey: string; }> = ({ registryKey }) => {
 const Home: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [chainFilters, setChainFilters] = useState<string[]>([]);
 
 
@@ -322,6 +326,7 @@ const Home: React.FC = () => {
 
   const selectedRegistries = searchParams.getAll('registry');
   const singleRegistry = selectedRegistries.length === 1 ? selectedRegistries[0] : null;
+  const currentRegistryAddress = singleRegistry ? registryMap[singleRegistry as keyof typeof registryMap] : undefined;
 
   return (
     <Container>
@@ -340,6 +345,7 @@ const Home: React.FC = () => {
                     <FilterButton onClick={() => setIsFilterModalOpen(true)} />
                   </SearchAndFiltersContainer>
                   <PolicyAndSubmitItemContainer>
+                    <ExportButton onClick={() => setIsExportModalOpen(true)} />
                     <PolicyButton />
                     <SubmitButton />
                   </PolicyAndSubmitItemContainer>
@@ -352,12 +358,18 @@ const Home: React.FC = () => {
             </PageInner>
           {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
           {isAddItemOpen && <AddEntryModal />}
-          <FilterModal 
+          <FilterModal
             isOpen={isFilterModalOpen}
             onClose={() => setIsFilterModalOpen(false)}
             chainFilters={chainFilters}
             onChainFiltersChange={setChainFilters}
           />
+          {isExportModalOpen && currentRegistryAddress && (
+            <ExportModal
+              registryAddress={currentRegistryAddress}
+              onClose={() => setIsExportModalOpen(false)}
+            />
+          )}
         </>
       )}
     </Container>
