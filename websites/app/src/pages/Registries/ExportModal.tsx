@@ -1,13 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import { landscapeStyle } from 'styles/landscapeStyle';
-import { responsiveSize } from 'styles/responsiveSize';
 import { useExportItems, ExportFilters } from "hooks/queries/useExportItems";
 import { json2csv } from "json-2-csv";
 import { revRegistryMap } from "utils/fetchItems";
 import { chains } from "utils/chains";
-import { StyledCloseButton, ClosedButtonContainer } from './index';
-import Button from 'components/Button';
 import ExportIcon from "svgs/icons/export.svg";
 
 const ModalOverlay = styled.div`
@@ -23,20 +20,12 @@ const ModalOverlay = styled.div`
   z-index: 50;
 `;
 
-const ModalContainer = styled.div`
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
-  backdrop-filter: blur(50px);
-  border-radius: 20px;
-  width: 84vw;
-  max-height: 85vh;
+const ModalWrapper = styled.div`
   position: relative;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
+  width: 90vw;
+  max-width: 800px;
+  max-height: 90vh;
+  border-radius: 20px;
 
   &:before {
     content: '';
@@ -53,48 +42,55 @@ const ModalContainer = styled.div`
 
   ${landscapeStyle(
     () => css`
-      width: 50%;
-      max-width: 600px;
+      width: 60%;
+      max-width: 700px;
     `
   )}
 `;
 
-const ModalContent = styled.div`
+const ModalContainer = styled.div`
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(153, 153, 153, 0.08) 100%
+  );
+  backdrop-filter: blur(50px);
+  border-radius: 20px;
+  border: 1px solid rgba(113, 134, 255, 0.3);
+  width: 100%;
+  height: 100%;
+  max-height: 90vh;
   overflow-y: auto;
-  padding: ${responsiveSize(16, 32)};
-`;
-
-const ExportContainer = styled.div`
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 24px;
+  position: relative;
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
 `;
 
-const ExportHeader = styled.div`
+
+
+const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  align-items: center;
+  border-bottom: 1px solid rgba(113, 134, 255, 0.3);
+  padding-bottom: 20px;
 `;
 
-const ExportTitle = styled.div`
-  margin: 0 0 4px 0;
-  font-size: 24px;
-  font-family: 'Inter', sans-serif;
+const ModalTitle = styled.h2`
+  color: ${({ theme }) => theme.primaryText};
+  font-size: 20px;
   font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: 0.5px;
-  position: relative;
-  z-index: 1;
+  margin: 0;
 `;
 
-const ExportSubtitle = styled.div`
+const ModalSubtitle = styled.div`
   font-size: 14px;
-  opacity: 80%;
+  color: ${({ theme }) => theme.secondaryText};
+  margin-top: 4px;
   line-height: 1.4;
-  position: relative;
-  z-index: 1;
-  max-width: 400px;
 `;
 
 const HeaderContent = styled.div`
@@ -102,17 +98,20 @@ const HeaderContent = styled.div`
   min-width: 0;
 `;
 
-const CloseButtonWrapper = styled.div`
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryText};
+  }
 `;
 
-const Divider = styled.div`
-  height: 1px;
-  width: 100%;
-  background: linear-gradient(90deg, transparent 0%, rgba(113, 134, 255, 0.5) 50%, transparent 100%);
-`;
 
 const FilterSection = styled.div`
   display: flex;
@@ -120,42 +119,149 @@ const FilterSection = styled.div`
   gap: 16px;
 `;
 
-const FilterRow = styled.div`
+const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
 `;
 
-const FilterLabel = styled.label`
-  font-family: 'Inter', sans-serif;
+const GroupHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+`;
+
+const FilterGroupTitle = styled.h4`
+  color: ${({ theme }) => theme.accent};
   font-size: 14px;
   font-weight: 600;
-  color: ${({ theme }) => theme.primaryText};
-`;
-
-const MultiSelect = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background: rgba(26, 11, 46, 0.3);
-  border: 1px solid rgba(126, 87, 194, 0.3);
-  border-radius: 8px;
-  padding: 12px;
-`;
-
-const CheckboxOption = styled.label`
+  margin: 0;
+  padding-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-  cursor: pointer;
 
-  input[type="checkbox"] {
-    margin: 0;
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: ${({ theme }) => theme.accent};
+  }
+`;
+
+
+const CheckboxGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const NetworkGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+`;
+
+const CheckboxItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: ${({ theme }) => theme.primaryText};
+  font-size: 14px;
+  padding: 4px 0;
+  transition: color 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.accent};
+
+    .only-button {
+      opacity: 1;
+    }
+  }
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 1;
+`;
+
+const NetworkItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: ${({ theme }) => theme.primaryText};
+  font-size: 14px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${({ theme }) => theme.lightGrey};
+    color: ${({ theme }) => theme.accent};
+
+    .only-button {
+      opacity: 1;
+    }
+  }
+`;
+
+const NetworkLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  flex: 1;
+
+  svg {
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
+  }
+`;
+
+
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 16px;
+  height: 16px;
+  accent-color: ${({ theme }) => theme.accent};
+`;
+
+const OnlyButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.accent};
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0;
+
+  &:hover {
+    background: ${({ theme }) => theme.lightGrey};
+  }
+`;
+
+const ActionButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.accent};
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.7;
+
+  &:hover {
+    background: ${({ theme }) => theme.lightGrey};
+    opacity: 1;
   }
 `;
 
@@ -179,63 +285,62 @@ const DateInput = styled.input`
   }
 `;
 
-const ActionButtons = styled.div`
+const FooterButtons = styled.div`
   display: flex;
-  gap: 12px;
   justify-content: flex-end;
-  margin-top: 8px;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(113, 134, 255, 0.3);
 `;
 
 const CancelButton = styled.button`
-  background: transparent;
-  border: 1px solid rgba(126, 87, 194, 0.5);
-  border-radius: 9999px;
-  color: ${({ theme }) => theme.secondaryText};
-  padding: 8px 16px;
-  font-family: 'Inter', sans-serif;
+  padding: 12px 24px;
+  border-radius: 8px;
   font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  border: 1px solid;
+  transition: all 0.2s;
+  background: transparent;
+  color: ${({ theme }) => theme.accent};
+  border-color: ${({ theme }) => theme.accent};
 
   &:hover {
-    border-color: rgba(126, 87, 194, 0.8);
+    background: ${({ theme }) => theme.lightGrey};
     color: ${({ theme }) => theme.primaryText};
   }
 `;
 
-const ExportButton = styled(Button)<{ disabled: boolean }>`
+const ExportButton = styled.button<{ disabled: boolean }>`
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 8px;
+  background: linear-gradient(135deg, #7186FF 0%, #9B59B6 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 16px rgba(113, 134, 255, 0.3);
   opacity: ${({ disabled }) => disabled ? 0.7 : 1};
   cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
-  font-size: 14px;
-  padding: 8px 16px;
-  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: ${({ disabled }) => disabled ? '0 4px 16px rgba(113, 134, 255, 0.3)' : '0 6px 20px rgba(113, 134, 255, 0.4)'};
+    filter: ${({ disabled }) => disabled ? 'none' : 'brightness(1.05)'};
+  }
 
   svg {
     width: 16px;
     height: 16px;
   }
-
-  ${({ disabled }) => disabled && `
-    &:hover {
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-      transform: none !important;
-      filter: none !important;
-    }
-  `}
 `;
 
-const StyledExportIcon = styled(ExportIcon)`
-  path {
-    stroke: currentColor;
-  }
-`;
 
-const ExportCloseButton: React.FC<{ onClick: () => void }> = ({ onClick }) => {
-  return <StyledCloseButton onClick={onClick} />;
-};
 
 const STATUS_OPTIONS = [
   { value: 'Registered', label: 'Registered' },
@@ -287,6 +392,22 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
     } else {
       setSelectedNetworks(prev => prev.filter(n => n !== network));
     }
+  };
+
+  const handleNetworkOnly = (selectedNetwork: string) => {
+    setSelectedNetworks([selectedNetwork]);
+  };
+
+  const handleNetworkAll = () => {
+    setSelectedNetworks([]);
+  };
+
+  const handleStatusOnly = (selectedStatus: string) => {
+    setSelectedStatuses([selectedStatus]);
+  };
+
+  const handleStatusAll = () => {
+    setSelectedStatuses(['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']);
   };
 
   const handleExport = () => {
@@ -355,96 +476,122 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
 
   return (
     <ModalOverlay onClick={onClose}>
-      <ModalContainer onClick={(e) => e.stopPropagation()}>
-        <ModalContent>
-          <ExportContainer>
-            <ExportHeader>
-              <HeaderContent>
-                <ExportTitle>Export Registry Data</ExportTitle>
-                <ExportSubtitle>
-                  Export filtered items as CSV with custom options.
-                </ExportSubtitle>
-              </HeaderContent>
-              <CloseButtonWrapper>
-                <ClosedButtonContainer onClick={onClose}>
-                  <ExportCloseButton onClick={onClose} />
-                </ClosedButtonContainer>
-              </CloseButtonWrapper>
-            </ExportHeader>
+      <ModalWrapper>
+        <ModalContainer onClick={(e) => e.stopPropagation()}>
+          <ModalHeader>
+            <HeaderContent>
+              <ModalTitle>Export Registry Data</ModalTitle>
+              <ModalSubtitle>
+                Export filtered items as CSV with custom options.
+              </ModalSubtitle>
+            </HeaderContent>
+            <CloseButton onClick={onClose}>×</CloseButton>
+          </ModalHeader>
 
-            <Divider />
-
-            <FilterSection>
-              <FilterRow>
-                <FilterLabel>Status (select at least one)</FilterLabel>
-                <MultiSelect>
-                  {STATUS_OPTIONS.map((option) => (
-                    <CheckboxOption key={option.value}>
-                      <input
-                        type="checkbox"
+          <FilterSection>
+            <FilterGroup>
+              <GroupHeader>
+                <FilterGroupTitle>Status (select at least one)</FilterGroupTitle>
+                <ActionButton onClick={handleStatusAll}>
+                  All
+                </ActionButton>
+              </GroupHeader>
+              <CheckboxGroup>
+                {STATUS_OPTIONS.map((option) => (
+                  <CheckboxItem key={option.value}>
+                    <CheckboxLabel>
+                      <Checkbox
                         checked={selectedStatuses.includes(option.value)}
                         onChange={(e) => handleStatusChange(option.value, e.target.checked)}
                       />
                       {option.label}
-                    </CheckboxOption>
-                  ))}
-                </MultiSelect>
-              </FilterRow>
+                    </CheckboxLabel>
+                    <OnlyButton
+                      className="only-button"
+                      onClick={() => handleStatusOnly(option.value)}
+                      type="button"
+                    >
+                      Only
+                    </OnlyButton>
+                  </CheckboxItem>
+                ))}
+              </CheckboxGroup>
+            </FilterGroup>
+          </FilterSection>
 
-              <FilterRow>
-                <FilterLabel>Networks (leave empty for all)</FilterLabel>
-                <MultiSelect>
-                  {NETWORK_OPTIONS.map((option) => (
-                    <CheckboxOption key={option.value}>
-                      <input
-                        type="checkbox"
-                        checked={selectedNetworks.includes(option.value)}
-                        onChange={(e) => handleNetworkChange(option.value, e.target.checked)}
-                      />
-                      {option.label}
-                    </CheckboxOption>
-                  ))}
-                </MultiSelect>
-              </FilterRow>
+          <FilterSection>
+            <GroupHeader>
+              <FilterGroupTitle>Networks (leave empty for all)</FilterGroupTitle>
+              <ActionButton onClick={handleNetworkAll}>
+                All
+              </ActionButton>
+            </GroupHeader>
+            <NetworkGrid>
+              {NETWORK_OPTIONS.map((option) => (
+                <NetworkItem key={option.value}>
+                  <NetworkLabel>
+                    <Checkbox
+                      checked={selectedNetworks.includes(option.value)}
+                      onChange={(e) => handleNetworkChange(option.value, e.target.checked)}
+                    />
+                    {option.label}
+                  </NetworkLabel>
+                  <OnlyButton
+                    className="only-button"
+                    onClick={() => handleNetworkOnly(option.value)}
+                    type="button"
+                  >
+                    Only
+                  </OnlyButton>
+                </NetworkItem>
+              ))}
+            </NetworkGrid>
+          </FilterSection>
 
-              <FilterRow>
-                <FilterLabel>From Date (leave empty for all history)</FilterLabel>
-                <DateInput
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-              </FilterRow>
+          <FilterSection>
+            <FilterGroup>
+              <GroupHeader>
+                <FilterGroupTitle>From Date (leave empty for all history)</FilterGroupTitle>
+              </GroupHeader>
+              <DateInput
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </FilterGroup>
+          </FilterSection>
 
-              <FilterRow>
-                <FilterLabel>To Date (leave empty for current date)</FilterLabel>
-                <DateInput
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-              </FilterRow>
-            </FilterSection>
+          <FilterSection>
+            <FilterGroup>
+              <GroupHeader>
+                <FilterGroupTitle>To Date (leave empty for current date)</FilterGroupTitle>
+              </GroupHeader>
+              <DateInput
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
+            </FilterGroup>
+          </FilterSection>
 
-            <ActionButtons>
-              <CancelButton onClick={onClose}>Cancel</CancelButton>
-              <ExportButton
-                disabled={!canExport || isButtonLoading}
-                onClick={handleExport}
-              >
-                {isButtonLoading ? (
-                  isRefetching ? "Fetching data..." : "Preparing CSV..."
-                ) : (
-                  <>
-                    Export CSV <StyledExportIcon />
-                  </>
-                )}
-              </ExportButton>
-            </ActionButtons>
-          </ExportContainer>
-        </ModalContent>
-        <a ref={ref} href="#" style={{ display: 'none' }} aria-hidden="true">Download</a>
-      </ModalContainer>
+          <FooterButtons>
+            <CancelButton onClick={onClose}>Cancel</CancelButton>
+            <ExportButton
+              disabled={!canExport || isButtonLoading}
+              onClick={handleExport}
+            >
+              {isButtonLoading ? (
+                isRefetching ? "Fetching data..." : "Preparing CSV..."
+              ) : (
+                <>
+                  Export CSV <ExportIcon />
+                </>
+              )}
+            </ExportButton>
+          </FooterButtons>
+          <a ref={ref} href="#" download style={{ display: 'none' }} aria-hidden="true">Download</a>
+        </ModalContainer>
+      </ModalWrapper>
     </ModalOverlay>
   );
 };
