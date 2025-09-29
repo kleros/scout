@@ -7,13 +7,27 @@ import { revRegistryMap } from "utils/fetchItems";
 import { chains } from "utils/chains";
 import ExportIcon from "svgs/icons/export.svg";
 
+import EthereumIcon from 'svgs/chains/ethereum.svg';
+import SolanaIcon from 'svgs/chains/solana.svg';
+import BaseIcon from 'svgs/chains/base.svg';
+import CeloIcon from 'svgs/chains/celo.svg';
+import ScrollIcon from 'svgs/chains/scroll.svg';
+import FantomIcon from 'svgs/chains/fantom.svg';
+import ZkSyncIcon from 'svgs/chains/zksync.svg';
+import GnosisIcon from 'svgs/chains/gnosis.svg';
+import PolygonIcon from 'svgs/chains/polygon.svg';
+import OptimismIcon from 'svgs/chains/optimism.svg';
+import ArbitrumIcon from 'svgs/chains/arbitrum.svg';
+import AvalancheIcon from 'svgs/chains/avalanche.svg';
+import BnbIcon from 'svgs/chains/bnb.svg';
+
 const ModalOverlay = styled.div`
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -349,6 +363,25 @@ const STATUS_OPTIONS = [
   { value: 'Absent', label: 'Removed' }
 ];
 
+const getChainIcon = (chainId: string) => {
+  const iconMap = {
+    '1': EthereumIcon,
+    '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': SolanaIcon,
+    '8453': BaseIcon,
+    '42220': CeloIcon,
+    '534352': ScrollIcon,
+    '250': FantomIcon,
+    '324': ZkSyncIcon,
+    '100': GnosisIcon,
+    '137': PolygonIcon,
+    '10': OptimismIcon,
+    '42161': ArbitrumIcon,
+    '43114': AvalancheIcon,
+    '56': BnbIcon,
+  };
+  return iconMap[chainId] || null;
+};
+
 const NETWORK_OPTIONS = chains
   .filter((chain) => !chain.deprecated)
   .map((chain) => ({ value: chain.id, label: chain.name }));
@@ -527,24 +560,28 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
               </ActionButton>
             </GroupHeader>
             <NetworkGrid>
-              {NETWORK_OPTIONS.map((option) => (
-                <NetworkItem key={option.value}>
-                  <NetworkLabel>
-                    <Checkbox
-                      checked={selectedNetworks.includes(option.value)}
-                      onChange={(e) => handleNetworkChange(option.value, e.target.checked)}
-                    />
-                    {option.label}
-                  </NetworkLabel>
-                  <OnlyButton
-                    className="only-button"
-                    onClick={() => handleNetworkOnly(option.value)}
-                    type="button"
-                  >
-                    Only
-                  </OnlyButton>
-                </NetworkItem>
-              ))}
+              {NETWORK_OPTIONS.map((option) => {
+                const ChainIcon = getChainIcon(option.value);
+                return (
+                  <NetworkItem key={option.value}>
+                    <NetworkLabel>
+                      <Checkbox
+                        checked={selectedNetworks.includes(option.value)}
+                        onChange={(e) => handleNetworkChange(option.value, e.target.checked)}
+                      />
+                      {ChainIcon && <ChainIcon />}
+                      {option.label}
+                    </NetworkLabel>
+                    <OnlyButton
+                      className="only-button"
+                      onClick={() => handleNetworkOnly(option.value)}
+                      type="button"
+                    >
+                      Only
+                    </OnlyButton>
+                  </NetworkItem>
+                );
+              })}
             </NetworkGrid>
           </FilterSection>
 
