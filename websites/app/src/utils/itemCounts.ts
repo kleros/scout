@@ -1,7 +1,7 @@
 import { gql, request } from 'graphql-request'
 import { DepositParams, fetchRegistryDeposits } from './fetchRegistryDeposits'
 import { registryMap } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index'
 
 export interface RegistryMetadata {
   address: string
@@ -48,7 +48,7 @@ const convertStringFieldsToNumber = (obj: any): any => {
 export const fetchItemCounts = async (): Promise<ItemCounts> => {
   const query = gql`
     {
-      Single_Tags: lregistry(id: "${registryMap.Single_Tags}") {
+      Single_Tags: LRegistry_by_pk(id: "${registryMap.Single_Tags}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -57,10 +57,10 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
         numberOfRegistrationRequested
         numberOfChallengedRegistrations
         registrationMetaEvidence {
-          URI
+          URI: uri
         }
       }
-      Tags_Queries: lregistry(id: "${registryMap.Tags_Queries}") {
+      Tags_Queries: LRegistry_by_pk(id: "${registryMap.Tags_Queries}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -69,10 +69,10 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
         numberOfRegistrationRequested
         numberOfChallengedRegistrations
         registrationMetaEvidence {
-          URI
+          URI: uri
         }
       }
-      CDN: lregistry(id: "${registryMap.CDN}") {
+      CDN: LRegistry_by_pk(id: "${registryMap.CDN}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -81,10 +81,10 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
         numberOfRegistrationRequested
         numberOfChallengedRegistrations
         registrationMetaEvidence {
-          URI
+          URI: uri
         }
       }
-      Tokens: lregistry(id: "${registryMap.Tokens}") {
+      Tokens: LRegistry_by_pk(id: "${registryMap.Tokens}") {
         id
         numberOfAbsent
         numberOfRegistered
@@ -93,7 +93,7 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
         numberOfRegistrationRequested
         numberOfChallengedRegistrations
         registrationMetaEvidence {
-          URI
+          URI: uri
         }
       }
     }
@@ -108,10 +108,12 @@ export const fetchItemCounts = async (): Promise<ItemCounts> => {
   // inject metadata into the uncomplete "ItemCounts". hacky code
   const regMEs = await Promise.all([
     fetch(
-      'https://cdn.kleros.link' + result?.Single_Tags?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' +
+        result?.Single_Tags?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
     fetch(
-      'https://cdn.kleros.link' + result?.Tags_Queries?.registrationMetaEvidence?.URI
+      'https://cdn.kleros.link' +
+        result?.Tags_Queries?.registrationMetaEvidence?.URI
     ).then((r) => r.json()),
     fetch(
       'https://cdn.kleros.link' + result?.CDN?.registrationMetaEvidence?.URI

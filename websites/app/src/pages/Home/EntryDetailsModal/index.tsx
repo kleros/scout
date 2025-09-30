@@ -319,7 +319,7 @@ const DetailsModal: React.FC = () => {
   const isTagsQueries = useMemo(() => searchParams.get('registry') === 'Tags_Queries', [searchParams]);
 
   const getPropValue = (label: string) => {
-    return detailsData?.metadata?.props?.find((prop) => prop.label === label)?.value || '';
+    return detailsData?.props?.find((prop) => prop.label === label)?.value || '';
   };
 
   return (
@@ -360,8 +360,8 @@ const DetailsModal: React.FC = () => {
                 )}
               </Header>
               <EntryDetailsContainer>
-                {detailsData?.metadata?.props && !isTagsQueries &&
-                  detailsData?.metadata?.props.map(({ label, value }) => (
+                {detailsData?.props && !isTagsQueries &&
+                  detailsData?.props.map(({ label, value }) => (
                     <LabelAndValue key={label}>
                       <strong>{label}:</strong> {renderValue(label, value)}
                     </LabelAndValue>
@@ -426,17 +426,17 @@ const DetailsModal: React.FC = () => {
                   evidences.map((evidence, idx) => (
                     <Evidence key={idx}>
                       <EvidenceField>
-                        <strong>Title:</strong> {evidence?.metadata?.title}
+                        <strong>Title:</strong> {evidence?.title}
                       </EvidenceField>
                       <EvidenceDescription>
                         <strong>Description:</strong>
-                        <StyledReactMarkdown>{evidence?.metadata?.description || ''}</StyledReactMarkdown>
+                        <StyledReactMarkdown>{evidence?.description || ''}</StyledReactMarkdown>
                       </EvidenceDescription>
-                      {evidence?.metadata?.fileURI ? (
+                      {evidence?.fileURI ? (
                         <StyledButton
                           onClick={() => {
-                            if (evidence.metadata?.fileURI) {
-                              setSearchParams({ attachment: `https://cdn.kleros.link${evidence.metadata.fileURI}` });
+                            if (evidence?.fileURI) {
+                              setSearchParams({ attachment: `https://cdn.kleros.link${evidence?.fileURI}` });
                               scrollTop();
                             }
                           }}

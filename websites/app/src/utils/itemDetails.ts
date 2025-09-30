@@ -1,6 +1,6 @@
 import request, { gql } from 'graphql-request'
 import { Prop, Request } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index'
 
 export interface GraphEvidence {
   party: string
@@ -8,12 +8,10 @@ export interface GraphEvidence {
   number: string
   timestamp: string
   txHash: string
-  metadata: {
-    title: string | null
-    description: string | null
-    fileURI: string | null
-    fileTypeExtension: string | null
-  } | null
+  title: string | null
+  description: string | null
+  fileURI: string | null
+  fileTypeExtension: string | null
 }
 
 export interface EvidenceGroup {
@@ -42,13 +40,11 @@ export interface GraphItemDetails {
     | 'RegistrationRequested'
     | 'ClearingRequested'
   disputed: boolean
-  metadata: {
-    key0: string
-    key1: string
-    key2: string
-    key3: string
-    props: Prop[]
-  } | null
+  key0: string
+  key1: string
+  key2: string
+  key3: string
+  props: Prop[]
   requests: RequestDetails[]
 }
 
@@ -57,25 +53,23 @@ export const fetchItemDetails = async (
 ): Promise<GraphItemDetails> => {
   const query = gql`
     query ($id: String!) {
-      litem(id: $id) {
-        metadata {
-          key0
-          key1
-          key2
-          key3
-          props {
-            value
-            type
-            label
-            description
-            isIdentifier
-          }
+      litem: LItem_by_pk(id: $id) {
+        key0
+        key1
+        key2
+        key3
+        props {
+          value
+          type: itemType
+          label
+          description
+          isIdentifier
         }
         itemID
         registryAddress
         status
         disputed
-        requests(orderBy: submissionTime, orderDirection: desc) {
+        requests(order_by: { submissionTime: desc }) {
           requestType
           disputed
           disputeID
@@ -92,21 +86,19 @@ export const fetchItemDetails = async (
           resolutionTime
           evidenceGroup {
             id
-            evidences(orderBy: number, orderDirection: desc) {
+            evidences(order_by: { number: desc }) {
               party
-              URI
+              URI: uri
               number
               timestamp
               txHash
-              metadata {
-                title
-                description
-                fileURI
-                fileTypeExtension
-              }
+              title
+              description
+              fileURI
+              fileTypeExtension
             }
           }
-          rounds(orderBy: creationTime, orderDirection: desc) {
+          rounds(order_by: { creationTime: desc }) {
             appealed
             appealPeriodStart
             appealPeriodEnd
