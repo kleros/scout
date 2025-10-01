@@ -279,7 +279,7 @@ const Home: React.FC = () => {
   }, [searchParams, countsData, countsLoading, searchData, chainFilters]);
 
   useEffect(() => {
-    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment') || searchParams.get('itemdetails')) {
+    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment')) {
       return;
     }
     const registry = searchParams.getAll('registry');

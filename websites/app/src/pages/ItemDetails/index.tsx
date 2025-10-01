@@ -13,7 +13,7 @@ import { useItemDetailsQuery, useItemCountsQuery } from 'hooks/queries';
 import { formatTimestamp } from 'utils/formatTimestamp';
 import { getStatusLabel } from 'utils/getStatusLabel';
 import LoadingItems from '../Registries/LoadingItems';
-import ConfirmationBox from '../Registries/EntryDetailsModal/ConfirmationBox';
+import ConfirmationBox from 'components/ConfirmationBox';
 import { SubmitButton } from '../Registries/SubmitEntries/AddEntryModal';
 import AttachmentIcon from "assets/svgs/icons/attachment.svg";
 import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown';

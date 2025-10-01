@@ -3,15 +3,27 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { SubmitButton } from '../SubmitEntries/AddEntryModal'
-import { StyledCloseButton, ClosedButtonContainer } from '~src/pages/Registries'
-import { ModalOverlay } from './index'
+import { SubmitButton } from 'pages/Registries/SubmitEntries/AddEntryModal'
+import { StyledCloseButton, ClosedButtonContainer } from 'pages/Registries'
 import { GraphItemDetails } from 'utils/itemDetails'
-import { useCurateInteractions } from '../../../hooks/contracts/useCurateInteractions'
-import { EnsureChain } from '../../../components/EnsureChain'
+import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
+import { EnsureChain } from 'components/EnsureChain'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
 import { Address } from 'viem'
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+`
 
 const Container = styled.div`
   position: fixed;
