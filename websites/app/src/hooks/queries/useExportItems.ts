@@ -1,5 +1,5 @@
 import { gql, request } from 'graphql-request';
-import { GraphItem } from 'utils/fetchItems';
+import { GraphItem } from 'utils/items';
 import { useQuery } from '@tanstack/react-query';
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 import { chains, getNamespaceForChainId } from 'utils/chains';

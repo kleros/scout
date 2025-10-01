@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
-import { registryMap } from 'utils/fetchItems';
+import { registryMap } from 'utils/items';
 
 const StyledLabel = styled.label`
   ${hoverShortTransitionTiming}

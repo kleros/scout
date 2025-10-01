@@ -1,6 +1,4 @@
-import request, { gql } from 'graphql-request'
-import { Prop, Request } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
+import { Prop, Request } from './items'
 
 export interface GraphEvidence {
   party: string
@@ -50,86 +48,4 @@ export interface GraphItemDetails {
     props: Prop[]
   } | null
   requests: RequestDetails[]
-}
-
-export const fetchItemDetails = async (
-  itemId: string
-): Promise<GraphItemDetails> => {
-  const query = gql`
-    query ($id: String!) {
-      litem(id: $id) {
-        metadata {
-          key0
-          key1
-          key2
-          key3
-          props {
-            value
-            type
-            label
-            description
-            isIdentifier
-          }
-        }
-        itemID
-        registryAddress
-        status
-        disputed
-        requests(orderBy: submissionTime, orderDirection: desc) {
-          requestType
-          disputed
-          disputeID
-          submissionTime
-          resolved
-          requester
-          arbitrator
-          arbitratorExtraData
-          challenger
-          creationTx
-          resolutionTx
-          deposit
-          disputeOutcome
-          resolutionTime
-          evidenceGroup {
-            id
-            evidences(orderBy: number, orderDirection: desc) {
-              party
-              URI
-              number
-              timestamp
-              txHash
-              metadata {
-                title
-                description
-                fileURI
-                fileTypeExtension
-              }
-            }
-          }
-          rounds(orderBy: creationTime, orderDirection: desc) {
-            appealed
-            appealPeriodStart
-            appealPeriodEnd
-            ruling
-            hasPaidRequester
-            hasPaidChallenger
-            amountPaidRequester
-            amountPaidChallenger
-            txHashAppealPossible
-            appealedAt
-            txHashAppealDecision
-          }
-        }
-      }
-    }
-  `
-  const result = (await request({
-    url: SUBGRAPH_GNOSIS_ENDPOINT,
-    document: query,
-    variables: {
-      id: itemId,
-    },
-  })) as any
-
-  return result.litem
 }

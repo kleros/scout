@@ -29,7 +29,7 @@ import {
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
-import { registryMap } from 'utils/fetchItems'
+import { registryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 
 const columns = [

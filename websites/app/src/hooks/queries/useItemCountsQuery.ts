@@ -3,7 +3,7 @@ import { gql } from 'graphql-request';
 import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts';
 import { useGraphqlBatcher } from './useGraphqlBatcher';
 import { ItemCounts } from '../../utils/itemCounts';
-import { registryMap } from '../../utils/fetchItems';
+import { registryMap } from 'utils/items';
 import { fetchRegistryDeposits, DepositParams } from '../../utils/fetchRegistryDeposits';
 
 const FETCH_ITEM_COUNTS_QUERY = gql`

@@ -3,7 +3,7 @@ import styled, { css } from "styled-components";
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { useExportItems, ExportFilters } from "hooks/queries/useExportItems";
 import { json2csv } from "json-2-csv";
-import { revRegistryMap } from "utils/fetchItems";
+import { revRegistryMap } from 'utils/items';
 import { chains } from "utils/chains";
 import ExportIcon from "svgs/icons/export.svg";
 

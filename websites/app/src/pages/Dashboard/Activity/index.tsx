@@ -13,7 +13,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import ConnectWallet from "components/ConnectWallet";
 import OngoingSubmissions from "./OngoingSubmissions";
 import PastSubmissions from "./PastSubmissions";
-import FilterButton from "./FilterButton";
+import FilterButton from "components/FilterButton";
 import FilterModal from "./FilterModal";
 import ActivitySearchBar from "./SearchBar";
 import { Copiable } from "@kleros/ui-components-library";

@@ -23,7 +23,7 @@ import { useItemCountsQuery } from '../../../../hooks/queries';
 import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions';
 import { getIPFSPath } from 'utils/getIPFSPath';
 import ipfsPublish from 'utils/ipfsPublish';
-import { registryMap } from 'utils/fetchItems'; 
+import { registryMap } from 'utils/items'; 
 import getAddressValidationIssue from 'utils/validateAddress';
 import { EnsureChain } from '../../../../components/EnsureChain';
 

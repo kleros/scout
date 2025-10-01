@@ -8,9 +8,8 @@ import { responsiveSize } from 'styles/responsiveSize';
 import ReactMarkdown from 'react-markdown';
 import { renderValue, StyledWebsiteAnchor } from 'utils/renderValue';
 import { fetchArbitrationCost } from 'utils/fetchArbitrationCost';
-import { fetchItemCounts } from 'utils/itemCounts';
-import { revRegistryMap } from 'utils/fetchItems';
-import { fetchItemDetails } from 'utils/itemDetails';
+import { revRegistryMap } from 'utils/items';
+import { useItemDetailsQuery, useItemCountsQuery } from 'hooks/queries';
 import { formatTimestamp } from 'utils/formatTimestamp';
 import { getStatusLabel } from 'utils/getStatusLabel';
 import LoadingItems from '../Registries/LoadingItems';
@@ -324,10 +323,9 @@ const ItemDetails: React.FC = () => {
     [searchParams]
   );
 
-  const { isLoading: detailsLoading, data: detailsData } = useQuery({
-    queryKey: ['details', itemId || ''],
-    queryFn: () => fetchItemDetails(itemId || ''),
-    staleTime: Infinity,
+  const { isLoading: detailsLoading, data: detailsData } = useItemDetailsQuery({
+    itemId: itemId || '',
+    enabled: !!itemId,
   });
 
   const registryParsedFromItemId = useMemo(() => itemId ? itemId.split('@')[1] : '', [itemId]);
@@ -336,11 +334,7 @@ const ItemDetails: React.FC = () => {
   const challengeRemainingTime = useChallengeRemainingTime(detailsData?.requests[0]?.submissionTime, detailsData?.disputed, challengePeriodDuration);
   const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2);
 
-  const { data: countsData } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  });
+  const { data: countsData } = useItemCountsQuery();
 
   const deposits = useMemo(() => {
     if (!countsData) return undefined;

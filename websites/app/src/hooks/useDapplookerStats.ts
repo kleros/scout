@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { gql } from 'graphql-request';
 import { useGraphqlBatcher } from './queries/useGraphqlBatcher';
-import { registryMap } from '../utils/fetchItems';
+import { registryMap } from 'utils/items';
 import { DAPPLOOKER_API_KEY } from 'consts';
 
 type ChainName = 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base';

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { gql } from 'graphql-request';
 import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts';
 import { useGraphqlBatcher } from './useGraphqlBatcher';
-import { GraphItem, registryMap } from '../../utils/fetchItems';
+import { GraphItem, registryMap } from 'utils/items';
 import { ITEMS_PER_PAGE } from '../../pages/Registries/index';
 import { chains, getNamespaceForChainId } from '../../utils/chains';
 

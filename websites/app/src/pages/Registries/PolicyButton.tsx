@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useScrollTop } from 'hooks/useScrollTop';
-import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts';
-import { useQuery } from '@tanstack/react-query';
+import { FocusedRegistry } from 'utils/itemCounts';
+import { useItemCountsQuery } from 'hooks/queries';
 import styled from 'styled-components';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
@@ -20,13 +20,7 @@ const PolicyButton: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const scrollTop = useScrollTop();
 
-  const {
-    data: countsData,
-  } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  });
+  const { data: countsData } = useItemCountsQuery();
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     const registryLabel = searchParams.get('registry');

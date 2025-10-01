@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { formatEther } from "ethers";
 import { useNavigate } from "react-router-dom";
 import AddressDisplay from "components/AddressDisplay";
-import { revRegistryMap } from "utils/fetchItems";
+import { revRegistryMap } from 'utils/items';
 import { useScrollTop } from "hooks/useScrollTop";
 import useHumanizedCountdown, {
   useChallengeRemainingTime,

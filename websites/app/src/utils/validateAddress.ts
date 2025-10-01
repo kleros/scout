@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers'
 import request, { gql } from 'graphql-request'
-import { registryMap } from './fetchItems'
+import { registryMap } from './items'
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
 import { PublicKey } from '@solana/web3.js'
 import { chains } from 'utils/chains'

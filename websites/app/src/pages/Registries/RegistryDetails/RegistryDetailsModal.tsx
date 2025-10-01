@@ -4,11 +4,11 @@ import Skeleton from 'react-loading-skeleton'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { FocusedRegistry, fetchItemCounts } from 'utils/itemCounts'
+import { FocusedRegistry } from 'utils/itemCounts'
+import { useItemCountsQuery } from 'hooks/queries'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 import { useScrollTop } from 'hooks/useScrollTop'
-import { registryMap } from 'utils/fetchItems'
+import { registryMap } from 'utils/items'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -80,14 +80,7 @@ const RegistryDetailsModal: React.FC = () => {
   const [imgLoaded, setImgLoaded] = useState(false)
   const scrollTop = useScrollTop();
 
-  const {
-    data: countsData,
-    isLoading,
-  } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  })
+  const { data: countsData, isLoading } = useItemCountsQuery();
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     const registryLabel = searchParams.get('registry')

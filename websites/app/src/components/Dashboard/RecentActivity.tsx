@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { useNavigate } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
-import { revRegistryMap } from 'utils/fetchItems';
+import { revRegistryMap } from 'utils/items';
 import { shortenAddress } from 'utils/shortenAddress';
 import HourglassIcon from 'svgs/icons/hourglass.svg';
 import useHumanizedCountdown, {

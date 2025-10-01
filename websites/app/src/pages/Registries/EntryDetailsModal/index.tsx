@@ -10,9 +10,8 @@ import { useQuery } from '@tanstack/react-query';
 import { renderValue, StyledWebsiteAnchor } from 'utils/renderValue';
 import { statusColorMap } from 'utils/colorMappings';
 import { fetchArbitrationCost } from 'utils/fetchArbitrationCost';
-import { fetchItemCounts } from 'utils/itemCounts';
-import { revRegistryMap } from 'utils/fetchItems';
-import { fetchItemDetails } from 'utils/itemDetails';
+import { revRegistryMap } from 'utils/items';
+import { useItemDetailsQuery, useItemCountsQuery } from 'hooks/queries';
 import { formatTimestamp } from 'utils/formatTimestamp';
 import { getStatusLabel } from 'utils/getStatusLabel';
 import LoadingItems from '../LoadingItems';
@@ -232,10 +231,9 @@ const DetailsModal: React.FC = () => {
 
   const itemDetailsId = useMemo(() => searchParams.get('itemdetails'), [searchParams]);
 
-  const { isLoading: detailsLoading, data: detailsData } = useQuery({
-    queryKey: ['details', itemDetailsId || ''],
-    queryFn: () => fetchItemDetails(itemDetailsId || ''),
-    staleTime: Infinity,
+  const { isLoading: detailsLoading, data: detailsData } = useItemDetailsQuery({
+    itemId: itemDetailsId || '',
+    enabled: !!itemDetailsId,
   });
 
   const registryParsedFromItemId = useMemo(() => itemDetailsId ? itemDetailsId.split('@')[1] : '', [itemDetailsId]);
@@ -244,11 +242,7 @@ const DetailsModal: React.FC = () => {
   const challengeRemainingTime = useChallengeRemainingTime(detailsData?.requests[0]?.submissionTime, detailsData?.disputed, challengePeriodDuration);
   const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2);
 
-  const { data: countsData } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  });
+  const { data: countsData } = useItemCountsQuery();
 
   const deposits = useMemo(() => {
     if (!countsData) return undefined;

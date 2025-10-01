@@ -1,11 +1,10 @@
 import React, { useMemo } from 'react';
 import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
-import { GraphItem } from 'utils/fetchItems';
+import { GraphItem, registryMap } from 'utils/items';
 import Entry from './Entry';
 import { ITEMS_PER_PAGE } from '~src/pages/Registries';
 import { useChallengePeriodDuration } from 'hooks/countdown';
-import { registryMap } from 'utils/fetchItems';
 
 const useRegistryDurations = () => {
   const singleTagsDuration = useChallengePeriodDuration(registryMap.Single_Tags);

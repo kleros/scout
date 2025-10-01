@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import humanizeDuration from 'humanize-duration'
-import { registryMap } from 'utils/fetchItems';
+import { registryMap } from 'utils/items';
 import { JsonRpcProvider, Contract } from 'ethers';
 
 export const useChallengePeriodDuration = (registryAddress: string) => {

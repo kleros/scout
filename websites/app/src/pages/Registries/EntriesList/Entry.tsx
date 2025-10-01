@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import Skeleton from 'react-loading-skeleton';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { formatEther } from 'ethers';
-import { GraphItem, registryMap } from 'utils/fetchItems';
+import { GraphItem, registryMap } from 'utils/items';
 import { StyledWebsiteAnchor } from 'utils/renderValue';
 import AddressDisplay from 'components/AddressDisplay';
 import { useScrollTop } from 'hooks/useScrollTop';
