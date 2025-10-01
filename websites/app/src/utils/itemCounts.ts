@@ -7,7 +7,6 @@ export interface RegistryMetadata {
   policyURI: string
   logoURI: string
 }
-
 export interface FocusedRegistry {
   numberOfAbsent: number
   numberOfRegistered: number

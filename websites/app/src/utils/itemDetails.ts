@@ -6,12 +6,10 @@ export interface GraphEvidence {
   number: string
   timestamp: string
   txHash: string
-  metadata: {
-    title: string | null
-    description: string | null
-    fileURI: string | null
-    fileTypeExtension: string | null
-  } | null
+  title: string | null
+  description: string | null
+  fileURI: string | null
+  fileTypeExtension: string | null
 }
 
 export interface EvidenceGroup {
@@ -40,12 +38,10 @@ export interface GraphItemDetails {
     | 'RegistrationRequested'
     | 'ClearingRequested'
   disputed: boolean
-  metadata: {
-    key0: string
-    key1: string
-    key2: string
-    key3: string
-    props: Prop[]
-  } | null
+  key0: string
+  key1: string
+  key2: string
+  key3: string
+  props: Prop[]
   requests: RequestDetails[]
 }
