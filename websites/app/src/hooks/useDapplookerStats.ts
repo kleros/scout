@@ -108,7 +108,7 @@ const getCurateStatsQuery = () => {
 
   return gql`
     query CurateStats {
-      lregistries(
+      lregistries: LRegistry(
         where: { id:{
           _in: [
           "0x66260c69d03837016d88c9877e61e08ef74c59f2",
@@ -126,7 +126,7 @@ const getCurateStatsQuery = () => {
         numberOfChallengedClearing
       }
       litems: LItem(
-        limit: 1000, 
+        limit: 1000,
         order_by: {latestRequestSubmissionTime : desc }
         where: { latestRequestSubmissionTime: {_gt: "${thirtyDaysAgo}"} }
       ) {
@@ -155,7 +155,7 @@ const getCurateStatsQuery = () => {
 // Query to get curator statistics
 const CURATOR_STATS_QUERY = gql`
   query CuratorStats {
-    litems(first: 1000) {
+    litems: LItem(limit: 1000) {
       requests {
         requester
         challenger
