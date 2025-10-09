@@ -209,3 +209,5 @@ subgraph/*/contracts/*
 
 # Local Netlify folder
 .netlify
+
+websites/app/.yarn
