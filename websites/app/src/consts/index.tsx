@@ -1,1 +1,2 @@
-export const SUBGRAPH_GNOSIS_ENDPOINT = "https://gateway.thegraph.com/api/b3d13124a4eec5a58826542dd0f460c5/subgraphs/id/9hHo5MpjpC1JqfD3BsgFnojGurXRHTrHWcUcZPPCo6m8"
+export const SUBGRAPH_GNOSIS_ENDPOINT =
+  'https://indexer.hyperindex.xyz/1a2f51c/v1/graphql'

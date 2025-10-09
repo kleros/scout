@@ -8,7 +8,9 @@ import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { formatTimestamp } from 'utils/formatTimestamp'
-import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
+import useHumanizedCountdown, {
+  useChallengeRemainingTime,
+} from 'hooks/countdown'
 
 const Card = styled.div`
   background-color: #321c49;
@@ -24,7 +26,7 @@ const CardStatus = styled.div<{ status: string }>`
   font-weight: bold;
   padding: 15px 20px;
   margin-bottom: 10px;
-  border-bottom: 2px solid #5A2393;
+  border-bottom: 2px solid #5a2393;
 
   &:before {
     content: '';
@@ -62,9 +64,9 @@ const TokenLogoWrapper = styled.div`
 `
 
 const VisualProofWrapper = styled.img`
-    object-fit: cover;
-    align-self: stretch;
-    width: 90%;
+  object-fit: cover;
+  align-self: stretch;
+  width: 90%;
 `
 
 const DetailsButton = styled.button`
@@ -88,7 +90,7 @@ const StyledButton = styled.button`
   background: none;
   border: none;
   padding: 0;
-`;
+`
 
 const LabelAndValue = styled.div`
   display: flex;
@@ -96,7 +98,7 @@ const LabelAndValue = styled.div`
   gap: 8px;
   align-items: center;
   justify-content: center;
-`;
+`
 
 const readableStatusMap = {
   Registered: 'Registered',
@@ -111,9 +113,13 @@ const challengedStatusMap = {
 }
 
 interface StatusProps {
-  status: 'Registered' | 'Absent' | 'RegistrationRequested' | 'ClearingRequested';
-  disputed: boolean;
-  bounty: string;
+  status:
+    | 'Registered'
+    | 'Absent'
+    | 'RegistrationRequested'
+    | 'ClearingRequested'
+  disputed: boolean
+  bounty: string
 }
 
 const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
@@ -136,31 +142,40 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
 })
 
 const Entry = React.memo(
-  ({ item, challengePeriodDuration }: { item: GraphItem; challengePeriodDuration: number | null }) => {
-    const [imgLoaded, setImgLoaded] = useState(false);
-    const [, setSearchParams] = useSearchParams();
-    const scrollTop = useScrollTop();
+  ({
+    item,
+    challengePeriodDuration,
+  }: {
+    item: GraphItem
+    challengePeriodDuration: number | null
+  }) => {
+    const [imgLoaded, setImgLoaded] = useState(false)
+    const [, setSearchParams] = useSearchParams()
+    const scrollTop = useScrollTop()
 
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests[0]?.submissionTime,
       item.disputed,
       challengePeriodDuration
-    );
-    const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2);
+    )
+    const formattedChallengeRemainingTime = useHumanizedCountdown(
+      challengeRemainingTime,
+      2
+    )
 
     const handleEntryDetailsClick = useCallback(() => {
       setSearchParams((prev) => {
-        const prevParams = prev.toString();
-        const newParams = new URLSearchParams(prevParams);
-        newParams.append('itemdetails', item.id);
-        return newParams;
-      });
-      scrollTop();
-    }, [setSearchParams, item.id]);
+        const prevParams = prev.toString()
+        const newParams = new URLSearchParams(prevParams)
+        newParams.append('itemdetails', item.id)
+        return newParams
+      })
+      scrollTop()
+    }, [setSearchParams, item.id])
 
     const getPropValue = (label: string) => {
-      return item?.metadata?.props?.find((prop) => prop.label === label)?.value || '';
-    };
+      return item?.props?.find((prop) => prop.label === label)?.value || ''
+    }
 
     return (
       <Card>
@@ -173,17 +188,22 @@ const Entry = React.memo(
           {item.registryAddress === registryMap.Tags_Queries && (
             <>
               <LabelAndValue>
-                {getPropValue('EVM Chain ID')} 
-                <AddressDisplay address={`eip155:${getPropValue('EVM Chain ID')}`} />
+                {getPropValue('EVM Chain ID')}
+                <AddressDisplay
+                  address={`eip155:${getPropValue('EVM Chain ID')}`}
+                />
               </LabelAndValue>
               <div>
-                  <>{getPropValue('Description')}</>
+                <>{getPropValue('Description')}</>
               </div>
               <b>
                 <StyledWebsiteAnchor
-                href={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                  href={`${getPropValue('Github Repository URL').replace(
+                    '.git',
+                    ''
+                  )}/commit/${getPropValue('Commit hash')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   {getPropValue('Github Repository URL')}
                 </StyledWebsiteAnchor>
@@ -214,9 +234,11 @@ const Entry = React.memo(
               {getPropValue('Logo') && (
                 <StyledButton
                   onClick={() => {
-                    const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`;
-                    setSearchParams({ attachment: tokenLogoURI });
-                    scrollTop();
+                    const tokenLogoURI = `https://cdn.kleros.link${getPropValue(
+                      'Logo'
+                    )}`
+                    setSearchParams({ attachment: tokenLogoURI })
+                    scrollTop()
                   }}
                 >
                   <TokenLogoWrapper>
@@ -231,14 +253,16 @@ const Entry = React.memo(
                 </StyledButton>
               )}
               <div>{getPropValue('Symbol')}</div>
-              <div>{getPropValue('Name')}</div> 
-              {getPropValue('Website') ? <StyledWebsiteAnchor
-                href={getPropValue('Website')}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {getPropValue('Website')}
-              </StyledWebsiteAnchor> : null}
+              <div>{getPropValue('Name')}</div>
+              {getPropValue('Website') ? (
+                <StyledWebsiteAnchor
+                  href={getPropValue('Website')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {getPropValue('Website')}
+                </StyledWebsiteAnchor>
+              ) : null}
             </>
           )}
           {item.registryAddress === registryMap.CDN && (
@@ -256,14 +280,18 @@ const Entry = React.memo(
               {getPropValue('Visual proof') && (
                 <StyledButton
                   onClick={() => {
-                    const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`;
-                    setSearchParams({ attachment: visualProofURI });
-                    scrollTop();
+                    const visualProofURI = `https://cdn.kleros.link${getPropValue(
+                      'Visual proof'
+                    )}`
+                    setSearchParams({ attachment: visualProofURI })
+                    scrollTop()
                   }}
                 >
                   {!imgLoaded && <Skeleton height={100} width={150} />}
                   <VisualProofWrapper
-                    src={`https://cdn.kleros.link${getPropValue('Visual proof')}`}
+                    src={`https://cdn.kleros.link${getPropValue(
+                      'Visual proof'
+                    )}`}
                     alt="Visual proof"
                     onLoad={() => setImgLoaded(true)}
                     style={{ display: imgLoaded ? '' : 'none' }}
@@ -273,18 +301,21 @@ const Entry = React.memo(
             </>
           )}
           <div style={{ color: '#CD9DFF' }}>
-            Submitted on: {formatTimestamp(Number(item?.requests[0].submissionTime), false)}
+            Submitted on:{' '}
+            {formatTimestamp(Number(item?.requests[0].submissionTime), false)}
           </div>
           {formattedChallengeRemainingTime && (
             <div style={{ color: '#CD9DFF' }}>
               Finalises in {formattedChallengeRemainingTime}
             </div>
           )}
-          <DetailsButton onClick={handleEntryDetailsClick}>Details</DetailsButton>
+          <DetailsButton onClick={handleEntryDetailsClick}>
+            Details
+          </DetailsButton>
         </CardContent>
       </Card>
-    );
+    )
   }
-);
+)
 
-export default Entry;
+export default Entry

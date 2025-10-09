@@ -1,7 +1,7 @@
 import { isAddress } from 'ethers'
 import request, { gql } from 'graphql-request'
 import { registryMap } from './fetchItems'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index';
+import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index'
 import { PublicKey } from '@solana/web3.js'
 import { chains } from 'utils/chains'
 import bs58check from 'bs58check'
@@ -48,7 +48,9 @@ const isBip122Address = (value: string): boolean => {
 }
 
 const isValidAddressForChain = (chainId: string, address: string): boolean => {
-  const network = chains.find(chain => `${chain.namespace}:${chain.id}` === chainId)
+  const network = chains.find(
+    (chain) => `${chain.namespace}:${chain.id}` === chainId
+  )
 
   if (!network) return false
   if (network.namespace === 'solana') return isSolanaAddress(address)
@@ -62,33 +64,33 @@ const isValidAddressForChain = (chainId: string, address: string): boolean => {
 
 export interface Issue {
   address?: {
-    severity: 'warn' | 'error';
-    message: string;
-  };
+    severity: 'warn' | 'error'
+    message: string
+  }
   domain?: {
-    severity: 'warn' | 'error';
-    message: string;
-  };
+    severity: 'warn' | 'error'
+    message: string
+  }
   contract?: {
-    severity: 'warn' | 'error';
-    message: string;
-  };
+    severity: 'warn' | 'error'
+    message: string
+  }
   projectName?: {
-    severity: 'warn' | 'error';
-    message: string;
-  };
+    severity: 'warn' | 'error'
+    message: string
+  }
   publicNameTag?: {
-    severity: 'warn' | 'error';
-    message: string;
-  };
+    severity: 'warn' | 'error'
+    message: string
+  }
   link?: {
-    severity: 'warn' | 'error';
-    message: string;
-  };
+    severity: 'warn' | 'error'
+    message: string
+  }
   symbol?: {
-    severity: 'warn' | 'error';
-    message: string;
-  };
+    severity: 'warn' | 'error'
+    message: string
+  }
 }
 
 const getDupesInRegistry = async (
@@ -97,28 +99,31 @@ const getDupesInRegistry = async (
   domain?: string
 ): Promise<number> => {
   const query = gql`
-    query ($registry: String!, $richAddress: String!) {
-      litems(
+    query ($registry: String!, $richAddress: String!, $domain: String) {
+      litems: LItem(
         where: {
-          registry: $registry,
-          status_in: ["Registered", "ClearingRequested", "RegistrationRequested"],
-          metadata_ : { key0_contains_nocase: $richAddress,
-            ${domain ? `key1_starts_with_nocase: "${domain}"` : ''}
-              },
+          registry_id: { _eq: $registry }
+          status: { _in: [ "Registered", "ClearingRequested", "RegistrationRequested"] }
+          key0: { _ilike: $richAddress }
+          ${domain ? `key1: { _ilike: $domain }` : ''}
         }
       ) {
         id
       }
     }
   `
+  const variables: Record<string, any> = {
+    registry: registryAddress,
+    richAddress: `%${richAddress}%`, // contains
+  }
+  if (domain) {
+    variables.domain = `${domain}%` // starts with
+  }
 
   const result = (await request({
     url: SUBGRAPH_GNOSIS_ENDPOINT,
     document: query,
-    variables: {
-      registry: registryAddress,
-      richAddress,
-    },
+    variables,
   })) as any
   const items = result.litems
   return items.length
@@ -130,17 +135,17 @@ const getTokenDupesWithWebsiteCheck = async (
 ): Promise<number> => {
   const query = gql`
     query ($registry: String!, $richAddress: String!) {
-      litems(
+      litems: LItem(
         where: {
-          registry: $registry,
-          status_in: ["Registered", "ClearingRequested", "RegistrationRequested"],
-          metadata_ : { key0_contains_nocase: $richAddress },
+          registry_id: { _eq: $registry }
+          status: {
+            _in: ["Registered", "ClearingRequested", "RegistrationRequested"]
+          }
+          key0: { _ilike: $richAddress }
         }
       ) {
         id
-        metadata {
-          key3
-        }
+        key3
       }
     }
   `
@@ -153,12 +158,12 @@ const getTokenDupesWithWebsiteCheck = async (
       richAddress,
     },
   })) as any
-  
+
   // Only count duplicates if existing entries have a website (key3)
-  const duplicatesWithWebsite = result.litems.filter((item: any) => 
-    item.metadata?.key3 && item.metadata.key3.trim() !== ''
+  const duplicatesWithWebsite = result.litems.filter(
+    (item: any) => item?.key3 && item.key3.trim() !== ''
   )
-  
+
   return duplicatesWithWebsite.length
 }
 
@@ -175,67 +180,105 @@ export const getAddressValidationIssue = async (
   const result: Issue = {}
 
   if (address && !isValidAddressForChain(chainId, address)) {
-    const network = chains.find(chain => `${chain.namespace}:${chain.id}` === chainId)
+    const network = chains.find(
+      (chain) => `${chain.namespace}:${chain.id}` === chainId
+    )
     let message = 'Invalid address for the specified chain'
-    
+
     if (network?.namespace === 'eip155' && !address.startsWith('0x')) {
       message = 'Address must start with "0x" prefix for Ethereum-like chains'
-    } else if (network?.namespace === 'eip155' && address.startsWith('0x') && !isAddress(address)) {
+    } else if (
+      network?.namespace === 'eip155' &&
+      address.startsWith('0x') &&
+      !isAddress(address)
+    ) {
       message = 'Invalid Ethereum address format'
     }
-    
+
     result.address = { message, severity: 'error' }
   }
 
   if (publicNameTag && publicNameTag.length > 50) {
-    result.publicNameTag = { message: 'Public Name Tag too long (max 50 characters)', severity: 'error' }
+    result.publicNameTag = {
+      message: 'Public Name Tag too long (max 50 characters)',
+      severity: 'error',
+    }
   }
 
   if (projectName && projectName !== projectName.trim()) {
-    result.projectName = { message: 'Project name has leading or trailing whitespace', severity: 'warn' }
+    result.projectName = {
+      message: 'Project name has leading or trailing whitespace',
+      severity: 'warn',
+    }
   }
 
   if (registry === 'Tokens' && projectName && projectName.length > 40) {
-    result.projectName = { message: 'Public Name too long (max 40 characters)', severity: 'warn' }
+    result.projectName = {
+      message: 'Public Name too long (max 40 characters)',
+      severity: 'warn',
+    }
   }
 
   if (registry === 'Tokens' && symbol && symbol.length > 20) {
-    result.symbol = { message: 'Symbol too long (max 20 characters)', severity: 'warn' }
+    result.symbol = {
+      message: 'Symbol too long (max 20 characters)',
+      severity: 'warn',
+    }
   }
 
   if (publicNameTag && publicNameTag !== publicNameTag.trim()) {
-    result.publicNameTag = { message: 'Public Name Tag has leading or trailing whitespace', severity: 'warn' }
+    result.publicNameTag = {
+      message: 'Public Name Tag has leading or trailing whitespace',
+      severity: 'warn',
+    }
   }
 
   const cdnRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
   if (domain && !cdnRegex.test(domain)) {
-    result.domain = { message: 'Invalid website format for CDN. Must be a valid domain', severity: 'error' }
+    result.domain = {
+      message: 'Invalid website format for CDN. Must be a valid domain',
+      severity: 'error',
+    }
   }
 
   const tagRegex = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
   if (link && !tagRegex.test(link)) {
-    result.link = { message: 'Invalid website format. Must start with http(s):// and include a valid domain', severity: 'error' }
+    result.link = {
+      message:
+        'Invalid website format. Must start with http(s):// and include a valid domain',
+      severity: 'error',
+    }
   }
 
   if (Object.keys(result).length > 0) return result
 
   // Check for duplicates based on registry type
   if (registry === 'Single_Tags' || registry === 'CDN') {
-    const ndupes = await getDupesInRegistry(chainId + ':' + address, registryMap[registry], domain)
+    const ndupes = await getDupesInRegistry(
+      chainId + ':' + address,
+      registryMap[registry],
+      domain
+    )
 
     if (ndupes > 0) {
       result.domain = { message: 'Duplicate submission', severity: 'error' }
     }
   } else if (registry === 'Tokens') {
     // For tokens, only consider it a duplicate if any of the existing entries have a website
-    const ndupes = await getTokenDupesWithWebsiteCheck(chainId + ':' + address, registryMap[registry])
+    const ndupes = await getTokenDupesWithWebsiteCheck(
+      chainId + ':' + address,
+      registryMap[registry]
+    )
 
     if (ndupes > 0) {
-      result.domain = { message: 'Duplicate submission - token with website already exists', severity: 'error' }
+      result.domain = {
+        message: 'Duplicate submission - token with website already exists',
+        severity: 'error',
+      }
     }
   }
 
-  return Object.keys(result).length > 0 ? result : null;
+  return Object.keys(result).length > 0 ? result : null
 }
 
 export default getAddressValidationIssue
