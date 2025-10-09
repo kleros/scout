@@ -137,7 +137,7 @@ export const useExportItems = (filters: ExportFilters) => {
             }
           offset: $skip
           limit: $first
-          order_by: {latestRequestSubmissionTime : $orderDirection }
+          order_by: {latestRequestSubmissionTime: desc}
           ) {
             id
             latestRequestSubmissionTime
@@ -158,7 +158,7 @@ export const useExportItems = (filters: ExportFilters) => {
               description
               isIdentifier
             }
-            requests(limit: 1, order_by: {submissionTime: desc})) {
+            requests(limit: 1, order_by: {submissionTime: desc}) {
               disputed
               disputeID
               submissionTime
