@@ -1,25 +1,25 @@
-import React, { useEffect, useRef, useState } from "react";
-import styled, { css } from "styled-components";
-import { landscapeStyle } from 'styles/landscapeStyle';
-import { useExportItems, ExportFilters } from "hooks/queries/useExportItems";
-import { json2csv } from "json-2-csv";
-import { revRegistryMap } from 'utils/items';
-import { chains } from "utils/chains";
-import ExportIcon from "svgs/icons/export.svg";
+import React, { useEffect, useRef, useState } from 'react'
+import styled, { css } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
+import { useExportItems, ExportFilters } from 'hooks/queries/useExportItems'
+import { json2csv } from 'json-2-csv'
+import { revRegistryMap } from 'utils/items'
+import { chains } from 'utils/chains'
+import ExportIcon from 'svgs/icons/export.svg'
 
-import EthereumIcon from 'svgs/chains/ethereum.svg';
-import SolanaIcon from 'svgs/chains/solana.svg';
-import BaseIcon from 'svgs/chains/base.svg';
-import CeloIcon from 'svgs/chains/celo.svg';
-import ScrollIcon from 'svgs/chains/scroll.svg';
-import FantomIcon from 'svgs/chains/fantom.svg';
-import ZkSyncIcon from 'svgs/chains/zksync.svg';
-import GnosisIcon from 'svgs/chains/gnosis.svg';
-import PolygonIcon from 'svgs/chains/polygon.svg';
-import OptimismIcon from 'svgs/chains/optimism.svg';
-import ArbitrumIcon from 'svgs/chains/arbitrum.svg';
-import AvalancheIcon from 'svgs/chains/avalanche.svg';
-import BnbIcon from 'svgs/chains/bnb.svg';
+import EthereumIcon from 'svgs/chains/ethereum.svg'
+import SolanaIcon from 'svgs/chains/solana.svg'
+import BaseIcon from 'svgs/chains/base.svg'
+import CeloIcon from 'svgs/chains/celo.svg'
+import ScrollIcon from 'svgs/chains/scroll.svg'
+import FantomIcon from 'svgs/chains/fantom.svg'
+import ZkSyncIcon from 'svgs/chains/zksync.svg'
+import GnosisIcon from 'svgs/chains/gnosis.svg'
+import PolygonIcon from 'svgs/chains/polygon.svg'
+import OptimismIcon from 'svgs/chains/optimism.svg'
+import ArbitrumIcon from 'svgs/chains/arbitrum.svg'
+import AvalancheIcon from 'svgs/chains/avalanche.svg'
+import BnbIcon from 'svgs/chains/bnb.svg'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -32,7 +32,7 @@ const ModalOverlay = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 50;
-`;
+`
 
 const ModalWrapper = styled.div`
   position: relative;
@@ -47,10 +47,12 @@ const ModalWrapper = styled.div`
     inset: 0;
     padding: 1px;
     border-radius: 20px;
-    background: linear-gradient(180deg, #7186FF90 0%, #BEBEC590 100%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    background: linear-gradient(180deg, #7186ff90 0%, #bebec590 100%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
-            mask-composite: exclude;
+    mask-composite: exclude;
     pointer-events: none;
   }
 
@@ -58,9 +60,9 @@ const ModalWrapper = styled.div`
     () => css`
       width: 60%;
       max-width: 700px;
-    `
+    `,
   )}
-`;
+`
 
 const ModalContainer = styled.div`
   background: linear-gradient(
@@ -81,9 +83,7 @@ const ModalContainer = styled.div`
   gap: 24px;
   position: relative;
   box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
-`;
-
-
+`
 
 const ModalHeader = styled.div`
   display: flex;
@@ -91,26 +91,26 @@ const ModalHeader = styled.div`
   align-items: center;
   border-bottom: 1px solid rgba(113, 134, 255, 0.3);
   padding-bottom: 20px;
-`;
+`
 
 const ModalTitle = styled.h2`
   color: ${({ theme }) => theme.primaryText};
   font-size: 20px;
   font-weight: 600;
   margin: 0;
-`;
+`
 
 const ModalSubtitle = styled.div`
   font-size: 14px;
   color: ${({ theme }) => theme.secondaryText};
   margin-top: 4px;
   line-height: 1.4;
-`;
+`
 
 const HeaderContent = styled.div`
   flex: 1;
   min-width: 0;
-`;
+`
 
 const CloseButton = styled.button`
   background: none;
@@ -124,27 +124,26 @@ const CloseButton = styled.button`
   &:hover {
     color: ${({ theme }) => theme.primaryText};
   }
-`;
-
+`
 
 const FilterSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
-`;
+`
 
 const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-`;
+`
 
 const GroupHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
-`;
+`
 
 const FilterGroupTitle = styled.h4`
   color: ${({ theme }) => theme.accent};
@@ -161,21 +160,20 @@ const FilterGroupTitle = styled.h4`
     height: 14px;
     fill: ${({ theme }) => theme.accent};
   }
-`;
-
+`
 
 const CheckboxGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-`;
+`
 
 const NetworkGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 8px;
   margin-top: 8px;
-`;
+`
 
 const CheckboxItem = styled.div`
   display: flex;
@@ -193,7 +191,7 @@ const CheckboxItem = styled.div`
       opacity: 1;
     }
   }
-`;
+`
 
 const CheckboxLabel = styled.label`
   display: flex;
@@ -201,7 +199,7 @@ const CheckboxLabel = styled.label`
   gap: 8px;
   cursor: pointer;
   flex: 1;
-`;
+`
 
 const NetworkItem = styled.div`
   display: flex;
@@ -221,7 +219,7 @@ const NetworkItem = styled.div`
       opacity: 1;
     }
   }
-`;
+`
 
 const NetworkLabel = styled.label`
   display: flex;
@@ -235,14 +233,13 @@ const NetworkLabel = styled.label`
     height: 16px;
     flex-shrink: 0;
   }
-`;
-
+`
 
 const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   width: 16px;
   height: 16px;
   accent-color: ${({ theme }) => theme.accent};
-`;
+`
 
 const OnlyButton = styled.button`
   background: none;
@@ -259,7 +256,7 @@ const OnlyButton = styled.button`
   &:hover {
     background: ${({ theme }) => theme.lightGrey};
   }
-`;
+`
 
 const ActionButton = styled.button`
   background: none;
@@ -277,7 +274,7 @@ const ActionButton = styled.button`
     background: ${({ theme }) => theme.lightGrey};
     opacity: 1;
   }
-`;
+`
 
 const DateInput = styled.input`
   background: rgba(26, 11, 46, 0.3);
@@ -297,7 +294,7 @@ const DateInput = styled.input`
   &::-webkit-calendar-picker-indicator {
     filter: invert(1);
   }
-`;
+`
 
 const FooterButtons = styled.div`
   display: flex;
@@ -305,7 +302,7 @@ const FooterButtons = styled.div`
   gap: 12px;
   padding-top: 20px;
   border-top: 1px solid rgba(113, 134, 255, 0.3);
-`;
+`
 
 const CancelButton = styled.button`
   padding: 12px 24px;
@@ -323,7 +320,7 @@ const CancelButton = styled.button`
     background: ${({ theme }) => theme.lightGrey};
     color: ${({ theme }) => theme.primaryText};
   }
-`;
+`
 
 const ExportButton = styled.button<{ disabled: boolean }>`
   padding: 12px 24px;
@@ -336,32 +333,33 @@ const ExportButton = styled.button<{ disabled: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #7186FF 0%, #9B59B6 100%);
+  background: linear-gradient(135deg, #7186ff 0%, #9b59b6 100%);
   color: white;
   border: none;
   box-shadow: 0 4px 16px rgba(113, 134, 255, 0.3);
-  opacity: ${({ disabled }) => disabled ? 0.7 : 1};
-  cursor: ${({ disabled }) => disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
 
   &:hover {
-    box-shadow: ${({ disabled }) => disabled ? '0 4px 16px rgba(113, 134, 255, 0.3)' : '0 6px 20px rgba(113, 134, 255, 0.4)'};
-    filter: ${({ disabled }) => disabled ? 'none' : 'brightness(1.05)'};
+    box-shadow: ${({ disabled }) =>
+      disabled
+        ? '0 4px 16px rgba(113, 134, 255, 0.3)'
+        : '0 6px 20px rgba(113, 134, 255, 0.4)'};
+    filter: ${({ disabled }) => (disabled ? 'none' : 'brightness(1.05)')};
   }
 
   svg {
     width: 16px;
     height: 16px;
   }
-`;
-
-
+`
 
 const STATUS_OPTIONS = [
   { value: 'Registered', label: 'Registered' },
   { value: 'RegistrationRequested', label: 'Registration Requested' },
   { value: 'ClearingRequested', label: 'Removal Requested' },
-  { value: 'Absent', label: 'Removed' }
-];
+  { value: 'Absent', label: 'Removed' },
+]
 
 const getChainIcon = (chainId: string) => {
   const iconMap = {
@@ -378,28 +376,33 @@ const getChainIcon = (chainId: string) => {
     '42161': ArbitrumIcon,
     '43114': AvalancheIcon,
     '56': BnbIcon,
-  };
-  return iconMap[chainId] || null;
-};
+  }
+  return iconMap[chainId] || null
+}
 
 const NETWORK_OPTIONS = chains
   .filter((chain) => !chain.deprecated)
-  .map((chain) => ({ value: chain.id, label: chain.name }));
+  .map((chain) => ({ value: chain.id, label: chain.name }))
 
 interface ExportModalProps {
-  registryAddress: string;
-  onClose: () => void;
+  registryAddress: string
+  onClose: () => void
 }
 
-const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) => {
-  const [hasClickedExport, setHasClickedExport] = useState(false);
-  const [isButtonLoading, setIsButtonLoading] = useState(false);
-  const ref = useRef<HTMLAnchorElement>(null);
+const ExportModal: React.FC<ExportModalProps> = ({
+  registryAddress,
+  onClose,
+}) => {
+  const [hasClickedExport, setHasClickedExport] = useState(false)
+  const [isButtonLoading, setIsButtonLoading] = useState(false)
+  const ref = useRef<HTMLAnchorElement>(null)
 
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(['Registered']);
-  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
-  const [fromDate, setFromDate] = useState<string>('');
-  const [toDate, setToDate] = useState<string>('');
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
+    'Registered',
+  ])
+  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([])
+  const [fromDate, setFromDate] = useState<string>('')
+  const [toDate, setToDate] = useState<string>('')
 
   const exportFilters: ExportFilters = {
     registryId: registryAddress,
@@ -407,50 +410,55 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
     network: selectedNetworks.length > 0 ? selectedNetworks : undefined,
     fromDate: fromDate || undefined,
     toDate: toDate || undefined,
-  };
+  }
 
-  const { data: items, refetch, isRefetching } = useExportItems(exportFilters);
+  const { data: items, refetch, isRefetching } = useExportItems(exportFilters)
 
   const handleStatusChange = (status: string, checked: boolean) => {
     if (checked) {
-      setSelectedStatuses(prev => [...prev, status]);
+      setSelectedStatuses((prev) => [...prev, status])
     } else {
-      setSelectedStatuses(prev => prev.filter(s => s !== status));
+      setSelectedStatuses((prev) => prev.filter((s) => s !== status))
     }
-  };
+  }
 
   const handleNetworkChange = (network: string, checked: boolean) => {
     if (checked) {
-      setSelectedNetworks(prev => [...prev, network]);
+      setSelectedNetworks((prev) => [...prev, network])
     } else {
-      setSelectedNetworks(prev => prev.filter(n => n !== network));
+      setSelectedNetworks((prev) => prev.filter((n) => n !== network))
     }
-  };
+  }
 
   const handleNetworkOnly = (selectedNetwork: string) => {
-    setSelectedNetworks([selectedNetwork]);
-  };
+    setSelectedNetworks([selectedNetwork])
+  }
 
   const handleNetworkAll = () => {
-    setSelectedNetworks([]);
-  };
+    setSelectedNetworks([])
+  }
 
   const handleStatusOnly = (selectedStatus: string) => {
-    setSelectedStatuses([selectedStatus]);
-  };
+    setSelectedStatuses([selectedStatus])
+  }
 
   const handleStatusAll = () => {
-    setSelectedStatuses(['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']);
-  };
+    setSelectedStatuses([
+      'Registered',
+      'RegistrationRequested',
+      'ClearingRequested',
+      'Absent',
+    ])
+  }
 
   const handleExport = () => {
-    setIsButtonLoading(true);
-    setHasClickedExport(true);
-    refetch();
-  };
+    setIsButtonLoading(true)
+    setHasClickedExport(true)
+    refetch()
+  }
 
   useEffect(() => {
-    if (!items || !ref.current || !hasClickedExport) return;
+    if (!items || !ref.current || !hasClickedExport) return
 
     try {
       const flattenedItems = items.map((item) => {
@@ -458,54 +466,69 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
           id: item.id,
           status: item.status,
           disputed: item.disputed,
-          submissionTime: new Date(parseInt(item.latestRequestSubmissionTime) * 1000).toISOString(),
+          submissionTime: new Date(
+            parseInt(item.latestRequestSubmissionTime) * 1000,
+          ).toISOString(),
           registryAddress: item.registryAddress,
           itemID: item.itemID,
-        };
-
-        if (item.metadata?.props) {
-          item.metadata.props.forEach((prop) => {
-            row[`${prop.label} (${prop.description})`] = prop.value;
-          });
         }
 
-        if (item.metadata) {
-          row.key0 = item.metadata.key0;
-          row.key1 = item.metadata.key1;
-          row.key2 = item.metadata.key2;
-          row.key3 = item.metadata.key3;
-          row.key4 = item.metadata.key4;
+        if (item?.props) {
+          item.props.forEach((prop) => {
+            row[`${prop.label} (${prop.description})`] = prop.value
+          })
         }
 
-        return row;
-      });
+        if (item) {
+          row.key0 = item.key0
+          row.key1 = item.key1
+          row.key2 = item.key2
+          row.key3 = item.key3
+          row.key4 = item.key4
+        }
 
-      const csvData = json2csv(flattenedItems);
-      const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
-      const link = ref.current;
+        return row
+      })
+
+      const csvData = json2csv(flattenedItems)
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' })
+      const link = ref.current
 
       if (link) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        const registryName = revRegistryMap[registryAddress] || 'Items';
-        const dateRange = fromDate || toDate ? `_${fromDate || 'start'}-${toDate || 'end'}` : '';
-        const statusSuffix = selectedStatuses.length === 1 ? `_${selectedStatuses[0]}` : '';
-        link.setAttribute("download", `Kleros-Curate-${registryName}${statusSuffix}${dateRange}.csv`);
-        link.click();
-        URL.revokeObjectURL(url);
+        const url = URL.createObjectURL(blob)
+        link.setAttribute('href', url)
+        const registryName = revRegistryMap[registryAddress] || 'Items'
+        const dateRange =
+          fromDate || toDate ? `_${fromDate || 'start'}-${toDate || 'end'}` : ''
+        const statusSuffix =
+          selectedStatuses.length === 1 ? `_${selectedStatuses[0]}` : ''
+        link.setAttribute(
+          'download',
+          `Kleros-Curate-${registryName}${statusSuffix}${dateRange}.csv`,
+        )
+        link.click()
+        URL.revokeObjectURL(url)
 
         // Close modal after successful export
-        setHasClickedExport(false); // Reset for next time
-        onClose();
+        setHasClickedExport(false) // Reset for next time
+        onClose()
       }
     } catch (error) {
-      console.error('Error preparing CSV:', error);
+      console.error('Error preparing CSV:', error)
     } finally {
-      setIsButtonLoading(false);
+      setIsButtonLoading(false)
     }
-  }, [items, registryAddress, selectedStatuses, fromDate, toDate, onClose, hasClickedExport]);
+  }, [
+    items,
+    registryAddress,
+    selectedStatuses,
+    fromDate,
+    toDate,
+    onClose,
+    hasClickedExport,
+  ])
 
-  const canExport = selectedStatuses.length > 0;
+  const canExport = selectedStatuses.length > 0
 
   return (
     <ModalOverlay onClick={onClose}>
@@ -524,10 +547,10 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
           <FilterSection>
             <FilterGroup>
               <GroupHeader>
-                <FilterGroupTitle>Status (select at least one)</FilterGroupTitle>
-                <ActionButton onClick={handleStatusAll}>
-                  All
-                </ActionButton>
+                <FilterGroupTitle>
+                  Status (select at least one)
+                </FilterGroupTitle>
+                <ActionButton onClick={handleStatusAll}>All</ActionButton>
               </GroupHeader>
               <CheckboxGroup>
                 {STATUS_OPTIONS.map((option) => (
@@ -535,7 +558,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
                     <CheckboxLabel>
                       <Checkbox
                         checked={selectedStatuses.includes(option.value)}
-                        onChange={(e) => handleStatusChange(option.value, e.target.checked)}
+                        onChange={(e) =>
+                          handleStatusChange(option.value, e.target.checked)
+                        }
                       />
                       {option.label}
                     </CheckboxLabel>
@@ -554,20 +579,22 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
 
           <FilterSection>
             <GroupHeader>
-              <FilterGroupTitle>Networks (leave empty for all)</FilterGroupTitle>
-              <ActionButton onClick={handleNetworkAll}>
-                All
-              </ActionButton>
+              <FilterGroupTitle>
+                Networks (leave empty for all)
+              </FilterGroupTitle>
+              <ActionButton onClick={handleNetworkAll}>All</ActionButton>
             </GroupHeader>
             <NetworkGrid>
               {NETWORK_OPTIONS.map((option) => {
-                const ChainIcon = getChainIcon(option.value);
+                const ChainIcon = getChainIcon(option.value)
                 return (
                   <NetworkItem key={option.value}>
                     <NetworkLabel>
                       <Checkbox
                         checked={selectedNetworks.includes(option.value)}
-                        onChange={(e) => handleNetworkChange(option.value, e.target.checked)}
+                        onChange={(e) =>
+                          handleNetworkChange(option.value, e.target.checked)
+                        }
                       />
                       {ChainIcon && <ChainIcon />}
                       {option.label}
@@ -580,7 +607,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
                       Only
                     </OnlyButton>
                   </NetworkItem>
-                );
+                )
               })}
             </NetworkGrid>
           </FilterSection>
@@ -588,7 +615,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
           <FilterSection>
             <FilterGroup>
               <GroupHeader>
-                <FilterGroupTitle>From Date (leave empty for all history)</FilterGroupTitle>
+                <FilterGroupTitle>
+                  From Date (leave empty for all history)
+                </FilterGroupTitle>
               </GroupHeader>
               <DateInput
                 type="date"
@@ -601,7 +630,9 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
           <FilterSection>
             <FilterGroup>
               <GroupHeader>
-                <FilterGroupTitle>To Date (leave empty for current date)</FilterGroupTitle>
+                <FilterGroupTitle>
+                  To Date (leave empty for current date)
+                </FilterGroupTitle>
               </GroupHeader>
               <DateInput
                 type="date"
@@ -618,7 +649,11 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
               onClick={handleExport}
             >
               {isButtonLoading ? (
-                isRefetching ? "Fetching data..." : "Preparing CSV..."
+                isRefetching ? (
+                  'Fetching data...'
+                ) : (
+                  'Preparing CSV...'
+                )
               ) : (
                 <>
                   Export CSV <ExportIcon />
@@ -626,11 +661,19 @@ const ExportModal: React.FC<ExportModalProps> = ({ registryAddress, onClose }) =
               )}
             </ExportButton>
           </FooterButtons>
-          <a ref={ref} href="#" download style={{ display: 'none' }} aria-hidden="true">Download</a>
+          <a
+            ref={ref}
+            href="#"
+            download
+            style={{ display: 'none' }}
+            aria-hidden="true"
+          >
+            Download
+          </a>
         </ModalContainer>
       </ModalWrapper>
     </ModalOverlay>
-  );
-};
+  )
+}
 
-export default ExportModal;
+export default ExportModal
