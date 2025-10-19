@@ -160,11 +160,47 @@ export const useCurateInteractions = () => {
     }
   }, [walletClient, publicClient, address]);
 
+  const fundAppeal = useCallback(async (
+    registryAddress: Address,
+    itemId: string,
+    side: number,
+    value: bigint
+  ) => {
+    if (!walletClient || !publicClient || !address) {
+      throw new Error('Wallet not connected');
+    }
+
+    setIsLoading(true);
+    try {
+      const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        address: registryAddress,
+        abi: klerosCurateAbi,
+        functionName: 'fundAppeal',
+        args: [itemId as `0x${string}`, side],
+        value,
+        account: address,
+      });
+
+      const result = await wrapWithToast(
+        async () => await walletClient.writeContract(request),
+        publicClient
+      );
+
+      return result;
+    } catch (error) {
+      console.error('Error funding appeal:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [walletClient, publicClient, address]);
+
   return {
     addItem,
     removeItem,
     challengeRequest,
     submitEvidence,
+    fundAppeal,
     isLoading,
   };
 };

@@ -1,4 +1,4 @@
-import { Prop, Request } from './items'
+import { Prop, Request, Round } from './items'
 
 export interface GraphEvidence {
   party: string
@@ -25,6 +25,7 @@ export interface RequestDetails extends Request {
   resolutionTx: string
   disputeOutcome: string
   evidenceGroup: EvidenceGroup
+  rounds: Round[]
 }
 
 export interface GraphItemDetails {

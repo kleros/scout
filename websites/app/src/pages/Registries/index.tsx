@@ -56,6 +56,7 @@ const FullWidthSection = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 24px;
+  overflow: visible;
 `;
 
 const ActionablesContainer = styled.div`
@@ -111,7 +112,7 @@ const HeroWrapper = styled.div`
     rgba(255, 255, 255, 0.08) 0%,
     rgba(153, 153, 153, 0.08) 100%
   );
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -125,19 +126,20 @@ const HeroWrapper = styled.div`
     background: linear-gradient(180deg, #7186FF90 0%, #BEBEC590 100%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
-            mask-composite: exclude;
+    mask-composite: exclude;
     pointer-events: none;
   }
 `;
 
 const HeroShadow = styled.div`
   position: absolute;
-  top: -40px;
-  left: -80px;
-  width: 363px;
-  height: 300px;
+  top: -150px;
+  left: -150px;
+  width: 800px;
+  height: 600px;
   pointer-events: none;
   z-index: 0;
+  opacity: 0.35;
   svg {
     width: 100%;
     height: 100%;
