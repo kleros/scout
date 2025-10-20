@@ -266,7 +266,7 @@ const Activity: React.FC = () => {
     ],
     [isLoading, ongoingSubmissions, pastSubmissions]
   );
-  const basePath = useMemo(() => location.pathname.replace(/\/(ongoing|past).*/, ""), [location.pathname]);
+  const basePath = useMemo(() => location.pathname.split(/\/(ongoing|past)\b/)[0], [location.pathname]);
   const switchTab = (n: number) => {
     setCurrentTab(n);
     const params = new URLSearchParams(location.search);
