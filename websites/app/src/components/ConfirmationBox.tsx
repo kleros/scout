@@ -76,7 +76,7 @@ const TextArea = styled.textarea`
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   color: ${({ theme }) => theme.primaryText};
-  font-family: 'Inter', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 14px;
   resize: vertical;
 

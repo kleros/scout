@@ -203,21 +203,22 @@ const ContributeButton = styled.button<{ disabled?: boolean }>`
   padding: 12px 24px;
   margin-top: 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 9999px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  background: #cd9dff;
-  color: #380c65;
+  background: #FFFFFF;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
 
   &:hover:not(:disabled) {
-    background: #b882ff;
+    background: #F0F0F0;
   }
 
   &:disabled {
-    background: ${({ theme }) => theme.lightGrey};
-    color: ${({ theme }) => theme.secondaryText};
+    background: #666666;
+    color: #999999;
     cursor: not-allowed;
   }
 `

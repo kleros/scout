@@ -3,22 +3,31 @@ import { responsiveSize } from 'styles/responsiveSize'
 
 const Button = styled.button`
   display: flex;
-  background: linear-gradient(145deg, #9575cd, #6c43ab);
-  color: white;
-  font-size: 18px;
-  font-weight: bold;
-  padding: 8px ${responsiveSize(8, 20)};
+  background: #FFFFFF;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px ${responsiveSize(16, 24)};
   border: none;
   border-radius: 9999px;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    background: #F0F0F0;
   }
 
   &:active {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    background: #E0E0E0;
+  }
+
+  &:disabled {
+    background: #666666;
+    color: #999999;
+    cursor: not-allowed;
   }
 `
 

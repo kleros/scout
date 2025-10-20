@@ -14,7 +14,11 @@ import ErrorFallback from "./components/ErrorFallback";
 import Registries from './pages/Registries/';
 import ItemDetails from './pages/ItemDetails/';
 
-const Dashboard = lazy(() => import('pages/Dashboard'));
+const Home = lazy(() => import('pages/Home'));
+const Activity = lazy(() => import('pages/Activity'));
+const Rewards = lazy(() => import('pages/Rewards'));
+const Guide = lazy(() => import('pages/Guide'));
+const Juror = lazy(() => import('pages/Juror'));
 
 const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   height: 100vh;
@@ -46,8 +50,12 @@ const App: React.FC = () => {
                 <Suspense fallback={null}>
                   <Routes>
                     <Route path="/" element={<Layout />}>
-                      <Route index element={<Navigate to="dashboard" replace />} />
-                      <Route path="dashboard/*" element={<Dashboard />} />
+                      <Route index element={<Navigate to="home" replace />} />
+                      <Route path="home" element={<Home />} />
+                      <Route path="activity/*" element={<Activity />} />
+                      <Route path="rewards" element={<Rewards />} />
+                      <Route path="guide" element={<Guide />} />
+                      <Route path="juror" element={<Juror />} />
                       <Route path="registry/*" element={<Registries />} />
                       <Route path="item/:itemId" element={<ItemDetails />} />
                       <Route path="*" element={<h1>Page not found</h1>} />

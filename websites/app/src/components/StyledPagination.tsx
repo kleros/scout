@@ -16,32 +16,29 @@ const PaginationWrapper = styled.nav`
 `;
 
 const PageButton = styled.button<{ selected?: boolean }>`
-  background: #2b2f46;
-  border: 1px solid #3e445f;
-  color: #c7cae6;
+  background: #FFFFFF;
+  border: none;
+  color: #000000;
+  font-family: "Open Sans", sans-serif;
   min-width: 40px;
   min-height: 40px;
-  border-radius: 6px;
+  border-radius: 9999px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: all 0.2s ease;
   ${({ selected }) =>
     selected &&
     `
-    background: #5676d9;
-    border-color: #5676d9;
-    color: #ffffff;
+    background: #E0E0E0;
+    color: #000000;
   `}
   &:hover:not(:disabled):not([aria-current="true"]) {
-    background: #303552;
-    border-color: #414970;
-    color: #ffffff;
+    background: #F0F0F0;
   }
   &:disabled {
-    background: transparent;
-    border-color: #3e445f;
-    color: #5f6585;
-    cursor: default;
+    background: #666666;
+    color: #999999;
+    cursor: not-allowed;
   }
 `;
 

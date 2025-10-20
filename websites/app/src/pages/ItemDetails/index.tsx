@@ -33,7 +33,7 @@ const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   min-height: 100vh;
   padding: 32px 16px 64px;
-  font-family: 'Inter', sans-serif;
+  font-family: "Open Sans", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
 
   ${landscapeStyle(
@@ -114,23 +114,24 @@ const ContentWrapper = styled.div`
 `
 
 const StatusButton = styled.button<{ status?: string }>`
-  background-color: #cd9dff;
-  color: #380c65;
+  background-color: #FFFFFF;
+  color: #000000;
   padding: 12px 24px;
-  font-family: 'Oxanium', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   border: none;
-  border-radius: 12px;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
   cursor: pointer;
-  transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #6f42c1;
+    background-color: #F0F0F0;
   }
 
   &:disabled {
-    background-color: #c7c7c7;
+    background-color: #666666;
+    color: #999999;
     cursor: not-allowed;
   }
 
@@ -369,7 +370,7 @@ const Evidence = styled.div`
   position: relative;
   padding: 24px;
   border-radius: 12px;
-  font-family: "Inter", sans-serif;
+  font-family: "Open Sans", sans-serif;
   margin-bottom: 20px;
   background: linear-gradient(
     180deg,

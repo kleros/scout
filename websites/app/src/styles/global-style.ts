@@ -33,7 +33,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   .ReactModal__Overlay {
-    background-color: #1b003fcc !important;
+    background-color: #000000E6 !important;
   }
 
   h1 {
@@ -68,7 +68,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   textarea {
-    font-family: "Open Sans";
+    font-family: "Open Sans", sans-serif;
     font-size: 14px;
   }
 

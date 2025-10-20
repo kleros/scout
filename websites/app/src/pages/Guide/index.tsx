@@ -16,7 +16,7 @@ const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   min-height: 100vh;
   padding: 32px 16px 64px;
-  font-family: "Inter", sans-serif;
+  font-family: "Open Sans", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
 
   ${landscapeStyle(
@@ -231,7 +231,7 @@ const QuickGuidePage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleRewardsClick = () => {
-    navigate('/dashboard/rewards');
+    navigate('/rewards');
   };
 
   return (

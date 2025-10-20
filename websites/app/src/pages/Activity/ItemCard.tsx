@@ -116,27 +116,23 @@ const LabelValue = styled.span`
 `
 
 const ViewButton = styled.button`
-  position: relative;
   padding: 8px 24px;
   border: none;
-  background: transparent;
-  color: ${({ theme }) => theme.primaryText};
+  background: #FFFFFF;
+  color: #000000;
   cursor: pointer;
   font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
 
-  &:before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 24px;
-    padding: 1px;
-    background: linear-gradient(90deg, #8b5cf6 0%, #1c3cf1 100%);
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+  &:hover {
+    background: #F0F0F0;
+  }
+
+  &:active {
+    background: #E0E0E0;
   }
 `
 

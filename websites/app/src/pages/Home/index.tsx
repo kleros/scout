@@ -27,7 +27,7 @@ const Container = styled.div`
   margin: 0 auto;
   min-height: 100vh;
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Inter", sans-serif;
+  font-family: "Open Sans", sans-serif;
   display: flex;
   flex-direction: column;
 

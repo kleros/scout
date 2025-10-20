@@ -183,7 +183,7 @@ const NavBar: React.FC = () => {
                 isMobileNavbar={true}
                 text="Home"
                 onClick={() => {
-                  navigate("/dashboard/home");
+                  navigate("/home");
                   toggleIsOpen();
                 }}
                 Icon={HomeIcon}
@@ -217,7 +217,7 @@ const NavBar: React.FC = () => {
                 isMobileNavbar={true}
                 text="My Activity"
                 onClick={() => {
-                  navigate(`/dashboard/activity/ongoing${
+                  navigate(`/activity/ongoing${
                     connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ""
                   }`);
                   toggleIsOpen();
@@ -229,7 +229,7 @@ const NavBar: React.FC = () => {
                 isMobileNavbar={true}
                 text="Active Rewards"
                 onClick={() => {
-                  navigate("/dashboard/rewards");
+                  navigate("/rewards");
                   toggleIsOpen();
                 }}
                 Icon={RewardsIcon}
@@ -239,7 +239,7 @@ const NavBar: React.FC = () => {
                 isMobileNavbar={true}
                 text="Quick Guide"
                 onClick={() => {
-                  navigate("/dashboard/guide");
+                  navigate("/guide");
                   toggleIsOpen();
                 }}
                 Icon={BookIcon}

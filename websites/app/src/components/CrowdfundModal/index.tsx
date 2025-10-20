@@ -152,22 +152,24 @@ const Button = styled.button<{ primary?: boolean }>`
   flex: 1;
   padding: 12px 24px;
   border: none;
-  border-radius: 8px;
+  border-radius: 9999px;
   font-size: 16px;
   font-weight: 600;
+  font-family: "Open Sans", sans-serif;
   cursor: pointer;
   transition: all 0.2s;
 
   ${({ primary, theme }) =>
     primary
       ? `
-    background: #cd9dff;
-    color: #380c65;
+    background: #FFFFFF;
+    color: #000000;
     &:hover {
-      background: #b882ff;
+      background: #F0F0F0;
     }
     &:disabled {
-      background: #c7c7c7;
+      background: #666666;
+      color: #999999;
       cursor: not-allowed;
     }
   `

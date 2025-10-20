@@ -9,8 +9,8 @@ const Card = styled.div`
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   padding: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
   position: relative;

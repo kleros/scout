@@ -20,22 +20,22 @@ const Container = styled.div`
 const StyledButton = styled(Button)`
   ${hoverShortTransitionTiming}
   display: flex;
-  background: linear-gradient(270deg, #1C3CF1 0%, #8B5CF6 100%);
-  color: #fff;
+  background: #FFFFFF;
+  color: #000000;
   font-size: 14px;
-  font-family: 'Avenir', sans-serif;
-  &:hover,
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  border-radius: 9999px;
+  &:hover {
+    background: #F0F0F0;
+  }
   &:active {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    filter: brightness(0.9);
-    transform: scale(1.01);
+    background: #E0E0E0;
   }
   &:disabled {
-    opacity: 0.2;
+    background: #666666;
+    color: #999999;
     cursor: not-allowed;
-    box-shadow: none;
-    filter: none;
-    transform: none;
   }
 `
 

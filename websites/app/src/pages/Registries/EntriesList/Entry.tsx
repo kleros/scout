@@ -19,10 +19,10 @@ import {
 
 const Card = styled.div`
   color: white;
-  font-family: 'Oxanium', sans-serif;
+  font-family: "Open Sans", sans-serif;
   box-sizing: border-box;
   word-break: break-word;
-  border: 1px solid ${({ theme }) => theme.backgroundTwo};
+  border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 12px;
 
   overflow: hidden;
@@ -120,42 +120,25 @@ const VisualProofWrapper = styled.img`
 
 const DetailsButton = styled.button`
   ${hoverLongTransitionTiming}
-  position: relative;
   margin: 8px 0;
-  font-family: 'Oxanium', sans-serif;
-  width: 86px;
+  font-family: "Open Sans", sans-serif;
+  min-width: 100px;
   padding: 10px 20px;
   font-size: 14px;
+  font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
   background: transparent;
-  border: none;
+  border: 1px solid ${({ theme }) => theme.primaryText};
+  border-radius: 9999px;
   cursor: pointer;
-  transition:
-    transform 100ms ease-in-out,
-    box-shadow 150ms ease-in-out;
-
-  &:before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: 9999px;
-    background: linear-gradient(270deg, #1c3cf1 0%, #8b5cf6 100%);
-    -webkit-mask:
-      linear-gradient(#fff 0 0) content-box,
-      linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
+  transition: all 0.2s ease;
 
   &:active {
-    transform: scale(0.97);
+    background: rgba(255, 255, 255, 0.1);
   }
 
   &:hover {
-    filter: brightness(1.2);
-    transform: scale(1.03);
+    background: rgba(255, 255, 255, 0.05);
   }
 `
 

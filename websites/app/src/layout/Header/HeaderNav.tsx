@@ -125,7 +125,7 @@ const HeaderNav: React.FC = () => {
 
   return (
     <Container>
-      <StyledNavLink to="/dashboard/home">Home</StyledNavLink>
+      <StyledNavLink to="/home">Home</StyledNavLink>
 
       <DropdownContainer ref={dropdownRef}>
         <StyledToggle
@@ -152,16 +152,16 @@ const HeaderNav: React.FC = () => {
       </DropdownContainer>
 
       <StyledNavLink
-        to={`/dashboard/activity/ongoing${
+        to={`/activity/ongoing${
           connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ""
         }`}
       >
         My Activity
       </StyledNavLink>
 
-      <StyledNavLink to="/dashboard/rewards">Active Rewards</StyledNavLink>
+      <StyledNavLink to="/rewards">Active Rewards</StyledNavLink>
 
-      <StyledNavLink to="/dashboard/guide">Quick Guide</StyledNavLink>
+      <StyledNavLink to="/guide">Quick Guide</StyledNavLink>
     </Container>
   );
 };

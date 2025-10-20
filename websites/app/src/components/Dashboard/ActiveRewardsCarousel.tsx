@@ -17,7 +17,7 @@ const REWARD_POOL = '100,000 PNK';
 
 const DOT_COLORS = {
   active: '#C5ABFF',
-  inactive: '#2A2A2A',
+  inactive: '#0A0A0A',
 } as const;
 
 const Container = styled.div`
@@ -55,8 +55,8 @@ const Card = styled.div<{ isActive: boolean; index: number }>`
   border: 1px solid ${({ theme }) => theme.lightGrey};
   padding: 24px;
   justify-content: space-between;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   cursor: ${({ isActive }) => isActive ? 'pointer' : 'default'};
   opacity: ${({ isActive }) => isActive ? 1 : 0};
   transform: scale(${({ isActive }) => isActive ? 1 : 0.95});

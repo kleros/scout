@@ -30,7 +30,7 @@ const Container = styled.div`
   margin: 0 auto;
   min-height: 100vh;
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Inter", sans-serif;
+  font-family: "Open Sans", sans-serif;
   display: flex;
   flex-direction: column;
 
@@ -106,40 +106,26 @@ const HeroWrapper = styled.div`
   position: relative;
   width: 100%;
   border-radius: 20px;
-  padding: 32px 24px 32px;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
   overflow: visible;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 6px;
-
-  &:before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #7186FF90 0%, #BEBEC590 100%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
 `;
 
 const HeroShadow = styled.div`
   position: absolute;
-  top: -150px;
-  left: -150px;
+  top: -140px;
+  left: 60%;
+  transform: translateX(-50%);
   width: 800px;
-  height: 600px;
+  height: 400px;
   pointer-events: none;
   z-index: 0;
   opacity: 0.35;
+  display: flex;
+  justify-content: center;
   svg {
     width: 100%;
     height: 100%;

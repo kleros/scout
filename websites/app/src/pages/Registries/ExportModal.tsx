@@ -282,7 +282,7 @@ const DateInput = styled.input`
   border-radius: 8px;
   color: ${({ theme }) => theme.secondaryText};
   padding: 12px;
-  font-family: 'Inter', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 14px;
 
   &:focus {

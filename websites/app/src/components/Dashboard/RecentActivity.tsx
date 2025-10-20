@@ -28,7 +28,7 @@ import ZkSyncIcon from 'svgs/chains/zksync.svg'
 // Constants - must be defined before styled components
 const DOT_COLORS = {
   active: '#C5ABFF',
-  inactive: '#2A2A2A',
+  inactive: '#0A0A0A',
 } as const
 
 const ACTIVITY_COLORS = {

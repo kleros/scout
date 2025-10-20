@@ -17,7 +17,7 @@ const Section = styled.section`
   border: 1px solid #CD9DFF;
   width: 80%;
   font-size: 20px;
-  font-family: "Oxanium", sans-serif;
+  font-family: "Open Sans", sans-serif;
 `;
 
 const Grid = styled.div`
@@ -36,7 +36,7 @@ const Grid = styled.div`
 const Title = styled.h2`
   font-size: 2rem;
   font-weight: 500;
-  font-family: "Avenir", sans-serif;
+  font-family: "Open Sans", sans-serif;
 `;
 
 const StatBox = styled.div<StatBoxProps>`
@@ -61,7 +61,7 @@ const StatNumber = styled.p`
   font-weight: bold;
   color: #9C46FF;
   margin-bottom: 0;
-  font-family: "Avenir", sans-serif;
+  font-family: "Open Sans", sans-serif;
 `;
 
 const StatLabel = styled.p`
@@ -94,7 +94,7 @@ const ClickableListItem = styled.li`
 `;
 
 const FormulaBox = styled.div`
-  background-color: #161616;
+  background-color: #000000;
   padding: 1rem;
   border-radius: 0.5rem;
   border: 1px solid #5A2393;

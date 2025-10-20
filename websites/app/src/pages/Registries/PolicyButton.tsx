@@ -10,6 +10,9 @@ const StyledLabel = styled.label`
   ${hoverShortTransitionTiming}
   cursor: pointer;
   color: ${({ theme }) => theme.secondaryText};
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
 
   :hover {
     color: ${({ theme }) => theme.primaryText};

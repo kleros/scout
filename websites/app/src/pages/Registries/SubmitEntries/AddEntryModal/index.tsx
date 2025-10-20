@@ -78,7 +78,7 @@ export const AddHeader = styled.div`
 export const AddTitle = styled.div`
   margin: 0 0 4px 0;
   font-size: 24px;
-  font-family: 'Inter', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: 0.5px;
@@ -120,7 +120,7 @@ export const SubmissionButton = styled.button`
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.9);
-  font-family: "Inter", sans-serif;
+  font-family: "Open Sans", sans-serif;
   align-self: center;
   padding: 8px 16px;
   font-size: 14px;
@@ -180,45 +180,28 @@ export const Buttons = styled.div`
 `
 
 export const SubmitButton = styled.button`
-  background: linear-gradient(135deg, #7186FF 0%, #9B59B6 100%);
-  align-self: start;
-  color: white;
+  background: #FFFFFF;
+  width: 100%;
+  color: #000000;
   padding: 14px 28px;
-  font-family: 'Inter', sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 16px;
   font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 9999px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(113, 134, 255, 0.3);
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-
-  &:before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, #8B5FE6 0%, #A855F7 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  &:hover:before {
-    opacity: 1;
-  }
+  transition: all 0.2s ease;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(113, 134, 255, 0.4);
+    background: #F0F0F0;
+  }
+
+  &:active {
+    background: #E0E0E0;
   }
 
   &:disabled {
-    background: rgba(255, 255, 255, 0.1);
+    background: #666666;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
@@ -243,7 +226,7 @@ export const PayoutsContainer = styled.div`
 `
 
 export const ExpectedPayouts = styled.p`
-  font-family: "Inter", sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 14px;
   font-weight: 500;
   align-self: center;

@@ -28,7 +28,7 @@ const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   min-height: 100vh;
   padding: 32px 16px 64px;
-  font-family: "Inter", sans-serif;
+  font-family: "Open Sans", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
 
   ${landscapeStyle(
@@ -70,9 +70,9 @@ const StyledExternalLink = styled(ExternalLink)`
 
 const TooltipGlobalStyle = createGlobalStyle`
   .dark-tooltip {
-    background-color: ${({ theme }) => theme.darkBackground || '#1a1a2e'} !important;
+    background-color: ${({ theme }) => theme.darkBackground || '#000000'} !important;
     color: ${({ theme }) => theme.primaryText || 'white'} !important;
-    border: 1px solid ${({ theme }) => theme.lightGrey || '#333'} !important;
+    border: 1px solid ${({ theme }) => theme.lightGrey || '#0A0A0A'} !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
     font-size: 12px !important;
     padding: 6px 8px !important;

@@ -12,7 +12,7 @@ const Container = styled.div`
   width: 100%;
   height: 108px;
   flex-direction: column;
-  background: #010002;
+  background: #000000;
   align-items: center;
   justify-content: center;
   margin-bottom: ${responsiveSize(20, 24)};
@@ -38,7 +38,7 @@ const StyledText = styled.h3`
   font-size: 24px;
   font-weight: 600;
   text-align: center;
-  font-family: 'Avenir', sans-serif;
+  font-family: "Open Sans", sans-serif;
 `
 
 const Title = styled.div`
@@ -57,7 +57,7 @@ const Title = styled.div`
 
 const StyledButton = styled.button<{ isSelected: boolean }>`
   display: none;
-  font-family: 'Oxanium', sans-serif;
+  font-family: "Open Sans", sans-serif;
   background: none;
   border: none;
   color: #fff;
