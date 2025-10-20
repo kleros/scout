@@ -16,8 +16,8 @@ import OverlayPortal from "components/OverlayPortal";
 import { Overlay } from "components/Overlay";
 
 import Logo from "./Logo";
+import HeaderNav from "./HeaderNav";
 import DappList from "./navbar/DappList";
-import Explore from "./navbar/Explore";
 import Menu from "./navbar/Menu";
 import Help from "./navbar/Menu/Help";
 import Settings from "./navbar/Menu/Settings";
@@ -40,11 +40,13 @@ const Container = styled.div`
 
 const LeftSide = styled.div`
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 24px;
 `;
 
-const MiddleSide = styled.div`
+const CenterSide = styled.div`
   display: flex;
+  align-items: center;
   position: absolute;
   left: 50%;
   top: 50%;
@@ -97,9 +99,9 @@ const DesktopHeader: React.FC = () => {
           <Logo />
         </LeftSide>
 
-        <MiddleSide>
-          <Explore />
-        </MiddleSide>
+        <CenterSide>
+          <HeaderNav />
+        </CenterSide>
 
         <RightSide>
           <ConnectWalletContainer

@@ -5,7 +5,6 @@ import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import { Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { OverlayScrollContext } from "context/OverlayScrollContext";
-import Sidebar from "./Sidebar";
 import Footer from "./Footer";
 import Header from "./Header";
 
@@ -27,11 +26,7 @@ const ContentArea = styled.div`
   display: flex;
   flex: 1;
   background-color: ${({ theme }) => theme.lightBackground};
-`;
-
-const OutletContainer = styled.div`
-  flex: 1;
-  display: flex;
+  width: 100%;
 `;
 
 const Notifications = styled(ToastContainer)`
@@ -49,10 +44,7 @@ const Layout: React.FC = () => {
           <Header />
           <Notifications />
           <ContentArea>
-            <Sidebar />
-            <OutletContainer>
-              <Outlet />
-            </OutletContainer>
+            <Outlet />
           </ContentArea>
           <Footer />
         </Container>
