@@ -9,9 +9,11 @@ const FieldsContainer = styled.div`
   gap: 24px;
   margin: 0;
   padding: 0 0 16px 0;
-  background: transparent;
+  background: ${({ theme }) => theme.whiteBackground};
   border-bottom: 1px solid ${({ theme }) => theme.stroke};
   margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
 `
 
 const FieldItem = styled.div`

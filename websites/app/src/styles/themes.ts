@@ -109,4 +109,6 @@ export const darkTheme = {
 
   paleCyan: "#ACFFFF",
   limeGreen: "#F3FFD9",
+
+  watermarkFill: "rgba(27, 32, 48, 0.40)",
 };

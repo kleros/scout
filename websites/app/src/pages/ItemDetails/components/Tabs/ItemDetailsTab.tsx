@@ -7,6 +7,7 @@ import CrowdfundingCard from 'components/CrowdfundingCard'
 import { STATUS_CODE } from 'utils/itemStatus'
 import EntryTimeline from '../EntryTimeline'
 import ItemFieldsDisplay from '../ItemFieldsDisplay'
+import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
 
 const AppealInfoBox = styled.div`
   background: transparent;
@@ -16,6 +17,8 @@ const AppealInfoBox = styled.div`
   flex-wrap: wrap;
   gap: 48px;
   align-items: center;
+  position: relative;
+  z-index: 1;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -78,10 +81,12 @@ const FundingStatus = styled.span<{ funded: boolean }>`
   border-radius: 12px;
   font-size: 13px;
   font-weight: 600;
-  background: transparent;
+  background: ${({ theme }) => theme.whiteBackground};
   color: ${({ funded }) => (funded ? '#48BB78' : '#CD9DFF')};
   border: 1px solid ${({ funded }) => (funded ? '#48BB78' : '#CD9DFF')};
   width: fit-content;
+  position: relative;
+  z-index: 1;
 `
 
 const RulingBadge = styled.span<{ ruling: string }>`
@@ -95,11 +100,19 @@ const RulingBadge = styled.span<{ ruling: string }>`
   width: fit-content;
   text-align: center;
   line-height: 1.3;
-  background: ${({ ruling }) => {
-    if (ruling === 'Accept') return 'rgba(72, 187, 120, 0.12)'
-    if (ruling === 'Reject') return 'rgba(245, 101, 101, 0.12)'
-    if (ruling === 'Refuse') return 'rgba(160, 174, 192, 0.12)'
-    return 'rgba(237, 137, 54, 0.12)'
+  position: relative;
+  z-index: 1;
+  background: ${({ theme, ruling }) => {
+    const baseColor = theme.whiteBackground
+    const overlayColor =
+      ruling === 'Accept'
+        ? 'rgba(72, 187, 120, 0.12)'
+        : ruling === 'Reject'
+        ? 'rgba(245, 101, 101, 0.12)'
+        : ruling === 'Refuse'
+        ? 'rgba(160, 174, 192, 0.12)'
+        : 'rgba(237, 137, 54, 0.12)'
+    return `linear-gradient(${overlayColor}, ${overlayColor}), ${baseColor}`
   }};
   color: ${({ ruling }) => {
     if (ruling === 'Accept') return '#48BB78'
@@ -108,12 +121,7 @@ const RulingBadge = styled.span<{ ruling: string }>`
     return '#ED8936'
   }};
   border: none;
-  box-shadow: 0 0 0 1px ${({ ruling }) => {
-    if (ruling === 'Accept') return 'rgba(72, 187, 120, 0.2)'
-    if (ruling === 'Reject') return 'rgba(245, 101, 101, 0.2)'
-    if (ruling === 'Refuse') return 'rgba(160, 174, 192, 0.15)'
-    return 'rgba(237, 137, 54, 0.2)'
-  }};
+  box-shadow: none;
 `
 
 const ContentWrapper = styled.div`
@@ -126,6 +134,25 @@ const ContentWrapper = styled.div`
 
 const PaddedContent = styled.div`
   padding: 8px 0 ${responsiveSize(16, 24)} 0;
+  position: relative;
+  min-height: 500px;
+`
+
+const ScoutWatermark = styled.div`
+  position: absolute;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  width: 720px;
+  height: 720px;
+  z-index: 0;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    fill: ${({ theme }) => theme.watermarkFill};
+  }
 `
 
 interface ItemDetailsTabProps {
@@ -161,6 +188,9 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
 }) => {
   return (
     <PaddedContent>
+      <ScoutWatermark>
+        <ScoutBigLogo />
+      </ScoutWatermark>
       <ItemFieldsDisplay
         detailsData={detailsData}
         registryParsedFromItemId={registryParsedFromItemId}

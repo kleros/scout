@@ -7,7 +7,7 @@ import { useSearchParams, Link } from 'react-router-dom'
 import { StyledButton } from 'components/Button'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import AttachmentIcon from 'assets/svgs/icons/attachment.svg'
-import KlerosIcon from 'assets/svgs/icons/kleros.svg'
+import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
@@ -29,22 +29,24 @@ const EvidenceSectionHeader = styled.div`
   justify-content: center;
   align-items: center;
   margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
 `
 
-const KlerosWatermark = styled.div`
+const ScoutWatermark = styled.div`
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  opacity: 0.03;
   pointer-events: none;
-  width: 500px;
-  height: 500px;
+  width: 720px;
+  height: 720px;
   z-index: 0;
 
   svg {
     width: 100%;
     height: 100%;
+    fill: ${({ theme }) => theme.watermarkFill};
   }
 `
 
@@ -59,6 +61,7 @@ const Evidence = styled.div`
   overflow: visible;
   border: 1px solid ${({ theme }) => theme.stroke};
   box-shadow: ${({ theme }) => theme.cardShadow};
+  z-index: 1;
 
   &:hover {
     border-color: rgba(255, 255, 255, 0.3);
@@ -129,7 +132,7 @@ const NoEvidenceText = styled.div`
   font-size: 16px;
   text-align: center;
   position: relative;
-  z-index: 1;
+  z-index: 2;
 `
 
 const StyledReactMarkdown = styled(ReactMarkdown)`
@@ -257,9 +260,9 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
       </EvidenceSectionHeader>
 
       <EvidenceSection hasEvidence={evidences.length > 0}>
-        <KlerosWatermark>
-          <KlerosIcon />
-        </KlerosWatermark>
+        <ScoutWatermark>
+          <ScoutBigLogo />
+        </ScoutWatermark>
         {evidences.length > 0 ? (
           evidences.map((evidence, idx) => (
             <Evidence key={idx}>

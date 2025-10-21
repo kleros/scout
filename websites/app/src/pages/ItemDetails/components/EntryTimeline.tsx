@@ -1,17 +1,24 @@
 import React, { useMemo } from 'react'
 import styled, { useTheme } from 'styled-components'
 import { Link } from 'react-router-dom'
-import { CustomTimeline, _TimelineItem1 } from '@kleros/ui-components-library'
+import { CustomTimeline } from '@kleros/ui-components-library'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
+type TimelineItem = {
+  title: string
+  party?: string
+  subtitle?: React.ReactNode
+}
+
 const Container = styled.div`
   display: flex;
   position: relative;
   flex-direction: column;
+  z-index: 1;
 `
 
 const StyledTimeline = styled(CustomTimeline)`
@@ -170,10 +177,10 @@ interface EntryTimelineProps {
 const EntryTimeline: React.FC<EntryTimelineProps> = ({ detailsData }) => {
   const theme = useTheme()
 
-  const timelineItems = useMemo<[_TimelineItem1, ..._TimelineItem1[]] | undefined>(() => {
+  const timelineItems = useMemo<[TimelineItem, ...TimelineItem[]] | undefined>(() => {
     if (!detailsData) return undefined
 
-    const items: _TimelineItem1[] = []
+    const items: TimelineItem[] = []
 
     // Submission - always present
     const creationTx = detailsData.requests[0]?.creationTx
@@ -309,7 +316,7 @@ const EntryTimeline: React.FC<EntryTimelineProps> = ({ detailsData }) => {
       })
     }
 
-    return items.length > 0 ? items as [_TimelineItem1, ..._TimelineItem1[]] : undefined
+    return items.length > 0 ? items as [TimelineItem, ...TimelineItem[]] : undefined
   }, [detailsData, theme])
 
   if (!timelineItems) return null
