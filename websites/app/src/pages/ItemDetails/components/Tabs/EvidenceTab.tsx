@@ -3,12 +3,14 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import ReactMarkdown from 'react-markdown'
-import { useSearchParams } from 'react-router-dom'
-import { SubmitButton } from '../../../Registries/SubmitEntries/AddEntryModal'
+import { useSearchParams, Link } from 'react-router-dom'
+import { StyledButton } from 'components/Button'
+import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import AttachmentIcon from 'assets/svgs/icons/attachment.svg'
 import KlerosIcon from 'assets/svgs/icons/kleros.svg'
 import { formatTimestamp } from 'utils/formatTimestamp'
-import SubmittedByLink from 'components/SubmittedByLink'
+import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
+import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { useScrollTop } from 'hooks/useScrollTop'
 
 const EvidenceSection = styled.div<{ hasEvidence?: boolean }>`
@@ -24,16 +26,9 @@ const EvidenceSection = styled.div<{ hasEvidence?: boolean }>`
 
 const EvidenceSectionHeader = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
   margin-bottom: 16px;
-`
-
-const EvidenceHeader = styled.h2`
-  font-size: 20px;
-  margin: 0;
 `
 
 const KlerosWatermark = styled.div`
@@ -59,25 +54,30 @@ const Evidence = styled.div`
   border-radius: 12px;
   font-family: "Open Sans", sans-serif;
   margin-bottom: 20px;
-  background: transparent;
+  background: ${({ theme }) => theme.backgroundThree};
   transition: all 0.2s ease;
   overflow: visible;
   border: 1px solid ${({ theme }) => theme.stroke};
+  box-shadow: ${({ theme }) => theme.cardShadow};
 
   &:hover {
-    border-color: ${({ theme }) => theme.primaryText};
+    border-color: rgba(255, 255, 255, 0.3);
   }
 `
 
 const EvidenceTitle = styled.div`
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
   margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(113, 134, 255, 0.2);
+  padding-bottom: 0;
+  border-bottom: none;
   position: relative;
   z-index: 1;
+`
+
+const EvidenceNumber = styled.span`
+  color: ${({ theme }) => theme.secondaryText};
 `
 
 const EvidenceDescription = styled.div`
@@ -85,12 +85,12 @@ const EvidenceDescription = styled.div`
   word-break: break-word;
   gap: 4px;
   margin: 16px 0;
-  padding: 12px;
+  padding: 0;
   background: transparent;
   border-radius: 8px;
-  border-left: 3px solid rgba(113, 134, 255, 0.4);
   font-size: 14px;
   line-height: 1.5;
+  color: ${({ theme }) => theme.secondaryText};
   position: relative;
   z-index: 1;
 `
@@ -100,8 +100,8 @@ const EvidenceMetadata = styled.div`
   gap: 24px;
   flex-wrap: wrap;
   margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0;
+  border-top: none;
   font-size: 13px;
   color: ${({ theme }) => theme.secondaryText};
   position: relative;
@@ -133,12 +133,22 @@ const NoEvidenceText = styled.div`
 `
 
 const StyledReactMarkdown = styled(ReactMarkdown)`
+  color: ${({ theme }) => theme.secondaryText};
+
   p {
     margin: 4px 0;
+    color: inherit;
   }
 `
 
-const StyledButton = styled.button`
+const SubmitEvidenceButton = styled(StyledButton).attrs({ variant: 'primary', size: 'medium' })`
+  ${hoverLongTransitionTiming}
+  margin: 0;
+  max-width: 152px;
+  height: 40px;
+`
+
+const AttachmentButton = styled.button`
   height: fit-content;
   display: inline-flex;
   align-items: center;
@@ -171,6 +181,54 @@ const StyledButton = styled.button`
   )}
 `
 
+const SubmissionDate = styled.a`
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 13px;
+  font-style: italic;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryText};
+    text-decoration: underline;
+  }
+`
+
+const PartyLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer !important;
+
+  label {
+    color: ${({ theme }) => theme.secondaryText};
+    cursor: pointer;
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
+    path {
+      fill: ${({ theme }) => theme.secondaryText};
+    }
+  }
+
+  &:hover {
+    cursor: pointer !important;
+    label {
+      color: ${({ theme }) => theme.primaryText};
+    }
+
+    svg {
+      path {
+        fill: ${({ theme }) => theme.primaryText};
+      }
+    }
+  }
+`
+
 interface EvidenceTabProps {
   evidences: any[]
   setIsConfirmationOpen: (open: boolean) => void
@@ -188,15 +246,14 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
   return (
     <>
       <EvidenceSectionHeader>
-        <EvidenceHeader>Evidence</EvidenceHeader>
-        <SubmitButton
+        <SubmitEvidenceButton
           onClick={() => {
             setIsConfirmationOpen(true)
             setEvidenceConfirmationType('Evidence')
           }}
         >
           Submit Evidence
-        </SubmitButton>
+        </SubmitEvidenceButton>
       </EvidenceSectionHeader>
 
       <EvidenceSection hasEvidence={evidences.length > 0}>
@@ -206,14 +263,17 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
         {evidences.length > 0 ? (
           evidences.map((evidence, idx) => (
             <Evidence key={idx}>
-              <EvidenceTitle>{evidence?.title}</EvidenceTitle>
+              <EvidenceTitle>
+                <EvidenceNumber>#{idx + 1}. </EvidenceNumber>
+                {evidence?.title}
+              </EvidenceTitle>
               <EvidenceDescription>
                 <StyledReactMarkdown>
                   {evidence?.description || ''}
                 </StyledReactMarkdown>
               </EvidenceDescription>
               {evidence?.fileURI ? (
-                <StyledButton
+                <AttachmentButton
                   onClick={() => {
                     if (evidence?.fileURI) {
                       setSearchParams({
@@ -225,16 +285,27 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                 >
                   <AttachmentIcon />
                   View Attached File
-                </StyledButton>
+                </AttachmentButton>
               ) : null}
               <EvidenceMetadata>
                 <EvidenceMetadataItem>
-                  <strong>Time:</strong>
-                  {formatTimestamp(Number(evidence.timestamp), true)}
-                </EvidenceMetadataItem>
-                <EvidenceMetadataItem>
-                  <strong>Party:</strong>
-                  <SubmittedByLink address={evidence.party} />
+                  <strong>Submitted on:</strong>
+                  <SubmissionDate
+                    href={`https://gnosisscan.io/tx/${evidence.txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {formatTimestamp(Number(evidence.timestamp), true)}
+                  </SubmissionDate>
+                  by
+                  <PartyLink
+                    to={`/activity/ongoing?userAddress=${evidence.party}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <IdenticonOrAvatar size="20" address={evidence.party as `0x${string}`} />
+                    <AddressOrName address={evidence.party as `0x${string}`} smallDisplay />
+                    <ArrowIcon />
+                  </PartyLink>
                 </EvidenceMetadataItem>
               </EvidenceMetadata>
             </Evidence>

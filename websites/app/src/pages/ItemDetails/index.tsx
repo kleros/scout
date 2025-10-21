@@ -17,8 +17,12 @@ import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus
 import { revRegistryMap } from 'utils/items'
 import Entry from '../Registries/EntriesList/Entry'
 import Breadcrumb from './components/Breadcrumb'
-import SubmitterSection from './components/SubmitterSection'
 import ItemDetailsContent from './components/ItemDetailsContent'
+import { hoverShortTransitionTiming } from 'styles/commonStyles'
+import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
+import { formatTimestamp } from 'utils/formatTimestamp'
+import { Link } from 'react-router-dom'
+import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 
 const Container = styled.div`
   display: flex;
@@ -52,7 +56,7 @@ const TopBar = styled.div`
 const ReturnButton = styled.button`
   background: none;
   border: none;
-  color: ${({ theme }) => theme.primaryText};
+  color: ${({ theme }) => theme.secondaryBlue};
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -61,15 +65,24 @@ const ReturnButton = styled.button`
   font-weight: 600;
   padding: 8px 16px;
   border-radius: 8px;
-  transition: background-color 0.2s;
+  ${hoverShortTransitionTiming}
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    color: ${({ theme }) => theme.primaryBlue};
   }
 
   svg {
     width: 16px;
     height: 16px;
+
+    path {
+      fill: ${({ theme }) => theme.secondaryBlue};
+      ${hoverShortTransitionTiming}
+    }
+  }
+
+  &:hover svg path {
+    fill: ${({ theme }) => theme.primaryBlue};
   }
 `
 
@@ -105,9 +118,85 @@ const RightSection = styled.div`
 
 const EntryCardWrapper = styled.div`
   width: 100%;
+  display: flex;
+  flex-direction: column;
 
   > div {
     margin-bottom: 0;
+  }
+`
+
+const SubmissionDetailsSection = styled.div`
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-top: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: -12px;
+`
+
+const DetailRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  row-gap: 4px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.secondaryText};
+  line-height: 1.5;
+`
+
+const SubmitterLink = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer !important;
+
+  label {
+    color: ${({ theme }) => theme.secondaryText};
+    cursor: pointer;
+  }
+
+  svg {
+    width: 12px;
+    height: 12px;
+    path {
+      fill: ${({ theme }) => theme.secondaryText};
+    }
+  }
+
+  &:hover {
+    cursor: pointer !important;
+    label {
+      color: ${({ theme }) => theme.primaryText};
+    }
+
+    svg {
+      path {
+        fill: ${({ theme }) => theme.primaryText};
+      }
+    }
+  }
+`
+
+const SubmissionDate = styled.a`
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 12px;
+  font-style: italic;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryText};
+    text-decoration: underline;
   }
 `
 
@@ -337,16 +426,42 @@ const ItemDetails: React.FC = () => {
                     setEvidenceConfirmationType(actionType)
                   }}
                   actionButtonCost={formattedDepositCost}
+                  hideBottomTimers={true}
+                  seamlessBottom={true}
                 />
               </EntryCardWrapper>
 
-              <SubmitterSection
-                requester={detailsData.requests[0].requester}
-                submissionTime={detailsData.requests[0].submissionTime}
-                resolutionTime={detailsData.requests[0].resolutionTime}
-                status={detailsData.status}
-                challengeRemainingTime={formattedChallengeRemainingTime}
-              />
+              <SubmissionDetailsSection>
+                <DetailRow>
+                  Submitted on:
+                  <SubmissionDate
+                    href={`https://gnosisscan.io/tx/${detailsData.requests[0].creationTx}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {formatTimestamp(Number(detailsData.requests[0].submissionTime), true)}
+                  </SubmissionDate>
+                  by
+                  <SubmitterLink
+                    to={`/activity/ongoing?userAddress=${detailsData.requests[0].requester}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <IdenticonOrAvatar size="20" address={detailsData.requests[0].requester as `0x${string}`} />
+                    <AddressOrName address={detailsData.requests[0].requester as `0x${string}`} smallDisplay />
+                    <ArrowIcon />
+                  </SubmitterLink>
+                </DetailRow>
+                {formattedChallengeRemainingTime && detailsData.status !== 'Registered' && (
+                  <DetailRow>
+                    Challenge period ends in: {formattedChallengeRemainingTime}
+                  </DetailRow>
+                )}
+                {detailsData.status === 'Registered' && detailsData.requests[0].resolutionTime && (
+                  <DetailRow>
+                    Included on: {formatTimestamp(Number(detailsData.requests[0].resolutionTime), true)}
+                  </DetailRow>
+                )}
+              </SubmissionDetailsSection>
             </LeftSection>
 
             <RightSection>

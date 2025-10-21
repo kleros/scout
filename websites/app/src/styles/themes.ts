@@ -72,9 +72,11 @@ export const darkTheme = {
   whiteBackground: "#000000",
   lightBackground: "#000000",
   backgroundTwo: "#0A0A0A",
+  backgroundThree: "#111111",
 
   defaultShadow: "#00000000",
   hoveredShadow: "#FFFFFF1A",
+  cardShadow: "0 2px 3px 0 rgba(0, 0, 0, 0.06)",
   whiteLowOpacitySubtle: "#FFFFFF0F",
   whiteLowOpacityStrong: "#FFFFFF24",
   blackLowOpacity: "#00000080",

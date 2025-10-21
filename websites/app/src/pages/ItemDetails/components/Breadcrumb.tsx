@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { Link } from 'react-router-dom'
+import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
 const BreadcrumbContainer = styled.div`
   display: flex;
@@ -13,10 +14,10 @@ const BreadcrumbContainer = styled.div`
   a {
     color: ${({ theme }) => theme.secondaryText};
     text-decoration: none;
-    transition: color 0.2s;
+    ${hoverShortTransitionTiming}
 
     &:hover {
-      color: ${({ theme }) => theme.primaryText};
+      color: ${({ theme }) => theme.primaryBlue};
     }
   }
 
@@ -27,7 +28,7 @@ const BreadcrumbContainer = styled.div`
   }
 
   span {
-    color: ${({ theme }) => theme.primaryText};
+    color: ${({ theme }) => theme.secondaryBlue};
   }
 `
 
@@ -43,8 +44,6 @@ interface BreadcrumbProps {
 const Breadcrumb: React.FC<BreadcrumbProps> = ({ registryName, itemName }) => {
   return (
     <BreadcrumbContainer>
-      <Link to="/">Home</Link>
-      <Separator>/</Separator>
       <Link to={`/registry/${registryName}`}>{registryName}</Link>
       <Separator>/</Separator>
       <span>{itemName}</span>

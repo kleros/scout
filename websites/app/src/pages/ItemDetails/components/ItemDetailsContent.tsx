@@ -2,27 +2,49 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import ItemDetailsTab from './Tabs/ItemDetailsTab'
 import EvidenceTab from './Tabs/EvidenceTab'
+import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
 const TabsWrapper = styled.div`
   display: flex;
-  gap: 40px;
+  gap: 0;
   border-bottom: 1px solid ${({ theme }) => theme.lightGrey};
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 `
 
 const TabButton = styled.button<{ selected: boolean }>`
   background: none;
   border: none;
   padding: 0 0 12px;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 400;
   color: ${({ theme, selected }) =>
-    selected ? theme.primaryText : theme.secondaryText};
-  border-bottom: 3px solid
-    ${({ theme, selected }) => (selected ? theme.primaryText : 'transparent')};
+    selected ? theme.secondaryBlue : theme.secondaryText};
+  border-bottom: 2px solid
+    ${({ theme, selected }) => (selected ? theme.secondaryBlue : theme.secondaryText)};
   cursor: pointer;
+  flex: 1;
+  text-align: center;
+  position: relative;
+  ${hoverShortTransitionTiming}
+
   &:hover {
-    color: ${({ theme }) => theme.primaryText};
+    color: ${({ theme }) => theme.primaryBlue};
+    border-bottom-color: ${({ theme }) => theme.primaryBlue};
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: ${({ theme, selected }) => (selected ? theme.secondaryBlue : theme.secondaryText)};
+    ${hoverShortTransitionTiming}
+  }
+
+  &:hover::after {
+    background: ${({ theme }) => theme.primaryBlue};
   }
 `
 
@@ -30,13 +52,11 @@ const ContentWrapper = styled.div`
   display: flex;
   flex-direction: column;
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  border-radius: 12px;
-  padding: 16px;
+  padding: 0;
+`
 
-  @media (min-width: 768px) {
-    padding: 24px;
-  }
+const EvidenceWrapper = styled.div`
+  padding: 8px 0 0 0;
 `
 
 interface ItemDetailsContentProps {
@@ -119,11 +139,13 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
             registryParsedFromItemId={registryParsedFromItemId}
           />
         ) : (
-          <EvidenceTab
-            evidences={evidences}
-            setIsConfirmationOpen={setIsConfirmationOpen}
-            setEvidenceConfirmationType={setEvidenceConfirmationType}
-          />
+          <EvidenceWrapper>
+            <EvidenceTab
+              evidences={evidences}
+              setIsConfirmationOpen={setIsConfirmationOpen}
+              setEvidenceConfirmationType={setEvidenceConfirmationType}
+            />
+          </EvidenceWrapper>
         )}
       </ContentWrapper>
     </>

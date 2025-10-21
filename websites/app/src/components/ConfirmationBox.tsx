@@ -79,10 +79,17 @@ const TextArea = styled.textarea`
   font-family: "Open Sans", sans-serif;
   font-size: 14px;
   resize: vertical;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.stroke};
+    background: rgba(255, 255, 255, 0.08);
+  }
 
   &:focus {
-    border-color: ${({ theme }) => theme.primaryText};
-    box-shadow: 0 0 0 2px rgba(205, 157, 255, 0.2);
+    border-color: ${({ theme }) => theme.secondaryBlue};
+    box-shadow: 0 0 0 2px rgba(113, 134, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   &::placeholder {
@@ -94,6 +101,17 @@ const TextArea = styled.textarea`
       width: 97%;
     `
   )}
+`
+
+const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  width: 100%;
+
+  button {
+    width: auto;
+    max-width: 200px;
+  }
 `
 
 interface IConfirmationBox {
@@ -154,78 +172,80 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             value={evidenceText}
             onChange={(e) => setEvidenceText(e.target.value)}
           ></TextArea>
-          <EnsureChain>
-            <SubmitButton
-              onClick={async () => {
-                try {
-                  const evidenceObject = {
-                    title: evidenceTitle,
-                    description: evidenceText,
-                  }
-                  const enc = new TextEncoder()
-                  const fileData = enc.encode(JSON.stringify(evidenceObject))
-                  const ipfsObject = await ipfsPublish('evidence.json', fileData)
-                  const ipfsPath = getIPFSPath(ipfsObject)
+          <ButtonWrapper>
+            <EnsureChain>
+              <SubmitButton
+                onClick={async () => {
+                  try {
+                    const evidenceObject = {
+                      title: evidenceTitle,
+                      description: evidenceText,
+                    }
+                    const enc = new TextEncoder()
+                    const fileData = enc.encode(JSON.stringify(evidenceObject))
+                    const ipfsObject = await ipfsPublish('evidence.json', fileData)
+                    const ipfsPath = getIPFSPath(ipfsObject)
 
-                  let result = false
-                  const registryAddress = detailsData.registryAddress as Address
-                  const itemId = detailsData.itemID
-                  const arbitrationCost = arbitrationCostData as bigint
-                  
-                  switch (evidenceConfirmationType) {
-                    case 'Evidence':
-                      await submitEvidence(registryAddress, itemId, ipfsPath)
-                      result = true
-                      break
-                    case 'RegistrationRequested':
-                      if (deposits?.submissionChallengeBaseDeposit) {
-                        await challengeRequest(
-                          registryAddress,
-                          itemId,
-                          ipfsPath,
-                          BigInt(deposits.submissionChallengeBaseDeposit),
-                          arbitrationCost
-                        )
+                    let result = false
+                    const registryAddress = detailsData.registryAddress as Address
+                    const itemId = detailsData.itemID
+                    const arbitrationCost = arbitrationCostData as bigint
+
+                    switch (evidenceConfirmationType) {
+                      case 'Evidence':
+                        await submitEvidence(registryAddress, itemId, ipfsPath)
                         result = true
-                      }
-                      break
-                    case 'Registered':
-                      if (deposits?.removalBaseDeposit) {
-                        await removeItem(
-                          registryAddress,
-                          itemId,
-                          ipfsPath,
-                          deposits,
-                          arbitrationCost
-                        )
-                        result = true
-                      }
-                      break
-                    case 'ClearingRequested':
-                      if (deposits?.removalChallengeBaseDeposit) {
-                        await challengeRequest(
-                          registryAddress,
-                          itemId,
-                          ipfsPath,
-                          BigInt(deposits.removalChallengeBaseDeposit),
-                          arbitrationCost
-                        )
-                        result = true
-                      }
-                      break
+                        break
+                      case 'RegistrationRequested':
+                        if (deposits?.submissionChallengeBaseDeposit) {
+                          await challengeRequest(
+                            registryAddress,
+                            itemId,
+                            ipfsPath,
+                            BigInt(deposits.submissionChallengeBaseDeposit),
+                            arbitrationCost
+                          )
+                          result = true
+                        }
+                        break
+                      case 'Registered':
+                        if (deposits?.removalBaseDeposit) {
+                          await removeItem(
+                            registryAddress,
+                            itemId,
+                            ipfsPath,
+                            deposits,
+                            arbitrationCost
+                          )
+                          result = true
+                        }
+                        break
+                      case 'ClearingRequested':
+                        if (deposits?.removalChallengeBaseDeposit) {
+                          await challengeRequest(
+                            registryAddress,
+                            itemId,
+                            ipfsPath,
+                            BigInt(deposits.removalChallengeBaseDeposit),
+                            arbitrationCost
+                          )
+                          result = true
+                        }
+                        break
+                    }
+
+                    if (result) {
+                      setIsConfirmationOpen(false)
+                    }
+                  } catch (error) {
+                    console.error('Error performing action:', error)
                   }
-                  
-                  if (result) {
-                    setIsConfirmationOpen(false)
-                  }
-                } catch (error) {
-                  console.error('Error performing action:', error)
-                }
-              }}
-            >
-              Confirm
-            </SubmitButton>
-          </EnsureChain>
+                }}
+              >
+                Confirm
+              </SubmitButton>
+            </EnsureChain>
+          </ButtonWrapper>
         </InnerContainer>
       </Container>
     </ModalOverlay>

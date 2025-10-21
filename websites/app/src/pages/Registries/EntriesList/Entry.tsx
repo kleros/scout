@@ -19,13 +19,17 @@ import {
 } from 'styles/commonStyles'
 import { StyledButton } from 'components/Button'
 
-const Card = styled.div`
+const Card = styled.div<{ seamlessBottom?: boolean }>`
   color: white;
   font-family: "Open Sans", sans-serif;
   box-sizing: border-box;
   word-break: break-word;
   border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 12px;
+  ${({ seamlessBottom }) => seamlessBottom && `
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  `}
 
   overflow: hidden;
   display: flex;
@@ -240,6 +244,8 @@ interface EntryProps {
   showActionButtons?: boolean
   onActionButtonClick?: (actionType: string) => void
   actionButtonCost?: string
+  hideBottomTimers?: boolean
+  seamlessBottom?: boolean
 }
 
 const Entry = React.memo(
@@ -249,6 +255,8 @@ const Entry = React.memo(
     showActionButtons = false,
     onActionButtonClick,
     actionButtonCost,
+    hideBottomTimers = false,
+    seamlessBottom = false,
   }: EntryProps) => {
     const [imgLoaded, setImgLoaded] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
@@ -274,7 +282,7 @@ const Entry = React.memo(
     }
 
     return (
-      <Card>
+      <Card seamlessBottom={seamlessBottom}>
         <Status
           status={item.status}
           disputed={item.disputed}
@@ -408,32 +416,36 @@ const Entry = React.memo(
                 Details
               </DetailsButton>
             ) : null}
-            <StyledDivider />
-            <TimersContainer>
-              {item?.status !== 'Registered' ? (
-                <SubmittedLabel>
-                  Submitted on:{' '}
-                  {formatTimestamp(
-                    Number(item?.requests[0].submissionTime),
-                    false,
+            {!hideBottomTimers && (
+              <>
+                <StyledDivider />
+                <TimersContainer>
+                  {item?.status !== 'Registered' ? (
+                    <SubmittedLabel>
+                      Submitted on:{' '}
+                      {formatTimestamp(
+                        Number(item?.requests[0].submissionTime),
+                        false,
+                      )}
+                    </SubmittedLabel>
+                  ) : null}
+                  {item?.status === 'Registered' ? (
+                    <SubmittedLabel>
+                      Included on:{' '}
+                      {formatTimestamp(
+                        Number(item?.requests[0].resolutionTime),
+                        false,
+                      )}
+                    </SubmittedLabel>
+                  ) : null}
+                  {formattedChallengeRemainingTime && (
+                    <SubmittedLabel>
+                      Will be included in: {formattedChallengeRemainingTime}
+                    </SubmittedLabel>
                   )}
-                </SubmittedLabel>
-              ) : null}
-              {item?.status === 'Registered' ? (
-                <SubmittedLabel>
-                  Included on:{' '}
-                  {formatTimestamp(
-                    Number(item?.requests[0].resolutionTime),
-                    false,
-                  )}
-                </SubmittedLabel>
-              ) : null}
-              {formattedChallengeRemainingTime && (
-                <SubmittedLabel>
-                  Will be included in: {formattedChallengeRemainingTime}
-                </SubmittedLabel>
-              )}
-            </TimersContainer>
+                </TimersContainer>
+              </>
+            )}
           </BottomCardContent>
         </CardContent>
       </Card>

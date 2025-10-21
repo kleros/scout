@@ -6,18 +6,11 @@ import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
 import CrowdfundingCard from 'components/CrowdfundingCard'
 import { STATUS_CODE } from 'utils/itemStatus'
 import EntryTimeline from '../EntryTimeline'
-
-const SectionHeader = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 24px;
-`
+import ItemFieldsDisplay from '../ItemFieldsDisplay'
 
 const AppealInfoBox = styled.div`
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  border-radius: 12px;
-  padding: 20px 24px;
+  padding: 20px 0;
   margin: 16px 0;
   display: flex;
   flex-wrap: wrap;
@@ -28,7 +21,7 @@ const AppealInfoBox = styled.div`
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
-    padding: 16px 20px;
+    padding: 16px 0;
   }
 `
 
@@ -55,20 +48,25 @@ const AppealStatusValue = styled.span`
 const CaseLink = styled.a`
   font-size: 14px;
   font-weight: 600;
-  color: #cd9dff;
+  color: ${({ theme }) => theme.secondaryBlue};
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 6px;
 
   svg {
-    fill: #cd9dff;
+    fill: ${({ theme }) => theme.secondaryBlue};
     width: 14px;
     height: 14px;
   }
 
   &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
     text-decoration: underline;
+
+    svg {
+      fill: ${({ theme }) => theme.primaryBlue};
+    }
   }
 `
 
@@ -90,25 +88,31 @@ const RulingBadge = styled.span<{ ruling: string }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 16px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   width: fit-content;
   text-align: center;
   line-height: 1.3;
-  background: transparent;
+  background: ${({ ruling }) => {
+    if (ruling === 'Accept') return 'rgba(72, 187, 120, 0.12)'
+    if (ruling === 'Reject') return 'rgba(245, 101, 101, 0.12)'
+    if (ruling === 'Refuse') return 'rgba(160, 174, 192, 0.12)'
+    return 'rgba(237, 137, 54, 0.12)'
+  }};
   color: ${({ ruling }) => {
     if (ruling === 'Accept') return '#48BB78'
     if (ruling === 'Reject') return '#F56565'
-    if (ruling === 'Refuse') return '#A0AEC0'
+    if (ruling === 'Refuse') return '#D1D5DB'
     return '#ED8936'
   }};
-  border: 1px solid ${({ ruling }) => {
-    if (ruling === 'Accept') return '#48BB78'
-    if (ruling === 'Reject') return '#F56565'
-    if (ruling === 'Refuse') return '#A0AEC0'
-    return '#ED8936'
+  border: none;
+  box-shadow: 0 0 0 1px ${({ ruling }) => {
+    if (ruling === 'Accept') return 'rgba(72, 187, 120, 0.2)'
+    if (ruling === 'Reject') return 'rgba(245, 101, 101, 0.2)'
+    if (ruling === 'Refuse') return 'rgba(160, 174, 192, 0.15)'
+    return 'rgba(237, 137, 54, 0.2)'
   }};
 `
 
@@ -116,10 +120,12 @@ const ContentWrapper = styled.div`
   display: flex;
   flex-direction: column;
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  border-radius: 12px;
   padding: ${responsiveSize(16, 24)};
   word-break: break-word;
+`
+
+const PaddedContent = styled.div`
+  padding: 8px 0 ${responsiveSize(16, 24)} 0;
 `
 
 interface ItemDetailsTabProps {
@@ -154,9 +160,11 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
   registryParsedFromItemId,
 }) => {
   return (
-    <>
-      <SectionHeader>Entry History</SectionHeader>
-
+    <PaddedContent>
+      <ItemFieldsDisplay
+        detailsData={detailsData}
+        registryParsedFromItemId={registryParsedFromItemId}
+      />
       <EntryTimeline detailsData={detailsData} />
 
       {/* Crowdfunding Card - show for active appeals */}
@@ -319,7 +327,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
           )}
         </>
       )}
-    </>
+    </PaddedContent>
   )
 }
 
