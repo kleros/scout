@@ -8,15 +8,25 @@ import UploadIcon from 'svgs/icons/upload.svg'
 const StyledLabel = styled.label`
   cursor: pointer;
   width: fit-content;
-  display: flex;  
+  display: flex;
   align-items: center;
+  gap: 8px;
   padding: 10px 20px;
-  background-color: #855caf;
-  color: white;
+  background: ${({ theme }) => theme.modalInputBackground};
+  color: ${({ theme }) => theme.primaryText};
+  border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 12px;
   position: relative;
+  font-size: 16px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+
   &:hover {
-    background-color: #9277b1;
+    background: ${({ theme }) => theme.backgroundFour};
+  }
+
+  &:active {
+    background: ${({ theme }) => theme.backgroundFour};
   }
 `
 
@@ -28,7 +38,12 @@ const StyledInput = styled.input`
 `
 
 const StyledUploadIcon = styled(UploadIcon)`
-  margin-left: 5px;
+  width: 16px;
+  height: 16px;
+
+  path {
+    fill: ${({ theme }) => theme.primaryText};
+  }
 `
 
 const ImageUpload: React.FC<{

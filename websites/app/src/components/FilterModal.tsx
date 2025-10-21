@@ -27,7 +27,7 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -37,33 +37,16 @@ const ModalOverlay = styled.div`
 const ModalWrapper = styled.div`
   position: relative;
   width: 90vw;
-  max-width: 800px;
+  max-width: 900px;
   max-height: 90vh;
   border-radius: 20px;
-
-  &:before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #7186FF90 0%, #BEBEC590 100%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    pointer-events: none;
-  }
 `;
 
 const ModalContainer = styled.div`
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
+  background: ${({ theme }) => theme.modalBackground};
   backdrop-filter: blur(50px);
   border-radius: 20px;
-  border: 1px solid rgba(113, 134, 255, 0.3);
+  border: 1px solid ${({ theme }) => theme.stroke};
   width: 100%;
   height: 100%;
   max-height: 90vh;
@@ -80,7 +63,7 @@ const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(113, 134, 255, 0.3);
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
   padding-bottom: 20px;
 `;
 
@@ -333,7 +316,7 @@ const FooterButtons = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
-  border-top: 1px solid rgba(113, 134, 255, 0.3);
+  border-top: 1px solid ${({ theme }) => theme.stroke};
 `;
 
 const STATUS_LABELS = {

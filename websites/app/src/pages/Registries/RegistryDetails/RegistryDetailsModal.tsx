@@ -16,32 +16,40 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 50;
 `
 
+const ModalWrapper = styled.div`
+  position: relative;
+  width: 90vw;
+  max-width: 900px;
+  border-radius: 20px;
+
+  ${landscapeStyle(
+    () => css`
+      width: 70%;
+    `
+  )}
+`
+
 const ModalContainer = styled.div`
   display: flex;
-  background-color: #cd9eff1a;
+  background: ${({ theme }) => theme.modalBackground};
   backdrop-filter: blur(50px);
-  border: 2px solid #CD9DFF;
-  border-radius: 12px;
-  width: 84vw;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 20px;
+  width: 100%;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 24px;
   padding-top: 24px;
   padding-bottom: 24px;
-
-  ${landscapeStyle(
-    () => css`
-      width: 43%;
-    `
-  )}
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
 `
 
 const StyledLabel = styled.div`
@@ -50,7 +58,7 @@ const StyledLabel = styled.div`
   flex-wrap: wrap;
   font-size: 20px;
   font-weight: bold;
-  color: #fff;
+  color: ${({ theme }) => theme.primaryText};
   padding: 0 ${responsiveSize(16, 32)};
 `
 
@@ -59,16 +67,28 @@ const StyledA = styled.a`
   justify-content: center;
   width: 100%;
   word-break: break-word;
-  color: #add8e6;
+  color: ${({ theme }) => theme.primaryBlue};
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.secondaryBlue};
+    text-decoration: underline;
+  }
 `
 
 const StyledButton = styled.button`
-  color: #add8e6;
+  color: ${({ theme }) => theme.primaryBlue};
   cursor: pointer;
   background: none;
   border: none;
   font-size: 20px;
   font-weight: bold;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.secondaryBlue};
+  }
 `
 
 const StyledImg = styled.img`
@@ -104,7 +124,8 @@ const RegistryDetailsModal: React.FC<RegistryDetailsModalProps> = ({ registryNam
 
   return (
     <ModalOverlay>
-      <ModalContainer ref={containerRef}>
+      <ModalWrapper>
+        <ModalContainer ref={containerRef}>
         {isLoading ? (
           <>
             <Skeleton height={25} width={500} />
@@ -147,7 +168,8 @@ const RegistryDetailsModal: React.FC<RegistryDetailsModalProps> = ({ registryNam
         ) : (
           <StyledLabel>No registry data available</StyledLabel>
         )}
-      </ModalContainer>
+        </ModalContainer>
+      </ModalWrapper>
     </ModalOverlay>
   )
 }

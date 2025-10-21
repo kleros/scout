@@ -8,6 +8,7 @@ import { ClosedButtonContainer } from 'pages/Registries';
 import {
   AddContainer,
   AddHeader,
+  HeaderActions,
   AddTitle,
   CloseButton,
   StyledTextInput,
@@ -157,21 +158,23 @@ const AddTagsQueries: React.FC = () => {
     <AddContainer>
       <AddHeader>
         <AddTitle>Submit Address Tags Query</AddTitle>
-        {registry && (
-          <SubmissionButton
-            onClick={() => {
-              if (registry.metadata.policyURI) {
-                setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
-                scrollTop();
-              }
-            }}
-          >
-            Submission Guidelines
-          </SubmissionButton>
-        )}
-        <ClosedButtonContainer onClick={handleClose}>
-          <CloseButton />
-        </ClosedButtonContainer>
+        <HeaderActions>
+          {registry && (
+            <SubmissionButton
+              onClick={() => {
+                if (registry.metadata.policyURI) {
+                  setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                  scrollTop();
+                }
+              }}
+            >
+              Submission Guidelines
+            </SubmissionButton>
+          )}
+          <ClosedButtonContainer onClick={handleClose}>
+            <CloseButton />
+          </ClosedButtonContainer>
+        </HeaderActions>
       </AddHeader>
       <Divider />
       Github Repository

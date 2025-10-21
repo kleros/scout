@@ -19,7 +19,7 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -31,23 +31,20 @@ const Container = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 84vw;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  border-radius: 12px;
+  width: 90vw;
+  max-width: 900px;
+  background: ${({ theme }) => theme.modalBackground};
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 20px;
   color: ${({ theme }) => theme.primaryText};
   display: flex;
   flex-direction: column;
   backdrop-filter: blur(50px);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
 
   ${landscapeStyle(
     () => css`
-      width: 50%;
+      width: 70%;
     `
   )}
 `
@@ -71,26 +68,23 @@ const ConfirmationTitle = styled.h3`
 const TextArea = styled.textarea`
   width: 93%;
   padding: 12px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
+  border: 1px solid ${({ theme }) => theme.stroke};
   outline: none;
   overflow: auto;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => theme.modalInputBackground};
   color: ${({ theme }) => theme.primaryText};
   font-family: "Open Sans", sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   resize: vertical;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: ${({ theme }) => theme.stroke};
-    background: rgba(255, 255, 255, 0.08);
+    background: ${({ theme }) => theme.backgroundFour};
   }
 
   &:focus {
-    border-color: ${({ theme }) => theme.secondaryBlue};
-    box-shadow: 0 0 0 2px rgba(113, 134, 255, 0.2);
-    background: rgba(255, 255, 255, 0.08);
+    background: ${({ theme }) => theme.backgroundFour};
   }
 
   &::placeholder {

@@ -28,7 +28,7 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,42 +38,22 @@ const ModalOverlay = styled.div`
 const ModalWrapper = styled.div`
   position: relative;
   width: 90vw;
-  max-width: 800px;
+  max-width: 900px;
   max-height: 90vh;
   border-radius: 20px;
 
-  &:before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #7186ff90 0%, #bebec590 100%);
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-  }
-
   ${landscapeStyle(
     () => css`
-      width: 60%;
-      max-width: 700px;
+      width: 70%;
     `,
   )}
 `
 
 const ModalContainer = styled.div`
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
+  background: ${({ theme }) => theme.modalBackground};
   backdrop-filter: blur(50px);
   border-radius: 20px;
-  border: 1px solid rgba(113, 134, 255, 0.3);
+  border: 1px solid ${({ theme }) => theme.stroke};
   width: 100%;
   height: 100%;
   max-height: 90vh;
@@ -90,7 +70,7 @@ const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(113, 134, 255, 0.3);
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
   padding-bottom: 20px;
 `
 
@@ -278,22 +258,51 @@ const ActionButton = styled.button`
 `
 
 const DateInput = styled.input`
-  background: rgba(26, 11, 46, 0.3);
-  border: 1px solid rgba(126, 87, 194, 0.3);
+  background: ${({ theme }) => theme.modalInputBackground};
+  border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 8px;
   color: ${({ theme }) => theme.secondaryText};
   padding: 12px;
   font-family: "Open Sans", sans-serif;
-  font-size: 14px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.backgroundFour};
+  }
 
   &:focus {
     outline: none;
-    border-color: rgba(113, 134, 255, 0.6);
+    background: ${({ theme }) => theme.backgroundFour};
     color: ${({ theme }) => theme.primaryText};
+  }
+
+  &::placeholder {
+    color: ${({ theme }) => theme.tertiaryText};
+    opacity: 0.6;
+  }
+
+  &::-webkit-datetime-edit-text,
+  &::-webkit-datetime-edit-month-field,
+  &::-webkit-datetime-edit-day-field,
+  &::-webkit-datetime-edit-year-field {
+    color: ${({ theme }) => theme.secondaryText};
   }
 
   &::-webkit-calendar-picker-indicator {
     filter: invert(1);
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  /* Show placeholder-like text when empty */
+  &:invalid {
+    color: ${({ theme }) => theme.tertiaryText};
   }
 `
 
@@ -302,7 +311,7 @@ const FooterButtons = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
-  border-top: 1px solid rgba(113, 134, 255, 0.3);
+  border-top: 1px solid ${({ theme }) => theme.stroke};
 `
 
 const ExportButton = styled(ModalButton)<{ disabled: boolean }>`
@@ -598,6 +607,8 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
+                placeholder="mm/dd/yyyy"
+                aria-label="From date (mm/dd/yyyy)"
               />
             </FilterGroup>
           </FilterSection>
@@ -613,6 +624,8 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
+                placeholder="mm/dd/yyyy"
+                aria-label="To date (mm/dd/yyyy)"
               />
             </FilterGroup>
           </FilterSection>

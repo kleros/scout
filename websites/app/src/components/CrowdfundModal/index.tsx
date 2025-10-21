@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
 import { STATUS_CODE, PARTY, SUBGRAPH_RULING } from '../../utils/itemStatus'
 import useRequiredFees from '../../hooks/useRequiredFees'
@@ -13,7 +14,7 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -22,21 +23,23 @@ const ModalOverlay = styled.div`
 
 const Modal = styled.div`
   position: relative;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
-  border: 1px solid ${({ theme }) => theme.lightGrey};
+  background: ${({ theme }) => theme.modalBackground};
+  border: 1px solid ${({ theme }) => theme.stroke};
   backdrop-filter: blur(50px);
   color: ${({ theme }) => theme.primaryText};
-  border-radius: 12px;
+  border-radius: 20px;
   padding: 32px;
-  max-width: 600px;
-  width: 90%;
+  width: 90vw;
+  max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+
+  ${landscapeStyle(
+    () => css`
+      width: 70%;
+    `
+  )}
 `
 
 const Title = styled.h2`
@@ -107,7 +110,7 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #cd9dff;
+    border-color: ${({ theme }) => theme.stroke};
   }
 `
 

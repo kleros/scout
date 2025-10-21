@@ -8,6 +8,7 @@ import AddTagsQueries from './AddTagsQueries'
 import AddToken from './AddToken'
 import AddCDN from './AddCDN'
 import { StyledCloseButton } from 'pages/Registries'
+import { baseButtonStyles, primaryButtonStyles } from 'components/Button'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -23,36 +24,21 @@ const ModalOverlay = styled.div`
 `
 
 const ModalContainer = styled.div`
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
+  background: ${({ theme }) => theme.modalBackground};
   backdrop-filter: blur(50px);
   border-radius: 20px;
-  width: 84vw;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  width: 90vw;
+  max-width: 900px;
   max-height: 85vh;
   position: relative;
   box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
 
-  &:before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    padding: 1px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #7186FF90 0%, #BEBEC590 100%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-            mask-composite: exclude;
-    pointer-events: none;
-  }
-
   ${landscapeStyle(
     () => css`
-      width: 60%;
+      width: 70%;
     `
   )}
 `
@@ -71,8 +57,15 @@ export const AddContainer = styled.div`
 export const AddHeader = styled.div`
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 24px;
+  align-items: flex-start;
+  gap: 16px;
+`
+
+export const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
 `
 
 export const AddTitle = styled.div`
@@ -97,7 +90,7 @@ export const AddSubtitle = styled.div`
 export const Divider = styled.div`
   height: 1px;
   width: 100%;
-  background: linear-gradient(90deg, transparent 0%, rgba(113, 134, 255, 0.5) 50%, transparent 100%);
+  background: ${({ theme }) => theme.stroke};
   position: relative;
   z-index: 1;
 `
@@ -117,7 +110,7 @@ export const StyledWholeField = styled.div`
 `
 
 export const SubmissionButton = styled.button`
-  border-radius: 6px;
+  border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.9);
   font-family: "Open Sans", sans-serif;
@@ -132,18 +125,18 @@ export const SubmissionButton = styled.button`
 
   :hover {
     background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(113, 134, 255, 0.5);
+    border-color: ${({ theme }) => theme.stroke};
     transform: translateY(-1px);
   }
 `
 
 export const StyledTextInput = styled.input`
   display: flex;
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => theme.modalInputBackground};
   padding: 12px 16px;
   outline: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  color: ${({ theme }) => theme.primaryText};
   border-radius: 8px;
   font-size: 16px;
   font-weight: 400;
@@ -152,15 +145,18 @@ export const StyledTextInput = styled.input`
   z-index: 1;
   transition: all 0.2s ease;
 
+  &:hover {
+    background: ${({ theme }) => theme.backgroundFour};
+  }
+
   &:focus {
-    border-color: rgba(113, 134, 255, 0.5);
-    box-shadow: 0 0 0 3px rgba(113, 134, 255, 0.1);
+    background: ${({ theme }) => theme.backgroundFour};
   }
 
   ::placeholder {
     font-size: 16px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.6);
+    color: ${({ theme }) => theme.secondaryText};
   }
 
   ${landscapeStyle(
@@ -180,45 +176,16 @@ export const Buttons = styled.div`
 `
 
 export const SubmitButton = styled.button`
-  background: ${({ theme }) => theme.buttonWhite};
-  width: 100%;
-  color: ${({ theme }) => theme.black};
-  padding: 14px 28px;
-  font-family: "Open Sans", sans-serif;
-  font-size: 16px;
-  font-weight: 600;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${({ theme }) => theme.buttonWhiteHover};
-  }
-
-  &:active {
-    background: ${({ theme }) => theme.buttonWhiteActive};
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.buttonDisabled};
-    color: ${({ theme }) => theme.buttonDisabledText};
-    border: 1px solid ${({ theme }) => theme.buttonDisabled};
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
+  ${baseButtonStyles}
+  ${primaryButtonStyles}
+  width: auto;
+  font-size: 14px;
+  padding: 10px 20px;
 
   & > * {
     position: relative;
     z-index: 1;
   }
-
-  ${landscapeStyle(
-    () => css`
-      padding: 14px 32px;
-    `
-  )}
 `
 
 export const PayoutsContainer = styled.div`

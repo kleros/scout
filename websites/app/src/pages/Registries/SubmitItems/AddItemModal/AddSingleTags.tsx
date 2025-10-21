@@ -14,6 +14,7 @@ import { ClosedButtonContainer } from 'pages/Registries'
 import {
   AddContainer,
   AddHeader,
+  HeaderActions,
   AddSubtitle,
   AddTitle,
   CloseButton,
@@ -227,21 +228,23 @@ const AddAddressTag: React.FC = () => {
             </StyledGoogleFormAnchor>
           </AddSubtitle>
         </div>
-        {registry && (
-          <SubmissionButton
-            onClick={() => {
-              if (registry.metadata.policyURI) {
-                setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
-                scrollTop();
-              }
-            }}
-          >
-            Submission Guidelines
-          </SubmissionButton>
-        )}
-        <ClosedButtonContainer onClick={handleClose}>
-          <CloseButton />
-        </ClosedButtonContainer>
+        <HeaderActions>
+          {registry && (
+            <SubmissionButton
+              onClick={() => {
+                if (registry.metadata.policyURI) {
+                  setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                  scrollTop();
+                }
+              }}
+            >
+              Submission Guidelines
+            </SubmissionButton>
+          )}
+          <ClosedButtonContainer onClick={handleClose}>
+            <CloseButton />
+          </ClosedButtonContainer>
+        </HeaderActions>
       </AddHeader>
       <Divider />
       <RichAddressForm

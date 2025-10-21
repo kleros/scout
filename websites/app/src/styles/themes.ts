@@ -74,6 +74,10 @@ export const darkTheme = {
   lightBackground: "#000000",
   backgroundTwo: "#0A0A0A",
   backgroundThree: "#111111",
+  backgroundFour: "#1A1A1A",
+  modalBackground: "#111111",
+  modalInputBackground: "#111111",
+  darkBackground: "#000000",
 
   defaultShadow: "#00000000",
   hoveredShadow: "#FFFFFF1A",

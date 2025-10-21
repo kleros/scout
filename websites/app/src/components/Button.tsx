@@ -2,7 +2,7 @@ import styled, { css } from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 
 // Base button styles - shared across all button variants
-const baseButtonStyles = css`
+export const baseButtonStyles = css`
   font-family: "Open Sans", sans-serif;
   font-weight: 600;
   border-radius: 9999px;
