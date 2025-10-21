@@ -35,8 +35,11 @@ const componentsDarkTheme = {
   klerosUIComponentsSkeletonHighlight: "#1A1A1A",
 
   klerosUIComponentsButtonWhite: "#FFFFFF",
-  klerosUIComponentsButtonWhiteHover: "#F0F0F0",
-  klerosUIComponentsButtonWhiteActive: "#E0E0E0",
+  klerosUIComponentsButtonWhiteHover: "#D4D4D4",
+  klerosUIComponentsButtonWhiteActive: "#B8B8B8",
+  klerosUIComponentsButtonDisabled: "#FFFFFF1A",
+  klerosUIComponentsButtonDisabledText: "#FFFFFF40",
+  klerosUIComponentsButtonSecondaryBorder: "#FFFFFF99",
 
   klerosUIComponentsCarouselDotActive: "#7186FF",
   klerosUIComponentsCarouselDotInactive: "#0A0A0A",
@@ -93,8 +96,11 @@ export const darkTheme = {
   skeletonHighlight: "#1A1A1A",
 
   buttonWhite: "#FFFFFF",
-  buttonWhiteHover: "#F0F0F0",
-  buttonWhiteActive: "#E0E0E0",
+  buttonWhiteHover: "#D4D4D4",
+  buttonWhiteActive: "#B8B8B8",
+  buttonDisabled: "#FFFFFF1A",
+  buttonDisabledText: "#FFFFFF40",
+  buttonSecondaryBorder: "#FFFFFF99",
 
   carouselDotActive: "#7186FF",
   carouselDotInactive: "#0A0A0A",

@@ -16,9 +16,9 @@ const PaginationWrapper = styled.nav`
 `;
 
 const PageButton = styled.button<{ selected?: boolean }>`
-  background: #FFFFFF;
+  background: ${({ theme }) => theme.buttonWhite};
   border: none;
-  color: #000000;
+  color: ${({ theme }) => theme.black};
   font-family: "Open Sans", sans-serif;
   min-width: 40px;
   min-height: 40px;
@@ -26,18 +26,19 @@ const PageButton = styled.button<{ selected?: boolean }>`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  ${({ selected }) =>
+  ${({ selected, theme }) =>
     selected &&
     `
-    background: #E0E0E0;
-    color: #000000;
+    background: ${theme.buttonWhiteActive};
+    color: ${theme.black};
   `}
   &:hover:not(:disabled):not([aria-current="true"]) {
-    background: #F0F0F0;
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
   &:disabled {
-    background: #666666;
-    color: #999999;
+    background: ${({ theme }) => theme.buttonDisabled};
+    color: ${({ theme }) => theme.buttonDisabledText};
+    border: 1px solid ${({ theme }) => theme.buttonDisabled};
     cursor: not-allowed;
   }
 `;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import styled, { css, createGlobalStyle } from "styled-components";
-import { landscapeStyle } from "styles/landscapeStyle";
+import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
+import { responsiveSize } from "styles/responsiveSize";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ActivityIcon from "svgs/icons/activity.svg";
@@ -30,11 +31,13 @@ const Container = styled.div`
   padding: 32px 16px 64px;
   font-family: "Open Sans", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
+  width: 100%;
+  max-width: ${MAX_WIDTH_LANDSCAPE};
+  margin: 0 auto;
 
   ${landscapeStyle(
     () => css`
-      padding: 48px 0 60px 48px;
-      width: calc(100vw - 120px);
+      padding: 48px ${responsiveSize(0, 48)} 60px;
     `
   )}
 `;

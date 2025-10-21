@@ -4,6 +4,7 @@ import Skeleton from 'react-loading-skeleton'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import { GraphItem, registryMap } from 'utils/items'
+import { GraphItemDetails } from 'utils/itemDetails'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
 import { useScrollTop } from 'hooks/useScrollTop'
@@ -16,6 +17,7 @@ import {
   hoverLongTransitionTiming,
   hoverShortTransitionTiming,
 } from 'styles/commonStyles'
+import { StyledButton } from 'components/Button'
 
 const Card = styled.div`
   color: white;
@@ -33,10 +35,11 @@ const Card = styled.div`
 const CardStatus = styled.div<{ status: string }>`
   text-align: center;
   font-weight: 400;
-  padding: 14px 12px 12px;
-  background-color: ${({ theme }) => theme.lightBackground};
+  padding: 14px 12px 16px;
+  background-color: transparent;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
+  position: relative;
 
   &:before {
     content: '';
@@ -55,17 +58,23 @@ const CardStatus = styled.div<{ status: string }>`
     border-radius: 50%;
     margin-right: 10px;
   }
+
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    right: 12px;
+    height: 1px;
+    background: ${({ theme }) => theme.stroke};
+  }
 `
 
 const CardContent = styled.div`
   flex: 1;
   justify-content: space-between;
 
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
+  background: transparent;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -118,31 +127,19 @@ const VisualProofWrapper = styled.img`
   }
 `
 
-const DetailsButton = styled.button`
+const DetailsButton = styled(StyledButton).attrs({ variant: 'secondary', size: 'medium' })`
   ${hoverLongTransitionTiming}
   margin: 8px 0;
-  font-family: "Open Sans", sans-serif;
   min-width: 100px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.primaryText};
-  background: transparent;
-  border: 1px solid ${({ theme }) => theme.primaryText};
-  border-radius: 9999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:active {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
 `
 
-const StyledButton = styled.button`
+const ActionButton = styled(StyledButton).attrs({ variant: 'primary', size: 'medium' })`
+  ${hoverLongTransitionTiming}
+  margin: 8px 0;
+  line-height: 1.2;
+`
+
+const TransparentButton = styled.button`
   cursor: pointer;
   background: none;
   border: none;
@@ -180,6 +177,9 @@ const SubmittedLabel = styled.label`
 
 const StyledDivider = styled(Divider)`
   margin-bottom: 8px;
+  margin-left: 12px;
+  margin-right: 12px;
+  width: calc(100% - 24px);
 `
 
 const TimersContainer = styled.div`
@@ -234,14 +234,22 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   )
 })
 
+interface EntryProps {
+  item: GraphItem | GraphItemDetails
+  challengePeriodDuration: number | null
+  showActionButtons?: boolean
+  onActionButtonClick?: (actionType: string) => void
+  actionButtonCost?: string
+}
+
 const Entry = React.memo(
   ({
     item,
     challengePeriodDuration,
-  }: {
-    item: GraphItem
-    challengePeriodDuration: number | null
-  }) => {
+    showActionButtons = false,
+    onActionButtonClick,
+    actionButtonCost,
+  }: EntryProps) => {
     const [imgLoaded, setImgLoaded] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
@@ -318,7 +326,7 @@ const Entry = React.memo(
               <>
                 <AddressDisplay address={getPropValue('Address')} />
                 {getPropValue('Logo') && (
-                  <StyledButton
+                  <TransparentButton
                     onClick={() => {
                       const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`
                       setSearchParams({ attachment: tokenLogoURI })
@@ -334,7 +342,7 @@ const Entry = React.memo(
                         style={{ display: imgLoaded ? 'block' : 'none' }}
                       />
                     </TokenLogoWrapper>
-                  </StyledButton>
+                  </TransparentButton>
                 )}
                 <SymbolLabel>{getPropValue('Symbol')}</SymbolLabel>
                 <NameLabel>{getPropValue('Name')}</NameLabel>
@@ -362,7 +370,7 @@ const Entry = React.memo(
                   </StyledWebsiteAnchor>
                 </WrappedWebsiteContainer>
                 {getPropValue('Visual proof') && (
-                  <StyledButton
+                  <TransparentButton
                     onClick={() => {
                       const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`
                       setSearchParams({ attachment: visualProofURI })
@@ -376,15 +384,30 @@ const Entry = React.memo(
                       onLoad={() => setImgLoaded(true)}
                       style={{ display: imgLoaded ? '' : 'none' }}
                     />
-                  </StyledButton>
+                  </TransparentButton>
                 )}
               </>
             )}
           </UpperCardContent>
           <BottomCardContent>
-            <DetailsButton onClick={handleEntryDetailsClick}>
-              Details
-            </DetailsButton>
+            {showActionButtons && !item.disputed && item.status !== 'Absent' ? (
+              <ActionButton
+                onClick={() => {
+                  if (onActionButtonClick) {
+                    onActionButtonClick(item.status)
+                  }
+                }}
+              >
+                {item.status === 'Registered' && 'Remove entry'}
+                {item.status === 'RegistrationRequested' && 'Challenge entry'}
+                {item.status === 'ClearingRequested' && 'Challenge removal'}
+                {actionButtonCost ? ` — ${actionButtonCost}` : ''}
+              </ActionButton>
+            ) : !showActionButtons ? (
+              <DetailsButton onClick={handleEntryDetailsClick}>
+                Details
+              </DetailsButton>
+            ) : null}
             <StyledDivider />
             <TimersContainer>
               {item?.status !== 'Registered' ? (

@@ -162,14 +162,18 @@ const Button = styled.button<{ primary?: boolean }>`
   ${({ primary, theme }) =>
     primary
       ? `
-    background: #FFFFFF;
-    color: #000000;
+    background: ${theme.buttonWhite};
+    color: ${theme.black};
     &:hover {
-      background: #F0F0F0;
+      background: ${theme.buttonWhiteHover};
+    }
+    &:active {
+      background: ${theme.buttonWhiteActive};
     }
     &:disabled {
-      background: #666666;
-      color: #999999;
+      background: ${theme.buttonDisabled};
+      color: ${theme.buttonDisabledText};
+      border: 1px solid ${theme.buttonDisabled};
       cursor: not-allowed;
     }
   `

@@ -180,9 +180,9 @@ export const Buttons = styled.div`
 `
 
 export const SubmitButton = styled.button`
-  background: #FFFFFF;
+  background: ${({ theme }) => theme.buttonWhite};
   width: 100%;
-  color: #000000;
+  color: ${({ theme }) => theme.black};
   padding: 14px 28px;
   font-family: "Open Sans", sans-serif;
   font-size: 16px;
@@ -193,15 +193,17 @@ export const SubmitButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: #F0F0F0;
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
 
   &:active {
-    background: #E0E0E0;
+    background: ${({ theme }) => theme.buttonWhiteActive};
   }
 
   &:disabled {
-    background: #666666;
+    background: ${({ theme }) => theme.buttonDisabled};
+    color: ${({ theme }) => theme.buttonDisabledText};
+    border: 1px solid ${({ theme }) => theme.buttonDisabled};
     cursor: not-allowed;
     transform: none;
     box-shadow: none;

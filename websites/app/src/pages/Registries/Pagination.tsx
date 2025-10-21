@@ -20,21 +20,22 @@ const Container = styled.div`
 const StyledButton = styled(Button)`
   ${hoverShortTransitionTiming}
   display: flex;
-  background: #FFFFFF;
-  color: #000000;
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
   font-size: 14px;
   font-family: "Open Sans", sans-serif;
   font-weight: 600;
   border-radius: 9999px;
   &:hover {
-    background: #F0F0F0;
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
   &:active {
-    background: #E0E0E0;
+    background: ${({ theme }) => theme.buttonWhiteActive};
   }
   &:disabled {
-    background: #666666;
-    color: #999999;
+    background: ${({ theme }) => theme.buttonDisabled};
+    color: ${({ theme }) => theme.buttonDisabledText};
+    border: 1px solid ${({ theme }) => theme.buttonDisabled};
     cursor: not-allowed;
   }
 `

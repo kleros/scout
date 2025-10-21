@@ -25,11 +25,18 @@ export const ModalButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
       &:active {
         background: ${theme.buttonWhiteActive};
       }
+
+      &:disabled {
+        background: ${theme.buttonDisabled};
+        color: ${theme.buttonDisabledText};
+        border-color: ${theme.buttonDisabled};
+        cursor: not-allowed;
+      }
     `
       : `
       background: transparent;
       color: ${theme.primaryText};
-      border-color: ${theme.stroke};
+      border-color: ${theme.buttonSecondaryBorder};
 
       &:hover {
         background: rgba(255, 255, 255, 0.1);
@@ -38,6 +45,13 @@ export const ModalButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
 
       &:active {
         background: rgba(255, 255, 255, 0.15);
+      }
+
+      &:disabled {
+        background: transparent;
+        color: ${theme.buttonDisabledText};
+        border-color: ${theme.buttonDisabled};
+        cursor: not-allowed;
       }
     `}
 `

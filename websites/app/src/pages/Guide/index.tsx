@@ -1,7 +1,7 @@
 import React from "react";
 import styled, { css } from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { landscapeStyle } from "styles/landscapeStyle";
+import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
 
 import BookCircleIcon from "svgs/icons/book-circle.svg";
@@ -18,10 +18,13 @@ const Container = styled.div`
   padding: 32px 16px 64px;
   font-family: "Open Sans", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
+  width: 100%;
+  max-width: ${MAX_WIDTH_LANDSCAPE};
+  margin: 0 auto;
 
   ${landscapeStyle(
     () => css`
-      padding: 48px ${responsiveSize(0, 48)} 60px; 
+      padding: 48px ${responsiveSize(0, 48)} 60px;
     `
   )}
 `;

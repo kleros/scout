@@ -118,8 +118,8 @@ const LabelValue = styled.span`
 const ViewButton = styled.button`
   padding: 8px 24px;
   border: none;
-  background: #FFFFFF;
-  color: #000000;
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
   cursor: pointer;
   font-size: 14px;
   font-family: "Open Sans", sans-serif;
@@ -128,11 +128,18 @@ const ViewButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: #F0F0F0;
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
 
   &:active {
-    background: #E0E0E0;
+    background: ${({ theme }) => theme.buttonWhiteActive};
+  }
+
+  &:disabled {
+    background: ${({ theme }) => theme.buttonDisabled};
+    color: ${({ theme }) => theme.buttonDisabledText};
+    border: 1px solid ${({ theme }) => theme.buttonDisabled};
+    cursor: not-allowed;
   }
 `
 

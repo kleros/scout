@@ -208,17 +208,22 @@ const ContributeButton = styled.button<{ disabled?: boolean }>`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  background: #FFFFFF;
-  color: #000000;
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
   font-family: "Open Sans", sans-serif;
 
   &:hover:not(:disabled) {
-    background: #F0F0F0;
+    background: ${({ theme }) => theme.buttonWhiteHover};
+  }
+
+  &:active:not(:disabled) {
+    background: ${({ theme }) => theme.buttonWhiteActive};
   }
 
   &:disabled {
-    background: #666666;
-    color: #999999;
+    background: ${({ theme }) => theme.buttonDisabled};
+    color: ${({ theme }) => theme.buttonDisabledText};
+    border: 1px solid ${({ theme }) => theme.buttonDisabled};
     cursor: not-allowed;
   }
 `

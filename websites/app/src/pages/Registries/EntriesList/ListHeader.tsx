@@ -11,7 +11,7 @@ const HeaderRow = styled.div<{ registryType?: string }>`
       case 'Single_Tags':
         return '0.8fr 1fr 1fr 1.2fr 2.3fr 1.2fr 1fr';
       case 'CDN':
-        return '1fr 1fr 1.2fr 2.3fr 1.2fr 1fr';
+        return '1fr 1fr 1.2fr 2.1fr 1.2fr 1fr';
       case 'Tags_Queries':
         return '1.3fr 1fr 0.4fr 0.9fr 2.3fr 1.2fr 1fr';
       default:
