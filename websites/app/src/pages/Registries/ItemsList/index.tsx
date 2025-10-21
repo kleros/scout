@@ -2,10 +2,10 @@ import React, { useMemo, useState, useEffect } from 'react';
 import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { GraphItem, registryMap } from 'utils/items';
-import Entry from './Entry';
-import EntryListView from './EntryListView';
+import Item from './Item';
+import ItemListView from './ItemListView';
 import ListHeader from './ListHeader';
-import { ITEMS_PER_PAGE } from '~src/pages/Registries';
+import { ITEMS_PER_PAGE } from 'pages/Registries';
 import { ViewMode } from 'components/ViewSwitcher';
 import { useRegistryParameters } from 'hooks/useRegistryParameters';
 
@@ -30,7 +30,7 @@ const ListViewWrapper = styled.div`
   gap: 8px;
 `;
 
-const EntriesContainer = styled.div<{ viewMode: ViewMode }>`
+const ItemsContainer = styled.div<{ viewMode: ViewMode }>`
   width: 100%;
   display: ${({ viewMode }) => (viewMode === 'list' ? 'flex' : 'grid')};
   flex-direction: ${({ viewMode }) => (viewMode === 'list' ? 'column' : 'row')};
@@ -48,12 +48,12 @@ const EntriesContainer = styled.div<{ viewMode: ViewMode }>`
     )}
 `;
 
-interface IEntriesList {
+interface IItemsList {
   searchData: GraphItem[];
   viewMode: ViewMode;
 }
 
-const EntriesList: React.FC<IEntriesList> = ({ searchData, viewMode }) => {
+const ItemsList: React.FC<IItemsList> = ({ searchData, viewMode }) => {
   const registryDurations = useRegistryDurations();
   const [shouldForceCardsView, setShouldForceCardsView] = useState(false);
 
@@ -86,30 +86,30 @@ const EntriesList: React.FC<IEntriesList> = ({ searchData, viewMode }) => {
     return (
       <ListViewWrapper>
         <ListHeader registryAddress={registryAddress} />
-        <EntriesContainer viewMode={effectiveViewMode}>
+        <ItemsContainer viewMode={effectiveViewMode}>
           {searchData.slice(0, ITEMS_PER_PAGE).map((item) => (
-            <EntryListView
+            <ItemListView
               key={item.id}
               item={item}
               challengePeriodDuration={registryDurations[item.registryAddress]}
             />
           ))}
-        </EntriesContainer>
+        </ItemsContainer>
       </ListViewWrapper>
     );
   }
 
   return (
-    <EntriesContainer viewMode={effectiveViewMode}>
+    <ItemsContainer viewMode={effectiveViewMode}>
       {searchData.slice(0, ITEMS_PER_PAGE).map((item) => (
-        <Entry
+        <Item
           key={item.id}
           item={item}
           challengePeriodDuration={registryDurations[item.registryAddress]}
         />
       ))}
-    </EntriesContainer>
+    </ItemsContainer>
   );
 };
 
-export default EntriesList;
+export default ItemsList;

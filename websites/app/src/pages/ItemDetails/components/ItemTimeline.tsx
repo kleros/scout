@@ -75,6 +75,11 @@ const StyledTimeline = styled(CustomTimeline)`
     > div:first-child div[class*="rounded"] {
       background: transparent !important;
     }
+
+    /* Override the connecting line color to match theme stroke */
+    > div:first-child div[class*="border-l"] {
+      border-left-color: ${({ theme }) => theme.stroke} !important;
+    }
   }
 `
 
@@ -170,11 +175,11 @@ const PartyWrapper = styled.div`
   gap: 4px;
 `
 
-interface EntryTimelineProps {
+interface ItemTimelineProps {
   detailsData: any
 }
 
-const EntryTimeline: React.FC<EntryTimelineProps> = ({ detailsData }) => {
+const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
   const theme = useTheme()
 
   const timelineItems = useMemo<[TimelineItem, ...TimelineItem[]] | undefined>(() => {
@@ -235,7 +240,7 @@ const EntryTimeline: React.FC<EntryTimelineProps> = ({ detailsData }) => {
         ),
         subtitle: detailsData.requests[0]?.submissionTime ? formatTimestamp(Number(detailsData.requests[0].submissionTime), true) : '',
         rightSided: true,
-        variant: theme.secondaryPurple,
+        variant: theme.orange,
       })
     }
 
@@ -244,8 +249,8 @@ const EntryTimeline: React.FC<EntryTimelineProps> = ({ detailsData }) => {
       detailsData.requests[0].rounds.forEach((round: any, index: number) => {
         // Only show jury decision if there's an actual ruling (not "None" or empty)
         if (round.ruling && round.ruling !== 'None' && round.appealPeriodStart && Number(round.appealPeriodStart) > 0) {
-          const rulingText = round.ruling === 'Accept' ? 'Accept Entry' :
-                           round.ruling === 'Reject' ? 'Reject Entry' :
+          const rulingText = round.ruling === 'Accept' ? 'Accept Item' :
+                           round.ruling === 'Reject' ? 'Reject Item' :
                            'Refuse to Arbitrate'
           const txHashAppealPossible = round.txHashAppealPossible
 
@@ -328,4 +333,4 @@ const EntryTimeline: React.FC<EntryTimelineProps> = ({ detailsData }) => {
   )
 }
 
-export default EntryTimeline
+export default ItemTimeline

@@ -1,16 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
+import { useQuery } from '@tanstack/react-query'
 import { formatEther } from 'viem'
 import getAddressValidationIssue from 'utils/validateAddress'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
-import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions'
+import { FocusedRegistry } from 'utils/itemCounts'
 import { useItemCountsQuery } from '../../../../hooks/queries'
+import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions'
 import { EnsureChain } from '../../../../components/EnsureChain'
-import { useQuery } from '@tanstack/react-query'
-import { FocusedRegistry } from '../../../../utils/itemCounts'
+import { useDebounce } from 'react-use'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
-import { ClosedButtonContainer } from '~src/pages/Registries'
+import ImageUpload from './ImageUpload'
+import { ClosedButtonContainer } from 'pages/Registries'
 import {
   AddContainer,
   AddHeader,
@@ -26,75 +28,78 @@ import {
   Divider,
   SubmissionButton
 } from './index'
-import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
-import { registryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 
 const columns = [
   {
-    label: 'Contract Address',
+    label: 'Address',
     description:
       'The address of the smart contract being tagged. Will be store in CAIP-10 format if the chain is properly selected in the UI.',
     type: 'rich address',
     isIdentifier: true,
   },
   {
-    label: 'Public Name Tag',
-    description:
-      'The Public Name tag of a contract address indicates a commonly-used name of the smart contract and clearly identifies it to avoid potential confusion. (e.g. Eth2 Deposit Contract).',
+    label: 'Name',
+    description: 'The name of the token',
     type: 'text',
     isIdentifier: true,
   },
   {
-    label: 'Project Name',
-    description:
-      'The name of the project that the contract belongs to. Can be omitted only for contracts which do not belong to a project',
+    label: 'Symbol',
+    description: 'The symbol/ticker of the token',
     type: 'text',
     isIdentifier: true,
   },
   {
-    label: 'UI/Website Link',
-    description:
-      'The URL of the most popular user interface used to interact with the contract tagged or the URL of the official website of the contract deployer (e.g. https://launchpad.ethereum.org/en/).',
-    type: 'link',
-    isIdentifier: true,
+    label: 'Decimals',
+    description: 'The number of decimals applicable for this token',
+    type: 'number',
   },
   {
-    label: 'Public Note',
-    description:
-      'The Public Note is a short, mandatory comment field used to add a comment/information about the contract that could not fit in the public name tag (e.g. Official Ethereum 2.0 Beacon Chain deposit contact address).',
-    type: 'text',
+    label: 'Logo',
+    description: 'The PNG logo of the token (at least 128px X 128px in size',
+    type: 'image',
+    isIdentifier: false,
   },
+  {
+    label: "Website",
+    description: "The URL of the token project's official website. Its primary source for documentation, token specifications, and team information (e.g. https://chain.link).",
+    type: "link",
+    isIdentifier: true
+  }
 ]
 
-const AddAddressTag: React.FC = () => {
-  const [formData, setFormData] = useLocalStorage('addTagForm', {
+const AddToken: React.FC = () => {
+  const [formData, setFormData] = useLocalStorage('addTokenForm', {
     network: { value: 'eip155:1', label: 'Mainnet' },
     address: '',
-    projectName: '',
-    publicNameTag: '',
-    publicNote: '',
+    decimals: '',
+    name: '',
+    symbol: '',
+    path: '',
     website: '',
   });
 
   const [network, setNetwork] = useState<NetworkOption>(formData.network);
   const [address, setAddress] = useState<string>(formData.address);
-  const [projectName, setProjectName] = useState<string>(formData.projectName);
-  const [publicNameTag, setPublicNameTag] = useState<string>(formData.publicNameTag);
-  const [publicNote, setPublicNote] = useState<string>(formData.publicNote);
+  const [decimals, setDecimals] = useState<string>(formData.decimals);
+  const [name, setName] = useState<string>(formData.name);
+  const [symbol, setSymbol] = useState<string>(formData.symbol);
+  const [path, setPath] = useState<string>(formData.path);
   const [website, setWebsite] = useState<string>(formData.website);
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
+  const [imageError, setImageError] = useState<string | null>(null);
   const scrollTop = useScrollTop();
 
   useEffect(() => {
     const caip10AddressParam = searchParams.get('caip10Address');
-    const projectNameParam = searchParams.get('projectName');
-    const publicNameTagParam = searchParams.get('publicNameTag');
-    const publicNoteParam = searchParams.get('publicNote');
+    const decimalsParam = searchParams.get('decimals');
+    const nameParam = searchParams.get('name');
+    const symbolParam = searchParams.get('symbol');
     const websiteParam = searchParams.get('website');
   
     if (caip10AddressParam) {
@@ -114,15 +119,15 @@ const AddAddressTag: React.FC = () => {
       setNetwork({ ...networkOption, label: networkLabel || '' });
       setAddress(walletAddress);
     }
-    if (projectNameParam) setProjectName(projectNameParam);
-    if (publicNameTagParam) setPublicNameTag(publicNameTagParam);
-    if (publicNoteParam) setPublicNote(publicNoteParam);
+    if (decimalsParam) setDecimals(decimalsParam);
+    if (nameParam) setName(nameParam);
+    if (symbolParam) setSymbol(symbolParam);
     if (websiteParam) setWebsite(websiteParam);
   }, [searchParams]);
 
   useEffect(() => {
-    setFormData({ network, address, projectName, publicNameTag, publicNote, website });
-  }, [network, address, projectName, publicNameTag, publicNote, website]);
+    setFormData({ network, address, decimals, name, symbol, path, website });
+  }, [network, address, decimals, name, symbol, path, website, setFormData]);
 
   useDebounce(
     () => {
@@ -132,10 +137,12 @@ const AddAddressTag: React.FC = () => {
     [address]
   )
 
-  const networkAddressKey = network.value + ':' + debouncedAddress
+  const networkAddressKey = useMemo(() => {
+    return network.value + ':' + debouncedAddress
+  }, [network.value, debouncedAddress])
 
-  const cacheKey = `addressIssues:${networkAddressKey}:${projectName}:${publicNameTag}:${website}`
-  
+  const cacheKey = `addressIssues:${networkAddressKey}:${name}:${symbol}:${website}`
+
   const cachedIssues = useMemo(() => {
     const cached = localStorage.getItem(cacheKey)
     if (!cached) return null
@@ -147,23 +154,24 @@ const AddAddressTag: React.FC = () => {
       return null
     }
   }, [cacheKey])
-  
+
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'Single_Tags', projectName, publicNameTag, website],
+    queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol, website],
     queryFn: async () => {
       const res = await getAddressValidationIssue(
         network.value,
-        'Single_Tags',
+        'Tokens',
         debouncedAddress,
         undefined,
-        projectName,
-        publicNameTag,
-        website
+        name,
+        undefined,
+        website,
+        symbol
       )
       localStorage.setItem(cacheKey, JSON.stringify(res))
       return res
     },
-    enabled: Boolean(debouncedAddress) || Boolean(projectName) || Boolean(publicNameTag) || Boolean(website),
+    enabled: Boolean(debouncedAddress) || Boolean(name) || Boolean(symbol) || Boolean(website),
     placeholderData: cachedIssues,
   });
 
@@ -177,15 +185,16 @@ const AddAddressTag: React.FC = () => {
 
   const { addItem, isLoading: isSubmitting } = useCurateInteractions();
 
-  const submitAddressTag = async () => {
-    if (!countsData?.Single_Tags.deposits) return;
+  const submitToken = async () => {
+    if (!countsData?.Tokens.deposits) return;
     
     const values = {
-      'Contract Address': `${network.value}:${address}`,
-      'Public Name Tag': publicNameTag,
-      'Project Name': projectName,
-      'UI/Website Link': website,
-      'Public Note': publicNote,
+      Address: `${network.value}:${address}`,
+      Name: name,
+      Symbol: symbol,
+      Decimals: decimals,
+      Logo: path,
+      Website: website,
     }
     const item = {
       columns,
@@ -197,31 +206,31 @@ const AddAddressTag: React.FC = () => {
     const ipfsPath = getIPFSPath(ipfsObject)
     
     await addItem(
-      registryMap.Single_Tags as `0x${string}`,
+      '0xee1502e29795ef6c2d60f8d7120596abe3bad990' as `0x${string}`,
       ipfsPath,
-      countsData.Single_Tags.deposits
-    )
-    clearLocalStorage('addTagForm');
+      countsData.Tokens.deposits
+    );
+    clearLocalStorage('addTokenForm');
   }
 
   const handleClose = () => {
-    clearLocalStorage('addTagForm');
+    clearLocalStorage('addTokenForm');
   }
 
-    const submittingDisabled = useMemo(() => {
-      return Boolean(!address || !projectName || !publicNameTag || !publicNote || !website || !!addressIssuesData || addressIssuesLoading || isSubmitting);
-    }, [address, projectName, publicNameTag, publicNote, website, addressIssuesData, addressIssuesLoading, isSubmitting]);
-  
+  const submittingDisabled = useMemo(() => {
+    return Boolean(!address || !decimals || !name || !symbol || !!addressIssuesData || !!addressIssuesLoading || !path || !website || imageError || isSubmitting);
+  }, [address, decimals, name, symbol, addressIssuesData, addressIssuesLoading, path, website, imageError, isSubmitting]);
+
   return (
     <AddContainer>
       <AddHeader>
         <div>
-          <AddTitle>Submit Address Tag</AddTitle>
+          <AddTitle>Submit Token</AddTitle>
           <AddSubtitle>
-            Want to suggest an entry without any deposit?{' '}
+            Want to suggest an item without any deposit?{' '}
             <StyledGoogleFormAnchor
               target="_blank"
-              href="https://docs.google.com/forms/d/e/1FAIpQLSdTwlrcbbPOkSCMKuUj42d_koSAEkWjMLz5hhTc5lB6aGCO9w/viewform"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSchZ5RBd1Y8RNpGCUGY9tZyQZSBgnN_4B9oLfKeKuer9oxGnA/viewform"
             >
               Click here
             </StyledGoogleFormAnchor>
@@ -249,36 +258,48 @@ const AddAddressTag: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Single_Tags"
+        registry="Tokens"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
-      Project name
+      Decimals
       <StyledTextInput
-        placeholder="e.g. Kleros"
-        value={projectName}
-        onChange={(e) => setProjectName(e.target.value)}
+        placeholder="e.g. 18"
+        value={decimals}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (/^\d*$/.test(value)) {
+            setDecimals(value);
+          }
+        }}
+      />
+      Name
+      <StyledTextInput
+        placeholder="e.g. Pinakion"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
       />
       {addressIssuesData?.projectName && (
         <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
       )}
-      Public Name Tag
+      Symbol
       <StyledTextInput
-        placeholder="e.g. PNK Merkle Drop"
-        value={publicNameTag}
-        onChange={(e) => setPublicNameTag(e.target.value)}
+        placeholder="e.g. PNK"
+        value={symbol}
+        onChange={(e) => setSymbol(e.target.value)}
       />
-      {addressIssuesData?.publicNameTag && (
-        <ErrorMessage>{addressIssuesData.publicNameTag.message}</ErrorMessage>
+      {addressIssuesData?.symbol && (
+        <ErrorMessage>{addressIssuesData.symbol.message}</ErrorMessage>
       )}
-      Public note
-      <StyledTextInput
-        placeholder="e.g. This contract is used for..."
-        value={publicNote}
-        onChange={(e) => setPublicNote(e.target.value)}
+      <ImageUpload
+        path={path}
+        setPath={setPath}
+        registry="Tokens"
+        {...{setImageError}}
       />
-      UI/Website link
+      {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
+      Website
       <StyledTextInput
         placeholder="e.g. https://kleros.io"
         value={website}
@@ -289,16 +310,16 @@ const AddAddressTag: React.FC = () => {
       )}
       <PayoutsContainer>
         <EnsureChain>
-          <SubmitButton disabled={submittingDisabled} onClick={submitAddressTag}>
+          <SubmitButton disabled={submittingDisabled} onClick={submitToken}>
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </SubmitButton>
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Single_Tags']?.deposits
+          {countsData?.Tokens?.deposits
             ? formatEther(
-              countsData['Single_Tags'].deposits.arbitrationCost +
-              countsData['Single_Tags'].deposits.submissionBaseDeposit
+              countsData.Tokens.deposits.arbitrationCost +
+              countsData.Tokens.deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}{' | '}Expected Reward: $12
         </ExpectedPayouts>
@@ -307,4 +328,4 @@ const AddAddressTag: React.FC = () => {
   )
 }
 
-export default AddAddressTag
+export default AddToken

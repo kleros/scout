@@ -5,7 +5,7 @@ import { responsiveSize } from 'styles/responsiveSize'
 import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
 import CrowdfundingCard from 'components/CrowdfundingCard'
 import { STATUS_CODE } from 'utils/itemStatus'
-import EntryTimeline from '../EntryTimeline'
+import ItemTimeline from '../ItemTimeline'
 import ItemFieldsDisplay from '../ItemFieldsDisplay'
 import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
 
@@ -195,7 +195,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
         detailsData={detailsData}
         registryParsedFromItemId={registryParsedFromItemId}
       />
-      <EntryTimeline detailsData={detailsData} />
+      <ItemTimeline detailsData={detailsData} />
 
       {/* Crowdfunding Card - show for active appeals */}
       {detailsData.disputed && !detailsData.requests[0].resolved && (
@@ -240,10 +240,10 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
 
                   if (ruling === 'Accept') {
                     badgeType = 'Accept'
-                    badgeText = 'Accept Entry'
+                    badgeText = 'Accept Item'
                   } else if (ruling === 'Reject') {
                     badgeType = 'Reject'
-                    badgeText = 'Reject Entry'
+                    badgeText = 'Reject Item'
                   } else if (ruling === 'None' || ruling === 'Refuse') {
                     badgeType = 'Refuse'
                     badgeText = 'Pending / Refused to Arbitrate'

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import styled, { css } from 'styled-components'
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -8,20 +8,19 @@ import { useItemDetailsQuery } from 'hooks/queries'
 import LoadingItems from '../Registries/LoadingItems'
 import ConfirmationBox from 'components/ConfirmationBox'
 import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
-import { useScrollTop } from 'hooks/useScrollTop'
+import ScrollTop from 'components/ScrollTop'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 import useAppealCost from 'hooks/useAppealCost'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus'
 import { revRegistryMap } from 'utils/items'
-import Entry from '../Registries/EntriesList/Entry'
+import Item from '../Registries/ItemsList/Item'
 import Breadcrumb from './components/Breadcrumb'
 import ItemDetailsContent from './components/ItemDetailsContent'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
-import { Link } from 'react-router-dom'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 
 const Container = styled.div`
@@ -53,7 +52,7 @@ const TopBar = styled.div`
   flex-wrap: wrap;
 `
 
-const ReturnButton = styled.button`
+const ReturnButton = styled(Link)`
   background: none;
   border: none;
   color: ${({ theme }) => theme.secondaryBlue};
@@ -65,6 +64,7 @@ const ReturnButton = styled.button`
   font-weight: 600;
   padding: 8px 16px;
   border-radius: 8px;
+  text-decoration: none;
   ${hoverShortTransitionTiming}
 
   &:hover {
@@ -116,7 +116,7 @@ const RightSection = styled.div`
   min-width: 0;
 `
 
-const EntryCardWrapper = styled.div`
+const ItemCardWrapper = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -204,10 +204,9 @@ const ItemDetails: React.FC = () => {
   const { itemId } = useParams<{ itemId: string }>()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('')
-
-  useScrollTop()
 
   const isAttachmentOpen = useMemo(
     () => !!searchParams.get('attachment'),
@@ -375,8 +374,27 @@ const ItemDetails: React.FC = () => {
   const formattedLoserTimeLeft = useHumanizedCountdown(appealRemainingTime?.loserTimeLeft || null, 2)
   const formattedWinnerTimeLeft = useHumanizedCountdown(appealRemainingTime?.winnerTimeLeft || null, 2)
 
-  const handleBackClick = () => {
-    navigate(-1)
+  const handleBackClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Check if user is trying to open in new tab (Ctrl+Click, Cmd+Click, or middle click)
+    if (e.ctrlKey || e.metaKey || e.button === 1) {
+      // Let the default Link behavior handle it (opens in new tab)
+      return
+    }
+
+    // For normal clicks, use smart navigation
+    e.preventDefault()
+
+    // Check if there's a previous page in history by checking location.key
+    // If location.key is 'default', it means this is the first page loaded
+    const hasHistory = location.key !== 'default'
+
+    if (hasHistory) {
+      // Navigate back to previous page if there's history
+      navigate(-1)
+    } else {
+      // Navigate to the registry page if there's no history
+      navigate(`/registry/${registryName}`)
+    }
   }
 
   if (detailsLoading || !detailsData) {
@@ -389,6 +407,7 @@ const ItemDetails: React.FC = () => {
 
   return (
     <Container>
+      <ScrollTop />
       {isAttachmentOpen ? (
         <EvidenceAttachmentDisplay />
       ) : (
@@ -408,7 +427,7 @@ const ItemDetails: React.FC = () => {
 
           <TopBar>
             <Breadcrumb registryName={registryName} itemName={displayName} />
-            <ReturnButton onClick={handleBackClick}>
+            <ReturnButton to={`/registry/${registryName}`} onClick={handleBackClick}>
               <ArrowLeftIcon />
               Return
             </ReturnButton>
@@ -416,8 +435,8 @@ const ItemDetails: React.FC = () => {
 
           <MainCard>
             <LeftSection>
-              <EntryCardWrapper>
-                <Entry
+              <ItemCardWrapper>
+                <Item
                   item={detailsData}
                   challengePeriodDuration={challengePeriodDuration}
                   showActionButtons={true}
@@ -429,7 +448,7 @@ const ItemDetails: React.FC = () => {
                   hideBottomTimers={true}
                   seamlessBottom={true}
                 />
-              </EntryCardWrapper>
+              </ItemCardWrapper>
 
               <SubmissionDetailsSection>
                 <DetailRow>

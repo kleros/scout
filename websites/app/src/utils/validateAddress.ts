@@ -160,7 +160,7 @@ const getTokenDupesWithWebsiteCheck = async (
     },
   })) as any
 
-  // Only count duplicates if existing entries have a website (key3)
+  // Only count duplicates if existing items have a website (key3)
   const duplicatesWithWebsite = result.litems.filter(
     (item: any) => item?.key3 && item.key3.trim() !== '',
   )
@@ -265,7 +265,7 @@ export const getAddressValidationIssue = async (
       result.domain = { message: 'Duplicate submission', severity: 'error' }
     }
   } else if (registry === 'Tokens') {
-    // For tokens, only consider it a duplicate if any of the existing entries have a website
+    // For tokens, only consider it a duplicate if any of the existing items have a website
     const ndupes = await getTokenDupesWithWebsiteCheck(
       chainId + ':' + address,
       registryMap[registry],

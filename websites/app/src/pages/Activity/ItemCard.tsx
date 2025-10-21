@@ -10,7 +10,7 @@ import useHumanizedCountdown, {
   useChallengeRemainingTime,
   useChallengePeriodDuration,
 } from 'hooks/countdown'
-import { shortenAddress } from '~src/utils/shortenAddress'
+import { shortenAddress } from 'utils/shortenAddress'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
 
 const Card = styled.div`
@@ -208,13 +208,13 @@ const ItemCard = ({ item }: { item: any }) => {
   const requester = item.requests?.[0]?.requester ?? ''
 
   const chainId = getProp(item, 'EVM Chain ID')
-  const entryAddrMap: Record<string, string | undefined> = {
+  const itemAddrMap: Record<string, string | undefined> = {
     Single_Tags: getProp(item, 'Contract Address'),
     Tags_Queries: undefined,
     Tokens: getProp(item, 'Address'),
     CDN: getProp(item, 'Contract address'),
   }
-  const entryAddr = entryAddrMap[registryName]
+  const itemAddr = itemAddrMap[registryName]
 
   const challengePeriodDuration = useChallengePeriodDuration(
     item.registryAddress,
@@ -289,10 +289,10 @@ const ItemCard = ({ item }: { item: any }) => {
               </StyledChainContainer>
             )}
 
-            {entryAddr && (
+            {itemAddr && (
               <StyledChainContainer>
                 <StyledChainLabel>Chain:</StyledChainLabel>
-                <AddressDisplay address={entryAddr} />
+                <AddressDisplay address={itemAddr} />
               </StyledChainContainer>
             )}
           </InfoRow>

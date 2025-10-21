@@ -7,7 +7,7 @@ import AddAddressTag from './AddSingleTags'
 import AddTagsQueries from './AddTagsQueries'
 import AddToken from './AddToken'
 import AddCDN from './AddCDN'
-import { StyledCloseButton } from '~src/pages/Registries'
+import { StyledCloseButton } from 'pages/Registries'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -259,7 +259,7 @@ export const CloseButton = () => {
   return <StyledCloseButton onClick={() => closeModal()} />
 }
 
-const AddEntryModal: React.FC = () => {
+const AddItemModal: React.FC = () => {
   const containerRef = useRef(null)
   const [searchParams] = useSearchParams()
   const addingItemToRegistry = useMemo(
@@ -286,4 +286,4 @@ const AddEntryModal: React.FC = () => {
   )
 }
 
-export default AddEntryModal
+export default AddItemModal

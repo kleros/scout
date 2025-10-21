@@ -6,6 +6,7 @@ import useRequiredFees from '../../hooks/useRequiredFees'
 import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
 import { GraphItemDetails } from '../../utils/itemDetails'
+import { errorToast } from '../../utils/wrapWithToast'
 
 const Card = styled.div`
   background: rgba(255, 255, 255, 0.05);
@@ -342,6 +343,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
       setContributionShare(1)
     } catch (error) {
       console.error('Error funding appeal:', error)
+      errorToast(error instanceof Error ? error.message : 'Failed to fund appeal')
     }
   }
 

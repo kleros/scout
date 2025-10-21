@@ -3,7 +3,6 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { SubmitButton } from 'pages/Registries/SubmitEntries/AddEntryModal'
 import { StyledCloseButton, ClosedButtonContainer } from 'pages/Registries'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
@@ -11,6 +10,8 @@ import { EnsureChain } from 'components/EnsureChain'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
 import { Address } from 'viem'
+import { errorToast } from 'utils/wrapWithToast'
+import TransactionButton from 'components/TransactionButton'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -133,7 +134,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 }) => {
   const [evidenceTitle, setEvidenceTitle] = useState('')
   const [evidenceText, setEvidenceText] = useState('')
-  const { submitEvidence, challengeRequest, removeItem } = useCurateInteractions()
+  const { submitEvidence, challengeRequest, removeItem, isLoading } = useCurateInteractions()
 
   return (
     <ModalOverlay>
@@ -146,9 +147,9 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                   case 'Evidence':
                     return 'Enter the evidence message you want to submit'
                   case 'RegistrationRequested':
-                    return 'Provide a reason for challenging this entry'
+                    return 'Provide a reason for challenging this item'
                   case 'Registered':
-                    return 'Provide a reason for removing this entry'
+                    return 'Provide a reason for removing this item'
                   case 'ClearingRequested':
                     return 'Provide a reason for challenging this removal request'
                   default:
@@ -156,7 +157,10 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                 }
               })()}
             </div>
-            <ClosedButtonContainer onClick={() => setIsConfirmationOpen(false)}>
+            <ClosedButtonContainer
+              onClick={() => !isLoading && setIsConfirmationOpen(false)}
+              style={{ cursor: isLoading ? 'not-allowed' : 'pointer', opacity: isLoading ? 0.5 : 1 }}
+            >
               <StyledCloseButton />
             </ClosedButtonContainer>
           </ConfirmationTitle>
@@ -174,7 +178,10 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
           ></TextArea>
           <ButtonWrapper>
             <EnsureChain>
-              <SubmitButton
+              <TransactionButton
+                isLoading={isLoading}
+                loadingText="Processing..."
+                disabled={!evidenceTitle.trim() || !evidenceText.trim()}
                 onClick={async () => {
                   try {
                     const evidenceObject = {
@@ -206,6 +213,9 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                             arbitrationCost
                           )
                           result = true
+                        } else {
+                          errorToast('Missing deposit parameters for challenging submission')
+                          return
                         }
                         break
                       case 'Registered':
@@ -218,6 +228,9 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                             arbitrationCost
                           )
                           result = true
+                        } else {
+                          errorToast('Missing deposit parameters for removing item')
+                          return
                         }
                         break
                       case 'ClearingRequested':
@@ -230,20 +243,26 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                             arbitrationCost
                           )
                           result = true
+                        } else {
+                          errorToast('Missing deposit parameters for challenging removal')
+                          return
                         }
                         break
                     }
 
                     if (result) {
+                      setEvidenceTitle('')
+                      setEvidenceText('')
                       setIsConfirmationOpen(false)
                     }
                   } catch (error) {
                     console.error('Error performing action:', error)
+                    errorToast(error instanceof Error ? error.message : 'Failed to perform action')
                   }
                 }}
               >
                 Confirm
-              </SubmitButton>
+              </TransactionButton>
             </EnsureChain>
           </ButtonWrapper>
         </InnerContainer>

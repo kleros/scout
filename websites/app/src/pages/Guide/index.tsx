@@ -163,9 +163,9 @@ const AttentionLabel = styled.label`
   color: ${({ theme }) => theme.tintYellow};
 `;
 
-const SubmittingEntry = () => (
+const SubmittingItem = () => (
   <SectionContainer>
-    <SectionHeader>Submitting an Entry</SectionHeader>
+    <SectionHeader>Submitting an Item</SectionHeader>
     <SectionSteps>
       <StepItem>1. Go to Kleros Scout.</StepItem>
       <StepItem>2. Connect your crypto wallet.</StepItem>
@@ -174,7 +174,7 @@ const SubmittingEntry = () => (
         “Tokens”).
       </StepItem>
       <StepItem>4. Check the policy and ensure you meet all requirements.</StepItem>
-      <StepItem>5. Click “Submit Entry” and fill out the necessary info.</StepItem>
+      <StepItem>5. Click “Submit Item and fill out the necessary info.</StepItem>
       <StepItem>
         6. Press “Submit” and confirm the transaction on your wallet to place the
         deposit.
@@ -198,7 +198,7 @@ const ChallengingSubmission = () => (
       <StepItem>1. Go to Kleros Scout.</StepItem>
       <StepItem>2. Connect your crypto wallet.</StepItem>
       <StepItem>3. Find a submission that looks inconsistent.</StepItem>
-      <StepItem>4. Click “Details,” then “Challenge Entry.”</StepItem>
+      <StepItem>4. Click "Details," then "Challenge Item."</StepItem>
       <StepItem>5. Provide your evidence in the form (e.g., mismatch data).</StepItem>
       <StepItem>
         6. Press “Confirm” and accept the transaction on your wallet to place the
@@ -220,7 +220,7 @@ const ChallengePhase = () => (
   <SectionContainer>
     <SectionHeader>Submission in Challenge Phase</SectionHeader>
     <SectionSteps>
-      <StepItem>1. Go to the specific entry under dispute.</StepItem>
+      <StepItem>1. Go to the specific item under dispute.</StepItem>
       <StepItem>2. Press “Details,” then “Submit Evidence.”</StepItem>
       <StepItem>3. Fill in the form with your supporting proofs.</StepItem>
       <StepItem>
@@ -266,7 +266,7 @@ const QuickGuidePage: React.FC = () => {
           <CardTitleAndDescription>
             <CardTitle>Rewards</CardTitle>
             <CardDescription>
-              Explore active reward plans and submit compliant entries to earn
+              Explore active reward plans and submit compliant items to earn
               rewards.
             </CardDescription>
           </CardTitleAndDescription>
@@ -274,7 +274,7 @@ const QuickGuidePage: React.FC = () => {
       </CardRow>
 
     <Frame>
-      <SubmittingEntry />
+      <SubmittingItem />
       <ChallengingSubmission />
       <ChallengePhase />
     </Frame>

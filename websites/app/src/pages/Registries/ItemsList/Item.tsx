@@ -238,7 +238,7 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
   )
 })
 
-interface EntryProps {
+interface ItemProps {
   item: GraphItem | GraphItemDetails
   challengePeriodDuration: number | null
   showActionButtons?: boolean
@@ -248,7 +248,7 @@ interface EntryProps {
   seamlessBottom?: boolean
 }
 
-const Entry = React.memo(
+const Item = React.memo(
   ({
     item,
     challengePeriodDuration,
@@ -257,7 +257,7 @@ const Entry = React.memo(
     actionButtonCost,
     hideBottomTimers = false,
     seamlessBottom = false,
-  }: EntryProps) => {
+  }: ItemProps) => {
     const [imgLoaded, setImgLoaded] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
@@ -273,7 +273,7 @@ const Entry = React.memo(
       2,
     )
 
-    const handleEntryDetailsClick = useCallback(() => {
+    const handleItemDetailsClick = useCallback(() => {
       navigate(`/item/${item.id}?${searchParams.toString()}`)
     }, [navigate, item.id, searchParams])
 
@@ -406,13 +406,13 @@ const Entry = React.memo(
                   }
                 }}
               >
-                {item.status === 'Registered' && 'Remove entry'}
-                {item.status === 'RegistrationRequested' && 'Challenge entry'}
-                {item.status === 'ClearingRequested' && 'Challenge removal'}
+                {item.status === 'Registered' && 'Remove Item'}
+                {item.status === 'RegistrationRequested' && 'Challenge Item'}
+                {item.status === 'ClearingRequested' && 'Challenge Removal'}
                 {actionButtonCost ? ` — ${actionButtonCost}` : ''}
               </ActionButton>
             ) : !showActionButtons ? (
-              <DetailsButton onClick={handleEntryDetailsClick}>
+              <DetailsButton onClick={handleItemDetailsClick}>
                 Details
               </DetailsButton>
             ) : null}
@@ -453,4 +453,4 @@ const Entry = React.memo(
   },
 )
 
-export default Entry
+export default Item

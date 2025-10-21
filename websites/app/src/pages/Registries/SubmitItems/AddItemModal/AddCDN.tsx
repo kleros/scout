@@ -11,7 +11,7 @@ import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInte
 import { EnsureChain } from '../../../../components/EnsureChain'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
-import { ClosedButtonContainer } from '~src/pages/Registries'
+import { ClosedButtonContainer } from 'pages/Registries'
 import {
   AddContainer,
   AddHeader,
@@ -146,7 +146,7 @@ const AddCDN: React.FC = () => {
 
   useEffect(() => {
     setFormData({ network, address, domain, path });
-  }, [network, address, domain, path]);
+  }, [network, address, domain, path, setFormData]);
 
   const { addItem, isLoading: isSubmitting } = useCurateInteractions();
 
@@ -189,7 +189,7 @@ const AddCDN: React.FC = () => {
         <div>
           <AddTitle>Submit CDN</AddTitle>
           <AddSubtitle>
-            Want to suggest an entry without any deposit?{' '}
+            Want to suggest an item without any deposit?{' '}
             <StyledGoogleFormAnchor
               target="_blank"
               href="https://docs.google.com/forms/d/e/1FAIpQLSeO32UBCpIYu3XIKGM-hLqWu51XcsSG1QRxtuycZPyS9mMtVg/viewform"

@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { formatEther } from 'viem';
 import { useSearchParams } from 'react-router-dom';
 import { useScrollTop } from 'hooks/useScrollTop';
-import { ClosedButtonContainer } from '~src/pages/Registries';
+import { ClosedButtonContainer } from 'pages/Registries';
 import {
   AddContainer,
   AddHeader,
@@ -72,7 +72,7 @@ const AddTagsQueries: React.FC = () => {
 
   useEffect(() => {
     setFormData({ githubRepository, commitHash, evmChainId, description });
-  }, [githubRepository, commitHash, evmChainId, description]);
+  }, [githubRepository, commitHash, evmChainId, description, setFormData]);
 
   const cacheKey = `addressIssues:${evmChainId}:${githubRepository}`
 
@@ -197,7 +197,7 @@ const AddTagsQueries: React.FC = () => {
       />
       Description
       <StyledTextInput
-        placeholder="e.g. An entry for retrieving SushiSwap v3 tags on..."
+        placeholder="e.g. An item for retrieving SushiSwap v3 tags on..."
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />

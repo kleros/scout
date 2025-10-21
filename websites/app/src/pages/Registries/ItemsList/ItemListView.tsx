@@ -299,13 +299,13 @@ const challengedStatusMap = {
   ClearingRequested: 'Challenged Removal',
 };
 
-interface EntryListViewProps {
+interface ItemListViewProps {
   item: GraphItem;
   challengePeriodDuration: number | null;
 }
 
-const EntryListView = React.memo(
-  ({ item, challengePeriodDuration }: EntryListViewProps) => {
+const ItemListView = React.memo(
+  ({ item, challengePeriodDuration }: ItemListViewProps) => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -624,4 +624,4 @@ const EntryListView = React.memo(
   },
 );
 
-export default EntryListView;
+export default ItemListView;

@@ -7,10 +7,10 @@ import { registryMap } from 'utils/items';
 import SubmitButton from './SubmitButton';
 import Search from './Search';
 import LoadingItems from './LoadingItems';
-import EntriesList from './EntriesList';
+import ItemsList from './ItemsList';
 import Pagination from './Pagination';
 import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
-import AddEntryModal from './SubmitEntries/AddEntryModal';
+import AddItemModal from './SubmitItems/AddItemModal';
 import FilterModal from './FilterModal';
 import FilterButton from 'components/FilterButton';
 import ViewSwitcher from 'components/ViewSwitcher';
@@ -22,6 +22,7 @@ import ExportButton from './ExportButton';
 import ExportModal from './ExportModal';
 import HeroShadowSVG from 'svgs/header/hero-shadow.svg';
 import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle';
+import ScrollTop from 'components/ScrollTop';
 
 const Container = styled.div`
   width: 100%;
@@ -329,6 +330,7 @@ const Home: React.FC = () => {
 
   return (
     <Container>
+      <ScrollTop />
       {isAttachmentOpen ? (
         <PageInner>
           <EvidenceAttachmentDisplay />
@@ -356,12 +358,12 @@ const Home: React.FC = () => {
                 </ActionablesContainer>
               </FullWidthSection>
               <FullWidthSection>
-                {searchLoading || !searchData ? <LoadingItems /> : <EntriesList searchData={searchData} viewMode={viewMode} />}
+                {searchLoading || !searchData ? <LoadingItems /> : <ItemsList searchData={searchData} viewMode={viewMode} />}
                 <Pagination totalPages={totalPages} />
               </FullWidthSection>
             </PageInner>
           {isRegistryDetailsModalOpen && <RegistryDetailsModal registryName={registryName} />}
-          {isAddItemOpen && <AddEntryModal />}
+          {isAddItemOpen && <AddItemModal />}
           <FilterModal
             isOpen={isFilterModalOpen}
             onClose={() => setIsFilterModalOpen(false)}
