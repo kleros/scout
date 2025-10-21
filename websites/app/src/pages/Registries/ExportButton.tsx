@@ -1,8 +1,6 @@
-import React, { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React from 'react';
 import styled from 'styled-components';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
-import { registryMap } from 'utils/items';
 
 const StyledLabel = styled.label`
   ${hoverShortTransitionTiming}
@@ -19,18 +17,12 @@ const StyledLabel = styled.label`
 
 interface ExportButtonProps {
   onClick: () => void;
+  registryName?: string;
 }
 
-const ExportButton: React.FC<ExportButtonProps> = ({ onClick }) => {
-  const [searchParams] = useSearchParams();
-
-  const selectedRegistries = searchParams.getAll('registry');
-  const registryAddress = useMemo(() => {
-    return selectedRegistries.length === 1 ? registryMap[selectedRegistries[0] as keyof typeof registryMap] : undefined;
-  }, [selectedRegistries]);
-
-  // Only show export button when a single registry is selected
-  if (!registryAddress) {
+const ExportButton: React.FC<ExportButtonProps> = ({ onClick, registryName }) => {
+  // Only show export button when a registry is selected
+  if (!registryName) {
     return null;
   }
 

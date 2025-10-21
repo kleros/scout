@@ -19,17 +19,20 @@ const StyledLabel = styled.label`
   }
 `
 
-const PolicyButton: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+interface PolicyButtonProps {
+  registryName?: string;
+}
+
+const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
+  const [, setSearchParams] = useSearchParams();
   const scrollTop = useScrollTop();
 
   const { data: countsData } = useItemCountsQuery();
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
-    const registryLabel = searchParams.get('registry');
-    if (registryLabel === null || !countsData) return undefined;
-    return countsData[registryLabel];
-  }, [searchParams, countsData]);
+    if (!registryName || !countsData) return undefined;
+    return countsData[registryName];
+  }, [registryName, countsData]);
 
   return (
     <StyledLabel

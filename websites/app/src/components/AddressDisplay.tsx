@@ -2,7 +2,6 @@ import React from 'react'
 import styled from 'styled-components'
 import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
-import { ExternalLink } from './ExternalLink'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import NewTabIcon from 'svgs/icons/new-tab.svg'
 
@@ -42,32 +41,35 @@ const IconWrapper = styled.div`
 `
 
 const StyledSpan = styled.span<{ bgColor: string }>`
-  padding: 4px 8px;
+  padding: 2px 6px;
   color: white;
   border-radius: 40px;
-  font-size: 16px;
+  font-size: 10px;
+  font-weight: 500;
   background-color: ${(props) => props.bgColor};
   margin-right: 8px;
 `
 
-const StyledExternalLink = styled(ExternalLink)`
+const StyledExternalLink = styled.a`
   ${hoverShortTransitionTiming}
-  color: ${({ theme }) => theme.secondaryPurple};
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 13px;
   display: flex;
   align-items: center;
   flex-direction: row;
   gap: 4px;
+  text-decoration: none;
 
   svg {
-    fill: ${({ theme }) => theme.secondaryPurple};
+    fill: ${({ theme }) => theme.secondaryText};
   }
 
   :hover {
-    color: ${({ theme }) => theme.tintPurple};
+    color: ${({ theme }) => theme.primaryText};
     text-decoration: none;
 
     svg {
-      fill: ${({ theme }) => theme.tintPurple};
+      fill: ${({ theme }) => theme.primaryText};
     }
   }
 `
@@ -117,9 +119,10 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
       )}
       {parts?.[2] && (
         <StyledExternalLink
-          to={`https://${reference?.explorer}/address/${parts?.[2]}`}
+          href={`https://${reference?.explorer}/address/${parts?.[2]}`}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
         >
           {truncateAddress(parts?.[2])} <StyledNewTabIcon />
         </StyledExternalLink>

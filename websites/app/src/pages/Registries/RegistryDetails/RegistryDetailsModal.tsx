@@ -75,7 +75,11 @@ const StyledImg = styled.img`
   height: 200px;
 `
 
-const RegistryDetailsModal: React.FC = () => {
+interface RegistryDetailsModalProps {
+  registryName?: string;
+}
+
+const RegistryDetailsModal: React.FC<RegistryDetailsModalProps> = ({ registryName }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [imgLoaded, setImgLoaded] = useState(false)
   const scrollTop = useScrollTop();
@@ -83,10 +87,9 @@ const RegistryDetailsModal: React.FC = () => {
   const { data: countsData, isLoading } = useItemCountsQuery();
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
-    const registryLabel = searchParams.get('registry')
-    if (registryLabel === null || !countsData) return undefined
-    return countsData[registryLabel]
-  }, [searchParams, countsData])
+    if (!registryName || !countsData) return undefined
+    return countsData[registryName]
+  }, [registryName, countsData])
 
   const closeModal = () => {
     setSearchParams((prev) => {

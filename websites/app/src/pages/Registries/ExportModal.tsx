@@ -5,6 +5,7 @@ import { useExportItems, ExportFilters } from 'hooks/queries/useExportItems'
 import { json2csv } from 'json-2-csv'
 import { revRegistryMap } from 'utils/items'
 import { chains } from 'utils/chains'
+import { ModalButton } from 'components/ModalButtons'
 import ExportIcon from 'svgs/icons/export.svg'
 
 import EthereumIcon from 'svgs/chains/ethereum.svg'
@@ -304,53 +305,27 @@ const FooterButtons = styled.div`
   border-top: 1px solid rgba(113, 134, 255, 0.3);
 `
 
-const CancelButton = styled.button`
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid;
-  transition: all 0.2s;
-  background: transparent;
-  color: ${({ theme }) => theme.accent};
-  border-color: ${({ theme }) => theme.accent};
-
-  &:hover {
-    background: ${({ theme }) => theme.lightGrey};
-    color: ${({ theme }) => theme.primaryText};
-  }
-`
-
-const ExportButton = styled.button<{ disabled: boolean }>`
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid;
-  transition: all 0.2s;
+const ExportButton = styled(ModalButton)<{ disabled: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #7186ff 0%, #9b59b6 100%);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 16px rgba(113, 134, 255, 0.3);
   opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
 
   &:hover {
-    box-shadow: ${({ disabled }) =>
-      disabled
-        ? '0 4px 16px rgba(113, 134, 255, 0.3)'
-        : '0 6px 20px rgba(113, 134, 255, 0.4)'};
-    filter: ${({ disabled }) => (disabled ? 'none' : 'brightness(1.05)')};
+    background: ${({ disabled, theme }) =>
+      disabled ? theme.buttonWhite : theme.buttonWhiteHover};
+  }
+
+  &:active {
+    background: ${({ disabled, theme }) =>
+      disabled ? theme.buttonWhite : theme.buttonWhiteActive};
   }
 
   svg {
     width: 16px;
     height: 16px;
+    fill: ${({ theme }) => theme.black};
   }
 `
 
@@ -643,8 +618,9 @@ const ExportModal: React.FC<ExportModalProps> = ({
           </FilterSection>
 
           <FooterButtons>
-            <CancelButton onClick={onClose}>Cancel</CancelButton>
+            <ModalButton variant="secondary" onClick={onClose}>Cancel</ModalButton>
             <ExportButton
+              variant="primary"
               disabled={!canExport || isButtonLoading}
               onClick={handleExport}
             >

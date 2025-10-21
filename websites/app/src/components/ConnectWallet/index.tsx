@@ -1,13 +1,24 @@
 import React, { useCallback } from "react";
+import styled from "styled-components";
 
 import { useAppKit, useAppKitState } from "@reown/appkit/react";
 import { useAccount, useSwitchChain } from "wagmi";
 
-import { Button } from "@kleros/ui-components-library";
+import Button from "components/Button";
 
 import { SUPPORTED_CHAINS, DEFAULT_CHAIN } from "consts/chains";
 
 import AccountDisplay from "./AccountDisplay";
+
+const StyledButton = styled(Button)`
+  color: ${({ theme }) => theme.black};
+
+  &:disabled {
+    background: #666666;
+    color: #999999;
+    cursor: not-allowed;
+  }
+`;
 
 export const SwitchChainButton: React.FC<{ className?: string }> = ({ className }) => {
   // TODO isLoading is not documented, but exists in the type, might have changed to isPending
@@ -24,13 +35,13 @@ export const SwitchChainButton: React.FC<{ className?: string }> = ({ className 
     }
   }, [switchChain]);
   return (
-    <Button
-      {...{ className }}
-      isLoading={isLoading}
+    <StyledButton
+      className={className}
       disabled={isLoading}
-      text={`Switch to ${SUPPORTED_CHAINS[DEFAULT_CHAIN].name}`}
       onClick={handleSwitch}
-    />
+    >
+      {isLoading ? "Switching..." : `Switch to ${SUPPORTED_CHAINS[DEFAULT_CHAIN].name}`}
+    </StyledButton>
   );
 };
 
@@ -38,13 +49,13 @@ const ConnectButton: React.FC<{ className?: string }> = ({ className }) => {
   const { open } = useAppKit();
   const { open: isOpen } = useAppKitState();
   return (
-    <Button
-      {...{ className }}
+    <StyledButton
+      className={className}
       disabled={isOpen}
-      small
-      text={"Connect"}
       onClick={async () => open({ view: "Connect" })}
-    />
+    >
+      Connect
+    </StyledButton>
   );
 };
 

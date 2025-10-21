@@ -170,7 +170,7 @@ const AddAddressTag: React.FC = () => {
   const { data: countsData } = useItemCountsQuery()
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
-    const registryLabel = searchParams.get('registry')
+    const registryLabel = searchParams.get('additem')
     if (registryLabel === null || !countsData) return undefined
     return countsData[registryLabel]
   }, [searchParams, countsData])

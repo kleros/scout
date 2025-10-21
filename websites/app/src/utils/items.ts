@@ -50,6 +50,7 @@ export interface Request {
   challenger: string
   resolutionTime: string
   deposit: string
+  creationTx: string
   rounds: Round[]
 }
 

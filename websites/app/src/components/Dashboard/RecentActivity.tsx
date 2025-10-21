@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import styled, { css } from 'styled-components'
+import Skeleton from 'react-loading-skeleton'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useNavigate } from 'react-router-dom'
 import { useItemsQuery } from 'hooks/queries/useItemsQuery'
@@ -26,11 +27,6 @@ import SolanaIcon from 'svgs/chains/solana.svg'
 import ZkSyncIcon from 'svgs/chains/zksync.svg'
 
 // Constants - must be defined before styled components
-const DOT_COLORS = {
-  active: '#C5ABFF',
-  inactive: '#0A0A0A',
-} as const
-
 const ACTIVITY_COLORS = {
   Challenged: '#E87B35',
   Submitted: '#60A5FA',
@@ -258,13 +254,13 @@ const Dot = styled.div<{ active: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${({ active }) =>
-    active ? DOT_COLORS.active : DOT_COLORS.inactive};
+  background: ${({ active, theme }) =>
+    active ? theme.carouselDotActive : theme.carouselDotInactive};
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${DOT_COLORS.active};
+    background: ${({ theme }) => theme.carouselDotActive};
   }
 `
 
@@ -403,10 +399,8 @@ export const RecentActivity: React.FC = () => {
 
   const handleCardClick = useCallback(
     (item: ActivityItem) => {
-      const registryName = revRegistryMap[item.registryAddress] ?? 'Unknown'
       const params = new URLSearchParams()
 
-      params.set('registry', registryName)
       ;[
         'Registered',
         'RegistrationRequested',
@@ -481,6 +475,11 @@ export const RecentActivity: React.FC = () => {
     const endsIn = useHumanizedCountdown(endsAtSeconds, 2)
     const showEndsIn = Boolean(endsIn) && item.status !== 'Registered'
 
+    // Determine if we're still loading the countdown data
+    // For non-Registered items, if challengePeriodDuration is null, we're still loading
+    const isLoadingCountdown =
+      item.status !== 'Registered' && challengePeriodDuration === null
+
     return (
       <ActivityCard key={item.id} onClick={() => handleCardClick(item)}>
         <FirstLine>
@@ -506,9 +505,13 @@ export const RecentActivity: React.FC = () => {
           <TimeInfo>
             <HourglassIcon />
             <span>
-              {showEndsIn
-                ? `Will be included in: ${endsIn}`
-                : 'Already included'}
+              {isLoadingCountdown ? (
+                <Skeleton width={150} height={14} />
+              ) : showEndsIn ? (
+                `Will be included in: ${endsIn}`
+              ) : (
+                'Already included'
+              )}
             </span>
           </TimeInfo>
           <ViewButton>View</ViewButton>

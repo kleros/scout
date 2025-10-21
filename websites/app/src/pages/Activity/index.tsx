@@ -210,16 +210,25 @@ const Activity: React.FC = () => {
     return [...availableChains, 'unknown']; // Include all chains + unknown by default
   });
 
+  // Auto-add connected address to URL when user connects wallet
+  useEffect(() => {
+    if (isConnected && connectedAddress && !userAddress) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('userAddress', connectedAddress.toLowerCase());
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [isConnected, connectedAddress, userAddress, searchParams, setSearchParams]);
+
   // Initialize URL params with all statuses/disputed values for Activity page
   useEffect(() => {
     if (address && searchParams.getAll('status').length === 0 && searchParams.getAll('disputed').length === 0) {
       const newParams = new URLSearchParams(searchParams);
-      
+
       // Add all registration statuses
       REGISTRATION_STATUSES.forEach(status => newParams.append('status', status));
-      // Add all challenge statuses  
+      // Add all challenge statuses
       CHALLENGE_STATUSES.forEach(challengeValue => newParams.append('disputed', challengeValue));
-      
+
       // Preserve existing params like userAddress, page, etc.
       setSearchParams(newParams, { replace: true });
     }

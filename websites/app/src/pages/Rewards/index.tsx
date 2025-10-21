@@ -208,7 +208,7 @@ const RewardsPage = () => {
   const navigate = useNavigate();
 
   const handleCardClick = (registryKey: string) => {
-    navigate(`/registry?registry=${registryKey}&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
+    navigate(`/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
   };
 
   return (

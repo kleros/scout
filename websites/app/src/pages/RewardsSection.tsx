@@ -128,19 +128,19 @@ const RewardSection: React.FC = () => {
   const navigate = useNavigate();
 
   const navigateToTokens = () => {
-    navigate('/registry?registry=Tokens&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
   };
 
   const navigateToAddressTags = () => {
-    navigate('/registry?registry=Single_Tags&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+    navigate('/registry/Single_Tags?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
   };
 
   const navigateToCDN = () => {
-    navigate('/registry?registry=CDN&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+    navigate('/registry/CDN?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
   };
 
   const navigateToRewards = () => {
-    navigate('/registry?registry=Tokens&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
   };
 
   return (

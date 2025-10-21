@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { useAccount } from "wagmi";
 
 import { hoverLongTransitionTiming } from "styles/commonStyles";
 
@@ -20,7 +21,7 @@ const Container = styled.div`
   border-radius: 30px;
 
   > label {
-    color: ${({ theme }) => theme.primaryText};
+    color: ${({ theme }) => theme.white};
     font-size: 16px;
     font-weight: 600;
   }
@@ -38,21 +39,38 @@ const AvatarAndAddressContainer = styled.div`
 
 const ReStyledArrowLink = styled(StyledArrowLink)`
   font-size: 14px;
+  color: ${({ theme }) => theme.white};
 
   > svg {
     height: 14px;
     width: 14px;
+    fill: ${({ theme }) => theme.white};
+    path {
+      fill: ${({ theme }) => theme.white};
+    }
+  }
+
+  &:hover {
+    color: ${({ theme }) => theme.secondaryText};
+    svg path {
+      fill: ${({ theme }) => theme.secondaryText};
+    }
   }
 `;
 
 const WalletAndProfile: React.FC<ISettings> = ({ toggleIsSettingsOpen }) => {
+  const { address } = useAccount();
+
   return (
     <Container>
       <AvatarAndAddressContainer>
         <IdenticonOrAvatar />
         <AddressOrName />
       </AvatarAndAddressContainer>
-      <ReStyledArrowLink to={"/activity"} onClick={toggleIsSettingsOpen}>
+      <ReStyledArrowLink
+        to={address ? `/activity/ongoing?userAddress=${address.toLowerCase()}` : "/activity"}
+        onClick={toggleIsSettingsOpen}
+      >
         My Activity <ArrowIcon />
       </ReStyledArrowLink>
     </Container>

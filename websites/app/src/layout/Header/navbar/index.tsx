@@ -4,10 +4,10 @@ import { useToggle } from "react-use";
 import { useNavigate } from "react-router-dom";
 import { useAccount } from "wagmi";
 
-import HomeIcon from "svgs/sidebar/home.svg";
-import ActivityIcon from "svgs/sidebar/activity.svg";
-import RewardsIcon from "svgs/sidebar/rewards.svg";
-import BookIcon from "svgs/sidebar/book.svg";
+import HomeIcon from "svgs/navbar/home.svg";
+import ActivityIcon from "svgs/navbar/activity.svg";
+import RewardsIcon from "svgs/navbar/rewards.svg";
+import BookIcon from "svgs/navbar/book.svg";
 import ArrowDown from "svgs/icons/arrow-down.svg";
 
 import { useLockOverlayScroll } from "hooks/useLockOverlayScroll";
@@ -169,7 +169,7 @@ const NavBar: React.FC = () => {
   ];
 
   const handleRegistryClick = (value: string) => {
-    navigate(`/registry?registry=${value}`);
+    navigate(`/registry/${value}`);
     toggleIsOpen();
   };
 

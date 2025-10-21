@@ -225,7 +225,6 @@ const ItemCard = ({ item }: { item: any }) => {
 
   const onView = () => {
     const params = new URLSearchParams()
-    params.set('registry', registryName)
     params.set('status', 'Registered')
     params.set('status', 'RegistrationRequested')
     params.set('status', 'ClearingRequested')

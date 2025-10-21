@@ -3,8 +3,8 @@ import { responsiveSize } from 'styles/responsiveSize'
 
 const Button = styled.button`
   display: flex;
-  background: #FFFFFF;
-  color: #000000;
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
   font-family: "Open Sans", sans-serif;
   font-size: 16px;
   font-weight: 600;
@@ -17,11 +17,11 @@ const Button = styled.button`
   justify-content: center;
 
   &:hover {
-    background: #F0F0F0;
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
 
   &:active {
-    background: #E0E0E0;
+    background: ${({ theme }) => theme.buttonWhiteActive};
   }
 
   &:disabled {

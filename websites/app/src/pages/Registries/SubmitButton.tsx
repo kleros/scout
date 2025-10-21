@@ -7,8 +7,8 @@ import { hoverShortTransitionTiming } from 'styles/commonStyles';
 const StyledButton = styled(Button)`
   ${hoverShortTransitionTiming}
   display: flex;
-  background: #FFFFFF;
-  color: #000000;
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
   font-size: 14px;
   font-family: "Open Sans", sans-serif;
   font-weight: 600;
@@ -16,26 +16,32 @@ const StyledButton = styled(Button)`
   border-radius: 9999px;
 
   &:hover {
-    background: #F0F0F0;
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
 
   &:active {
-    background: #E0E0E0;
+    background: ${({ theme }) => theme.buttonWhiteActive};
   }
 `
 
-const SubmitButton: React.FC = () => {
+interface SubmitButtonProps {
+  registryName?: string;
+}
+
+const SubmitButton: React.FC<SubmitButtonProps> = ({ registryName }) => {
   const [, setSearchParams] = useSearchParams()
 
   const openModal = () => {
+    if (!registryName) return;
     setSearchParams((prev) => {
-      const registry = prev.get('registry') as string
       const prevParams = prev.toString()
       const newParams = new URLSearchParams(prevParams)
-      newParams.append('additem', registry)
+      newParams.append('additem', registryName)
       return newParams
     })
   }
+
+  if (!registryName) return null;
 
   return (
     <>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import styled, { css } from 'styled-components';
-import { useSearchParams, createSearchParams } from 'react-router-dom';
+import { useSearchParams, createSearchParams, useParams } from 'react-router-dom';
 import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
 import { chains } from 'utils/chains';
 import { registryMap } from 'utils/items';
@@ -13,6 +13,8 @@ import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
 import AddEntryModal from './SubmitEntries/AddEntryModal';
 import FilterModal from './FilterModal';
 import FilterButton from 'components/FilterButton';
+import ViewSwitcher from 'components/ViewSwitcher';
+import { useViewMode } from 'hooks/useViewMode';
 import CloseIcon from 'svgs/icons/close.svg';
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
@@ -20,7 +22,6 @@ import ExportButton from './ExportButton';
 import ExportModal from './ExportModal';
 import HeroShadowSVG from 'svgs/header/hero-shadow.svg';
 import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle';
-import { responsiveSize } from 'styles/responsiveSize';
 
 const Container = styled.div`
   width: 100%;
@@ -36,7 +37,7 @@ const Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      padding: 48px ${responsiveSize(0, 48)} 60px;
+      padding: 48px 32px 60px;
     `
   )}
 `;
@@ -75,6 +76,7 @@ const SearchAndFiltersContainer = styled.div`
   gap: 8px;
   flex: 1;
   min-width: 300px;
+  align-items: center;
 `;
 
 const PolicyAndSubmitItemContainer = styled.div`
@@ -202,11 +204,13 @@ const Hero: React.FC<{ registryKey: string; }> = ({ registryKey }) => {
 };
 
 const Home: React.FC = () => {
+  const { registryName } = useParams<{ registryName: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [chainFilters, setChainFilters] = useState<string[]>([]);
-
+  const [viewMode, setViewMode] = useViewMode();
+  const [shouldDisableListView, setShouldDisableListView] = useState(false);
 
   const isRegistryDetailsModalOpen = useMemo(
     () => !!searchParams.get('registrydetails'),
@@ -221,22 +225,22 @@ const Home: React.FC = () => {
     [searchParams]
   );
 
-  const { isLoading: searchLoading, data: searchData } = useItemsQuery({ 
+  const { isLoading: searchLoading, data: searchData } = useItemsQuery({
     searchParams,
-    chainFilters 
+    registryName,
+    chainFilters
   });
 
   const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
 
   const currentItemCount = useMemo(() => {
-    const registry = searchParams.getAll('registry');
     const status = searchParams.getAll('status');
     const disputed = searchParams.getAll('disputed');
     const text = searchParams.get('text');
     const page = searchParams.get('page');
     if (
       countsLoading ||
-      registry.length === 0 ||
+      !registryName ||
       status.length === 0 ||
       disputed.length === 0 ||
       page === null ||
@@ -254,51 +258,47 @@ const Home: React.FC = () => {
           (status.includes('ClearingRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedClearing : 0)
         );
       };
-      const count =
-        (registry.includes('Single_Tags') ? getCount('Single_Tags') : 0) +
-        (registry.includes('Tags_Queries') ? getCount('Tags_Queries') : 0) +
-        (registry.includes('CDN') ? getCount('CDN') : 0) +
-        (registry.includes('Tokens') ? getCount('Tokens') : 0);
-      return count;
+      // Only count for the current registry from URL
+      return getCount(registryName as 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN');
     } else {
       if (!searchData || searchData.length > ITEMS_PER_PAGE) return null;
       return searchData.length + (Number(page) - 1) * ITEMS_PER_PAGE;
     }
-  }, [searchParams, countsData, countsLoading, searchData, chainFilters]);
+  }, [searchParams, countsData, countsLoading, searchData, chainFilters, registryName]);
 
   useEffect(() => {
-    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment')) {
-      return;
-    }
-    const registry = searchParams.getAll('registry');
-    const status = searchParams.getAll('status');
-    const disputed = searchParams.getAll('disputed');
-    const page = searchParams.get('page');
-    const orderDirection = searchParams.get('orderDirection');
-    const hasNetworkInUrl = searchParams.has('network');
-    
-    if (
-      registry.length === 0 ||
-      status.length === 0 ||
-      disputed.length === 0 ||
-      orderDirection === null ||
-      page === null ||
-      hasNetworkInUrl
-    ) {
-      const newSearchParams = createSearchParams({
-        registry: registry.length === 0 ? ['Single_Tags'] : registry,
-        status: status.length === 0 ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent'] : status,
-        disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
-        page: page === null ? '1' : page,
-        orderDirection: orderDirection === null ? 'desc' : orderDirection
-      });
-      const text = searchParams.get('text');
-      if (text) {
-        newSearchParams.set('text', text);
+    setSearchParams((prev) => {
+      if (prev.get('page') === 'rewards' || prev.get('attachment')) {
+        return prev;
       }
-      setSearchParams(newSearchParams);
-    }
-  }, [searchParams, setSearchParams]);
+      const status = prev.getAll('status');
+      const disputed = prev.getAll('disputed');
+      const page = prev.get('page');
+      const orderDirection = prev.get('orderDirection');
+      const hasNetworkInUrl = prev.has('network');
+
+      if (
+        status.length === 0 ||
+        disputed.length === 0 ||
+        orderDirection === null ||
+        page === null ||
+        hasNetworkInUrl
+      ) {
+        const newSearchParams = createSearchParams({
+          status: status.length === 0 ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent'] : status,
+          disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
+          page: page === null ? '1' : page,
+          orderDirection: orderDirection === null ? 'desc' : orderDirection
+        });
+        const text = prev.get('text');
+        if (text) {
+          newSearchParams.set('text', text);
+        }
+        return newSearchParams;
+      }
+      return prev;
+    });
+  }, [setSearchParams]);
 
   useEffect(() => {
     if (chainFilters.length === 0) {
@@ -312,9 +312,20 @@ const Home: React.FC = () => {
       ? Math.ceil(currentItemCount / ITEMS_PER_PAGE)
       : null;
 
-  const selectedRegistries = searchParams.getAll('registry');
-  const singleRegistry = selectedRegistries.length === 1 ? selectedRegistries[0] : null;
-  const currentRegistryAddress = singleRegistry ? registryMap[singleRegistry as keyof typeof registryMap] : undefined;
+  const currentRegistryAddress = registryName ? registryMap[registryName as keyof typeof registryMap] : undefined;
+
+  // Check if list view should be disabled for Tokens registry on narrow screens
+  useEffect(() => {
+    const checkListViewAvailability = () => {
+      const isTokensRegistry = registryName === 'Tokens';
+      const minWidth = 1350;
+      setShouldDisableListView(isTokensRegistry && window.innerWidth < minWidth);
+    };
+
+    checkListViewAvailability();
+    window.addEventListener('resize', checkListViewAvailability);
+    return () => window.removeEventListener('resize', checkListViewAvailability);
+  }, [registryName]);
 
   return (
     <Container>
@@ -326,25 +337,30 @@ const Home: React.FC = () => {
         <>
           <PageInner>
               <FullWidthSection>
-                {singleRegistry && REGISTRY_INFO[singleRegistry] && <Hero registryKey={singleRegistry} />}
+                {registryName && REGISTRY_INFO[registryName] && <Hero registryKey={registryName} />}
                 <ActionablesContainer>
                   <SearchAndFiltersContainer>
                     <Search />
                     <FilterButton onClick={() => setIsFilterModalOpen(true)} />
+                    <ViewSwitcher
+                      viewMode={viewMode}
+                      onViewModeChange={setViewMode}
+                      disableListView={shouldDisableListView}
+                    />
                   </SearchAndFiltersContainer>
                   <PolicyAndSubmitItemContainer>
-                    <ExportButton onClick={() => setIsExportModalOpen(true)} />
-                    <PolicyButton />
-                    <SubmitButton />
+                    <ExportButton onClick={() => setIsExportModalOpen(true)} registryName={registryName} />
+                    <PolicyButton registryName={registryName} />
+                    <SubmitButton registryName={registryName} />
                   </PolicyAndSubmitItemContainer>
                 </ActionablesContainer>
               </FullWidthSection>
               <FullWidthSection>
-                {searchLoading || !searchData ? <LoadingItems /> : <EntriesList searchData={searchData} />}
+                {searchLoading || !searchData ? <LoadingItems /> : <EntriesList searchData={searchData} viewMode={viewMode} />}
                 <Pagination totalPages={totalPages} />
               </FullWidthSection>
             </PageInner>
-          {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
+          {isRegistryDetailsModalOpen && <RegistryDetailsModal registryName={registryName} />}
           {isAddItemOpen && <AddEntryModal />}
           <FilterModal
             isOpen={isFilterModalOpen}

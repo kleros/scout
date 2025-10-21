@@ -54,6 +54,7 @@ const AccountContainer = styled.div`
   > label {
     font-size: 16px;
     font-weight: 600;
+    color: ${({ theme }) => theme.white};
   }
 
   ${landscapeStyle(
@@ -75,9 +76,8 @@ const ChainConnectionContainer = styled.div`
   align-items: center;
   padding-left: 0px;
   > label {
-    color: ${({ theme }) => theme.success};
+    color: ${({ theme }) => theme.white};
     font-size: 16px;
-
     font-weight: 500;
   }
 
@@ -113,6 +113,8 @@ const StyledAvatar = styled.img<{ size: `${number}` }>`
 
 const StyledSmallLabel = styled.label`
   font-size: 14px !important;
+  cursor: pointer;
+  color: ${({ theme }) => theme.white};
 `;
 
 interface IIdenticonOrAvatar {

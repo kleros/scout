@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useSearchParams } from 'react-router-dom';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
+import { ModalButton } from './ModalButtons';
 import FiltersIcon from 'svgs/icons/filters.svg';
 import SortIcon from 'svgs/icons/sort.svg';
 
@@ -333,39 +334,6 @@ const FooterButtons = styled.div`
   gap: 12px;
   padding-top: 20px;
   border-top: 1px solid rgba(113, 134, 255, 0.3);
-`;
-
-const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 1px solid;
-  transition: all 0.2s;
-  
-  ${({ variant = 'secondary', theme }) => variant === 'primary' 
-    ? `
-      background: ${theme.accent};
-      color: ${theme.lightBackground};
-      border-color: ${theme.accent};
-      
-      &:hover {
-        background: ${theme.primary};
-        border-color: ${theme.primary};
-      }
-    `
-    : `
-      background: transparent;
-      color: ${theme.accent};
-      border-color: ${theme.accent};
-      
-      &:hover {
-        background: ${theme.lightGrey};
-        color: ${theme.primaryText};
-      }
-    `
-  }
 `;
 
 const STATUS_LABELS = {
@@ -726,7 +694,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
         </SortSection>
 
         <FooterButtons>
-          <Button onClick={onClose}>Close</Button>
+          <ModalButton variant="secondary" onClick={onClose}>Close</ModalButton>
         </FooterButtons>
         </ModalContainer>
       </ModalWrapper>

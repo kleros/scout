@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import styled, { css } from "styled-components";
-import { NavLink, useSearchParams } from "react-router-dom";
+import styled from "styled-components";
+import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ArrowDown from "svgs/icons/arrow-down.svg";
 
@@ -27,6 +27,22 @@ const StyledNavLink = styled(NavLink)`
   &.active {
     color: ${({ theme }) => theme.white};
     font-weight: 600;
+  }
+`;
+
+const StyledLink = styled(Link)<{ $isActive: boolean }>`
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  font-size: 16px;
+  color: ${({ $isActive, theme }) => ($isActive ? theme.white : `${theme.white}BA`)};
+  font-weight: ${({ $isActive }) => ($isActive ? "600" : "normal")};
+  padding: 8px 16px;
+  border-radius: 7px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: ${({ theme }) => theme.white};
   }
 `;
 
@@ -96,7 +112,7 @@ const HeaderNav: React.FC = () => {
   const [registriesOpen, setRegistriesOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { address: connectedAddress } = useAccount();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -121,7 +137,17 @@ const HeaderNav: React.FC = () => {
     setRegistriesOpen(false);
   };
 
-  const isRegistryActive = window.location.pathname === "/registry";
+  const isRegistryActive = location.pathname.startsWith("/registry/");
+  const currentRegistryName = location.pathname.split('/registry/')[1]?.split('?')[0];
+
+  // Check if My Activity should be active
+  const isActivityPage = location.pathname.startsWith("/activity");
+  const searchParams = new URLSearchParams(location.search);
+  const userAddressParam = searchParams.get("userAddress");
+  const isMyActivity = isActivityPage && (
+    !connectedAddress && !userAddressParam || // Not connected and no param (showing connect prompt)
+    (connectedAddress && userAddressParam === connectedAddress.toLowerCase()) // Viewing own activity
+  );
 
   return (
     <Container>
@@ -140,8 +166,8 @@ const HeaderNav: React.FC = () => {
             {registryOptions.map(({ label, value }) => (
               <DropdownItem
                 key={value}
-                isActive={searchParams.get("registry") === value}
-                to={`/registry?registry=${value}`}
+                isActive={currentRegistryName === value}
+                to={`/registry/${value}`}
                 onClick={handleDropdownItemClick}
               >
                 {label}
@@ -151,13 +177,14 @@ const HeaderNav: React.FC = () => {
         )}
       </DropdownContainer>
 
-      <StyledNavLink
+      <StyledLink
         to={`/activity/ongoing${
           connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ""
         }`}
+        $isActive={isMyActivity}
       >
         My Activity
-      </StyledNavLink>
+      </StyledLink>
 
       <StyledNavLink to="/rewards">Active Rewards</StyledNavLink>
 

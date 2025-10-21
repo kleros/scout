@@ -26,6 +26,7 @@ import CrowdfundingCard from 'components/CrowdfundingCard'
 import useAppealCost from 'hooks/useAppealCost'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus'
+import { revRegistryMap } from 'utils/items'
 
 const Container = styled.div`
   display: flex;
@@ -699,9 +700,10 @@ const ItemDetails: React.FC = () => {
 
 
   const isTagsQueries = useMemo(() => {
-    const registry = searchParams.get('registry')
-    return registry === 'Tags_Queries'
-  }, [searchParams])
+    if (!registryParsedFromItemId) return false
+    const registryName = revRegistryMap[registryParsedFromItemId]
+    return registryName === 'Tags_Queries'
+  }, [registryParsedFromItemId])
 
   const getPropValue = (label: string) => {
     return detailsData?.props?.find((prop) => prop.label === label)?.value || ''

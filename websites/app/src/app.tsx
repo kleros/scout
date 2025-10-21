@@ -56,7 +56,7 @@ const App: React.FC = () => {
                       <Route path="rewards" element={<Rewards />} />
                       <Route path="guide" element={<Guide />} />
                       <Route path="juror" element={<Juror />} />
-                      <Route path="registry/*" element={<Registries />} />
+                      <Route path="registry/:registryName" element={<Registries />} />
                       <Route path="item/:itemId" element={<ItemDetails />} />
                       <Route path="*" element={<h1>Page not found</h1>} />
                     </Route>

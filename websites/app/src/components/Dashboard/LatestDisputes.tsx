@@ -6,11 +6,6 @@ import { useKlerosDisputes, getDisputePeriodName, formatDisputeDeadline } from '
 import DisputeResolverIcon from 'assets/svgs/icons/dispute-resolver.svg';
 import HourglassIcon from 'assets/svgs/icons/hourglass.svg';
 
-const DOT_COLORS = {
-  active: '#C5ABFF',
-  inactive: '#0A0A0A',
-} as const;
-
 const Container = styled.div`
   padding: 16px;
   border-radius: 16px;
@@ -165,12 +160,12 @@ const Dot = styled.div<{ active: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${({ active }) => active ? DOT_COLORS.active : DOT_COLORS.inactive};
+  background: ${({ active, theme }) => active ? theme.carouselDotActive : theme.carouselDotInactive};
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${DOT_COLORS.active};
+    background: ${({ theme }) => theme.carouselDotActive};
   }
 `;
 

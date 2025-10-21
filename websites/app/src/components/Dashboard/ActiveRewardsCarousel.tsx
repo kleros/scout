@@ -15,11 +15,6 @@ interface RewardData {
 const CAROUSEL_INTERVAL = 7000;
 const REWARD_POOL = '100,000 PNK';
 
-const DOT_COLORS = {
-  active: '#C5ABFF',
-  inactive: '#0A0A0A',
-} as const;
-
 const Container = styled.div`
   margin-bottom: 12px;
 `;
@@ -159,12 +154,12 @@ const Dot = styled.div<{ active: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${({ active }) => active ? DOT_COLORS.active : DOT_COLORS.inactive};
+  background: ${({ active, theme }) => active ? theme.carouselDotActive : theme.carouselDotInactive};
   cursor: pointer;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${DOT_COLORS.active};
+    background: ${({ theme }) => theme.carouselDotActive};
   }
 `;
 
@@ -214,7 +209,7 @@ export const ActiveRewardsCarousel: React.FC = () => {
   }, []);
 
   const handleCardClick = useCallback((registryKey: string) => {
-    navigate(`/registry?registry=${registryKey}&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
+    navigate(`/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
   }, [navigate]);
 
   const handleDotClick = useCallback((index: number) => {

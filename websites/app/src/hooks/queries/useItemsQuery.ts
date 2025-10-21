@@ -8,18 +8,21 @@ import { chains, getNamespaceForChainId } from '../../utils/chains'
 
 interface UseItemsQueryParams {
   searchParams: URLSearchParams
+  registryName?: string
   chainFilters?: string[]
   enabled?: boolean
 }
 
 export const useItemsQuery = ({
   searchParams,
+  registryName,
   chainFilters = [],
   enabled = true,
 }: UseItemsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
 
-  const registry = searchParams.getAll('registry')
+  // Support both single registry (from registryName prop) and multiple registries (from searchParams for dashboard)
+  const registry = registryName ? [registryName] : searchParams.getAll('registry')
   const status = searchParams.getAll('status')
   const disputed = searchParams.getAll('disputed')
   const network = chainFilters
@@ -35,7 +38,7 @@ export const useItemsQuery = ({
     page > 0
 
   return useQuery({
-    queryKey: [...queryKeys.items(searchParams), chainFilters],
+    queryKey: [...queryKeys.items(searchParams), registryName, chainFilters],
     queryFn: async () => {
       if (!shouldFetch) return []
 
@@ -138,6 +141,7 @@ export const useItemsQuery = ({
               challenger
               resolutionTime
               deposit
+              creationTx
               rounds(limit: 1, order_by: {creationTime : desc}) {
                 appealPeriodStart
                 appealPeriodEnd

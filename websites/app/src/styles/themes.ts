@@ -1,7 +1,7 @@
 const componentsDarkTheme = {
   klerosUIComponentsName: "dark",
   klerosUIComponentsPrimaryPurple: "#7E1BD4",
-  klerosUIComponentsSecondaryPurple: "#C5ABFF",
+  klerosUIComponentsSecondaryPurple: "#7186FF",
   klerosUIComponentsMediumPurple: "#390F6C",
   klerosUIComponentsLightPurple: "#FCFBFF",
   klerosUIComponentsPrimaryBlue: "#6CC5FF",
@@ -34,6 +34,13 @@ const componentsDarkTheme = {
   klerosUIComponentsSkeletonBackground: "#0A0A0A",
   klerosUIComponentsSkeletonHighlight: "#1A1A1A",
 
+  klerosUIComponentsButtonWhite: "#FFFFFF",
+  klerosUIComponentsButtonWhiteHover: "#F0F0F0",
+  klerosUIComponentsButtonWhiteActive: "#E0E0E0",
+
+  klerosUIComponentsCarouselDotActive: "#7186FF",
+  klerosUIComponentsCarouselDotInactive: "#0A0A0A",
+
   klerosUIComponentsTransitionSpeed: "0.25s",
 };
 
@@ -44,7 +51,7 @@ export const darkTheme = {
   white: "#FFFFFF",
   black: "#000000",
   primaryPurple: "#7E1BD4",
-  secondaryPurple: "#C5ABFF",
+  secondaryPurple: "#7186FF",
   darkPurple: "#000000",
   mediumPurple: "#390F6C",
   lightPurple: "#FCFBFF",
@@ -84,6 +91,13 @@ export const darkTheme = {
 
   skeletonBackground: "#0A0A0A",
   skeletonHighlight: "#1A1A1A",
+
+  buttonWhite: "#FFFFFF",
+  buttonWhiteHover: "#F0F0F0",
+  buttonWhiteActive: "#E0E0E0",
+
+  carouselDotActive: "#7186FF",
+  carouselDotInactive: "#0A0A0A",
 
   paleCyan: "#ACFFFF",
   limeGreen: "#F3FFD9",

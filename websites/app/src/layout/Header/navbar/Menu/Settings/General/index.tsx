@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { useAccount, useDisconnect } from "wagmi";
 
-import { Button } from "@kleros/ui-components-library";
+import Button from "components/Button";
 
 import { ChainDisplay } from "components/ConnectWallet/AccountDisplay";
 import { EnsureChain } from "components/EnsureChain";
@@ -29,7 +29,7 @@ const StyledChainContainer = styled.div`
     background-color: ${({ theme }) => theme.success};
   }
   > label {
-    color: ${({ theme }) => theme.success};
+    color: ${({ theme }) => theme.white};
   }
 `;
 
@@ -53,7 +53,7 @@ const UserContainer = styled.div`
 
 export const DisconnectWalletButton: React.FC = () => {
   const { disconnect } = useDisconnect();
-  return <Button text={`Disconnect`} onClick={() => disconnect()} />;
+  return <Button onClick={() => disconnect()}>Disconnect</Button>;
 };
 
 const General: React.FC<ISettings> = ({ toggleIsSettingsOpen }) => {

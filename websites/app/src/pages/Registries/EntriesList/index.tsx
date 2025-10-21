@@ -1,52 +1,111 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { GraphItem, registryMap } from 'utils/items';
 import Entry from './Entry';
+import EntryListView from './EntryListView';
+import ListHeader from './ListHeader';
 import { ITEMS_PER_PAGE } from '~src/pages/Registries';
-import { useChallengePeriodDuration } from 'hooks/countdown';
+import { ViewMode } from 'components/ViewSwitcher';
+import { useRegistryParameters } from 'hooks/useRegistryParameters';
 
 const useRegistryDurations = () => {
-  const singleTagsDuration = useChallengePeriodDuration(registryMap.Single_Tags);
-  const tagsQueriesDuration = useChallengePeriodDuration(registryMap.Tags_Queries);
-  const tokensDuration = useChallengePeriodDuration(registryMap.Tokens);
-  const cdnDuration = useChallengePeriodDuration(registryMap.CDN);
+  const singleTagsParams = useRegistryParameters(registryMap.Single_Tags);
+  const tagsQueriesParams = useRegistryParameters(registryMap.Tags_Queries);
+  const tokensParams = useRegistryParameters(registryMap.Tokens);
+  const cdnParams = useRegistryParameters(registryMap.CDN);
 
   return useMemo(() => ({
-    [registryMap.Single_Tags]: singleTagsDuration,
-    [registryMap.Tags_Queries]: tagsQueriesDuration,
-    [registryMap.Tokens]: tokensDuration,
-    [registryMap.CDN]: cdnDuration,
-  }), [singleTagsDuration, tagsQueriesDuration, tokensDuration, cdnDuration]);
+    [registryMap.Single_Tags]: singleTagsParams.data ? Number(singleTagsParams.data.challengePeriodDuration) : null,
+    [registryMap.Tags_Queries]: tagsQueriesParams.data ? Number(tagsQueriesParams.data.challengePeriodDuration) : null,
+    [registryMap.Tokens]: tokensParams.data ? Number(tokensParams.data.challengePeriodDuration) : null,
+    [registryMap.CDN]: cdnParams.data ? Number(cdnParams.data.challengePeriodDuration) : null,
+  }), [singleTagsParams.data, tagsQueriesParams.data, tokensParams.data, cdnParams.data]);
 };
 
-const EntriesContainer = styled.div`
+const ListViewWrapper = styled.div`
   width: 100%;
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const EntriesContainer = styled.div<{ viewMode: ViewMode }>`
+  width: 100%;
+  display: ${({ viewMode }) => (viewMode === 'list' ? 'flex' : 'grid')};
+  flex-direction: ${({ viewMode }) => (viewMode === 'list' ? 'column' : 'row')};
+  gap: ${({ viewMode }) => (viewMode === 'list' ? '0' : '16px')};
+  grid-template-columns: ${({ viewMode }) =>
+    viewMode === 'cards' ? 'repeat(1, minmax(0, 1fr))' : 'none'};
   justify-content: center;
   overflow-x: hidden;
-  ${landscapeStyle(
-    () => css`
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    `
-  )}
+  ${({ viewMode }) =>
+    viewMode === 'cards' &&
+    landscapeStyle(
+      () => css`
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      `,
+    )}
 `;
 
 interface IEntriesList {
   searchData: GraphItem[];
+  viewMode: ViewMode;
 }
 
-const EntriesList: React.FC<IEntriesList> = ({ searchData }) => {
+const EntriesList: React.FC<IEntriesList> = ({ searchData, viewMode }) => {
   const registryDurations = useRegistryDurations();
+  const [shouldForceCardsView, setShouldForceCardsView] = useState(false);
+
+  // Determine registry type from first item
+  const registryAddress = searchData[0]?.registryAddress;
+  const isTokensRegistry = registryAddress === registryMap.Tokens;
+
+  // Check if screen width is sufficient for Tokens list view
+  useEffect(() => {
+    const checkWidth = () => {
+      // Tokens registry needs minimum 1350px to display properly
+      // Other registries work fine on smaller screens
+      if (isTokensRegistry && viewMode === 'list') {
+        const minWidth = 1350;
+        setShouldForceCardsView(window.innerWidth < minWidth);
+      } else {
+        setShouldForceCardsView(false);
+      }
+    };
+
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+    return () => window.removeEventListener('resize', checkWidth);
+  }, [isTokensRegistry, viewMode]);
+
+  // Effective view mode considers forced cards view
+  const effectiveViewMode = shouldForceCardsView ? 'cards' : viewMode;
+
+  if (effectiveViewMode === 'list') {
+    return (
+      <ListViewWrapper>
+        <ListHeader registryAddress={registryAddress} />
+        <EntriesContainer viewMode={effectiveViewMode}>
+          {searchData.slice(0, ITEMS_PER_PAGE).map((item) => (
+            <EntryListView
+              key={item.id}
+              item={item}
+              challengePeriodDuration={registryDurations[item.registryAddress]}
+            />
+          ))}
+        </EntriesContainer>
+      </ListViewWrapper>
+    );
+  }
+
   return (
-    <EntriesContainer>
+    <EntriesContainer viewMode={effectiveViewMode}>
       {searchData.slice(0, ITEMS_PER_PAGE).map((item) => (
         <Entry
           key={item.id}
-            item={item}
-            challengePeriodDuration={registryDurations[item.registryAddress]}
+          item={item}
+          challengePeriodDuration={registryDurations[item.registryAddress]}
         />
       ))}
     </EntriesContainer>

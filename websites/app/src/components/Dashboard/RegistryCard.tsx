@@ -122,7 +122,7 @@ export const RegistryCard: React.FC<RegistryCardProps> = ({
   const navigate = useNavigate();
   
   const handleOpenClick = () => {
-    navigate(`/registry?registry=${registryKey}&status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
+    navigate(`/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
   };
 
   const formattedMainValue = typeof mainValue === 'number' ? mainValue.toLocaleString() : 
