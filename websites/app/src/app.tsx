@@ -18,7 +18,6 @@ const Home = lazy(() => import('pages/Home'));
 const Activity = lazy(() => import('pages/Activity'));
 const Rewards = lazy(() => import('pages/Rewards'));
 const Guide = lazy(() => import('pages/Guide'));
-const Juror = lazy(() => import('pages/Juror'));
 
 const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   height: 100vh;
@@ -55,7 +54,6 @@ const App: React.FC = () => {
                       <Route path="activity/*" element={<Activity />} />
                       <Route path="rewards" element={<Rewards />} />
                       <Route path="guide" element={<Guide />} />
-                      <Route path="juror" element={<Juror />} />
                       <Route path="registry/:registryName" element={<Registries />} />
                       <Route path="item/:itemId" element={<ItemDetails />} />
                       <Route path="*" element={<h1>Page not found</h1>} />
