@@ -140,9 +140,9 @@ const PaddedContent = styled.div`
 
 const ScoutWatermark = styled.div`
   position: absolute;
-  top: 55%;
+  top: 0;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   pointer-events: none;
   width: 720px;
   height: 720px;

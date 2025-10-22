@@ -35,9 +35,9 @@ const EvidenceSectionHeader = styled.div`
 
 const ScoutWatermark = styled.div`
   position: absolute;
-  top: 50%;
+  top: -64px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   pointer-events: none;
   width: 720px;
   height: 720px;

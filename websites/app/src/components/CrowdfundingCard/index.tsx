@@ -9,12 +9,14 @@ import { GraphItemDetails } from '../../utils/itemDetails'
 import { errorToast } from '../../utils/wrapWithToast'
 
 const Card = styled.div`
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => theme.backgroundThree};
   border: 1px solid ${({ theme }) => theme.lightGrey};
   border-radius: 12px;
   padding: 24px;
   margin: 16px 0;
   color: ${({ theme }) => theme.primaryText};
+  position: relative;
+  z-index: 1;
 `
 
 const CardHeader = styled.div`
@@ -51,9 +53,11 @@ const Section = styled.div`
   flex-direction: column;
   gap: 12px;
   padding: 20px;
-  background: rgba(205, 157, 255, 0.05);
+  background: ${({ theme }) => theme.backgroundFour};
   border: 1px solid ${({ theme }) => theme.lightGrey};
   border-radius: 8px;
+  position: relative;
+  z-index: 1;
 `
 
 const SectionHeader = styled.div`
@@ -183,7 +187,7 @@ const Input = styled.input`
   padding: 10px 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => theme.backgroundThree};
   color: ${({ theme }) => theme.primaryText};
   font-size: 14px;
 
