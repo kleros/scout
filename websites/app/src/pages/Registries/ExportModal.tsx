@@ -6,6 +6,7 @@ import { json2csv } from 'json-2-csv'
 import { revRegistryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 import { ModalButton } from 'components/ModalButtons'
+import Checkbox from 'components/Checkbox'
 import ExportIcon from 'svgs/icons/export.svg'
 
 import EthereumIcon from 'svgs/chains/ethereum.svg'
@@ -214,12 +215,6 @@ const NetworkLabel = styled.label`
     height: 16px;
     flex-shrink: 0;
   }
-`
-
-const Checkbox = styled.input.attrs({ type: 'checkbox' })`
-  width: 16px;
-  height: 16px;
-  accent-color: ${({ theme }) => theme.accent};
 `
 
 const OnlyButton = styled.button`

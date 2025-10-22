@@ -4,6 +4,8 @@ import { useSearchParams } from 'react-router-dom';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
 import { ModalButton } from './ModalButtons';
+import Checkbox from './Checkbox';
+import RadioButton from './RadioButton';
 import FiltersIcon from 'svgs/icons/filters.svg';
 import SortIcon from 'svgs/icons/sort.svg';
 
@@ -238,12 +240,6 @@ const StatusCircle = styled.div<{ status: string }>`
   }};
 `;
 
-const Checkbox = styled.input.attrs({ type: 'checkbox' })`
-  width: 16px;
-  height: 16px;
-  accent-color: ${({ theme }) => theme.accent};
-`;
-
 const NetworkGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -303,12 +299,6 @@ const SortOption = styled.label`
   color: ${({ theme }) => theme.primaryText};
   font-size: 14px;
   cursor: pointer;
-`;
-
-const RadioButton = styled.input.attrs({ type: 'radio' })`
-  width: 16px;
-  height: 16px;
-  accent-color: ${({ theme }) => theme.accent};
 `;
 
 const FooterButtons = styled.div`

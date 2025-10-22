@@ -13,8 +13,8 @@ const Button = styled.button`
   border: 1px solid ${({ theme }) => theme.stroke};
   padding: 8px 16px;
   height: 40px;
-  color: ${({ theme }) => theme.primaryText};
-  font-size: 16px;
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   gap: 8px;
