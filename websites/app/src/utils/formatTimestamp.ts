@@ -2,7 +2,7 @@ export function formatTimestamp(unixTimestamp: number, withTime = false): string
   const date = new Date(unixTimestamp * 1000);
   const options: Intl.DateTimeFormatOptions = withTime
     ? {
-        month: "long",
+        month: "short",
         day: "2-digit",
         year: "numeric",
         hour: "numeric",
@@ -10,6 +10,6 @@ export function formatTimestamp(unixTimestamp: number, withTime = false): string
         timeZone: "GMT",
         timeZoneName: "short",
       }
-    : { month: "long", day: "2-digit", year: "numeric" };
+    : { month: "short", day: "2-digit", year: "numeric" };
   return date.toLocaleDateString("en-US", options);
 }

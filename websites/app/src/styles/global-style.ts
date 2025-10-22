@@ -116,4 +116,16 @@ export const GlobalStyle = createGlobalStyle`
     --os-handle-bg-hover: ${({ theme }) => theme.klerosUIComponentsSecondaryPurple};
     --os-handle-bg-active: ${({ theme }) => theme.klerosUIComponentsLavenderPurple};
   }
+
+  [role="tooltip"] {
+    background-color: ${({ theme }) => theme.backgroundThree} !important;
+    color: ${({ theme }) => theme.primaryText} !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    z-index: 9999 !important;
+    border: none !important;
+  }
 `;

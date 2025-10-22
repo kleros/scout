@@ -96,7 +96,23 @@ const useHumanizedCountdown = (duration: number | null, largest: number): string
 
   const formattedTime = humanizeDuration(remainingTime, {
     largest: largest || 2,
-    round: true
+    round: true,
+    units: ['d', 'h', 'm'],
+    spacer: '',
+    delimiter: ' ',
+    language: 'shortEn',
+    languages: {
+      shortEn: {
+        y: () => 'y',
+        mo: () => 'mo',
+        w: () => 'w',
+        d: () => 'd',
+        h: () => 'h',
+        m: () => 'min',
+        s: () => 's',
+        ms: () => 'ms',
+      }
+    }
   });
 
   return remainingTime > 0 ? `${formattedTime}` : 'Ended';

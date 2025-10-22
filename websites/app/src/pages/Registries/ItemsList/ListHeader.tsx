@@ -7,18 +7,18 @@ const HeaderRow = styled.div<{ registryType?: string }>`
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '40px 0.5fr 0.55fr 1fr 1fr 72px 2.3fr 1.2fr 1fr';
+        return '40px 60px 80px 200px 152px 72px 300px 1.2fr 1fr';
       case 'Single_Tags':
-        return '0.8fr 1fr 1fr 1.2fr 2.3fr 1.2fr 1fr';
+        return '0.8fr 1fr 1fr 1.2fr 300px 1.2fr 1fr';
       case 'CDN':
-        return '1fr 1fr 1.2fr 2.1fr 1.2fr 1fr';
+        return '1fr 1fr 1.2fr 300px 1.2fr 1fr';
       case 'Tags_Queries':
-        return '1.3fr 1fr 0.4fr 0.9fr 2.3fr 1.2fr 1fr';
+        return '1.3fr 1fr 0.4fr 0.9fr 300px 1.2fr 1fr';
       default:
         return '200px 280px 180px 200px 100px 180px';
     }
   }};
-  gap: 8px;
+  gap: 16px;
   align-items: center;
   padding: 12px 0 8px 0;
   border-radius: 0;
