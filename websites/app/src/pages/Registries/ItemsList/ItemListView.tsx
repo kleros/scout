@@ -210,7 +210,7 @@ const SubmitterCell = styled.div`
 const SubmitterLink = styled(Link)`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 14px;
   text-decoration: none;
   overflow: hidden;
@@ -221,6 +221,7 @@ const SubmitterLink = styled(Link)`
 
   label {
     color: ${({ theme }) => theme.secondaryText};
+    margin-left: 2px;
   }
 
   svg {
@@ -394,7 +395,7 @@ const ItemListView = React.memo(
                     to={`/activity/ongoing?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <IdenticonOrAvatar size="20" address={submitterAddress} />
+                    <IdenticonOrAvatar size="16" address={submitterAddress} />
                     <AddressOrName address={submitterAddress} smallDisplay />
                     <ArrowIcon />
                   </SubmitterLink>
@@ -455,7 +456,7 @@ const ItemListView = React.memo(
                     to={`/activity/ongoing?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <IdenticonOrAvatar size="20" address={submitterAddress} />
+                    <IdenticonOrAvatar size="16" address={submitterAddress} />
                     <AddressOrName address={submitterAddress} smallDisplay />
                     <ArrowIcon />
                   </SubmitterLink>
@@ -514,7 +515,7 @@ const ItemListView = React.memo(
                     to={`/activity/ongoing?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <IdenticonOrAvatar size="20" address={submitterAddress} />
+                    <IdenticonOrAvatar size="16" address={submitterAddress} />
                     <AddressOrName address={submitterAddress} smallDisplay />
                     <ArrowIcon />
                   </SubmitterLink>
@@ -579,7 +580,7 @@ const ItemListView = React.memo(
                     to={`/activity/ongoing?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <IdenticonOrAvatar size="20" address={submitterAddress} />
+                    <IdenticonOrAvatar size="16" address={submitterAddress} />
                     <AddressOrName address={submitterAddress} smallDisplay />
                     <ArrowIcon />
                   </SubmitterLink>

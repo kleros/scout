@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
-import NewTabIcon from 'svgs/icons/new-tab.svg'
+import { Copiable } from '@kleros/ui-components-library'
 
 import ArbitrumIcon from 'svgs/chains/arbitrum.svg'
 import AvalancheIcon from 'svgs/chains/avalanche.svg'
@@ -29,7 +29,7 @@ const Container = styled.div`
 const IconWrapper = styled.div`
   width: 20px;
   height: 20px;
-  margin-right: 8px;
+  margin-right: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -47,35 +47,45 @@ const StyledSpan = styled.span<{ bgColor: string }>`
   font-size: 10px;
   font-weight: 500;
   background-color: ${(props) => props.bgColor};
-  margin-right: 8px;
+  margin-right: 6px;
 `
 
 const StyledExternalLink = styled.a`
   ${hoverShortTransitionTiming}
   color: ${({ theme }) => theme.secondaryText};
   font-size: 13px;
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  gap: 4px;
   text-decoration: none;
-
-  svg {
-    fill: ${({ theme }) => theme.secondaryText};
-  }
 
   :hover {
     color: ${({ theme }) => theme.primaryText};
-    text-decoration: none;
-
-    svg {
-      fill: ${({ theme }) => theme.primaryText};
-    }
+    text-decoration: underline;
   }
 `
 
-const StyledNewTabIcon = styled(NewTabIcon)`
-  margin-bottom: 2px;
+const StyledCopiable = styled(Copiable)`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  .copy-icon,
+  .copied-icon {
+    width: 14px !important;
+    height: 14px !important;
+    margin-left: 2px !important;
+  }
+
+  .copy-icon path,
+  .copied-icon path {
+    fill: ${({ theme }) => theme.secondaryText} !important;
+  }
+
+  .copy-icon path {
+    transition: fill 0.2s ease !important;
+  }
+
+  button:hover .copy-icon path {
+    fill: ${({ theme }) => theme.primaryText} !important;
+  }
 `
 
 const truncateAddress = (addr: string) => `${addr?.substring(0, 6)}...${addr?.substring(addr.length - 4)}`
@@ -118,14 +128,20 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
         <StyledSpan bgColor={bgColor}>{reference?.label}</StyledSpan>
       )}
       {parts?.[2] && (
-        <StyledExternalLink
-          href={`https://${reference?.explorer}/address/${parts?.[2]}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
+        <StyledCopiable
+          copiableContent={parts[2].toLowerCase()}
+          info="Copy Address"
+          tooltipProps={{ place: 'top' }}
         >
-          {truncateAddress(parts?.[2])} <StyledNewTabIcon />
-        </StyledExternalLink>
+          <StyledExternalLink
+            href={`https://${reference?.explorer}/address/${parts?.[2]}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {truncateAddress(parts[2])}
+          </StyledExternalLink>
+        </StyledCopiable>
       )}
     </Container>
   )
