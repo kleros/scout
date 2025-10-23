@@ -2,8 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import AddressDisplay from 'components/AddressDisplay'
-import { useSearchParams } from 'react-router-dom'
-import { useScrollTop } from 'hooks/useScrollTop'
+import { useAttachment } from 'hooks/useAttachment'
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
 const ImageContainer = styled.div`
@@ -35,20 +34,13 @@ export const StyledWebsiteAnchor = styled.a`
 
 const ImageWithSkeleton = ({ src, alt }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [, setSearchParams] = useSearchParams()
-
-  const scrollTop = useScrollTop();
+  const openAttachment = useAttachment();
 
   return (
     <ImageContainer>
       <StyledButton
         onClick={() => {
-          setSearchParams((prev) => {
-            const newParams = new URLSearchParams(prev);
-            newParams.set('attachment', src);
-            return newParams;
-          });
-          scrollTop();
+          openAttachment(src);
         }}
       >
         {!imgLoaded && <Skeleton height={100} width={100} />}

@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { useScrollTop } from 'hooks/useScrollTop';
+import { useAttachment } from 'hooks/useAttachment';
 import { FocusedRegistry } from 'utils/itemCounts';
 import { useItemCountsQuery } from 'hooks/queries';
 import styled from 'styled-components';
@@ -24,9 +23,7 @@ interface PolicyButtonProps {
 }
 
 const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
-  const [, setSearchParams] = useSearchParams();
-  const scrollTop = useScrollTop();
-
+  const openAttachment = useAttachment();
   const { data: countsData } = useItemCountsQuery();
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
@@ -38,12 +35,7 @@ const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
     <StyledLabel
       onClick={() => {
         if (registry?.metadata.policyURI) {
-          setSearchParams((prev) => {
-            const newParams = new URLSearchParams(prev);
-            newParams.set('attachment', `https://cdn.kleros.link${registry.metadata.policyURI}`);
-            return newParams;
-          });
-          scrollTop();
+          openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
         }
       }}
     >

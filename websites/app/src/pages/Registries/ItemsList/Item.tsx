@@ -7,7 +7,7 @@ import { GraphItem, registryMap } from 'utils/items'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
-import { useScrollTop } from 'hooks/useScrollTop'
+import { useAttachment } from 'hooks/useAttachment'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import useHumanizedCountdown, {
   useChallengeRemainingTime,
@@ -271,7 +271,7 @@ const Item = React.memo(
     const [imgLoaded, setImgLoaded] = useState(false)
     const [searchParams, setSearchParams] = useSearchParams()
     const navigate = useNavigate()
-    const scrollTop = useScrollTop()
+    const openAttachment = useAttachment()
 
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests[0]?.submissionTime,
@@ -347,12 +347,7 @@ const Item = React.memo(
                   <TransparentButton
                     onClick={() => {
                       const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`
-                      setSearchParams((prev) => {
-                        const newParams = new URLSearchParams(prev);
-                        newParams.set('attachment', tokenLogoURI);
-                        return newParams;
-                      });
-                      scrollTop()
+                      openAttachment(tokenLogoURI)
                     }}
                   >
                     <TokenLogoWrapper>
@@ -395,12 +390,7 @@ const Item = React.memo(
                   <TransparentButton
                     onClick={() => {
                       const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`
-                      setSearchParams((prev) => {
-                        const newParams = new URLSearchParams(prev);
-                        newParams.set('attachment', visualProofURI);
-                        return newParams;
-                      });
-                      scrollTop()
+                      openAttachment(visualProofURI)
                     }}
                   >
                     {!imgLoaded && <Skeleton height={100} width={150} />}

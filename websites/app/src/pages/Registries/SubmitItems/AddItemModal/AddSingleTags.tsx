@@ -29,7 +29,7 @@ import {
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
-import { useScrollTop } from 'hooks/useScrollTop'
+import { useAttachment } from 'hooks/useAttachment'
 import { registryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 
@@ -89,7 +89,7 @@ const AddAddressTag: React.FC = () => {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
-  const scrollTop = useScrollTop();
+  const openAttachment = useAttachment();
 
   useEffect(() => {
     const caip10AddressParam = searchParams.get('caip10Address');
@@ -233,12 +233,7 @@ const AddAddressTag: React.FC = () => {
             <SubmissionButton
               onClick={() => {
                 if (registry.metadata.policyURI) {
-                  setSearchParams((prev) => {
-                    const newParams = new URLSearchParams(prev);
-                    newParams.set('attachment', `https://cdn.kleros.link${registry.metadata.policyURI}`);
-                    return newParams;
-                  });
-                  scrollTop();
+                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
                 }
               }}
             >

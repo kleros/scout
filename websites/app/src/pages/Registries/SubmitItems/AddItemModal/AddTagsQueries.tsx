@@ -3,7 +3,7 @@ import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage';
 import { useQuery } from '@tanstack/react-query';
 import { formatEther } from 'viem';
 import { useSearchParams } from 'react-router-dom';
-import { useScrollTop } from 'hooks/useScrollTop';
+import { useAttachment } from 'hooks/useAttachment';
 import { ClosedButtonContainer } from 'pages/Registries';
 import {
   AddContainer,
@@ -69,7 +69,7 @@ const AddTagsQueries: React.FC = () => {
   const [description, setDescription] = useState<string>(formData.description);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const scrollTop = useScrollTop();
+  const openAttachment = useAttachment();
 
   useEffect(() => {
     setFormData({ githubRepository, commitHash, evmChainId, description });
@@ -163,12 +163,7 @@ const AddTagsQueries: React.FC = () => {
             <SubmissionButton
               onClick={() => {
                 if (registry.metadata.policyURI) {
-                  setSearchParams((prev) => {
-                    const newParams = new URLSearchParams(prev);
-                    newParams.set('attachment', `https://cdn.kleros.link${registry.metadata.policyURI}`);
-                    return newParams;
-                  });
-                  scrollTop();
+                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
                 }
               }}
             >

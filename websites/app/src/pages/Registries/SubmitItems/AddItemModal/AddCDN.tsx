@@ -29,7 +29,7 @@ import {
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
-import { useScrollTop } from 'hooks/useScrollTop'
+import { useAttachment } from 'hooks/useAttachment'
 import { chains } from 'utils/chains'
 
 const columns = [
@@ -72,7 +72,7 @@ const AddCDN: React.FC = () => {
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [imageError, setImageError] = useState<string | null>(null);
-  const scrollTop = useScrollTop();
+  const openAttachment = useAttachment();
 
   useEffect(() => {
     const caip10AddressParam = searchParams.get('caip10Address');
@@ -202,12 +202,7 @@ const AddCDN: React.FC = () => {
           <SubmissionButton
             onClick={() => {
               if (registry.metadata.policyURI) {
-                setSearchParams((prev) => {
-                  const newParams = new URLSearchParams(prev);
-                  newParams.set('attachment', `https://cdn.kleros.link${registry.metadata.policyURI}`);
-                  return newParams;
-                });
-                scrollTop();
+                openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
               }
             }}
           >
