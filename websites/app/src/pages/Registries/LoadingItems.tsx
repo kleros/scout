@@ -7,7 +7,7 @@ const Container = styled.div`
 `
 
 const LoadingImage = styled.img`
-  height: 92px;
+  height: 110px;
 `
 
 const LoadingItems: React.FC = () => {
