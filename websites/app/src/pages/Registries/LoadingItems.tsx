@@ -4,6 +4,8 @@ import LoadingGif from 'gifs/loading-icosahedron.gif'
 
 const Container = styled.div`
   display: flex;
+  justify-content: center;
+  width: 100%;
 `
 
 const LoadingImage = styled.img`

@@ -259,7 +259,7 @@ const DateInput = styled.input`
   color: ${({ theme }) => theme.secondaryText};
   padding: 12px;
   font-family: "Open Sans", sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   transition: all 0.2s ease;
 
   &:hover {

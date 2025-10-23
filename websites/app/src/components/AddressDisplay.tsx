@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
-import { Copiable } from '@kleros/ui-components-library'
+import Copyable from 'components/Copyable'
 
 import ArbitrumIcon from 'svgs/chains/arbitrum.svg'
 import AvalancheIcon from 'svgs/chains/avalanche.svg'
@@ -24,6 +24,7 @@ const Container = styled.div`
   flex-direction: row;
   align-items: center;
   margin-bottom: 8px;
+  position: relative;
 `
 
 const IconWrapper = styled.div`
@@ -62,29 +63,15 @@ const StyledExternalLink = styled.a`
   }
 `
 
-const StyledCopiable = styled(Copiable)`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+const StyledCopyable = styled(Copyable)`
+  button {
+    color: ${({ theme }) => theme.secondaryText};
+    margin-left: -2px;
 
-  .copy-icon,
-  .copied-icon {
-    width: 14px !important;
-    height: 14px !important;
-    margin-left: 2px !important;
-  }
-
-  .copy-icon path,
-  .copied-icon path {
-    fill: ${({ theme }) => theme.secondaryText} !important;
-  }
-
-  .copy-icon path {
-    transition: fill 0.2s ease !important;
-  }
-
-  button:hover .copy-icon path {
-    fill: ${({ theme }) => theme.primaryText} !important;
+    &:hover {
+      color: ${({ theme }) => theme.primaryText};
+      opacity: 1;
+    }
   }
 `
 
@@ -128,10 +115,9 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
         <StyledSpan bgColor={bgColor}>{reference?.label}</StyledSpan>
       )}
       {parts?.[2] && (
-        <StyledCopiable
-          copiableContent={parts[2].toLowerCase()}
+        <StyledCopyable
+          copyableContent={parts[2].toLowerCase()}
           info="Copy Address"
-          tooltipProps={{ place: 'top' }}
         >
           <StyledExternalLink
             href={`https://${reference?.explorer}/address/${parts?.[2]}`}
@@ -141,7 +127,7 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
           >
             {truncateAddress(parts[2])}
           </StyledExternalLink>
-        </StyledCopiable>
+        </StyledCopyable>
       )}
     </Container>
   )

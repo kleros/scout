@@ -16,7 +16,7 @@ const RadioButton = styled.input.attrs({ type: 'radio' })`
   }
 
   &:checked {
-    border-color: ${({ theme }) => theme.primaryText};
+    border-color: ${({ theme }) => theme.secondaryBlue};
   }
 
   &:checked::after {
@@ -28,7 +28,7 @@ const RadioButton = styled.input.attrs({ type: 'radio' })`
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: ${({ theme }) => theme.primaryText};
+    background: ${({ theme }) => theme.secondaryBlue};
   }
 `
 

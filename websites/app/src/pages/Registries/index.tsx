@@ -27,7 +27,7 @@ import ScrollTop from 'components/ScrollTop';
 const Container = styled.div`
   width: 100%;
   background-color: ${({ theme }) => theme.lightBackground};
-  padding: 32px 16px 40px;
+  padding: 24px 16px 40px;
   max-width: ${MAX_WIDTH_LANDSCAPE};
   margin: 0 auto;
   min-height: 100vh;
@@ -38,7 +38,7 @@ const Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      padding: 48px 32px 60px;
+      padding: 36px 32px 60px;
     `
   )}
 `;
@@ -84,7 +84,7 @@ const PolicyAndSubmitItemContainer = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
 `;
 
 export const StyledCloseButton = styled(CloseIcon)`

@@ -16,8 +16,8 @@ const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   }
 
   &:checked {
-    background: ${({ theme }) => theme.primaryText};
-    border-color: ${({ theme }) => theme.primaryText};
+    background: ${({ theme }) => theme.secondaryBlue};
+    border-color: ${({ theme }) => theme.secondaryBlue};
   }
 
   &:checked::after {

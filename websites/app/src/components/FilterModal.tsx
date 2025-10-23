@@ -97,21 +97,24 @@ const FilterSection = styled.div`
 `;
 
 const SectionTitle = styled.h3`
-  color: ${({ theme }) => theme.primaryText};
-  font-size: 16px;
+  color: ${({ theme }) => theme.secondaryBlue};
+  font-size: 14px;
   font-weight: 600;
   margin: 0;
-  padding-bottom: 4px;
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   svg {
-    width: 16px;
-    height: 16px;
-    fill: ${({ theme }) => theme.primaryText};
+    width: 14px;
+    height: 14px;
+    fill: ${({ theme }) => theme.secondaryBlue};
   }
 `;
+
+const SortBySectionTitle = styled(SectionTitle)`
+  margin-bottom: 4px;
+`
 
 const SectionGrid = styled.div`
   display: grid;
@@ -128,23 +131,22 @@ const FilterColumn = styled.div`
 const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 `;
 
 const FilterGroupTitle = styled.h4`
-  color: ${({ theme }) => theme.accent};
+  color: ${({ theme }) => theme.secondaryBlue};
   font-size: 14px;
   font-weight: 600;
   margin: 0;
-  padding-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   svg {
     width: 14px;
     height: 14px;
-    fill: ${({ theme }) => theme.accent};
+    fill: ${({ theme }) => theme.secondaryBlue};
   }
 `;
 
@@ -158,7 +160,6 @@ const GroupHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
 `;
 
 const ActionButton = styled.button`
@@ -244,7 +245,7 @@ const NetworkGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 8px;
-  margin-top: 8px;
+  margin-top: -4px;
 `;
 
 const NetworkItem = styled.div`
@@ -296,7 +297,7 @@ const SortOption = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${({ theme }) => theme.primaryText};
+  color: ${({ theme }) => theme.secondaryText};
   font-size: 14px;
   cursor: pointer;
 `;
@@ -640,10 +641,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
         </FilterSection>
 
         <SortSection>
-          <SectionTitle>
+          <SortBySectionTitle>
             <SortIcon />
             Sort by
-          </SectionTitle>
+          </SortBySectionTitle>
           <SortOptions>
             <SortOption>
               <RadioButton

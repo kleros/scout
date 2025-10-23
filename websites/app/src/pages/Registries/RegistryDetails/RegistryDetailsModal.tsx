@@ -150,7 +150,11 @@ const RegistryDetailsModal: React.FC<RegistryDetailsModalProps> = ({ registryNam
               <StyledButton
                 onClick={() => {
                   if (registry.metadata.policyURI) {
-                    setSearchParams({ attachment: `https://cdn.kleros.link${registry.metadata.policyURI}` });
+                    setSearchParams((prev) => {
+                      const newParams = new URLSearchParams(prev);
+                      newParams.set('attachment', `https://cdn.kleros.link${registry.metadata.policyURI}`);
+                      return newParams;
+                    });
                     scrollTop();
                   }
                 }}

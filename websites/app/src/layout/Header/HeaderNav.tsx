@@ -140,9 +140,13 @@ const HeaderNav: React.FC = () => {
   const isRegistryActive = location.pathname.startsWith("/registry/");
   const currentRegistryName = location.pathname.split('/registry/')[1]?.split('?')[0];
 
-  // Preserve URL params when switching registries
+  // Preserve URL params when switching registries (except attachment)
   const getRegistryPath = (value: string) => {
     const currentParams = new URLSearchParams(location.search);
+    // Remove attachment param when switching registries
+    currentParams.delete('attachment');
+    currentParams.delete('registrydetails');
+    currentParams.delete('additem');
     const paramsString = currentParams.toString();
     return `/registry/${value}${paramsString ? `?${paramsString}` : ''}`;
   };

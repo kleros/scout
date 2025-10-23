@@ -170,6 +170,10 @@ const NavBar: React.FC = () => {
 
   const handleRegistryClick = (value: string) => {
     const currentParams = new URLSearchParams(window.location.search);
+    // Remove modal/attachment params when switching registries
+    currentParams.delete('attachment');
+    currentParams.delete('registrydetails');
+    currentParams.delete('additem');
     const paramsString = currentParams.toString();
     navigate(`/registry/${value}${paramsString ? `?${paramsString}` : ''}`);
     toggleIsOpen();

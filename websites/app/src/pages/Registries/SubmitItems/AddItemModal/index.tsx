@@ -244,7 +244,13 @@ const AddItemModal: React.FC = () => {
   }
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+    // Check if click is on a react-select menu (which is portaled to body)
+    const target = e.target as HTMLElement
+    if (target.closest('.select__menu') || target.closest('.select__menu-portal')) {
+      return
+    }
+
+    if (containerRef.current && !containerRef.current.contains(target)) {
       closeModal()
     }
   }
