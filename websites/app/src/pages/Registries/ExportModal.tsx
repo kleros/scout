@@ -8,33 +8,27 @@ import { chains } from 'utils/chains'
 import { ModalButton } from 'components/ModalButtons'
 import Checkbox from 'components/Checkbox'
 import ExportIcon from 'svgs/icons/export.svg'
-
-import EthereumIcon from 'svgs/chains/ethereum.svg'
-import SolanaIcon from 'svgs/chains/solana.svg'
-import BaseIcon from 'svgs/chains/base.svg'
-import CeloIcon from 'svgs/chains/celo.svg'
-import ScrollIcon from 'svgs/chains/scroll.svg'
-import FantomIcon from 'svgs/chains/fantom.svg'
-import ZkSyncIcon from 'svgs/chains/zksync.svg'
-import GnosisIcon from 'svgs/chains/gnosis.svg'
-import PolygonIcon from 'svgs/chains/polygon.svg'
-import OptimismIcon from 'svgs/chains/optimism.svg'
-import ArbitrumIcon from 'svgs/chains/arbitrum.svg'
-import AvalancheIcon from 'svgs/chains/avalanche.svg'
-import BnbIcon from 'svgs/chains/bnb.svg'
-
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.75);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 50;
-`
+import FiltersIcon from 'svgs/icons/filters.svg'
+import CalendarIcon from 'svgs/icons/calendar.svg'
+import { getChainIcon } from 'utils/chainIcons'
+import {
+  ModalOverlay,
+  ModalContainer,
+  ModalHeader,
+  ModalTitle,
+  CloseButton,
+  FilterSection,
+  GroupHeader,
+  FilterGroupTitle,
+  ActionButton,
+  CheckboxGroup,
+  CheckboxItem,
+  CheckboxLabel,
+  OnlyButton,
+  NetworkItem,
+  NetworkLabel,
+  FooterButtons,
+} from 'components/ModalComponents'
 
 const ModalWrapper = styled.div`
   position: relative;
@@ -50,38 +44,6 @@ const ModalWrapper = styled.div`
   )}
 `
 
-const ModalContainer = styled.div`
-  background: ${({ theme }) => theme.modalBackground};
-  backdrop-filter: blur(50px);
-  border-radius: 20px;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  width: 100%;
-  height: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  position: relative;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
-`
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid ${({ theme }) => theme.stroke};
-  padding-bottom: 20px;
-`
-
-const ModalTitle = styled.h2`
-  color: ${({ theme }) => theme.primaryText};
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0;
-`
-
 const ModalSubtitle = styled.div`
   font-size: 14px;
   color: ${({ theme }) => theme.secondaryText};
@@ -94,162 +56,35 @@ const HeaderContent = styled.div`
   min-width: 0;
 `
 
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.secondaryText};
-  font-size: 24px;
-  cursor: pointer;
-  padding: 4px;
-  transition: color 0.2s;
+const StatusAndDatesRow = styled.div`
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
 
-  &:hover {
-    color: ${({ theme }) => theme.primaryText};
+  @media (max-width: 768px) {
+    flex-direction: column;
   }
 `
 
-const FilterSection = styled.div`
+const DateFiltersColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 1;
 `
 
 const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-`
-
-const GroupHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-`
-
-const FilterGroupTitle = styled.h4`
-  color: ${({ theme }) => theme.accent};
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0;
-  padding-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  svg {
-    width: 14px;
-    height: 14px;
-    fill: ${({ theme }) => theme.accent};
-  }
-`
-
-const CheckboxGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex: 1;
 `
 
 const NetworkGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 8px;
-  margin-top: 8px;
-`
-
-const CheckboxItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: ${({ theme }) => theme.primaryText};
-  font-size: 14px;
-  padding: 4px 0;
-  transition: color 0.2s;
-
-  &:hover {
-    color: ${({ theme }) => theme.accent};
-
-    .only-button {
-      opacity: 1;
-    }
-  }
-`
-
-const CheckboxLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  flex: 1;
-`
-
-const NetworkItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: ${({ theme }) => theme.primaryText};
-  font-size: 14px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: ${({ theme }) => theme.lightGrey};
-    color: ${({ theme }) => theme.accent};
-
-    .only-button {
-      opacity: 1;
-    }
-  }
-`
-
-const NetworkLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  flex: 1;
-
-  svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
-`
-
-const OnlyButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.accent};
-  font-size: 11px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  opacity: 0;
-
-  &:hover {
-    background: ${({ theme }) => theme.lightGrey};
-  }
-`
-
-const ActionButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.accent};
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: all 0.2s;
-  opacity: 0.7;
-
-  &:hover {
-    background: ${({ theme }) => theme.lightGrey};
-    opacity: 1;
-  }
+  gap: 0;
+  margin-top: -8px;
 `
 
 const DateInput = styled.input`
@@ -261,6 +96,7 @@ const DateInput = styled.input`
   font-family: "Open Sans", sans-serif;
   font-size: 14px;
   transition: all 0.2s ease;
+  cursor: text;
 
   &:hover {
     background: ${({ theme }) => theme.backgroundFour};
@@ -301,14 +137,6 @@ const DateInput = styled.input`
   }
 `
 
-const FooterButtons = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 20px;
-  border-top: 1px solid ${({ theme }) => theme.stroke};
-`
-
 const ExportButton = styled(ModalButton)<{ disabled: boolean }>`
   display: flex;
   align-items: center;
@@ -339,25 +167,6 @@ const STATUS_OPTIONS = [
   { value: 'ClearingRequested', label: 'Removal Requested' },
   { value: 'Absent', label: 'Removed' },
 ]
-
-const getChainIcon = (chainId: string) => {
-  const iconMap = {
-    '1': EthereumIcon,
-    '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': SolanaIcon,
-    '8453': BaseIcon,
-    '42220': CeloIcon,
-    '534352': ScrollIcon,
-    '250': FantomIcon,
-    '324': ZkSyncIcon,
-    '100': GnosisIcon,
-    '137': PolygonIcon,
-    '10': OptimismIcon,
-    '42161': ArbitrumIcon,
-    '43114': AvalancheIcon,
-    '56': BnbIcon,
-  }
-  return iconMap[chainId] || null
-}
 
 const NETWORK_OPTIONS = chains
   .filter((chain) => !chain.deprecated)
@@ -524,41 +333,79 @@ const ExportModal: React.FC<ExportModalProps> = ({
           </ModalHeader>
 
           <FilterSection>
-            <FilterGroup>
-              <GroupHeader>
-                <FilterGroupTitle>
-                  Status (select at least one)
-                </FilterGroupTitle>
-                <ActionButton onClick={handleStatusAll}>All</ActionButton>
-              </GroupHeader>
-              <CheckboxGroup>
-                {STATUS_OPTIONS.map((option) => (
-                  <CheckboxItem key={option.value}>
-                    <CheckboxLabel>
-                      <Checkbox
-                        checked={selectedStatuses.includes(option.value)}
-                        onChange={(e) =>
-                          handleStatusChange(option.value, e.target.checked)
-                        }
-                      />
-                      {option.label}
-                    </CheckboxLabel>
-                    <OnlyButton
-                      className="only-button"
-                      onClick={() => handleStatusOnly(option.value)}
-                      type="button"
-                    >
-                      Only
-                    </OnlyButton>
-                  </CheckboxItem>
-                ))}
-              </CheckboxGroup>
-            </FilterGroup>
+            <StatusAndDatesRow>
+              <FilterGroup>
+                <GroupHeader>
+                  <FilterGroupTitle>
+                    <FiltersIcon />
+                    Status (select at least one)
+                  </FilterGroupTitle>
+                  <ActionButton onClick={handleStatusAll}>All</ActionButton>
+                </GroupHeader>
+                <CheckboxGroup>
+                  {STATUS_OPTIONS.map((option) => (
+                    <CheckboxItem key={option.value}>
+                      <CheckboxLabel>
+                        <Checkbox
+                          checked={selectedStatuses.includes(option.value)}
+                          onChange={(e) =>
+                            handleStatusChange(option.value, e.target.checked)
+                          }
+                        />
+                        {option.label}
+                      </CheckboxLabel>
+                      <OnlyButton
+                        className="only-button"
+                        onClick={() => handleStatusOnly(option.value)}
+                        type="button"
+                      >
+                        Only
+                      </OnlyButton>
+                    </CheckboxItem>
+                  ))}
+                </CheckboxGroup>
+              </FilterGroup>
+
+              <DateFiltersColumn>
+                <FilterGroup>
+                  <GroupHeader>
+                    <FilterGroupTitle>
+                      <CalendarIcon />
+                      From Date (leave empty for all history)
+                    </FilterGroupTitle>
+                  </GroupHeader>
+                  <DateInput
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    placeholder="mm/dd/yyyy"
+                    aria-label="From date (mm/dd/yyyy)"
+                  />
+                </FilterGroup>
+
+                <FilterGroup>
+                  <GroupHeader>
+                    <FilterGroupTitle>
+                      <CalendarIcon />
+                      To Date (leave empty for current date)
+                    </FilterGroupTitle>
+                  </GroupHeader>
+                  <DateInput
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    placeholder="mm/dd/yyyy"
+                    aria-label="To date (mm/dd/yyyy)"
+                  />
+                </FilterGroup>
+              </DateFiltersColumn>
+            </StatusAndDatesRow>
           </FilterSection>
 
           <FilterSection>
             <GroupHeader>
               <FilterGroupTitle>
+                <FiltersIcon />
                 Networks (leave empty for all)
               </FilterGroupTitle>
               <ActionButton onClick={handleNetworkAll}>All</ActionButton>
@@ -589,40 +436,6 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 )
               })}
             </NetworkGrid>
-          </FilterSection>
-
-          <FilterSection>
-            <FilterGroup>
-              <GroupHeader>
-                <FilterGroupTitle>
-                  From Date (leave empty for all history)
-                </FilterGroupTitle>
-              </GroupHeader>
-              <DateInput
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                placeholder="mm/dd/yyyy"
-                aria-label="From date (mm/dd/yyyy)"
-              />
-            </FilterGroup>
-          </FilterSection>
-
-          <FilterSection>
-            <FilterGroup>
-              <GroupHeader>
-                <FilterGroupTitle>
-                  To Date (leave empty for current date)
-                </FilterGroupTitle>
-              </GroupHeader>
-              <DateInput
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                placeholder="mm/dd/yyyy"
-                aria-label="To date (mm/dd/yyyy)"
-              />
-            </FilterGroup>
           </FilterSection>
 
           <FooterButtons>
