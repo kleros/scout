@@ -347,7 +347,11 @@ const Item = React.memo(
                   <TransparentButton
                     onClick={() => {
                       const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`
-                      setSearchParams({ attachment: tokenLogoURI })
+                      setSearchParams((prev) => {
+                        const newParams = new URLSearchParams(prev);
+                        newParams.set('attachment', tokenLogoURI);
+                        return newParams;
+                      });
                       scrollTop()
                     }}
                   >
@@ -391,7 +395,11 @@ const Item = React.memo(
                   <TransparentButton
                     onClick={() => {
                       const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`
-                      setSearchParams({ attachment: visualProofURI })
+                      setSearchParams((prev) => {
+                        const newParams = new URLSearchParams(prev);
+                        newParams.set('attachment', visualProofURI);
+                        return newParams;
+                      });
                       scrollTop()
                     }}
                   >

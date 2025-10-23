@@ -43,7 +43,11 @@ const ImageWithSkeleton = ({ src, alt }) => {
     <ImageContainer>
       <StyledButton
         onClick={() => {
-          setSearchParams({ attachment: src });
+          setSearchParams((prev) => {
+            const newParams = new URLSearchParams(prev);
+            newParams.set('attachment', src);
+            return newParams;
+          });
           scrollTop();
         }}
       >
