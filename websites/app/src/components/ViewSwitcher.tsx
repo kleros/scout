@@ -7,7 +7,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 const Container = styled.div<{ hide?: boolean }>`
   display: none;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.08) 0%,
@@ -35,11 +35,12 @@ const ViewButton = styled.button<{ isActive: boolean; disabled?: boolean }>`
   border-radius: 0;
   border: none;
   background: ${({ isActive, theme }) =>
-    isActive ? theme.accent : 'transparent'};
-  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+    isActive ? theme.backgroundFour : 'transparent'};
+  cursor: ${({ isActive, disabled }) =>
+    disabled ? 'not-allowed' : isActive ? 'not-allowed' : 'pointer'};
   transition: all 0.2s ease;
   color: ${({ isActive, theme }) =>
-    isActive ? theme.white : theme.secondaryText};
+    isActive ? theme.buttonDisabledText : theme.secondaryText};
   opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 
   &:first-child {
@@ -67,13 +68,13 @@ const ViewButton = styled.button<{ isActive: boolean; disabled?: boolean }>`
       disabled
         ? 'transparent'
         : isActive
-          ? theme.accent
+          ? theme.backgroundFour
           : 'rgba(255, 255, 255, 0.1)'};
     color: ${({ isActive, disabled, theme }) =>
       disabled
         ? theme.secondaryText
         : isActive
-          ? theme.white
+          ? theme.buttonDisabledText
           : theme.primaryText};
   }
 `

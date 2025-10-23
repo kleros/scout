@@ -81,9 +81,9 @@ const StatusBadge = styled.span<{ funded: boolean }>`
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  background: ${({ funded }) => (funded ? 'rgba(72, 187, 120, 0.1)' : 'rgba(205, 157, 255, 0.1)')};
-  color: ${({ funded }) => (funded ? '#48BB78' : '#CD9DFF')};
-  border: 1px solid ${({ funded }) => (funded ? '#48BB78' : '#CD9DFF')};
+  background: ${({ funded, theme }) => (funded ? `${theme.success}1A` : `${theme.secondaryPurple}1A`)};
+  color: ${({ funded, theme }) => (funded ? theme.success : theme.secondaryPurple)};
+  border: 1px solid ${({ funded, theme }) => (funded ? theme.success : theme.secondaryPurple)};
 `
 
 const Description = styled.p`
@@ -104,15 +104,15 @@ const ProgressBarContainer = styled.div`
 const ProgressBarFill = styled.div<{ percent: number; status: 'active' | 'success' }>`
   height: 100%;
   width: ${(props) => props.percent}%;
-  background: ${(props) => (props.status === 'success' ? '#48BB78' : '#CD9DFF')};
+  background: ${({ status, theme }) => (status === 'success' ? theme.success : theme.secondaryPurple)};
   transition: width 0.3s ease;
 `
 
 const InfoBox = styled.div`
   grid-column: 1 / -1;
   padding: 16px;
-  background: rgba(237, 137, 54, 0.1);
-  border: 1px solid rgba(237, 137, 54, 0.3);
+  background: ${({ theme }) => theme.backgroundFour};
+  border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 8px;
   font-size: 13px;
   line-height: 1.6;
@@ -151,12 +151,12 @@ const Slider = styled.input`
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #cd9dff;
+    background: ${({ theme }) => theme.secondaryPurple};
     cursor: pointer;
     transition: background 0.2s;
 
     &:hover {
-      background: #b882ff;
+      background: ${({ theme }) => theme.lavenderPurple};
     }
   }
 
@@ -164,13 +164,13 @@ const Slider = styled.input`
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: #cd9dff;
+    background: ${({ theme }) => theme.secondaryPurple};
     cursor: pointer;
     border: none;
     transition: background 0.2s;
 
     &:hover {
-      background: #b882ff;
+      background: ${({ theme }) => theme.lavenderPurple};
     }
   }
 `
@@ -193,7 +193,16 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #cd9dff;
+    border-color: ${({ theme }) => theme.secondaryPurple};
+  }
+
+  /* Hide number input arrows */
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
   }
 `
 
@@ -236,7 +245,8 @@ const ContributeButton = styled.button<{ disabled?: boolean }>`
 const ContributionInfo = styled.div`
   margin-top: 12px;
   padding: 12px;
-  background: rgba(205, 157, 255, 0.05);
+  background: ${({ theme }) => theme.backgroundFour};
+  border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 6px;
   font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
@@ -247,6 +257,10 @@ const InfoRow = styled.div`
   display: flex;
   justify-content: space-between;
   margin: 4px 0;
+`
+
+const RewardAmount = styled.strong`
+  color: ${({ theme }) => theme.success};
 `
 
 interface CrowdfundingCardProps {
@@ -414,7 +428,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
               </InfoRow>
               <InfoRow style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                 <span>Potential Reward:</span>
-                <strong style={{ color: '#48BB78' }}>{Number(formatEther(potentialRewardForContribution)).toFixed(4)} {nativeCurrency}</strong>
+                <RewardAmount>{Number(formatEther(potentialRewardForContribution)).toFixed(4)} {nativeCurrency}</RewardAmount>
               </InfoRow>
             </ContributionInfo>
             <ContributeButton
@@ -493,17 +507,12 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
           {(() => {
             const isNoRuling = ruling === SUBGRAPH_RULING.NONE || ruling === 'Refuse' ||
                               ruling === SUBGRAPH_RULING.NONE_NUM || ruling === 'None'
-            const isAccept = ruling === SUBGRAPH_RULING.ACCEPT || ruling === SUBGRAPH_RULING.ACCEPT_NUM
 
             if (isNoRuling) {
-              return 'The arbitrator did not give a decisive ruling. If a party fully funds their side, the other must also fund to avoid losing.'
+              return 'The arbitrator did not give a decisive ruling. If one side fully funds their appeal, the other side must also fund to avoid losing.'
             }
 
-            return `If the ${
-              isAccept ? 'challenger' : 'submitter'
-            } fully funds their appeal, the ${
-              isAccept ? 'submitter' : 'challenger'
-            } must also fund to avoid losing the case.`
+            return 'If one side fully funds their appeal, the other side must also fund to avoid losing the case.'
           })()}
         </InfoBox>
       </Content>

@@ -78,17 +78,27 @@ const Slider = styled.input`
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #cd9dff;
+    background: ${({ theme }) => theme.secondaryPurple};
     cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: ${({ theme }) => theme.lavenderPurple};
+    }
   }
 
   &::-moz-range-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #cd9dff;
+    background: ${({ theme }) => theme.secondaryPurple};
     cursor: pointer;
     border: none;
+    transition: background 0.2s;
+
+    &:hover {
+      background: ${({ theme }) => theme.lavenderPurple};
+    }
   }
 `
 
@@ -112,6 +122,15 @@ const Input = styled.input`
     outline: none;
     border-color: ${({ theme }) => theme.stroke};
   }
+
+  /* Hide number input arrows */
+  -moz-appearance: textfield;
+
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 `
 
 const Unit = styled.span`
@@ -121,9 +140,9 @@ const Unit = styled.span`
 const InfoSection = styled.div`
   margin: 24px 0;
   padding: 16px;
-  background: rgba(205, 157, 255, 0.1);
+  background: ${({ theme }) => theme.backgroundFour};
   border-radius: 8px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
+  border: 1px solid ${({ theme }) => theme.stroke};
 `
 
 const InfoRow = styled.div`
@@ -195,11 +214,11 @@ const SideSelectionButton = styled(Button)`
 `
 
 const Link = styled.a`
-  color: #cd9dff;
+  color: ${({ theme }) => theme.secondaryPurple};
   text-decoration: underline;
 
   &:hover {
-    color: #b882ff;
+    color: ${({ theme }) => theme.lavenderPurple};
   }
 `
 

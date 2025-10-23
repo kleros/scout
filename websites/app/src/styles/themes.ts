@@ -54,6 +54,7 @@ export const darkTheme = {
   name: "dark",
   white: "#FFFFFF",
   black: "#000000",
+  accent: "#7186FF",
   primaryPurple: "#7E1BD4",
   secondaryPurple: "#7186FF",
   darkPurple: "#000000",

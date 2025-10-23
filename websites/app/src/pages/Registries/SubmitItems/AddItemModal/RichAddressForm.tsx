@@ -202,6 +202,7 @@ const customSelectStyles = {
     boxShadow: 'none',
     minHeight: '48px',
     height: '48px',
+    cursor: 'pointer',
     transition: 'all 0.2s ease',
     '&:hover': {
       backgroundColor: '#1A1A1A',

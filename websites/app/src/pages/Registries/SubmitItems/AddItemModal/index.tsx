@@ -227,15 +227,30 @@ export const CloseButton = () => {
 }
 
 const AddItemModal: React.FC = () => {
-  const containerRef = useRef(null)
-  const [searchParams] = useSearchParams()
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
   const addingItemToRegistry = useMemo(
     () => searchParams.get('additem'),
     [searchParams]
   )
 
+  const closeModal = () => {
+    setSearchParams((prev) => {
+      const prevParams = prev.toString()
+      const newParams = new URLSearchParams(prevParams)
+      newParams.delete('additem')
+      return newParams
+    })
+  }
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      closeModal()
+    }
+  }
+
   return (
-    <ModalOverlay>
+    <ModalOverlay onClick={handleOverlayClick}>
       <ModalContainer ref={containerRef}>
         <ModalContent>
           {addingItemToRegistry === 'Single_Tags' ? (

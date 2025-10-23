@@ -15,7 +15,7 @@ const AppealInfoBox = styled.div`
   margin: 16px 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 48px;
+  gap: 24px 48px;
   align-items: center;
   position: relative;
   z-index: 1;
@@ -45,7 +45,7 @@ const AppealInfoLabel = styled.span`
 const AppealStatusValue = styled.span`
   font-size: 14px;
   font-weight: 600;
-  color: #cd9dff;
+  color: ${({ theme }) => theme.secondaryPurple};
 `
 
 const CaseLink = styled.a`
@@ -82,8 +82,8 @@ const FundingStatus = styled.span<{ funded: boolean }>`
   font-size: 13px;
   font-weight: 600;
   background: ${({ theme }) => theme.whiteBackground};
-  color: ${({ funded }) => (funded ? '#48BB78' : '#CD9DFF')};
-  border: 1px solid ${({ funded }) => (funded ? '#48BB78' : '#CD9DFF')};
+  color: ${({ funded, theme }) => (funded ? theme.success : theme.secondaryPurple)};
+  border: 1px solid ${({ funded, theme }) => (funded ? theme.success : theme.secondaryPurple)};
   width: fit-content;
   position: relative;
   z-index: 1;
@@ -106,21 +106,21 @@ const RulingBadge = styled.span<{ ruling: string }>`
     const baseColor = theme.whiteBackground
     const overlayColor =
       ruling === 'Accept'
-        ? 'rgba(72, 187, 120, 0.12)'
+        ? `${theme.success}1F`
         : ruling === 'Reject'
-        ? 'rgba(245, 101, 101, 0.12)'
+        ? `${theme.error}1F`
         : ruling === 'Refuse'
-        ? 'rgba(160, 174, 192, 0.12)'
-        : 'rgba(237, 137, 54, 0.12)'
+        ? `${theme.tertiaryText}1F`
+        : `${theme.orange}1F`
     return `linear-gradient(${overlayColor}, ${overlayColor}), ${baseColor}`
   }};
-  color: ${({ ruling }) => {
-    if (ruling === 'Accept') return '#48BB78'
-    if (ruling === 'Reject') return '#F56565'
-    if (ruling === 'Refuse') return '#D1D5DB'
-    return '#ED8936'
+  color: ${({ theme, ruling }) => {
+    if (ruling === 'Accept') return theme.success
+    if (ruling === 'Reject') return theme.error
+    if (ruling === 'Refuse') return theme.tertiaryText
+    return theme.orange
   }};
-  border: none;
+  border: 1px solid ${({ theme }) => theme.stroke};
   box-shadow: none;
 `
 
@@ -274,7 +274,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
                           {detailsData.requests[0].rounds[0].hasPaidRequester ? '✓ Funded' : 'Funding'}
                         </FundingStatus>
                         {!detailsData.requests[0].rounds[0].hasPaidRequester && (
-                          <AppealStatusValue style={{ fontSize: '12px', marginTop: '4px', color: '#A0AEC0' }}>
+                          <AppealStatusValue as="div" style={{ fontSize: '12px', marginTop: '4px' }}>
                             {appealRemainingTime.loserIsRequester && appealRemainingTime.isLoserPeriod
                               ? `${formattedLoserTimeLeft} left`
                               : !appealRemainingTime.loserIsRequester && !appealRemainingTime.isLoserPeriod
@@ -291,7 +291,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
                           {detailsData.requests[0].rounds[0].hasPaidChallenger ? '✓ Funded' : 'Funding'}
                         </FundingStatus>
                         {!detailsData.requests[0].rounds[0].hasPaidChallenger && (
-                          <AppealStatusValue style={{ fontSize: '12px', marginTop: '4px', color: '#A0AEC0' }}>
+                          <AppealStatusValue as="div" style={{ fontSize: '12px', marginTop: '4px' }}>
                             {!appealRemainingTime.loserIsRequester && appealRemainingTime.isLoserPeriod
                               ? `${formattedLoserTimeLeft} left`
                               : appealRemainingTime.loserIsRequester && !appealRemainingTime.isLoserPeriod

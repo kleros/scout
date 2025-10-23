@@ -169,7 +169,9 @@ const NavBar: React.FC = () => {
   ];
 
   const handleRegistryClick = (value: string) => {
-    navigate(`/registry/${value}`);
+    const currentParams = new URLSearchParams(window.location.search);
+    const paramsString = currentParams.toString();
+    navigate(`/registry/${value}${paramsString ? `?${paramsString}` : ''}`);
     toggleIsOpen();
   };
 

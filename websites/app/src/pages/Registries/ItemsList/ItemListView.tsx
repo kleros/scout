@@ -52,7 +52,7 @@ const ListRow = styled.div<{ registryType?: string; }>`
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '40px 60px 80px 200px 152px 72px 300px 1.2fr 1fr';
+        return '40px 60px 80px 160px 152px 72px 300px 1.2fr 1fr';
       case 'Single_Tags':
         return '0.8fr 1fr 1fr 1.2fr 300px 1.2fr 1fr';
       case 'CDN':

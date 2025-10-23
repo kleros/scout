@@ -140,6 +140,13 @@ const HeaderNav: React.FC = () => {
   const isRegistryActive = location.pathname.startsWith("/registry/");
   const currentRegistryName = location.pathname.split('/registry/')[1]?.split('?')[0];
 
+  // Preserve URL params when switching registries
+  const getRegistryPath = (value: string) => {
+    const currentParams = new URLSearchParams(location.search);
+    const paramsString = currentParams.toString();
+    return `/registry/${value}${paramsString ? `?${paramsString}` : ''}`;
+  };
+
   // Check if My Activity should be active
   const isActivityPage = location.pathname.startsWith("/activity");
   const searchParams = new URLSearchParams(location.search);
@@ -167,7 +174,7 @@ const HeaderNav: React.FC = () => {
               <DropdownItem
                 key={value}
                 isActive={currentRegistryName === value}
-                to={`/registry/${value}`}
+                to={getRegistryPath(value)}
                 onClick={handleDropdownItemClick}
               >
                 {label}
