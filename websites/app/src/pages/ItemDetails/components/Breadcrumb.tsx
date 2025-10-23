@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
 const BreadcrumbContainer = styled.div`
@@ -44,11 +44,11 @@ const StyledLink = styled(Link)`
 interface BreadcrumbProps {
   registryName: string
   itemName: string
+  registryUrl: string
 }
 
-const Breadcrumb: React.FC<BreadcrumbProps> = ({ registryName, itemName }) => {
+const Breadcrumb: React.FC<BreadcrumbProps> = ({ registryName, itemName, registryUrl }) => {
   const navigate = useNavigate()
-  const location = useLocation()
 
   const handleRegistryClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Check if user is trying to open in new tab (Ctrl+Click, Cmd+Click, or middle click)
@@ -57,26 +57,15 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ registryName, itemName }) => {
       return
     }
 
-    // For normal clicks, use smart navigation like Return button
+    // For normal clicks, navigate to registry page with preserved filters
     e.preventDefault()
-
-    // Check if there's a previous page in history by checking location.key
-    // If location.key is 'default', it means this is the first page loaded
-    const hasHistory = location.key !== 'default'
-
-    if (hasHistory) {
-      // Navigate back to previous page if there's history
-      navigate(-1)
-    } else {
-      // Navigate to the registry page if there's no history
-      navigate(`/registry/${registryName}`)
-    }
+    navigate(registryUrl)
   }
 
   return (
     <BreadcrumbContainer>
       <StyledLink
-        to={`/registry/${registryName}`}
+        to={registryUrl}
         onClick={handleRegistryClick}
       >
         {registryName}

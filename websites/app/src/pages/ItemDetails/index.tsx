@@ -374,6 +374,17 @@ const ItemDetails: React.FC = () => {
   const formattedLoserTimeLeft = useHumanizedCountdown(appealRemainingTime?.loserTimeLeft || null, 2)
   const formattedWinnerTimeLeft = useHumanizedCountdown(appealRemainingTime?.winnerTimeLeft || null, 2)
 
+  const registryUrl = useMemo(() => {
+    // Get current search params to preserve filters
+    const params = new URLSearchParams(searchParams)
+    // Remove item-specific params
+    params.delete('attachment')
+    params.delete('tab')
+
+    const queryString = params.toString()
+    return `/registry/${registryName}${queryString ? `?${queryString}` : ''}`
+  }, [registryName, searchParams])
+
   const handleBackClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Check if user is trying to open in new tab (Ctrl+Click, Cmd+Click, or middle click)
     if (e.ctrlKey || e.metaKey || e.button === 1) {
@@ -381,20 +392,9 @@ const ItemDetails: React.FC = () => {
       return
     }
 
-    // For normal clicks, use smart navigation
+    // For normal clicks, always navigate to registry page with preserved filters
     e.preventDefault()
-
-    // Check if there's a previous page in history by checking location.key
-    // If location.key is 'default', it means this is the first page loaded
-    const hasHistory = location.key !== 'default'
-
-    if (hasHistory) {
-      // Navigate back to previous page if there's history
-      navigate(-1)
-    } else {
-      // Navigate to the registry page if there's no history
-      navigate(`/registry/${registryName}`)
-    }
+    navigate(registryUrl)
   }
 
   if (detailsLoading || !detailsData) {
@@ -426,8 +426,8 @@ const ItemDetails: React.FC = () => {
           )}
 
           <TopBar>
-            <Breadcrumb registryName={registryName} itemName={displayName} />
-            <ReturnButton to={`/registry/${registryName}`} onClick={handleBackClick}>
+            <Breadcrumb registryName={registryName} itemName={displayName} registryUrl={registryUrl} />
+            <ReturnButton to={registryUrl} onClick={handleBackClick}>
               <ArrowLeftIcon />
               Return
             </ReturnButton>
