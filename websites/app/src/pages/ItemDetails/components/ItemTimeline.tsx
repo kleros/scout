@@ -274,26 +274,33 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
         }
 
         // Appeal - only if there's another round after this one AND appeal was actually made
+        // Check that the appeal period has ended (is in the past) before showing "Appealed"
         if (index < detailsData.requests[0].rounds.length - 1 && round.appealPeriodEnd && Number(round.appealPeriodEnd) > 0) {
-          const txHashAppealDecision = round.txHashAppealDecision
+          const currentTimestamp = Math.floor(Date.now() / 1000)
+          const appealPeriodEndTimestamp = Number(round.appealPeriodEnd)
 
-          items.push({
-            title: 'Appealed',
-            party: '',
-            subtitle: txHashAppealDecision ? (
-              <DateLink
-                href={`https://gnosisscan.io/tx/${txHashAppealDecision}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {formatTimestamp(Number(round.appealPeriodEnd), true)}
-              </DateLink>
-            ) : (
-              formatTimestamp(Number(round.appealPeriodEnd), true)
-            ),
-            rightSided: true,
-            variant: theme.secondaryPurple,
-          })
+          // Only show "Appealed" if the appeal period has actually ended (is in the past)
+          if (appealPeriodEndTimestamp < currentTimestamp) {
+            const txHashAppealDecision = round.txHashAppealDecision
+
+            items.push({
+              title: 'Appealed',
+              party: '',
+              subtitle: txHashAppealDecision ? (
+                <DateLink
+                  href={`https://gnosisscan.io/tx/${txHashAppealDecision}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {formatTimestamp(Number(round.appealPeriodEnd), true)}
+                </DateLink>
+              ) : (
+                formatTimestamp(Number(round.appealPeriodEnd), true)
+              ),
+              rightSided: true,
+              variant: theme.secondaryPurple,
+            })
+          }
         }
       })
     }

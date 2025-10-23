@@ -17,15 +17,16 @@ const FieldsContainer = styled.div`
 `
 
 const FieldItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: inline;
+  flex: 1;
+  min-width: 0;
 `
 
 const FieldLabel = styled.span`
   font-size: 14px;
   font-weight: 400;
   color: ${({ theme }) => theme.secondaryText};
+  margin-right: 4px;
 `
 
 const FieldValue = styled.span`
