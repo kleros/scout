@@ -156,7 +156,7 @@ const Slider = styled.input`
     transition: background 0.2s;
 
     &:hover {
-      background: ${({ theme }) => theme.lavenderPurple};
+      background: ${({ theme }) => theme.primaryBlue};
     }
   }
 
@@ -170,7 +170,7 @@ const Slider = styled.input`
     transition: background 0.2s;
 
     &:hover {
-      background: ${({ theme }) => theme.lavenderPurple};
+      background: ${({ theme }) => theme.primaryBlue};
     }
   }
 `
@@ -190,10 +190,15 @@ const Input = styled.input`
   background: ${({ theme }) => theme.backgroundThree};
   color: ${({ theme }) => theme.primaryText};
   font-size: 14px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.backgroundFour};
+  }
 
   &:focus {
     outline: none;
-    border-color: ${({ theme }) => theme.secondaryPurple};
+    background: ${({ theme }) => theme.backgroundFour};
   }
 
   /* Hide number input arrows */

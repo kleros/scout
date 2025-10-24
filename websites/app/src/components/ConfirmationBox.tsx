@@ -63,6 +63,13 @@ const ConfirmationTitle = styled.h3`
   justify-content: space-between;
   margin-top: 0;
   gap: 24px;
+  font-size: 18px;
+  font-weight: 600;
+`
+
+const FieldLabel = styled.label`
+  font-size: 14px;
+  color: ${({ theme }) => theme.primaryText};
 `
 
 const TextArea = styled.textarea`
@@ -139,13 +146,13 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               {(() => {
                 switch (evidenceConfirmationType) {
                   case 'Evidence':
-                    return 'Enter the evidence message you want to submit'
+                    return 'Submit Evidence'
                   case 'RegistrationRequested':
-                    return 'Provide a reason for challenging this item'
+                    return 'Challenge Item'
                   case 'Registered':
-                    return 'Provide a reason for removing this item'
+                    return 'Remove Item'
                   case 'ClearingRequested':
-                    return 'Provide a reason for challenging this removal request'
+                    return 'Challenge Removal Request'
                   default:
                     return 'Default message'
                 }
@@ -158,13 +165,13 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               <StyledCloseButton />
             </ClosedButtonContainer>
           </ConfirmationTitle>
-          <label>Message title</label>
+          <FieldLabel>Title</FieldLabel>
           <TextArea
             rows={1}
             value={evidenceTitle}
             onChange={(e) => setEvidenceTitle(e.target.value)}
           ></TextArea>
-          <label>Evidence message</label>
+          <FieldLabel>Description</FieldLabel>
           <TextArea
             rows={3}
             value={evidenceText}

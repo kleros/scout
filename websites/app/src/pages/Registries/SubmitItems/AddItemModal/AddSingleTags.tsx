@@ -25,7 +25,8 @@ import {
   ExpectedPayouts,
   PayoutsContainer,
   Divider,
-  SubmissionButton
+  SubmissionButton,
+  FieldLabel
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
@@ -256,7 +257,7 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
-      Project name
+      <FieldLabel>Project name</FieldLabel>
       <StyledTextInput
         placeholder="e.g. Kleros"
         value={projectName}
@@ -265,7 +266,7 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.projectName && (
         <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
       )}
-      Public Name Tag
+      <FieldLabel>Public Name Tag</FieldLabel>
       <StyledTextInput
         placeholder="e.g. PNK Merkle Drop"
         value={publicNameTag}
@@ -274,13 +275,13 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.publicNameTag && (
         <ErrorMessage>{addressIssuesData.publicNameTag.message}</ErrorMessage>
       )}
-      Public note
+      <FieldLabel>Public note</FieldLabel>
       <StyledTextInput
         placeholder="e.g. This contract is used for..."
         value={publicNote}
         onChange={(e) => setPublicNote(e.target.value)}
       />
-      UI/Website link
+      <FieldLabel>UI/Website link</FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://kleros.io"
         value={website}

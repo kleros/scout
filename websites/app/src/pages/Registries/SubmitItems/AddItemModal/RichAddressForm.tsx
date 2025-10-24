@@ -1,9 +1,9 @@
 import React, { SetStateAction, Dispatch } from 'react'
-import styled, { css } from 'styled-components'
+import styled, { css, useTheme } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import Select, { components } from 'react-select'
 import { chains } from 'utils/chains'
-import { StyledWholeField } from './index'
+import { StyledWholeField, FieldLabel } from './index'
 
 import EthereumIcon from 'svgs/chains/ethereum.svg'
 import SolanaIcon from 'svgs/chains/solana.svg'
@@ -23,14 +23,13 @@ const StyledAddressDiv = styled.div`
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  margin-top: 8px;
+  margin-top: 12px;
   position: relative;
   z-index: 10;
 `
 
 const StyledNetworkSelect = styled(Select)`
   font-weight: 400;
-  color: ${({ theme }) => theme.primaryText};
   min-width: 200px;
   max-width: 300px;
   position: relative;
@@ -157,12 +156,12 @@ const CustomSingleValue = (props: any) => {
   )
 }
 
-const customSelectStyles = {
+const getCustomSelectStyles = (theme: any) => ({
   menu: (provided: any) => ({
     ...provided,
     zIndex: 9999,
-    backgroundColor: '#111111',
-    border: '1px solid #FFFFFF1A',
+    backgroundColor: theme.modalInputBackground,
+    border: `1px solid ${theme.stroke}`,
     borderRadius: '12px',
     marginTop: '4px',
     overflow: 'hidden',
@@ -180,23 +179,23 @@ const customSelectStyles = {
   option: (provided: any, state: any) => ({
     ...provided,
     backgroundColor: state.isSelected
-      ? '#FFFFFF1A'
+      ? theme.lightGrey
       : state.isFocused
-      ? '#0A0A0A'
+      ? theme.backgroundFour
       : 'transparent',
-    color: '#FFFFFF',
+    color: theme.secondaryText,
     padding: '10px 12px',
     cursor: 'pointer',
     borderRadius: '8px',
     transition: 'all 0.2s ease',
     '&:hover': {
-      backgroundColor: state.isSelected ? '#FFFFFF24' : '#0A0A0A',
+      backgroundColor: state.isSelected ? theme.lightGrey : theme.backgroundFour,
     },
   }),
   control: (provided: any, state: any) => ({
     ...provided,
-    backgroundColor: state.isFocused ? '#1A1A1A' : '#111111',
-    border: '1px solid #FFFFFF1A',
+    backgroundColor: state.isFocused ? theme.backgroundFour : theme.modalInputBackground,
+    border: `1px solid ${theme.stroke}`,
     borderBottom: 'none',
     borderRadius: '12px 12px 0 0',
     boxShadow: 'none',
@@ -205,12 +204,12 @@ const customSelectStyles = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     '&:hover': {
-      backgroundColor: '#1A1A1A',
+      backgroundColor: theme.backgroundFour,
     },
   }),
   singleValue: (provided: any) => ({
     ...provided,
-    color: '#FFFFFF',
+    color: theme.secondaryText,
     margin: 0,
     padding: 0,
   }),
@@ -228,9 +227,9 @@ const customSelectStyles = {
   dropdownIndicator: (provided: any) => ({
     ...provided,
     padding: '8px',
-    color: '#FFFFFF',
+    color: theme.primaryText,
   }),
-}
+})
 
 const RichAddressForm: React.FC<{
   networkOption: NetworkOption // entire chain! ; namespace:reference , e.g. eip155:1
@@ -240,16 +239,18 @@ const RichAddressForm: React.FC<{
   registry: string
   domain?: string // checks for dupe richAddress - domain pairs, in domains.
 }> = (p) => {
+  const theme = useTheme()
+
   return (
     <StyledWholeField>
-      Address
+      <FieldLabel>Address</FieldLabel>
       <StyledAddressDiv>
         <StyledNetworkSelect
           onChange={p.setNetwork}
           value={p.networkOption}
           options={networkOptions}
           menuPortalTarget={document.body}
-          styles={customSelectStyles}
+          styles={getCustomSelectStyles(theme)}
           classNamePrefix="select"
           components={{
             Option: CustomOption,

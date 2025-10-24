@@ -27,7 +27,8 @@ import {
   ExpectedPayouts,
   PayoutsContainer,
   Divider,
-  SubmissionButton
+  SubmissionButton,
+  FieldLabel
 } from './index'
 import { useSearchParams } from 'react-router-dom'
 import { useAttachment } from 'hooks/useAttachment'
@@ -265,7 +266,7 @@ const AddToken: React.FC = () => {
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
-      Decimals
+      <FieldLabel>Decimals</FieldLabel>
       <StyledTextInput
         placeholder="e.g. 18"
         value={decimals}
@@ -276,7 +277,7 @@ const AddToken: React.FC = () => {
           }
         }}
       />
-      Name
+      <FieldLabel>Name</FieldLabel>
       <StyledTextInput
         placeholder="e.g. Pinakion"
         value={name}
@@ -285,7 +286,7 @@ const AddToken: React.FC = () => {
       {addressIssuesData?.projectName && (
         <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
       )}
-      Symbol
+      <FieldLabel>Symbol</FieldLabel>
       <StyledTextInput
         placeholder="e.g. PNK"
         value={symbol}
@@ -301,7 +302,7 @@ const AddToken: React.FC = () => {
         {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
-      Website
+      <FieldLabel>Website</FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://kleros.io"
         value={website}

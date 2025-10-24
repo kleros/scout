@@ -15,6 +15,7 @@ import { ClosedButtonContainer } from 'pages/Registries'
 import {
   AddContainer,
   AddHeader,
+  HeaderActions,
   AddSubtitle,
   AddTitle,
   CloseButton,
@@ -25,7 +26,8 @@ import {
   ExpectedPayouts,
   PayoutsContainer,
   Divider,
-  SubmissionButton
+  SubmissionButton,
+  FieldLabel
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
@@ -198,20 +200,22 @@ const AddCDN: React.FC = () => {
             </StyledGoogleFormAnchor>
           </AddSubtitle>
         </div>
-        {registry && (
-          <SubmissionButton
-            onClick={() => {
-              if (registry.metadata.policyURI) {
-                openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
-              }
-            }}
-          >
-            Submission Guidelines
-          </SubmissionButton>
-        )}
-        <ClosedButtonContainer onClick={handleClose}>
-          <CloseButton />
-        </ClosedButtonContainer>
+        <HeaderActions>
+          {registry && (
+            <SubmissionButton
+              onClick={() => {
+                if (registry.metadata.policyURI) {
+                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
+                }
+              }}
+            >
+              Submission Guidelines
+            </SubmissionButton>
+          )}
+          <ClosedButtonContainer onClick={handleClose}>
+            <CloseButton />
+          </ClosedButtonContainer>
+        </HeaderActions>
       </AddHeader>
       <Divider />
       <RichAddressForm
@@ -224,7 +228,7 @@ const AddCDN: React.FC = () => {
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
-      Domain
+      <FieldLabel>Domain</FieldLabel>
       <StyledTextInput
         placeholder="e.g. kleros.io"
         value={domain}

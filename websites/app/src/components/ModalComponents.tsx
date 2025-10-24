@@ -155,6 +155,8 @@ export const CheckboxLabel = styled.label`
   gap: 8px;
   cursor: pointer;
   flex: 1;
+  padding: 8px 0;
+  margin: -8px 0;
 `;
 
 export const OnlyButton = styled.button`
@@ -209,6 +211,8 @@ export const NetworkLabel = styled.label`
   gap: 8px;
   cursor: pointer;
   flex: 1;
+  padding: 8px 0;
+  margin: -8px 0;
 
   svg {
     width: 16px;

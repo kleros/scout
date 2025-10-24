@@ -51,7 +51,7 @@ const ModalContent = styled.div`
 export const AddContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 `
 
 export const AddHeader = styled.div`
@@ -107,6 +107,13 @@ export const StyledGoogleFormAnchor = styled.a`
 export const StyledWholeField = styled.div`
   display: flex;
   flex-direction: column;
+`
+
+export const FieldLabel = styled.div`
+  font-size: 14px;
+  color: ${({ theme }) => theme.primaryText};
+  margin-top: 8px;
+  margin-bottom: 0;
 `
 
 export const SubmissionButton = styled.button`

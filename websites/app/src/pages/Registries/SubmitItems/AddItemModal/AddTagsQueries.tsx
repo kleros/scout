@@ -17,7 +17,8 @@ import {
   PayoutsContainer,
   Divider,
   SubmissionButton,
-  ErrorMessage
+  ErrorMessage,
+  FieldLabel
 } from './index';
 import { FocusedRegistry } from 'utils/itemCounts';
 import { useItemCountsQuery } from '../../../../hooks/queries';
@@ -176,7 +177,7 @@ const AddTagsQueries: React.FC = () => {
         </HeaderActions>
       </AddHeader>
       <Divider />
-      Github Repository
+      <FieldLabel>Github Repository</FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://github.com/kleros/scout-snap.git"
         value={githubRepository}
@@ -185,19 +186,19 @@ const AddTagsQueries: React.FC = () => {
       {addressIssuesData?.link && (
         <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
       )}
-      Commit Hash
+      <FieldLabel>Commit Hash</FieldLabel>
       <StyledTextInput
         placeholder="e.g. c8baafd"
         value={commitHash}
         onChange={(e) => setCommitHash(e.target.value)}
       />
-      EVM Chain ID
+      <FieldLabel>EVM Chain ID</FieldLabel>
       <StyledTextInput
         placeholder="e.g. 1 (for Ethereum Mainnet)"
         value={evmChainId}
         onChange={(e) => setEvmChainId(e.target.value)}
       />
-      Description
+      <FieldLabel>Description</FieldLabel>
       <StyledTextInput
         placeholder="e.g. An item for retrieving SushiSwap v3 tags on..."
         value={description}

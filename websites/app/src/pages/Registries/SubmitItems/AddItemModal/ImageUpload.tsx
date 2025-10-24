@@ -4,6 +4,7 @@ import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
 import { isPngFile } from 'utils/pngValidation'
 import UploadIcon from 'svgs/icons/upload.svg'
+import { FieldLabel } from './index'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -105,7 +106,7 @@ const ImageUpload: React.FC<{
 
   return (
     <>
-      Image
+      <FieldLabel>Image</FieldLabel>
       <StyledLabel>
         Upload Image <StyledUploadIcon />
         <StyledInput
