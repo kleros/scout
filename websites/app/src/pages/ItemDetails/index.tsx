@@ -374,15 +374,39 @@ const ItemDetails: React.FC = () => {
   const formattedLoserTimeLeft = useHumanizedCountdown(appealRemainingTime?.loserTimeLeft || null, 2)
   const formattedWinnerTimeLeft = useHumanizedCountdown(appealRemainingTime?.winnerTimeLeft || null, 2)
 
-  const registryUrl = useMemo(() => {
+  const { registryUrl, breadcrumbName } = useMemo(() => {
     // Get current search params to preserve filters
     const params = new URLSearchParams(searchParams)
+
+    // Check if we came from an Activity page (has fromActivity and userAddress params)
+    const fromActivity = params.get('fromActivity')
+    const userAddress = params.get('userAddress')
+
+    if (fromActivity && userAddress && (fromActivity === 'ongoing' || fromActivity === 'past')) {
+      // Navigate back to Activity page with preserved params
+      params.delete('attachment')
+      params.delete('tab')
+      params.delete('fromActivity') // Remove this meta param
+
+      const queryString = params.toString()
+      return {
+        registryUrl: `/activity/${fromActivity}${queryString ? `?${queryString}` : ''}`,
+        breadcrumbName: 'Activity'
+      }
+    }
+
+    // Otherwise, navigate back to Registry page
     // Remove item-specific params
     params.delete('attachment')
     params.delete('tab')
+    params.delete('fromActivity')
+    params.delete('userAddress') // Don't include userAddress in registry URL
 
     const queryString = params.toString()
-    return `/registry/${registryName}${queryString ? `?${queryString}` : ''}`
+    return {
+      registryUrl: `/registry/${registryName}${queryString ? `?${queryString}` : ''}`,
+      breadcrumbName: registryName
+    }
   }, [registryName, searchParams])
 
   const handleBackClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -426,7 +450,7 @@ const ItemDetails: React.FC = () => {
           )}
 
           <TopBar>
-            <Breadcrumb registryName={registryName} itemName={displayName} registryUrl={registryUrl} />
+            <Breadcrumb registryName={breadcrumbName} itemName={displayName} registryUrl={registryUrl} />
             <ReturnButton to={registryUrl} onClick={handleBackClick}>
               <ArrowLeftIcon />
               Return

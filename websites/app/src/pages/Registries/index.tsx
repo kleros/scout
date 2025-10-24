@@ -286,7 +286,7 @@ const Home: React.FC = () => {
         hasNetworkInUrl
       ) {
         const newSearchParams = createSearchParams({
-          status: status.length === 0 ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent'] : status,
+          status: status.length === 0 ? ['Registered', 'RegistrationRequested', 'ClearingRequested'] : status,
           disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
           page: page === null ? '1' : page,
           orderDirection: orderDirection === null ? 'desc' : orderDirection

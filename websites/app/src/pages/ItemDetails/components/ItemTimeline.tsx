@@ -10,8 +10,10 @@ import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
 type TimelineItem = {
   title: string
-  party?: string
+  party?: string | React.ReactNode
   subtitle?: React.ReactNode
+  rightSided?: boolean
+  variant?: string
 }
 
 const Container = styled.div`
@@ -163,6 +165,12 @@ const DateLink = styled.a`
   }
 `
 
+const DateText = styled.span`
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 12px;
+  font-weight: 400;
+`
+
 const ByText = styled.span`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 14px;
@@ -238,7 +246,9 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
             </AddressLink>
           </PartyWrapper>
         ),
-        subtitle: detailsData.requests[0]?.submissionTime ? formatTimestamp(Number(detailsData.requests[0].submissionTime), true) : '',
+        subtitle: detailsData.requests[0]?.submissionTime ? (
+          <DateText>{formatTimestamp(Number(detailsData.requests[0].submissionTime), true)}</DateText>
+        ) : '',
         rightSided: true,
         variant: theme.orange,
       })
@@ -273,14 +283,14 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           })
         }
 
-        // Appeal - only if there's another round after this one AND appeal was actually made
+        // Appeal - only if there's another round after this one AND BOTH sides have funded their appeals
         // Check that the appeal period has ended (is in the past) before showing "Appealed"
         if (index < detailsData.requests[0].rounds.length - 1 && round.appealPeriodEnd && Number(round.appealPeriodEnd) > 0) {
           const currentTimestamp = Math.floor(Date.now() / 1000)
           const appealPeriodEndTimestamp = Number(round.appealPeriodEnd)
 
-          // Only show "Appealed" if the appeal period has actually ended (is in the past)
-          if (appealPeriodEndTimestamp < currentTimestamp) {
+          // Only show "Appealed" if the appeal period has actually ended AND both sides have funded
+          if (appealPeriodEndTimestamp < currentTimestamp && round.hasPaidRequester && round.hasPaidChallenger) {
             const txHashAppealDecision = round.txHashAppealDecision
 
             items.push({
@@ -298,7 +308,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 formatTimestamp(Number(round.appealPeriodEnd), true)
               ),
               rightSided: true,
-              variant: theme.secondaryPurple,
+              variant: theme.primaryBlue,
             })
           }
         }

@@ -405,12 +405,11 @@ export const RecentActivity: React.FC = () => {
         'Registered',
         'RegistrationRequested',
         'ClearingRequested',
-        'Absent',
       ].forEach((status) => {
-        params.set('status', status)
+        params.append('status', status)
       })
       ;['true', 'false'].forEach((disputed) => {
-        params.set('disputed', disputed)
+        params.append('disputed', disputed)
       })
       params.set('page', '1')
       params.set('orderDirection', 'desc')

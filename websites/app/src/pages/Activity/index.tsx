@@ -17,7 +17,7 @@ import PastSubmissions from "./PastSubmissions";
 import FilterButton from "components/FilterButton";
 import FilterModal from "./FilterModal";
 import ActivitySearchBar from "./SearchBar";
-import { Copiable } from "@kleros/ui-components-library";
+import Copyable from "components/Copyable";
 import { ExternalLink } from "components/ExternalLink";
 import { DEFAULT_CHAIN, getChain } from "consts/chains";
 import { chains } from "utils/chains";
@@ -61,12 +61,14 @@ const Title = styled.h1`
 `;
 
 const StyledExternalLink = styled(ExternalLink)`
-  color: ${({ theme }) => theme.primaryBlue};
+  color: ${({ theme }) => theme.secondaryBlue};
   font-size: 24px;
   font-weight: 600;
-  
+  text-decoration: none;
+  transition: all 0.2s ease;
+
   &:hover {
-    color: ${({ theme }) => theme.secondaryBlue};
+    color: ${({ theme }) => theme.primaryBlue};
     text-decoration: underline;
   }
 `;
@@ -90,11 +92,21 @@ const TooltipGlobalStyle = createGlobalStyle`
   }
 `;
 
-const StyledCopiable = styled(Copiable)`
+const StyledCopyable = styled(Copyable)`
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  
+
+  button {
+    color: ${({ theme }) => theme.secondaryBlue};
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: ${({ theme }) => theme.primaryBlue};
+      opacity: 1;
+    }
+  }
+
   svg {
     width: 16px;
     height: 16px;
@@ -142,9 +154,8 @@ const StatCard = styled.div`
   gap: 24px;
   padding: 24px;
   border-radius: 12px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.stroke};
   svg {
     min-width: 64px;
     min-height: 64px;
@@ -194,7 +205,7 @@ const FilterControlsContainer = styled.div`
 
 const PATHS = ["ongoing", "past"];
 
-const REGISTRATION_STATUSES = ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent'];
+const REGISTRATION_STATUSES = ['Registered', 'RegistrationRequested', 'ClearingRequested'];
 const CHALLENGE_STATUSES = ['true', 'false'];
 
 const Activity: React.FC = () => {
@@ -289,13 +300,9 @@ const Activity: React.FC = () => {
   const shouldShowConnectWallet = !isConnected && !userAddress;
 
   const renderAddressLink = (address: string) => (
-    <StyledCopiable 
-      copiableContent={address} 
+    <StyledCopyable
+      copyableContent={address}
       info="Copy Address"
-      tooltipProps={{
-        place: "top",
-        className: "dark-tooltip"
-      }}
     >
       {addressExplorerLink ? (
         <StyledExternalLink to={addressExplorerLink} target="_blank" rel="noopener noreferrer">
@@ -304,7 +311,7 @@ const Activity: React.FC = () => {
       ) : (
         shortenAddress(address)
       )}
-    </StyledCopiable>
+    </StyledCopyable>
   );
 
   return (

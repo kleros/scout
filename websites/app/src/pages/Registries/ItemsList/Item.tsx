@@ -18,6 +18,8 @@ import {
   hoverShortTransitionTiming,
 } from 'styles/commonStyles'
 import { StyledButton } from 'components/Button'
+import HourglassIcon from 'svgs/icons/hourglass.svg'
+import CalendarIcon from 'svgs/icons/calendar.svg'
 
 const Card = styled.div<{ seamlessBottom?: boolean }>`
   color: white;
@@ -185,8 +187,18 @@ const NameLabel = styled.label`
 `
 
 const SubmittedLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: ${({ theme }) => theme.secondaryText};
   font-size: 12px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    color: ${({ theme }) => theme.secondaryText};
+  }
 `
 
 const StyledDivider = styled(Divider)`
@@ -200,7 +212,7 @@ const TimersContainer = styled.div`
   display: flex;
   flex-direction: column;
   padding: 0 8px;
-  gap: 4px;
+  gap: 8px;
 `
 
 const WrappedWebsiteContainer = styled.div`
@@ -282,6 +294,7 @@ const Item = React.memo(
       challengeRemainingTime,
       2,
     )
+    const isCountdownLoading = challengePeriodDuration === null && item.status !== 'Registered' && !item.disputed
 
     const handleItemDetailsClick = useCallback(() => {
       navigate(`/item/${item.id}?${searchParams.toString()}`)
@@ -430,6 +443,7 @@ const Item = React.memo(
                 <TimersContainer>
                   {item?.status !== 'Registered' ? (
                     <SubmittedLabel>
+                      <CalendarIcon />
                       Submitted on:{' '}
                       {formatTimestamp(
                         Number(item?.requests[0].submissionTime),
@@ -439,6 +453,7 @@ const Item = React.memo(
                   ) : null}
                   {item?.status === 'Registered' ? (
                     <SubmittedLabel>
+                      <CalendarIcon />
                       Included on:{' '}
                       {formatTimestamp(
                         Number(item?.requests[0].resolutionTime),
@@ -446,9 +461,10 @@ const Item = React.memo(
                       )}
                     </SubmittedLabel>
                   ) : null}
-                  {formattedChallengeRemainingTime && (
+                  {(isCountdownLoading || formattedChallengeRemainingTime) && (
                     <SubmittedLabel>
-                      Will be included in: {formattedChallengeRemainingTime}
+                      <HourglassIcon />
+                      Will be included in: {isCountdownLoading ? <Skeleton width={60} /> : formattedChallengeRemainingTime}
                     </SubmittedLabel>
                   )}
                 </TimersContainer>

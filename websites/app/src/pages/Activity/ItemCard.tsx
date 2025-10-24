@@ -2,8 +2,11 @@ import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { format } from 'date-fns'
 import { formatEther } from 'ethers'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
+import { StyledButton } from 'components/Button'
 import { revRegistryMap } from 'utils/items'
 import { useScrollTop } from 'hooks/useScrollTop'
 import useHumanizedCountdown, {
@@ -12,20 +15,17 @@ import useHumanizedCountdown, {
 } from 'hooks/countdown'
 import { shortenAddress } from 'utils/shortenAddress'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
+import { hoverLongTransitionTiming } from 'styles/commonStyles'
 
 const Card = styled.div`
   width: 100%;
-  border: 1px solid ${({ theme }) => theme.backgroundTwo};
+  border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
+  background: transparent;
 `
 
 const Header = styled.div`
@@ -79,7 +79,7 @@ const StatusLabel = styled.span`
 
 const Divider = styled.hr`
   border: none;
-  border-top: 1px solid ${({ theme }) => theme.backgroundTwo};
+  border-top: 1px solid ${({ theme }) => theme.stroke};
   margin: 0;
 `
 
@@ -115,32 +115,9 @@ const LabelValue = styled.span`
   white-space: nowrap;
 `
 
-const ViewButton = styled.button`
-  padding: 8px 24px;
-  border: none;
-  background: ${({ theme }) => theme.buttonWhite};
-  color: ${({ theme }) => theme.black};
-  cursor: pointer;
-  font-size: 14px;
-  font-family: "Open Sans", sans-serif;
-  font-weight: 600;
-  border-radius: 9999px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${({ theme }) => theme.buttonWhiteHover};
-  }
-
-  &:active {
-    background: ${({ theme }) => theme.buttonWhiteActive};
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.buttonDisabled};
-    color: ${({ theme }) => theme.buttonDisabledText};
-    border: 1px solid ${({ theme }) => theme.buttonDisabled};
-    cursor: not-allowed;
-  }
+const ViewButton = styled(StyledButton).attrs({ variant: 'secondary', size: 'medium' })`
+  ${hoverLongTransitionTiming}
+  min-width: 100px;
 `
 
 const StyledChainLabel = styled.span`
@@ -177,6 +154,7 @@ const getProp = (item: any, label: string) =>
 const ItemCard = ({ item }: { item: any }) => {
   const navigate = useNavigate()
   const scrollTop = useScrollTop()
+  const location = useLocation()
 
   const registryName = revRegistryMap[item.registryAddress] ?? 'Unknown'
 
@@ -225,21 +203,35 @@ const ItemCard = ({ item }: { item: any }) => {
     challengePeriodDuration,
   )
   const endsIn = useHumanizedCountdown(endsAtSeconds, 2)
+  const isCountdownLoading = challengePeriodDuration === null && item.status !== 'Registered' && !item.disputed
   const showEndsIn = useMemo(
-    () => Boolean(endsIn) && item.status !== 'Registered',
-    [endsIn, item.status],
+    () => (isCountdownLoading || Boolean(endsIn)) && item.status !== 'Registered',
+    [isCountdownLoading, endsIn, item.status],
   )
 
   const onView = () => {
     const params = new URLSearchParams()
-    params.set('status', 'Registered')
-    params.set('status', 'RegistrationRequested')
-    params.set('status', 'ClearingRequested')
-    params.set('status', 'Absent')
-    params.set('disputed', 'true')
-    params.set('disputed', 'false')
+    params.append('status', 'Registered')
+    params.append('status', 'RegistrationRequested')
+    params.append('status', 'ClearingRequested')
+    params.append('disputed', 'true')
+    params.append('disputed', 'false')
     params.set('page', '1')
     params.set('orderDirection', 'desc')
+
+    // Preserve the current location (activity path + params) so ItemDetails can navigate back correctly
+    const currentSearch = new URLSearchParams(location.search)
+    const userAddress = currentSearch.get('userAddress')
+
+    if (userAddress) {
+      params.set('userAddress', userAddress)
+      // Also preserve the activity path (ongoing or past) so we know where to go back
+      const activityPath = location.pathname.split('/').pop() // 'ongoing' or 'past'
+      if (activityPath === 'ongoing' || activityPath === 'past') {
+        params.set('fromActivity', activityPath)
+      }
+    }
+
     navigate(`/item/${item.id}?${params.toString()}`)
     scrollTop()
   }
@@ -256,7 +248,7 @@ const ItemCard = ({ item }: { item: any }) => {
         {showEndsIn && (
           <HeaderRight>
             <HourglassIcon />
-            Will be included in: {endsIn}
+            Will be included in: {isCountdownLoading ? <Skeleton width={60} /> : endsIn}
           </HeaderRight>
         )}
       </Header>
