@@ -309,11 +309,11 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                       : (() => {
                           switch (evidenceConfirmationType) {
                             case 'RegistrationRequested':
-                              return 'Challenge Request'
+                              return 'Challenge Justification'
                             case 'Registered':
-                              return 'Removal Request'
+                              return 'Removal Justification'
                             case 'ClearingRequested':
-                              return 'Challenge Removal Request'
+                              return 'Challenge Removal Justification'
                             default:
                               return evidenceTitle
                           }
