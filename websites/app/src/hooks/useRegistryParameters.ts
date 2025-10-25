@@ -180,7 +180,15 @@ export function useRegistryParameters(registryAddress: string) {
       const lgtcrViewContract = new Contract(LGTCRViewAddress, LGTCRViewABI, provider)
 
       try {
-        const viewInfo = await lgtcrViewContract.fetchArbitrable(registryAddress)
+        // Add timeout to prevent indefinite hanging (15 seconds)
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('Registry parameters fetch timed out after 15 seconds')), 15000)
+        })
+
+        const viewInfo = await Promise.race([
+          lgtcrViewContract.fetchArbitrable(registryAddress),
+          timeoutPromise
+        ])
 
         const params: RegistryParameters = {
           sharedStakeMultiplier: viewInfo.sharedStakeMultiplier,
@@ -206,12 +214,12 @@ export function useRegistryParameters(registryAddress: string) {
     },
     enabled: !!registryAddress,
     staleTime: 24 * 60 * 60 * 1000, // 24 hours - these parameters rarely change
-    cacheTime: 24 * 60 * 60 * 1000, // Keep in memory for 24 hours
-    retry: 2, // Retry twice on failure
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    gcTime: 24 * 60 * 60 * 1000, // Keep in memory for 24 hours (formerly cacheTime)
+    retry: 3, // Retry 3 times on failure
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Faster retries
     refetchOnWindowFocus: false,
     refetchOnMount: false, // Don't refetch on mount if we have cached data
-    // Use cached data immediately if available
+    // Use cached data immediately if available for instant UI
     placeholderData: cachedData || undefined,
   })
 

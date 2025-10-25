@@ -32,6 +32,43 @@ const ContentArea = styled.div`
 const Notifications = styled(ToastContainer)`
   padding: 16px;
   padding-top: 70px;
+  pointer-events: none;
+
+  .Toastify__toast {
+    pointer-events: auto;
+  }
+
+  .Toastify__toast--info {
+    background: ${({ theme }) => theme.secondaryBlue};
+  }
+
+  .Toastify__toast--success {
+    background: ${({ theme }) => theme.success};
+  }
+
+  .Toastify__toast--error {
+    background: ${({ theme }) => theme.error};
+  }
+
+  .Toastify__toast--warning {
+    background: ${({ theme }) => theme.warning};
+  }
+
+  .Toastify__progress-bar--info {
+    background: ${({ theme }) => theme.primaryBlue};
+  }
+
+  .Toastify__progress-bar--success {
+    background: ${({ theme }) => theme.successLight};
+  }
+
+  .Toastify__progress-bar--error {
+    background: ${({ theme }) => theme.errorLight};
+  }
+
+  .Toastify__progress-bar--warning {
+    background: ${({ theme }) => theme.warningLight};
+  }
 `;
 
 const Layout: React.FC = () => {

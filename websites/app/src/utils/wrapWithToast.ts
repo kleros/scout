@@ -27,46 +27,24 @@ export async function wrapWithToast(
   contractWrite: () => Promise<`0x${string}`>,
   publicClient: PublicClient
 ): Promise<WrapWithToastReturnType> {
-  const loadingToast = toast.loading("Transaction initiated...", OPTIONS);
-  
-  try {
-    const hash = await contractWrite();
-    
-    toast.update(loadingToast, {
-      render: "Transaction is being mined...",
-      type: "info",
-      ...OPTIONS
+  toast.info("Transaction initiated", OPTIONS);
+
+  return await contractWrite()
+    .then(
+      async (hash) =>
+        await publicClient.waitForTransactionReceipt({ hash, confirmations: 2 }).then((res: TransactionReceipt) => {
+          const status = res.status === "success";
+
+          if (status) toast.success("Transaction mined!", OPTIONS);
+          else toast.error("Transaction reverted!", OPTIONS);
+
+          return { status, result: res };
+        })
+    )
+    .catch((error) => {
+      toast.error(parseWagmiError(error), OPTIONS);
+      return { status: false };
     });
-    
-    const receipt = await publicClient.waitForTransactionReceipt({ 
-      hash, 
-      confirmations: 2 
-    });
-    
-    if (receipt.status === "success") {
-      toast.update(loadingToast, {
-        render: "Transaction executed successfully!",
-        type: "success",
-        ...OPTIONS
-      });
-      return { status: true, result: receipt };
-    } else {
-      toast.update(loadingToast, {
-        render: "Transaction reverted!",
-        type: "error", 
-        ...OPTIONS
-      });
-      return { status: false, result: receipt };
-    }
-  } catch (error) {
-    const parsedError = parseWagmiError(error);
-    toast.update(loadingToast, {
-      render: parsedError,
-      type: "error",
-      ...OPTIONS
-    });
-    return { status: false };
-  }
 }
 
 export async function catchShortMessage(promise: Promise<any>) {

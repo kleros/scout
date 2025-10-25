@@ -22,6 +22,7 @@ import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
+import { errorToast } from 'utils/wrapWithToast'
 
 const Container = styled.div`
   display: flex;
@@ -266,8 +267,10 @@ const ItemDetails: React.FC = () => {
   }, [registryParameters])
 
   const formattedDepositCost = useMemo(() => {
-    if (!detailsData || !deposits || arbitrationCostData === undefined)
-      return '??? xDAI'
+    if (!detailsData || !deposits || arbitrationCostData === undefined) {
+      // Show loading indicator if registry parameters are being fetched
+      return registryParametersLoading ? 'Loading...' : '??? xDAI'
+    }
     let sum = 0n
     if (detailsData.status === 'Registered') {
       sum = arbitrationCostData + deposits.removalBaseDeposit
@@ -277,7 +280,7 @@ const ItemDetails: React.FC = () => {
       sum = arbitrationCostData + deposits.removalChallengeBaseDeposit
     }
     return `${Number(formatEther(sum))} xDAI`
-  }, [detailsData, deposits, arbitrationCostData])
+  }, [detailsData, deposits, arbitrationCostData, registryParametersLoading])
 
   // Fetch appeal cost for disputed items
   const { data: appealCost, isLoading: appealCostLoading } = useAppealCost(
@@ -465,6 +468,11 @@ const ItemDetails: React.FC = () => {
                   challengePeriodDuration={challengePeriodDuration}
                   showActionButtons={true}
                   onActionButtonClick={(actionType) => {
+                    // Check if deposits are loaded before opening modal
+                    if (!deposits || !arbitrationCostData) {
+                      errorToast('Loading deposit parameters... Please try again in a moment.')
+                      return
+                    }
                     setIsConfirmationOpen(true)
                     setEvidenceConfirmationType(actionType)
                   }}

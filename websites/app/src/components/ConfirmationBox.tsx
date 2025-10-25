@@ -10,8 +10,9 @@ import { EnsureChain } from 'components/EnsureChain'
 import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
 import { Address } from 'viem'
-import { errorToast } from 'utils/wrapWithToast'
+import { errorToast, infoToast } from 'utils/wrapWithToast'
 import TransactionButton from 'components/TransactionButton'
+import UploadIcon from 'assets/svgs/icons/upload.svg'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -23,14 +24,11 @@ const ModalOverlay = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 50;
+  z-index: 1000;
 `
 
 const Container = styled.div`
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   width: 90vw;
   max-width: 900px;
   background: ${({ theme }) => theme.modalBackground};
@@ -41,6 +39,8 @@ const Container = styled.div`
   flex-direction: column;
   backdrop-filter: blur(50px);
   box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  max-height: 90vh;
+  overflow-y: auto;
 
   ${landscapeStyle(
     () => css`
@@ -116,6 +116,76 @@ const ButtonWrapper = styled.div`
   }
 `
 
+const FileUploadContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`
+
+const FileUploadButton = styled.label`
+  cursor: pointer;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: ${({ theme }) => theme.modalInputBackground};
+  color: ${({ theme }) => theme.primaryText};
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => theme.backgroundFour};
+    border-color: rgba(113, 134, 255, 0.5);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+
+    path {
+      fill: ${({ theme }) => theme.primaryText};
+    }
+  }
+`
+
+const HiddenFileInput = styled.input`
+  opacity: 0;
+  width: 0.1px;
+  height: 0.1px;
+  position: absolute;
+`
+
+const FilePreview = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: ${({ theme }) => theme.backgroundThree};
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 8px;
+  font-size: 13px;
+  color: ${({ theme }) => theme.secondaryText};
+  width: fit-content;
+`
+
+const RemoveFileButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.error};
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.7;
+  }
+`
+
 interface IConfirmationBox {
   evidenceConfirmationType: string;
   isConfirmationOpen: boolean;
@@ -135,7 +205,23 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 }) => {
   const [evidenceTitle, setEvidenceTitle] = useState('')
   const [evidenceText, setEvidenceText] = useState('')
-  const { submitEvidence, challengeRequest, removeItem, isLoading } = useCurateInteractions()
+  const [attachedFile, setAttachedFile] = useState<File | null>(null)
+  const [isLocalLoading, setIsLocalLoading] = useState(false)
+  const { submitEvidence, challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
+
+  // Combined loading state for both IPFS upload and contract interaction
+  const isLoading = isLocalLoading || isContractLoading
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setAttachedFile(file)
+    }
+  }
+
+  const handleRemoveFile = () => {
+    setAttachedFile(null)
+  }
 
   return (
     <ModalOverlay>
@@ -165,104 +251,177 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               <StyledCloseButton />
             </ClosedButtonContainer>
           </ConfirmationTitle>
-          <FieldLabel>Title</FieldLabel>
-          <TextArea
-            rows={1}
-            value={evidenceTitle}
-            onChange={(e) => setEvidenceTitle(e.target.value)}
-          ></TextArea>
+          {evidenceConfirmationType === 'Evidence' && (
+            <>
+              <FieldLabel>Title</FieldLabel>
+              <TextArea
+                rows={1}
+                value={evidenceTitle}
+                onChange={(e) => setEvidenceTitle(e.target.value)}
+              ></TextArea>
+            </>
+          )}
           <FieldLabel>Description</FieldLabel>
           <TextArea
             rows={3}
             value={evidenceText}
             onChange={(e) => setEvidenceText(e.target.value)}
           ></TextArea>
+          <FileUploadContainer>
+            <FieldLabel>Attach file (Optional)</FieldLabel>
+            {!attachedFile ? (
+              <FileUploadButton>
+                <UploadIcon />
+                Choose File
+                <HiddenFileInput
+                  type="file"
+                  onChange={handleFileChange}
+                  disabled={isLoading}
+                />
+              </FileUploadButton>
+            ) : (
+              <FilePreview>
+                <span>{attachedFile.name}</span>
+                <RemoveFileButton onClick={handleRemoveFile} disabled={isLoading}>
+                  ×
+                </RemoveFileButton>
+              </FilePreview>
+            )}
+          </FileUploadContainer>
           <ButtonWrapper>
             <EnsureChain>
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."
-                disabled={!evidenceTitle.trim() || !evidenceText.trim()}
+                disabled={
+                  evidenceConfirmationType === 'Evidence'
+                    ? !evidenceTitle.trim() || !evidenceText.trim()
+                    : !evidenceText.trim()
+                }
                 onClick={async () => {
+                  // Set loading state immediately
+                  setIsLocalLoading(true)
+
                   try {
-                    const evidenceObject = {
-                      title: evidenceTitle,
+                    // Auto-generate title for challenge/removal requests
+                    const finalTitle = evidenceConfirmationType === 'Evidence'
+                      ? evidenceTitle
+                      : (() => {
+                          switch (evidenceConfirmationType) {
+                            case 'RegistrationRequested':
+                              return 'Challenge Request'
+                            case 'Registered':
+                              return 'Removal Request'
+                            case 'ClearingRequested':
+                              return 'Challenge Removal Request'
+                            default:
+                              return evidenceTitle
+                          }
+                        })()
+                    // Upload attached file to IPFS if present
+                    let fileURI: string | null = null
+                    let fileTypeExtension: string | null = null
+
+                    if (attachedFile) {
+                      infoToast('Uploading file to IPFS...')
+                      const fileData = await attachedFile.arrayBuffer()
+                      const fileIpfsObject = await ipfsPublish(attachedFile.name, fileData)
+                      fileURI = getIPFSPath(fileIpfsObject)
+                      const extension = attachedFile.name.split('.').pop()
+                      fileTypeExtension = extension ? `.${extension}` : null
+                    }
+
+                    // Construct evidence object with optional file attachment
+                    const evidenceObject: {
+                      title: string
+                      description: string
+                      fileURI?: string
+                      fileTypeExtension?: string
+                    } = {
+                      title: finalTitle,
                       description: evidenceText,
                     }
+
+                    if (fileURI) {
+                      evidenceObject.fileURI = fileURI
+                    }
+                    if (fileTypeExtension) {
+                      evidenceObject.fileTypeExtension = fileTypeExtension
+                    }
+
+                    infoToast('Uploading evidence to IPFS...')
                     const enc = new TextEncoder()
-                    const fileData = enc.encode(JSON.stringify(evidenceObject))
-                    const ipfsObject = await ipfsPublish('evidence.json', fileData)
+                    const evidenceData = enc.encode(JSON.stringify(evidenceObject))
+                    const ipfsObject = await ipfsPublish('evidence.json', evidenceData.buffer)
                     const ipfsPath = getIPFSPath(ipfsObject)
 
-                    let result = false
                     const registryAddress = detailsData.registryAddress as Address
                     const itemId = detailsData.itemID
                     const arbitrationCost = arbitrationCostData as bigint
 
+                    let result: { status: boolean } | undefined
                     switch (evidenceConfirmationType) {
                       case 'Evidence':
-                        await submitEvidence(registryAddress, itemId, ipfsPath)
-                        result = true
+                        result = await submitEvidence(registryAddress, itemId, ipfsPath)
                         break
                       case 'RegistrationRequested':
-                        if (deposits?.submissionChallengeBaseDeposit) {
-                          await challengeRequest(
-                            registryAddress,
-                            itemId,
-                            ipfsPath,
-                            BigInt(deposits.submissionChallengeBaseDeposit),
-                            arbitrationCost
-                          )
-                          result = true
-                        } else {
-                          errorToast('Missing deposit parameters for challenging submission')
+                        if (!deposits || deposits.submissionChallengeBaseDeposit === undefined) {
+                          errorToast('Missing deposit parameters for challenging submission. Please try again.')
                           return
                         }
+                        result = await challengeRequest(
+                          registryAddress,
+                          itemId,
+                          ipfsPath,
+                          BigInt(deposits.submissionChallengeBaseDeposit),
+                          arbitrationCost
+                        )
                         break
                       case 'Registered':
-                        if (deposits?.removalBaseDeposit) {
-                          await removeItem(
-                            registryAddress,
-                            itemId,
-                            ipfsPath,
-                            deposits,
-                            arbitrationCost
-                          )
-                          result = true
-                        } else {
-                          errorToast('Missing deposit parameters for removing item')
+                        if (!deposits || deposits.removalBaseDeposit === undefined) {
+                          errorToast('Missing deposit parameters for removing item. Please try again.')
                           return
                         }
+                        result = await removeItem(
+                          registryAddress,
+                          itemId,
+                          ipfsPath,
+                          deposits,
+                          arbitrationCost
+                        )
                         break
                       case 'ClearingRequested':
-                        if (deposits?.removalChallengeBaseDeposit) {
-                          await challengeRequest(
-                            registryAddress,
-                            itemId,
-                            ipfsPath,
-                            BigInt(deposits.removalChallengeBaseDeposit),
-                            arbitrationCost
-                          )
-                          result = true
-                        } else {
-                          errorToast('Missing deposit parameters for challenging removal')
+                        if (!deposits || deposits.removalChallengeBaseDeposit === undefined) {
+                          errorToast('Missing deposit parameters for challenging removal. Please try again.')
                           return
                         }
+                        result = await challengeRequest(
+                          registryAddress,
+                          itemId,
+                          ipfsPath,
+                          BigInt(deposits.removalChallengeBaseDeposit),
+                          arbitrationCost
+                        )
                         break
+                      default:
+                        throw new Error('Invalid evidence confirmation type')
                     }
 
-                    if (result) {
+                    if (result?.status) {
                       setEvidenceTitle('')
                       setEvidenceText('')
+                      setAttachedFile(null)
                       setIsConfirmationOpen(false)
                     }
                   } catch (error) {
                     console.error('Error performing action:', error)
                     errorToast(error instanceof Error ? error.message : 'Failed to perform action')
+                  } finally {
+                    setIsLocalLoading(false)
                   }
                 }}
               >
-                Confirm
+                Submit
               </TransactionButton>
             </EnsureChain>
           </ButtonWrapper>

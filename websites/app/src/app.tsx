@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { ErrorBoundary } from "react-error-boundary";
 import 'overlayscrollbars/styles/overlayscrollbars.css';
 import 'react-loading-skeleton/dist/skeleton.css';
+import 'react-toastify/dist/ReactToastify.css';
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { OverlayScrollContext } from 'context/OverlayScrollContext';
 import StyledComponentsProvider from 'context/StyledComponentsProvider';
