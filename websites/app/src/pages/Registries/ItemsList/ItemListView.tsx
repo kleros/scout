@@ -52,13 +52,13 @@ const ListRow = styled.div<{ registryType?: string; }>`
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '40px 60px 80px 160px 152px 72px 300px 1.2fr 1fr';
+        return '1.2fr 0.3fr 0.5fr 0.6fr 2fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
       case 'Single_Tags':
-        return '0.8fr 1fr 1fr 1.2fr 300px 1.2fr 1fr';
+        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Period ends in
       case 'CDN':
-        return '1fr 1fr 1.2fr 300px 1.2fr 1fr';
+        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Period ends in
       case 'Tags_Queries':
-        return '1.3fr 1fr 0.4fr 0.9fr 300px 1.2fr 1fr';
+        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Period ends in
       default:
         return '200px 280px 180px 200px 100px 180px';
     }
@@ -361,6 +361,10 @@ const ItemListView = React.memo(
 
         return (
           <>
+            <StatusCell status={status}>
+              {status}
+              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+            </StatusCell>
             <LogoCell>
               {logoUrl ? <img src={logoUrl} alt="Token logo" /> : '-'}
             </LogoCell>
@@ -387,8 +391,8 @@ const ItemListView = React.memo(
             <AddressCell>
               <AddressDisplay address={getPropValue('Address')} />
             </AddressCell>
-            <DecimalsCell>{getPropValue('Decimals') || '-'}</DecimalsCell>
-            <SubmitterCell>
+            {/* <DecimalsCell>{getPropValue('Decimals') || '-'}</DecimalsCell> */}
+            {/* <SubmitterCell>
               {submitterAddress ? (
                 <>
                   <SubmitterLink
@@ -411,11 +415,7 @@ const ItemListView = React.memo(
               ) : (
                 '-'
               )}
-            </SubmitterCell>
-            <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
-            </StatusCell>
+            </SubmitterCell> */}
             <DateCell>{periodEndsIn}</DateCell>
           </>
         );
@@ -426,6 +426,10 @@ const ItemListView = React.memo(
 
         return (
           <>
+            <StatusCell status={status}>
+              {status}
+              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+            </StatusCell>
             <Cell>
               <SymbolText>{getPropValue('Project Name') || '-'}</SymbolText>
             </Cell>
@@ -449,7 +453,7 @@ const ItemListView = React.memo(
             <AddressCell>
               <AddressDisplay address={getPropValue('Contract Address')} />
             </AddressCell>
-            <SubmitterCell>
+            {/* <SubmitterCell>
               {submitterAddress ? (
                 <>
                   <SubmitterLink
@@ -472,11 +476,7 @@ const ItemListView = React.memo(
               ) : (
                 '-'
               )}
-            </SubmitterCell>
-            <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
-            </StatusCell>
+            </SubmitterCell> */}
             <DateCell>{periodEndsIn}</DateCell>
           </>
         );
@@ -488,6 +488,10 @@ const ItemListView = React.memo(
 
         return (
           <>
+            <StatusCell status={status}>
+              {status}
+              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+            </StatusCell>
             <Cell>
               <SymbolText>{domainName || '-'}</SymbolText>
             </Cell>
@@ -508,7 +512,7 @@ const ItemListView = React.memo(
             <AddressCell>
               <AddressDisplay address={getPropValue('Contract address')} />
             </AddressCell>
-            <SubmitterCell>
+            {/* <SubmitterCell>
               {submitterAddress ? (
                 <>
                   <SubmitterLink
@@ -531,11 +535,7 @@ const ItemListView = React.memo(
               ) : (
                 '-'
               )}
-            </SubmitterCell>
-            <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
-            </StatusCell>
+            </SubmitterCell> */}
             <DateCell>{periodEndsIn}</DateCell>
           </>
         );
@@ -549,6 +549,10 @@ const ItemListView = React.memo(
 
         return (
           <>
+            <StatusCell status={status}>
+              {status}
+              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+            </StatusCell>
             <Cell>
               <NameText>{getPropValue('Description') || '-'}</NameText>
             </Cell>
@@ -573,7 +577,7 @@ const ItemListView = React.memo(
               {ChainIcon && <ChainIcon />}
               <span>Chain {chainId}</span>
             </ChainCell>
-            <SubmitterCell>
+            {/* <SubmitterCell>
               {submitterAddress ? (
                 <>
                   <SubmitterLink
@@ -596,11 +600,7 @@ const ItemListView = React.memo(
               ) : (
                 '-'
               )}
-            </SubmitterCell>
-            <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
-            </StatusCell>
+            </SubmitterCell> */}
             <DateCell>{periodEndsIn}</DateCell>
           </>
         );

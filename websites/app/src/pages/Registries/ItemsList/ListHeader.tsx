@@ -7,13 +7,13 @@ const HeaderRow = styled.div<{ registryType?: string }>`
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '40px 60px 80px 160px 152px 72px 300px 1.2fr 1fr';
+        return '1.2fr 0.3fr 0.5fr 0.6fr 2fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
       case 'Single_Tags':
-        return '0.8fr 1fr 1fr 1.2fr 300px 1.2fr 1fr';
+        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Period ends in
       case 'CDN':
-        return '1fr 1fr 1.2fr 300px 1.2fr 1fr';
+        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Period ends in
       case 'Tags_Queries':
-        return '1.3fr 1fr 0.4fr 0.9fr 300px 1.2fr 1fr';
+        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Period ends in
       default:
         return '200px 280px 180px 200px 100px 180px';
     }
@@ -72,14 +72,14 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   if (registryAddress === registryMap.Tokens) {
     return (
       <HeaderRow registryType={getRegistryType()}>
+        <HeaderCell>Status</HeaderCell>
         <HeaderCell>Logo</HeaderCell>
         <HeaderCell>Symbol</HeaderCell>
         <HeaderCell>Name</HeaderCell>
         <HeaderCell>Website</HeaderCell>
         <HeaderCell>Address</HeaderCell>
-        <CenteredHeaderCell>Decimals</CenteredHeaderCell>
-        <HeaderCell>Submitted by</HeaderCell>
-        <HeaderCell>Status</HeaderCell>
+        {/* <CenteredHeaderCell>Decimals</CenteredHeaderCell> */}
+        {/* <HeaderCell>Submitted by</HeaderCell> */}
         <HeaderCell>Period ends in</HeaderCell>
       </HeaderRow>
     );
@@ -89,12 +89,12 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   if (registryAddress === registryMap.Single_Tags) {
     return (
       <HeaderRow registryType={getRegistryType()}>
+        <HeaderCell>Status</HeaderCell>
         <HeaderCell>Project</HeaderCell>
         <HeaderCell>Tag</HeaderCell>
         <HeaderCell>Website</HeaderCell>
         <HeaderCell>Address</HeaderCell>
-        <HeaderCell>Submitted by</HeaderCell>
-        <HeaderCell>Status</HeaderCell>
+        {/* <HeaderCell>Submitted by</HeaderCell> */}
         <HeaderCell>Period ends in</HeaderCell>
       </HeaderRow>
     );
@@ -104,11 +104,11 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   if (registryAddress === registryMap.CDN) {
     return (
       <HeaderRow registryType={getRegistryType()}>
+        <HeaderCell>Status</HeaderCell>
         <HeaderCell>Domain</HeaderCell>
         <HeaderCell>Website</HeaderCell>
         <HeaderCell>Address</HeaderCell>
-        <HeaderCell>Submitted by</HeaderCell>
-        <HeaderCell>Status</HeaderCell>
+        {/* <HeaderCell>Submitted by</HeaderCell> */}
         <HeaderCell>Period ends in</HeaderCell>
       </HeaderRow>
     );
@@ -118,12 +118,12 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   if (registryAddress === registryMap.Tags_Queries) {
     return (
       <HeaderRow registryType={getRegistryType()}>
+        <HeaderCell>Status</HeaderCell>
         <HeaderCell>Description</HeaderCell>
         <HeaderCell>Repository</HeaderCell>
         <HeaderCell>Commit</HeaderCell>
         <HeaderCell>Chain</HeaderCell>
-        <HeaderCell>Submitted by</HeaderCell>
-        <HeaderCell>Status</HeaderCell>
+        {/* <HeaderCell>Submitted by</HeaderCell> */}
         <HeaderCell>Period ends in</HeaderCell>
       </HeaderRow>
     );
