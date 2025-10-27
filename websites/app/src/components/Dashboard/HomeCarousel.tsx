@@ -222,6 +222,7 @@ interface HomeCarouselProps {
 
 export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, chartData }) => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const startCarousel = useCallback(() => {
@@ -234,22 +235,40 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
     }, CAROUSEL_INTERVAL);
   }, []);
 
+  const stopCarousel = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
-    startCarousel();
+    if (!isPaused) {
+      startCarousel();
+    } else {
+      stopCarousel();
+    }
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      stopCarousel();
     };
-  }, [startCarousel]);
+  }, [isPaused, startCarousel, stopCarousel]);
 
   const handleDotClick = useCallback((index: number) => {
     setActiveIndex(index);
+    setIsPaused(false);
     startCarousel(); // Reset timer when user manually changes
   }, [startCarousel]);
 
+  const handleMouseEnter = useCallback(() => {
+    setIsPaused(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsPaused(false);
+  }, []);
+
   return (
-    <Container>
+    <Container onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <CarouselTrack $activeIndex={activeIndex}>
         {/* Position 1: Metrics (left), Chart (middle), Chain Ranking (right) */}
         <CarouselSlide>
