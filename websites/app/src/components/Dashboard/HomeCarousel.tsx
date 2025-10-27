@@ -20,13 +20,23 @@ const Container = styled.div`
 
 const CarouselTrack = styled.div<{ $activeIndex: number }>`
   display: flex;
-  transition: transform 0.5s ease-in-out;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(-${({ $activeIndex }) => $activeIndex * 100}%);
+  will-change: transform;
+
+  ${landscapeStyle(
+    () => css`
+      transition: transform 0.5s ease-in-out;
+    `
+  )}
 `;
 
 const CarouselSlide = styled.div`
   min-width: 100%;
+  width: 100%;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 `;
 
 const Position1Container = styled.div`
@@ -123,7 +133,14 @@ const DotsContainer = styled.div`
   display: flex;
   justify-content: center;
   gap: 8px;
-  margin-top: 24px;
+  margin-top: 16px;
+  padding: 8px 0;
+
+  ${landscapeStyle(
+    () => css`
+      margin-top: 24px;
+    `
+  )}
 `;
 
 const Dot = styled.div<{ $active: boolean }>`
@@ -140,9 +157,9 @@ const Dot = styled.div<{ $active: boolean }>`
 `;
 
 const LoadingContainer = styled.div`
-  padding: 16px;
+  padding: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
-  border-radius: 16px;
+  border-radius: 12px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(10px);
@@ -154,28 +171,47 @@ const LoadingContainer = styled.div`
   ${landscapeStyle(
     () => css`
       padding: 20px;
+      border-radius: 16px;
     `
   )}
 `;
 
 const SkeletonTitle = styled(Skeleton)`
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   margin-left: auto;
   margin-right: auto;
+
+  ${landscapeStyle(
+    () => css`
+      margin-bottom: 20px;
+    `
+  )}
 `;
 
 const ChainRankingLoadingItem = styled.div<{ $isLast?: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0;
+  padding: 12px 0;
   border-bottom: ${({ $isLast }) => $isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.1)'};
+
+  ${landscapeStyle(
+    () => css`
+      padding: 16px 0;
+    `
+  )}
 `;
 
 const ChainRankingLoadingLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 16px;
+    `
+  )}
 `;
 
 interface HomeCarouselProps {

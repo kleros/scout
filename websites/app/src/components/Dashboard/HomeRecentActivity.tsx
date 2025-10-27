@@ -47,6 +47,7 @@ const ActivityRow = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
+  row-gap: 8px;
   padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.2s ease;
@@ -64,15 +65,25 @@ const ActivityRow = styled.div`
     margin-right: -8px;
     border-radius: 8px;
   }
+
+  @media (max-width: 767px) {
+    padding: 10px 0;
+  }
 `;
 
 const LeftSection = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
+  row-gap: 6px;
+  flex: 1 1 auto;
   min-width: 0;
   flex-wrap: wrap;
+
+  @media (max-width: 767px) {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
 `;
 
 const ItemName = styled.span`
@@ -82,7 +93,12 @@ const ItemName = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 150px;
+  flex-shrink: 1;
+  max-width: 120px;
+
+  @media (min-width: 480px) {
+    max-width: 180px;
+  }
 
   @media (min-width: 768px) {
     max-width: none;
@@ -94,44 +110,81 @@ const RegistryName = styled.span`
   font-weight: 400;
   color: ${({ theme }) => theme.secondaryText};
   flex-shrink: 0;
+  white-space: nowrap;
+
+  @media (max-width: 767px) {
+    font-size: 13px;
+  }
 `;
 
 const TimeInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11px;
   color: ${({ theme }) => theme.secondaryText};
   flex-shrink: 0;
-  width: 100%;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  flex-basis: 100%;
+
+  @media (min-width: 480px) {
+    flex-basis: auto;
+    font-size: 12px;
+  }
 
   @media (min-width: 768px) {
-    width: auto;
+    flex-basis: auto;
   }
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
     opacity: 0.8;
+
+    @media (min-width: 768px) {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 `;
 
 const RightSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  row-gap: 6px;
   flex-shrink: 0;
   flex-wrap: wrap;
+
+  @media (min-width: 768px) {
+    gap: 12px;
+  }
+
+  @media (max-width: 767px) {
+    flex: 0 0 100%;
+    justify-content: flex-start;
+  }
 `;
 
 const StatusBadge = styled.div<{ status: string }>`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 12px;
   color: ${({ theme }) => theme.primaryText};
   white-space: nowrap;
+  flex-shrink: 0;
+
+  @media (min-width: 768px) {
+    font-size: 13px;
+  }
 
   &:before {
     content: '';
@@ -167,9 +220,9 @@ const ViewButton = styled.button`
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   border: 1px solid;
@@ -181,9 +234,20 @@ const ViewButton = styled.button`
   flex-shrink: 0;
   white-space: nowrap;
 
+  @media (min-width: 768px) {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
   svg {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
+
+    @media (min-width: 768px) {
+      width: 12px;
+      height: 12px;
+    }
+
     path {
       fill: ${({ theme }) => theme.primaryText};
     }

@@ -60,19 +60,24 @@ const ChartTitle = styled.h3`
 `;
 
 const ChartWrapper = styled.div`
-  height: 180px;
+  height: 200px;
   width: 100%;
   position: relative;
-  flex: 1;
+  min-height: 200px;
 
   ${landscapeStyle(
     () => css`
       height: 280px;
+      flex: 1;
     `
   )}
 
   .recharts-wrapper {
     transition: all 0.3s ease;
+  }
+
+  .recharts-surface {
+    overflow: visible;
   }
 `;
 
@@ -93,7 +98,7 @@ const CHART_COLORS = {
 } as const;
 
 const CHART_CONFIG = {
-  margin: { top: 10, right: 10, left: 0, bottom: 10 },
+  margin: { top: 5, right: 5, left: -5, bottom: 5 },
   strokeWidth: 2,
   opacity: {
     gridOpacity: 0.3,
@@ -120,13 +125,13 @@ export const SubmissionsChart: React.FC<SubmissionsChartProps> = ({ data, title 
   }), []);
 
   const legendStyle = useMemo(() => ({
-    paddingTop: '10px',
-    fontSize: '11px'
+    paddingTop: '8px',
+    fontSize: '10px'
   }), []);
 
   const tickStyle = useMemo(() => ({
     fill: theme.secondaryText,
-    fontSize: 10
+    fontSize: 9
   }), [theme.secondaryText]);
 
   return (
