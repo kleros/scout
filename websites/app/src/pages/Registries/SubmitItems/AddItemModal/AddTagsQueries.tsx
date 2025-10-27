@@ -25,9 +25,10 @@ import { useItemCountsQuery } from '../../../../hooks/queries';
 import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions';
 import { getIPFSPath } from 'utils/getIPFSPath';
 import ipfsPublish from 'utils/ipfsPublish';
-import { registryMap } from 'utils/items'; 
+import { registryMap } from 'utils/items';
 import getAddressValidationIssue from 'utils/validateAddress';
 import { EnsureChain } from '../../../../components/EnsureChain';
+import { infoToast, errorToast } from 'utils/wrapWithToast';
 
 const columns = [
   {
@@ -119,32 +120,49 @@ const AddTagsQueries: React.FC = () => {
   }, [searchParams, countsData])
 
 
-  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
+  const { addItem, isLoading: isContractLoading } = useCurateInteractions();
+
+  // Combined loading state for both IPFS upload and contract interaction
+  const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitTagsQueries = async () => {
     if (!countsData?.Tags_Queries.deposits) return;
-    
-    const values = {
-      'Github Repository URL': githubRepository,
-      'Commit hash': commitHash,
-      'EVM Chain ID': evmChainId,
-      'Description': description,
+
+    setIsLocalLoading(true);
+    try {
+      const values = {
+        'Github Repository URL': githubRepository,
+        'Commit hash': commitHash,
+        'EVM Chain ID': evmChainId,
+        'Description': description,
+      }
+      const item = {
+        columns,
+        values,
+      }
+
+      infoToast('Uploading item to IPFS...');
+      const enc = new TextEncoder()
+      const fileData = enc.encode(JSON.stringify(item))
+      const ipfsObject = await ipfsPublish('item.json', fileData)
+      const ipfsPath = getIPFSPath(ipfsObject)
+
+      const result = await addItem(
+        registryMap.Tags_Queries as `0x${string}`,
+        ipfsPath,
+        countsData.Tags_Queries.deposits
+      );
+
+      if (result?.status) {
+        clearLocalStorage('addTagsQueriesForm');
+      }
+    } catch (error) {
+      console.error('Error submitting tags queries:', error);
+      errorToast(error instanceof Error ? error.message : 'Failed to submit tags queries');
+    } finally {
+      setIsLocalLoading(false);
     }
-    const item = {
-      columns,
-      values,
-    }
-    const enc = new TextEncoder()
-    const fileData = enc.encode(JSON.stringify(item))
-    const ipfsObject = await ipfsPublish('item.json', fileData)
-    const ipfsPath = getIPFSPath(ipfsObject)
-    
-    await addItem(
-      registryMap.Tags_Queries as `0x${string}`,
-      ipfsPath,
-      countsData.Tags_Queries.deposits
-    )
-    clearLocalStorage('addTagsQueriesForm');
   };
 
   const handleClose = () => {

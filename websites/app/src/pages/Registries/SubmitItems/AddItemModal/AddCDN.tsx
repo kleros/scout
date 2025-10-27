@@ -33,6 +33,7 @@ import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { useAttachment } from 'hooks/useAttachment'
 import { chains } from 'utils/chains'
+import { infoToast, errorToast } from 'utils/wrapWithToast'
 
 const columns = [
   {
@@ -150,31 +151,48 @@ const AddCDN: React.FC = () => {
     setFormData({ network, address, domain, path });
   }, [network, address, domain, path, setFormData]);
 
-  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
+  const { addItem, isLoading: isContractLoading } = useCurateInteractions();
+
+  // Combined loading state for both IPFS upload and contract interaction
+  const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitCDN = async () => {
     if (!countsData?.CDN.deposits) return;
-    
-    const values = {
-      'Contract address': `${network.value}:${address}`,
-      'Domain name': domain,
-      'Visual proof': path,
+
+    setIsLocalLoading(true);
+    try {
+      const values = {
+        'Contract address': `${network.value}:${address}`,
+        'Domain name': domain,
+        'Visual proof': path,
+      }
+      const item = {
+        columns,
+        values,
+      }
+
+      infoToast('Uploading item to IPFS...');
+      const enc = new TextEncoder()
+      const fileData = enc.encode(JSON.stringify(item))
+      const ipfsObject = await ipfsPublish('item.json', fileData)
+      const ipfsPath = getIPFSPath(ipfsObject)
+
+      const result = await addItem(
+        '0x957a53a994860be4750810131d9c876b2f52d6e1' as `0x${string}`,
+        ipfsPath,
+        countsData.CDN.deposits
+      );
+
+      if (result?.status) {
+        clearLocalStorage('addCDNForm');
+      }
+    } catch (error) {
+      console.error('Error submitting CDN:', error);
+      errorToast(error instanceof Error ? error.message : 'Failed to submit CDN');
+    } finally {
+      setIsLocalLoading(false);
     }
-    const item = {
-      columns,
-      values,
-    }
-    const enc = new TextEncoder()
-    const fileData = enc.encode(JSON.stringify(item))
-    const ipfsObject = await ipfsPublish('item.json', fileData)
-    const ipfsPath = getIPFSPath(ipfsObject)
-    
-    await addItem(
-      '0x957a53a994860be4750810131d9c876b2f52d6e1' as `0x${string}`,
-      ipfsPath,
-      countsData.CDN.deposits
-    );
-    clearLocalStorage('addCDNForm');
   }
 
   const handleClose = () => {

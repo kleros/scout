@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
@@ -7,6 +7,7 @@ import useRequiredFees from '../../hooks/useRequiredFees'
 import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
 import { GraphItemDetails } from '../../utils/itemDetails'
+import { errorToast } from '../../utils/wrapWithToast'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -432,6 +433,7 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
       onClose()
     } catch (error) {
       console.error('Error funding appeal:', error)
+      errorToast(error instanceof Error ? error.message : 'Failed to fund appeal')
     }
   }
 

@@ -33,6 +33,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useAttachment } from 'hooks/useAttachment'
 import { registryMap } from 'utils/items'
 import { chains } from 'utils/chains'
+import { infoToast, errorToast } from 'utils/wrapWithToast'
 
 const columns = [
   {
@@ -177,33 +178,50 @@ const AddAddressTag: React.FC = () => {
     return countsData[registryLabel]
   }, [searchParams, countsData])
 
-  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
+  const { addItem, isLoading: isContractLoading } = useCurateInteractions();
+
+  // Combined loading state for both IPFS upload and contract interaction
+  const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitAddressTag = async () => {
     if (!countsData?.Single_Tags.deposits) return;
-    
-    const values = {
-      'Contract Address': `${network.value}:${address}`,
-      'Public Name Tag': publicNameTag,
-      'Project Name': projectName,
-      'UI/Website Link': website,
-      'Public Note': publicNote,
+
+    setIsLocalLoading(true);
+    try {
+      const values = {
+        'Contract Address': `${network.value}:${address}`,
+        'Public Name Tag': publicNameTag,
+        'Project Name': projectName,
+        'UI/Website Link': website,
+        'Public Note': publicNote,
+      }
+      const item = {
+        columns,
+        values,
+      }
+
+      infoToast('Uploading item to IPFS...');
+      const enc = new TextEncoder()
+      const fileData = enc.encode(JSON.stringify(item))
+      const ipfsObject = await ipfsPublish('item.json', fileData)
+      const ipfsPath = getIPFSPath(ipfsObject)
+
+      const result = await addItem(
+        registryMap.Single_Tags as `0x${string}`,
+        ipfsPath,
+        countsData.Single_Tags.deposits
+      );
+
+      if (result?.status) {
+        clearLocalStorage('addTagForm');
+      }
+    } catch (error) {
+      console.error('Error submitting address tag:', error);
+      errorToast(error instanceof Error ? error.message : 'Failed to submit address tag');
+    } finally {
+      setIsLocalLoading(false);
     }
-    const item = {
-      columns,
-      values,
-    }
-    const enc = new TextEncoder()
-    const fileData = enc.encode(JSON.stringify(item))
-    const ipfsObject = await ipfsPublish('item.json', fileData)
-    const ipfsPath = getIPFSPath(ipfsObject)
-    
-    await addItem(
-      registryMap.Single_Tags as `0x${string}`,
-      ipfsPath,
-      countsData.Single_Tags.deposits
-    )
-    clearLocalStorage('addTagForm');
   }
 
   const handleClose = () => {

@@ -33,6 +33,7 @@ import {
 import { useSearchParams } from 'react-router-dom'
 import { useAttachment } from 'hooks/useAttachment'
 import { chains } from 'utils/chains'
+import { infoToast, errorToast } from 'utils/wrapWithToast'
 
 const columns = [
   {
@@ -185,34 +186,51 @@ const AddToken: React.FC = () => {
     return countsData[registryLabel]
   }, [searchParams, countsData])
 
-  const { addItem, isLoading: isSubmitting } = useCurateInteractions();
+  const [isLocalLoading, setIsLocalLoading] = useState(false);
+  const { addItem, isLoading: isContractLoading } = useCurateInteractions();
+
+  // Combined loading state for both IPFS upload and contract interaction
+  const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitToken = async () => {
     if (!countsData?.Tokens.deposits) return;
-    
-    const values = {
-      Address: `${network.value}:${address}`,
-      Name: name,
-      Symbol: symbol,
-      Decimals: decimals,
-      Logo: path,
-      Website: website,
+
+    setIsLocalLoading(true);
+    try {
+      const values = {
+        Address: `${network.value}:${address}`,
+        Name: name,
+        Symbol: symbol,
+        Decimals: decimals,
+        Logo: path,
+        Website: website,
+      }
+      const item = {
+        columns,
+        values,
+      }
+
+      infoToast('Uploading item to IPFS...');
+      const enc = new TextEncoder()
+      const fileData = enc.encode(JSON.stringify(item))
+      const ipfsObject = await ipfsPublish('item.json', fileData)
+      const ipfsPath = getIPFSPath(ipfsObject)
+
+      const result = await addItem(
+        '0xee1502e29795ef6c2d60f8d7120596abe3bad990' as `0x${string}`,
+        ipfsPath,
+        countsData.Tokens.deposits
+      );
+
+      if (result?.status) {
+        clearLocalStorage('addTokenForm');
+      }
+    } catch (error) {
+      console.error('Error submitting token:', error);
+      errorToast(error instanceof Error ? error.message : 'Failed to submit token');
+    } finally {
+      setIsLocalLoading(false);
     }
-    const item = {
-      columns,
-      values,
-    }
-    const enc = new TextEncoder()
-    const fileData = enc.encode(JSON.stringify(item))
-    const ipfsObject = await ipfsPublish('item.json', fileData)
-    const ipfsPath = getIPFSPath(ipfsObject)
-    
-    await addItem(
-      '0xee1502e29795ef6c2d60f8d7120596abe3bad990' as `0x${string}`,
-      ipfsPath,
-      countsData.Tokens.deposits
-    );
-    clearLocalStorage('addTokenForm');
   }
 
   const handleClose = () => {

@@ -14,7 +14,7 @@ export const OPTIONS = {
   theme: "colored" as Theme,
 };
 
-type WrapWithToastReturnType = {
+export type WrapWithToastReturnType = {
   status: boolean;
   result?: TransactionReceipt;
 };
