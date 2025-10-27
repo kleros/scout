@@ -205,8 +205,8 @@ const ItemCard = ({ item }: { item: any }) => {
   const endsIn = useHumanizedCountdown(endsAtSeconds, 2)
   const isCountdownLoading = challengePeriodDuration === null && item.status !== 'Registered' && !item.disputed
   const showEndsIn = useMemo(
-    () => (isCountdownLoading || Boolean(endsIn)) && item.status !== 'Registered',
-    [isCountdownLoading, endsIn, item.status],
+    () => (isCountdownLoading || Boolean(endsIn)) && item.status !== 'Registered' && !item.disputed,
+    [isCountdownLoading, endsIn, item.status, item.disputed],
   )
 
   const onView = () => {
@@ -248,7 +248,7 @@ const ItemCard = ({ item }: { item: any }) => {
         {showEndsIn && (
           <HeaderRight>
             <HourglassIcon />
-            Will be included in: {isCountdownLoading ? <Skeleton width={60} /> : endsIn}
+            {item.status === 'ClearingRequested' ? 'Will be removed in' : 'Will be included in'}: {isCountdownLoading ? <Skeleton width={60} /> : endsIn}
           </HeaderRight>
         )}
       </Header>

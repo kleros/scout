@@ -381,6 +381,15 @@ const ItemDetails: React.FC = () => {
     // Get current search params to preserve filters
     const params = new URLSearchParams(searchParams)
 
+    // Check if we came from the Home page
+    const fromHome = params.get('fromHome')
+    if (fromHome === 'true') {
+      return {
+        registryUrl: '/',
+        breadcrumbName: 'Home'
+      }
+    }
+
     // Check if we came from an Activity page (has fromActivity and userAddress params)
     const fromActivity = params.get('fromActivity')
     const userAddress = params.get('userAddress')

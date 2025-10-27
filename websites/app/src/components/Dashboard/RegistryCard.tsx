@@ -27,22 +27,10 @@ const Header = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
-
-  svg {
-    min-width: 32px;
-    min-height: 32px;
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-    
-    path, circle {
-      fill: ${({ theme }) => theme.primary};
-    }
-  }
 `;
 
 const Title = styled.h4`
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   margin: 0;
   color: ${({ theme }) => theme.primaryText};
@@ -71,37 +59,36 @@ const OpenButton = styled.button`
   justify-content: center;
   gap: 6px;
   padding: 8px 16px;
-  background: linear-gradient(90deg, #7d4bff 0%, #485fff 100%);
-  color: ${({ theme }) => theme.white};
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
   border: none;
-  border-radius: 8px;
+  border-radius: 9999px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: auto;
-  
+
   svg {
     width: 12px;
     height: 12px;
-    
+
     path {
       fill: currentColor;
     }
   }
-  
+
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0px 4px 12px rgba(125, 75, 255, 0.3);
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
-  
+
   &:active {
-    transform: translateY(0);
+    background: ${({ theme }) => theme.buttonWhiteActive};
   }
 `;
 
 interface RegistryCardProps {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   title: string;
   mainValue: string | number | React.ReactNode;
   secondaryValue: string;
@@ -131,7 +118,6 @@ export const RegistryCard: React.FC<RegistryCardProps> = ({
   return (
     <Card className={className} style={style}>
       <Header>
-        {icon}
         <Title>{title}</Title>
       </Header>
       <MainValue>{formattedMainValue}</MainValue>

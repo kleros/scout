@@ -464,7 +464,7 @@ const Item = React.memo(
                   {(isCountdownLoading || formattedChallengeRemainingTime) && (
                     <SubmittedLabel>
                       <HourglassIcon />
-                      Will be included in: {isCountdownLoading ? <Skeleton width={60} /> : formattedChallengeRemainingTime}
+                      {item.status === 'ClearingRequested' ? 'Will be removed in' : 'Will be included in'}: {isCountdownLoading ? <Skeleton width={60} /> : formattedChallengeRemainingTime}
                     </SubmittedLabel>
                   )}
                 </TimersContainer>

@@ -1,22 +1,15 @@
 import React, { useMemo } from 'react';
 import styled, { css } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle';
 import { responsiveSize } from 'styles/responsiveSize';
-import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 
 import { useDapplookerStats } from 'hooks/useDapplookerStats';
-import { StatCard } from 'components/Dashboard/StatCard';
-import { RegistryCard } from 'components/Dashboard/RegistryCard';
-import { StatsChart } from 'components/Dashboard/StatsChart';
-import { ChainRanking } from 'components/Dashboard/ChainRanking';
-import { ActiveRewardsCarousel } from 'components/Dashboard/ActiveRewardsCarousel';
-import { RecentActivity } from 'components/Dashboard/RecentActivity';
-import { LatestDisputes } from 'components/Dashboard/LatestDisputes';
-
-import SubmissionsIcon from 'svgs/icons/submissions.svg';
-import AssetsVerifiedIcon from 'svgs/icons/assets-verified.svg';
-import CuratorsIcon from 'svgs/icons/curators.svg';
+import { GlobalSearch } from 'components/Dashboard/GlobalSearch';
+import { HomeCarousel } from 'components/Dashboard/HomeCarousel';
+import { HomeRecentActivity } from 'components/Dashboard/HomeRecentActivity';
+import { HomeLatestDisputes } from 'components/Dashboard/HomeLatestDisputes';
 import ScrollTop from 'components/ScrollTop';
 
 const Container = styled.div`
@@ -38,305 +31,142 @@ const Container = styled.div`
   )}
 `;
 
-const Header = styled.div`
+const HeaderSection = styled.div`
   display: flex;
-  width: 100%;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
-  svg {
-    width: 64px;
-    height: 64px;
-    flex-shrink: 0;
-  }
+  text-align: center;
 `;
 
 const Title = styled.h1`
+  color: var(--Primary-text, #FFF);
+  text-align: center;
+  font-family: "Open Sans";
   font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
   margin: 0;
 `;
 
-const Subtitle = styled.p`
-  margin: 4px 0 0 0;
-  color: ${({ theme }) => theme.secondaryText};
+const Description = styled.p`
+  color: var(--Secondary-text, #BEBEC5);
+  text-align: center;
+  font-family: "Open Sans";
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin: 8px 0 0 0;
+  max-width: 800px;
 `;
 
-const MainGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  
-  @media (min-width: 900px) and (max-width: 1200px) {
-    /* Tablet: single column but larger gap */
-    gap: 40px;
+const SubmitButton = styled.button`
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
+  border: none;
+  border-radius: 9999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 24px;
+
+  &:hover {
+    background: ${({ theme }) => theme.buttonWhiteHover};
   }
-  
-  @media (min-width: 1201px) {
-    /* Desktop: two columns */
-    grid-template-columns: 1fr 400px;
-    gap: 32px;
+
+  &:active {
+    background: ${({ theme }) => theme.buttonWhiteActive};
   }
 `;
 
-const LeftColumn = styled.div`
+const SearchSection = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-`;
-
-const RightColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  justify-content: center;
+  margin-top: 32px;
+  margin-bottom: 48px;
   width: 100%;
-  min-width: 0;
-`;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  
   ${landscapeStyle(
     () => css`
-      grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
-      gap: 24px;
+      margin-bottom: 64px;
     `
   )}
 `;
 
-const RegistryGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  
+const CarouselSection = styled.div`
+  margin-bottom: 48px;
+
   ${landscapeStyle(
     () => css`
-      grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
+      margin-bottom: 64px;
     `
   )}
-`;
-
-const ChartSection = styled.div`
-  --index: 2;
 `;
 
 const BottomGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
-  --index: 3;
-  
+  gap: 24px;
+
   ${landscapeStyle(
     () => css`
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
+      grid-template-columns: 65fr 35fr;
+      gap: 32px;
     `
   )}
-  
-  /* Ensure children maintain stable dimensions */
-  > * {
-    min-width: 0;
-    overflow: hidden;
-  }
-`;
-
-const LoadingContainer = styled.div`
-  padding: 16px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(10px);
-  
-  ${landscapeStyle(
-    () => css`
-      padding: 24px;
-    `
-  )}
-`;
-
-const SkeletonTitle = styled(Skeleton)`
-  margin-bottom: 16px;
-  margin-left: auto;
-  margin-right: auto;
-  
-  ${landscapeStyle(
-    () => css`
-      margin-bottom: 24px;
-    `
-  )}
-`;
-
-const ChainRankingLoadingItem = styled.div<{ $isLast?: boolean }>`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: ${({ $isLast }) => $isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.1)'};
-`;
-
-const ChainRankingLoadingLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`;
-
-const ChartSkeleton = styled(Skeleton)`
-  height: 250px;
-  
-  ${landscapeStyle(
-    () => css`
-      height: 300px;
-    `
-  )}
-`;
-
-const IndexedWrapper = styled.div<{ $index: number }>`
-  --index: ${({ $index }) => $index};
-`;
-
-const ChildIndexedWrapper = styled.div<{ $childIndex: number }>`
-  --child-index: ${({ $childIndex }) => $childIndex};
 `;
 
 interface IHome {}
 
 const Home: React.FC<IHome> = () => {
   const { data: stats, isLoading } = useDapplookerStats();
+  const navigate = useNavigate();
 
   const chartData = useMemo(() => {
     if (!stats?.submissionsVsDisputes) return [];
-    
+
     return stats.submissionsVsDisputes.dates.map((date, index) => ({
       name: date,
       submissions: stats.submissionsVsDisputes.submissions[index],
-      disputes: stats.submissionsVsDisputes.disputes[index],
     }));
   }, [stats]);
+
+  const handleSubmitNowClick = () => {
+    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+  };
 
   return (
     <Container>
       <ScrollTop />
-      <Header>
-        <div>
-          <Title>Decentralized Asset Verification platform</Title>
-          <Subtitle>Keep Web3 secure. Earn rewards by adding, checking, and challenging submissions.</Subtitle>
-        </div>
-      </Header>
-      
-      <MainGrid>
-        <LeftColumn>
-          <StatsGrid>
-            <IndexedWrapper $index={0}>
-              <StatCard
-                icon={<AssetsVerifiedIcon />}
-                title="Total Assets Verified"
-                mainValue={isLoading ? <Skeleton width={80} height={32} /> : (stats?.totalAssetsVerified || 0)}
-              />
-            </IndexedWrapper>
-            
-            <IndexedWrapper $index={1}>
-              <StatCard
-                icon={<CuratorsIcon />}
-                title="Curators"
-                mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.totalCurators || 0)}
-              />
-            </IndexedWrapper>
-          </StatsGrid>
-          
-          <RegistryGrid>
-            <IndexedWrapper $index={0}>
-              <RegistryCard
-                icon={<SubmissionsIcon />}
-                title="Tokens"
-                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.tokens?.assetsVerified || 0)}
-                secondaryValue="Assets Verified"
-                registryKey="Tokens"
-              />
-            </IndexedWrapper>
-            
-            <IndexedWrapper $index={1}>
-              <RegistryCard
-                icon={<SubmissionsIcon />}
-                title="CDN"
-                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.cdn?.assetsVerified || 0)}
-                secondaryValue="Assets Verified"
-                registryKey="CDN"
-              />
-            </IndexedWrapper>
-            
-            <IndexedWrapper $index={2}>
-              <RegistryCard
-                icon={<SubmissionsIcon />}
-                title="Single Tags"
-                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.singleTags?.assetsVerified || 0)}
-                secondaryValue="Assets Verified"
-                registryKey="Single_Tags"
-              />
-            </IndexedWrapper>
-            
-            <IndexedWrapper $index={3}>
-              <RegistryCard
-                icon={<SubmissionsIcon />}
-                title="Tag Queries"
-                mainValue={isLoading ? <Skeleton width={70} height={24} /> : (stats?.tagQueries?.assetsVerified || 0)}
-                secondaryValue="Assets Verified"
-                registryKey="Tags_Queries"
-              />
-            </IndexedWrapper>
-          </RegistryGrid>
-          
-          <ChartSection>
-            {!isLoading && chartData.length > 0 ? (
-              <StatsChart 
-                data={chartData} 
-                title="Submissions vs. Disputes (Daily)"
-              />
-            ) : (
-              <LoadingContainer>
-                <SkeletonTitle height={16} width={250} />
-                <ChartSkeleton />
-              </LoadingContainer>
-            )}
-          </ChartSection>
-          
-          <BottomGrid>
-            <ChildIndexedWrapper $childIndex={0}>
-              {!isLoading && stats?.chainRanking ? (
-                <ChainRanking data={stats.chainRanking} />
-              ) : (
-                <LoadingContainer>
-                  <SkeletonTitle height={16} width={200} />
-                  {[...Array(5)].map((_, i) => (
-                    <ChainRankingLoadingItem key={i} $isLast={i === 4}>
-                      <ChainRankingLoadingLeft>
-                        <Skeleton width={32} height={16} />
-                        <Skeleton circle width={32} height={32} />
-                      </ChainRankingLoadingLeft>
-                      <Skeleton width={80} height={16} />
-                    </ChainRankingLoadingItem>
-                  ))}
-                </LoadingContainer>
-              )}
-            </ChildIndexedWrapper>
-            
-            <ChildIndexedWrapper $childIndex={1}>
-              <LatestDisputes />
-            </ChildIndexedWrapper>
-          </BottomGrid>
-        </LeftColumn>
-        
-        <RightColumn>
-          <IndexedWrapper $index={0}>
-            <ActiveRewardsCarousel />
-          </IndexedWrapper>
-          <IndexedWrapper $index={1}>
-            <RecentActivity />
-          </IndexedWrapper>
-        </RightColumn>
-      </MainGrid>
+
+      <HeaderSection>
+        <Title>Join The Largest Decentralized Database</Title>
+        <Description>
+          With one submission, smart contracts will be verified and assigned a trusted project name.
+          Partners will display these information on their dashboards and wallets making every interaction
+          safer for users and solving blind signing issues.
+        </Description>
+        <SubmitButton onClick={handleSubmitNowClick}>
+          Submit Now
+        </SubmitButton>
+      </HeaderSection>
+
+      <SearchSection>
+        <GlobalSearch />
+      </SearchSection>
+
+      <CarouselSection>
+        <HomeCarousel stats={stats} isLoading={isLoading} chartData={chartData} />
+      </CarouselSection>
+
+      <BottomGrid>
+        <HomeRecentActivity />
+        <HomeLatestDisputes />
+      </BottomGrid>
     </Container>
   );
 };

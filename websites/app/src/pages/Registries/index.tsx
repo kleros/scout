@@ -269,7 +269,7 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     setSearchParams((prev) => {
-      if (prev.get('page') === 'rewards' || prev.get('attachment')) {
+      if (prev.get('page') === 'rewards' || prev.get('attachment') || prev.get('additem')) {
         return prev;
       }
       const status = prev.getAll('status');
@@ -294,6 +294,10 @@ const Home: React.FC = () => {
         const text = prev.get('text');
         if (text) {
           newSearchParams.set('text', text);
+        }
+        const additem = prev.get('additem');
+        if (additem) {
+          newSearchParams.set('additem', additem);
         }
         return newSearchParams;
       }

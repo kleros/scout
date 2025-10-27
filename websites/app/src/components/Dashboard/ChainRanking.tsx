@@ -20,21 +20,22 @@ const fadeInUp = keyframes`
 `;
 
 const Container = styled.div`
-  padding: 16px;
-  border-radius: 16px;
+  padding: 12px;
+  border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   animation: ${fadeInUp} 0.6s ease-out;
-  
+
   ${landscapeStyle(
     () => css`
       padding: 24px;
+      border-radius: 16px;
     `
   )}
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
@@ -42,20 +43,18 @@ const Container = styled.div`
 `;
 
 const Title = styled.h3`
-  font-size: 16px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.primaryText};
-  margin: 0 0 16px 0;
-  letter-spacing: -0.3px;
-  background: linear-gradient(135deg, #7d4bff 0%, #485fff 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--Secondary-blue, #7186FF);
+  font-family: "Open Sans";
+  font-size: 14px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: normal;
+  margin: 0 0 12px 0;
 
   ${landscapeStyle(
     () => css`
-      font-size: 18px;
-      margin-bottom: 24px;
+      font-size: 16px;
+      margin: 0 0 20px 0;
     `
   )}
 `;
@@ -70,10 +69,17 @@ const RankingItem = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
-  font-size: 16px;
+  padding: 12px 0;
+  font-size: 14px;
   color: ${({ theme }) => theme.secondaryText};
-  
+
+  ${landscapeStyle(
+    () => css`
+      padding: 16px 0;
+      font-size: 16px;
+    `
+  )}
+
   &:not(:last-child) {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
@@ -82,21 +88,41 @@ const RankingItem = styled.div`
 const LeftSide = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 16px;
+    `
+  )}
 `;
 
 const RankPosition = styled.div`
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   color: ${({ theme }) => theme.secondaryText};
-  min-width: 32px;
+  min-width: 24px;
+
+  ${landscapeStyle(
+    () => css`
+      font-size: 16px;
+      min-width: 32px;
+    `
+  )}
 `;
 
 const ChainIcon = styled.div`
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
-  
+
+  ${landscapeStyle(
+    () => css`
+      width: 32px;
+      height: 32px;
+    `
+  )}
+
   svg {
     width: 100%;
     height: 100%;
@@ -104,9 +130,15 @@ const ChainIcon = styled.div`
 `;
 
 const ItemCount = styled.div`
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   color: ${({ theme }) => theme.secondaryText};
+
+  ${landscapeStyle(
+    () => css`
+      font-size: 16px;
+    `
+  )}
 `;
 
 type ChainName = 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base';

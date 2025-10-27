@@ -14,16 +14,26 @@ const shimmer = keyframes`
 const Card = styled.div`
   display: flex;
   flex-direction: column;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
-  padding: clamp(16px, 3vw, 24px);
+  padding: 12px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
-  
+  margin-bottom: 12px;
+
+  ${landscapeStyle(
+    () => css`
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      min-width: clamp(250px, 30vw, 300px);
+    `
+  )}
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.15);
@@ -51,19 +61,13 @@ const Card = styled.div`
   &:hover::before {
     opacity: 1;
   }
-  
-  ${landscapeStyle(
-    () => css`
-      min-width: clamp(250px, 30vw, 300px);
-    `
-  )}
 `;
 
 const Header = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 
   ${landscapeStyle(
     () => css`
@@ -73,12 +77,12 @@ const Header = styled.div`
   )}
 
   svg {
-    min-width: 40px;
-    min-height: 40px;
-    width: 40px;
-    height: 40px;
+    min-width: 32px;
+    min-height: 32px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
-    
+
     ${landscapeStyle(
       () => css`
         min-width: 48px;
@@ -87,7 +91,7 @@ const Header = styled.div`
         height: 48px;
       `
     )}
-    
+
     path, circle {
       fill: ${({ theme }) => theme.primary};
     }
@@ -95,25 +99,20 @@ const Header = styled.div`
 `;
 
 const Title = styled.h3`
+  color: var(--Secondary-text, #BEBEC5);
+  font-family: "Open Sans";
   font-size: 14px;
-  font-weight: 600;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
   margin: 0;
-  color: ${({ theme }) => theme.primaryText};
-  letter-spacing: -0.2px;
-  line-height: 1.2;
-
-  ${landscapeStyle(
-    () => css`
-      font-size: 16px;
-    `
-  )}
 `;
 
 const MainValue = styled.div`
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   color: ${({ theme }) => theme.primaryText};
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   letter-spacing: -1px;
   transition: all 0.3s ease;
 
