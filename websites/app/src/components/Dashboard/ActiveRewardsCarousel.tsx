@@ -53,13 +53,19 @@ const CardsGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
+  width: 100%;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
 
   ${landscapeStyle(
     () => css`
       grid-template-columns: repeat(3, 1fr);
       max-width: 1200px;
       margin: 0 auto;
-      gap: 16px;
+      gap: 24px;
     `
   )}
 `;
@@ -69,75 +75,74 @@ const Card = styled.div`
   flex-direction: column;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
-  padding: 12px;
+  padding: 16px;
   justify-content: space-between;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
+  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  transform: scale(1);
   ${hoverShortTransitionTiming}
   position: relative;
-  min-height: 180px;
+  min-height: 200px;
+  width: 100%;
+  min-width: 0;
 
   ${landscapeStyle(
     () => css`
-      padding: 18px;
-      min-height: 220px;
+      padding: 24px;
+      min-height: 240px;
     `
   )}
 
   &:hover {
+    transform: scale(1.02);
     border-color: ${({ theme }) => theme.primary};
     box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
-    transform: translateY(-4px);
   }
 `;
 
 const NewBadge = styled.div`
   position: absolute;
-  top: -8px;
+  top: -12px;
   right: 0px;
   background: linear-gradient(90deg, #7d4bff 0%, #485fff 100%);
   color: ${({ theme }) => theme.white};
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 600;
   border-radius: 999px;
-  padding: 3px 10px;
-
-  ${landscapeStyle(
-    () => css`
-      font-size: 12px;
-      padding: 4px 12px;
-      top: -10px;
-    `
-  )}
+  padding: 6px 16px;
+  z-index: 1;
 `;
 
 const CardTitle = styled.h2`
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  margin: 0 0 4px 0;
-  line-height: 1.3;
+  margin: 0 0 6px 0;
+  line-height: 1.5;
   color: ${({ theme }) => theme.primaryText};
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 
   ${landscapeStyle(
     () => css`
-      font-size: 14px;
-      margin: 0 0 6px 0;
+      font-size: 16px;
+      margin: 0 0 8px 0;
     `
   )}
 `;
 
 const CardDescription = styled.p`
-  margin: 0 0 12px 0;
+  margin: 0 0 16px 0;
   color: ${({ theme }) => theme.secondaryText};
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 13px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 
   ${landscapeStyle(
     () => css`
-      margin: 0 0 16px 0;
-      font-size: 13px;
+      margin: 0 0 24px 0;
+      font-size: 14px;
     `
   )}
 `;
@@ -147,30 +152,34 @@ const DetailRow = styled.div`
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 11px;
-  margin-bottom: 6px;
+  row-gap: 4px;
+  font-size: 13px;
+  margin-bottom: 10px;
   color: ${({ theme }) => theme.secondaryText};
+  width: 100%;
+  min-width: 0;
 
   ${landscapeStyle(
     () => css`
-      font-size: 13px;
-      margin-bottom: 10px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      gap: 8px;
     `
   )}
 
   svg {
-    min-width: 12px;
-    min-height: 12px;
-    width: 12px;
-    height: 12px;
+    min-width: 14px;
+    min-height: 14px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
 
     ${landscapeStyle(
       () => css`
-        min-width: 14px;
-        min-height: 14px;
-        width: 14px;
-        height: 14px;
+        min-width: 16px;
+        min-height: 16px;
+        width: 16px;
+        height: 16px;
       `
     )}
 
@@ -178,39 +187,52 @@ const DetailRow = styled.div`
       fill: ${({ theme }) => theme.primary};
     }
   }
+
+  span {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
 `;
 
 const TopSide = styled.div`
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: 100%;
 `;
 
 const BottomSide = styled.div`
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: 100%;
 `;
 
 const StyledCalendarValue = styled.label`
   margin-left: auto;
   color: ${({ theme }) => theme.secondaryPurple};
-  font-size: 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   ${landscapeStyle(
     () => css`
-      font-size: 13px;
+      font-size: 14px;
     `
   )}
 `;
 
 const StyledRewardValue = styled.label`
   margin-left: auto;
-  font-size: 14px;
+  font-size: 16px;
   color: ${({ theme }) => theme.secondaryPurple};
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 
   ${landscapeStyle(
     () => css`
-      font-size: 18px;
+      font-size: 24px;
     `
   )}
 `;
@@ -218,11 +240,11 @@ const StyledRewardValue = styled.label`
 const Divider = styled.div`
   height: 1px;
   background: linear-gradient(90deg, #7d4bff 0%, #485fff 100%);
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 
   ${landscapeStyle(
     () => css`
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     `
   )}
 `;

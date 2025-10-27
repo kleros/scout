@@ -102,10 +102,10 @@ const Position3Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      grid-template-columns: repeat(4, 1fr);
-      max-width: 1200px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      max-width: 1400px;
       margin: 0 auto;
-      gap: 16px;
+      gap: 24px;
     `
   )}
 `;

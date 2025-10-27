@@ -162,14 +162,15 @@ const RightSection = styled.div`
   row-gap: 6px;
   flex-shrink: 0;
   flex-wrap: wrap;
+  justify-content: space-between;
 
   @media (min-width: 768px) {
     gap: 12px;
+    justify-content: flex-start;
   }
 
   @media (max-width: 767px) {
     flex: 0 0 100%;
-    justify-content: flex-start;
   }
 `;
 
@@ -202,6 +203,17 @@ const StatusBadge = styled.div<{ status: string }>`
     })[status] || 'gray'};
     border-radius: 50%;
     flex-shrink: 0;
+  }
+`;
+
+const StatusGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+
+  @media (min-width: 768px) {
+    gap: 12px;
   }
 `;
 
@@ -380,12 +392,14 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, onClick }) => {
         )}
       </LeftSection>
       <RightSection>
-        <StatusBadge status={status}>{status}</StatusBadge>
-        {ChainIcon && (
-          <ChainInfo>
-            <ChainIcon />
-          </ChainInfo>
-        )}
+        <StatusGroup>
+          <StatusBadge status={status}>{status}</StatusBadge>
+          {ChainIcon && (
+            <ChainInfo>
+              <ChainIcon />
+            </ChainInfo>
+          )}
+        </StatusGroup>
         <ViewButton onClick={onClick}>
           View <ArrowIcon />
         </ViewButton>
