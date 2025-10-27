@@ -48,7 +48,7 @@ const TopBar = styled.div`
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   gap: 16px;
   flex-wrap: wrap;
 `
@@ -99,7 +99,7 @@ const MainCard = styled.div`
 
   ${landscapeStyle(
     () => css`
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 1fr 380px;
       gap: 40px;
     `,
   )}
@@ -470,6 +470,29 @@ const ItemDetails: React.FC = () => {
           </TopBar>
 
           <MainCard>
+            <RightSection>
+              <ItemDetailsContent
+                detailsData={detailsData}
+                deposits={deposits}
+                arbitrationCostData={arbitrationCostData}
+                statusCode={statusCode}
+                registryParametersLoading={registryParametersLoading}
+                challengePeriodDuration={challengePeriodDuration}
+                shouldShowCrowdfunding={shouldShowCrowdfunding}
+                currentRulingRound={currentRulingRound}
+                appealRemainingTime={appealRemainingTime}
+                formattedLoserTimeLeft={formattedLoserTimeLeft}
+                formattedWinnerTimeLeft={formattedWinnerTimeLeft}
+                appealCost={appealCost}
+                appealCostLoading={appealCostLoading}
+                registryParameters={registryParameters}
+                registryParsedFromItemId={registryParsedFromItemId}
+                evidences={evidences}
+                setIsConfirmationOpen={setIsConfirmationOpen}
+                setEvidenceConfirmationType={setEvidenceConfirmationType}
+              />
+            </RightSection>
+
             <LeftSection>
               <ItemCardWrapper>
                 <Item
@@ -523,29 +546,6 @@ const ItemDetails: React.FC = () => {
                 )}
               </SubmissionDetailsSection>
             </LeftSection>
-
-            <RightSection>
-              <ItemDetailsContent
-                detailsData={detailsData}
-                deposits={deposits}
-                arbitrationCostData={arbitrationCostData}
-                statusCode={statusCode}
-                registryParametersLoading={registryParametersLoading}
-                challengePeriodDuration={challengePeriodDuration}
-                shouldShowCrowdfunding={shouldShowCrowdfunding}
-                currentRulingRound={currentRulingRound}
-                appealRemainingTime={appealRemainingTime}
-                formattedLoserTimeLeft={formattedLoserTimeLeft}
-                formattedWinnerTimeLeft={formattedWinnerTimeLeft}
-                appealCost={appealCost}
-                appealCostLoading={appealCostLoading}
-                registryParameters={registryParameters}
-                registryParsedFromItemId={registryParsedFromItemId}
-                evidences={evidences}
-                setIsConfirmationOpen={setIsConfirmationOpen}
-                setEvidenceConfirmationType={setEvidenceConfirmationType}
-              />
-            </RightSection>
           </MainCard>
         </>
       )}
