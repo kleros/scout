@@ -119,21 +119,21 @@ const HeroWrapper = styled.div`
 
 const HeroShadow = styled.div`
   position: absolute;
-  top: -140px;
-  left: 60%;
+  top: -280px;
+  left: 50%;
   transform: translateX(-50%);
-  width: 800px;
-  height: 400px;
+  width: 1000px;
+  height: 600px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.35;
-  display: flex;
-  justify-content: center;
-  svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
+  opacity: 0;
+  display: none;
+
+  ${landscapeStyle(
+    () => css`
+      display: none;
+    `
+  )}
 `;
 
 const HeroTitle = styled.h1`
@@ -144,6 +144,23 @@ const HeroTitle = styled.h1`
   position: relative;
   z-index: 1;
   letter-spacing: 0.5px;
+  filter: drop-shadow(0 0 20px rgba(113, 134, 255, 0.55))
+          drop-shadow(0 0 40px rgba(113, 134, 255, 0.35))
+          drop-shadow(0 0 60px rgba(113, 134, 255, 0.2));
+  text-shadow: 0 0 25px rgba(113, 134, 255, 0.6),
+               0 0 50px rgba(113, 134, 255, 0.4),
+               0 0 75px rgba(113, 134, 255, 0.25);
+
+  ${landscapeStyle(
+    () => css`
+      filter: drop-shadow(0 0 25px rgba(113, 134, 255, 0.6))
+              drop-shadow(0 0 50px rgba(113, 134, 255, 0.4))
+              drop-shadow(0 0 75px rgba(113, 134, 255, 0.25));
+      text-shadow: 0 0 30px rgba(113, 134, 255, 0.65),
+                   0 0 60px rgba(113, 134, 255, 0.45),
+                   0 0 90px rgba(113, 134, 255, 0.3);
+    `
+  )}
 `;
 
 const HeroSubtitle = styled.h2`

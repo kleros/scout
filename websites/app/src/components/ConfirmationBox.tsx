@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -13,15 +13,16 @@ import { Address } from 'viem'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
 import TransactionButton from 'components/TransactionButton'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
+import { useLocalStorage } from 'hooks/useLocalStorage'
 
-const ModalOverlay = styled.div`
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.75);
-  display: flex;
+  display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   justify-content: center;
   align-items: center;
   z-index: 1000;
@@ -203,28 +204,76 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   deposits,
   arbitrationCostData,
 }) => {
-  const [evidenceTitle, setEvidenceTitle] = useState('')
-  const [evidenceText, setEvidenceText] = useState('')
-  const [attachedFile, setAttachedFile] = useState<File | null>(null)
+  const cacheKey = `confirmationBox:${detailsData.registryAddress}:${detailsData.itemID}:${evidenceConfirmationType}`
+
+  const [formData, setFormData] = useLocalStorage(cacheKey, {
+    evidenceTitle: '',
+    evidenceText: '',
+    attachedFileBase64: null as string | null,
+    attachedFileName: null as string | null,
+  })
+
+  const [evidenceTitle, setEvidenceTitle] = useState<string>(formData.evidenceTitle)
+  const [evidenceText, setEvidenceText] = useState<string>(formData.evidenceText)
+  const [attachedFileBase64, setAttachedFileBase64] = useState<string | null>(formData.attachedFileBase64)
+  const [attachedFileName, setAttachedFileName] = useState<string | null>(formData.attachedFileName)
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const { submitEvidence, challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
 
   // Combined loading state for both IPFS upload and contract interaction
   const isLoading = isLocalLoading || isContractLoading
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Sync to localStorage - EXACT same pattern as AddToken
+  useEffect(() => {
+    setFormData({ evidenceTitle, evidenceText, attachedFileBase64, attachedFileName })
+  }, [evidenceTitle, evidenceText, attachedFileBase64, attachedFileName, setFormData])
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      setAttachedFile(file)
+      setAttachedFileName(file.name)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const result = reader.result?.toString()
+        if (result) {
+          setAttachedFileBase64(result)
+        }
+      }
+      reader.readAsDataURL(file)
     }
   }
 
   const handleRemoveFile = () => {
-    setAttachedFile(null)
+    setAttachedFileBase64(null)
+    setAttachedFileName(null)
+  }
+
+  // Convert base64 back to File object when needed
+  const attachedFile = attachedFileBase64 && attachedFileName ? (() => {
+    try {
+      const arr = attachedFileBase64.split(',')
+      const mime = arr[0].match(/:(.*?);/)?.[1] || 'application/octet-stream'
+      const bstr = atob(arr[1])
+      let n = bstr.length
+      const u8arr = new Uint8Array(n)
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n)
+      }
+      return new File([u8arr], attachedFileName, { type: mime })
+    } catch (error) {
+      console.error('Error converting base64 to file:', error)
+      return null
+    }
+  })() : null
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && !isLoading) {
+      setIsConfirmationOpen(false)
+    }
   }
 
   return (
-    <ModalOverlay>
+    <ModalOverlay $isOpen={isConfirmationOpen} onClick={handleOverlayClick}>
       <Container>
         <InnerContainer>
           <ConfirmationTitle>
@@ -410,7 +459,14 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     if (result?.status) {
                       setEvidenceTitle('')
                       setEvidenceText('')
-                      setAttachedFile(null)
+                      setAttachedFileBase64(null)
+                      setAttachedFileName(null)
+                      setFormData({
+                        evidenceTitle: '',
+                        evidenceText: '',
+                        attachedFileBase64: null,
+                        attachedFileName: null,
+                      })
                       setIsConfirmationOpen(false)
                     }
                   } catch (error) {
