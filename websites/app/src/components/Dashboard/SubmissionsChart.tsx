@@ -92,9 +92,9 @@ interface SubmissionsChartProps {
 }
 
 const CHART_COLORS = {
-  primary: '#7d4bff',
+  primary: '#7186FF',
   tooltip: 'rgba(0, 0, 0, 0.8)',
-  cursor: '#7d4bff',
+  cursor: '#7186FF',
 } as const;
 
 const CHART_CONFIG = {

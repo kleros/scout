@@ -12,6 +12,12 @@ import { HomeRecentActivity } from 'components/Dashboard/HomeRecentActivity';
 import { HomeLatestDisputes } from 'components/Dashboard/HomeLatestDisputes';
 import ScrollTop from 'components/ScrollTop';
 
+import EtherscanLogo from 'assets/pngs/partners/etherscan.png';
+import UniswapLogo from 'assets/pngs/partners/uniswap.png';
+import LedgerLogo from 'assets/pngs/partners/ledger.png';
+import MetamaskLogo from 'assets/pngs/partners/metamask.png';
+import ZerionLogo from 'assets/pngs/partners/zerion.png';
+
 const Container = styled.div`
   width: 100%;
   background-color: ${({ theme }) => theme.lightBackground};
@@ -87,12 +93,85 @@ const SearchSection = styled.div`
   display: flex;
   justify-content: center;
   margin-top: 32px;
+  margin-bottom: 32px;
+  width: 100%;
+
+  ${landscapeStyle(
+    () => css`
+      margin-bottom: 48px;
+    `
+  )}
+`;
+
+const TrustedBySection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 48px;
   width: 100%;
 
   ${landscapeStyle(
     () => css`
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
       margin-bottom: 64px;
+      flex-wrap: wrap;
+    `
+  )}
+`;
+
+const TrustedByText = styled.h3`
+  color: var(--Secondary-blue, #7186FF);
+  font-family: "Open Sans";
+  font-size: 14px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: normal;
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  ${landscapeStyle(
+    () => css`
+      font-size: 16px;
+    `
+  )}
+`;
+
+const LogosContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex-shrink: 1;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 64px;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    `
+  )}
+`;
+
+const PartnerLogo = styled.img`
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  ${landscapeStyle(
+    () => css`
+      height: 28px;
     `
   )}
 `;
@@ -158,6 +237,18 @@ const Home: React.FC<IHome> = () => {
       <SearchSection>
         <GlobalSearch />
       </SearchSection>
+
+      <TrustedBySection>
+        <TrustedByText>Trusted by</TrustedByText>
+        <LogosContainer>
+          <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
+          <PartnerLogo src={UniswapLogo} alt="Uniswap" />
+          <PartnerLogo src={LedgerLogo} alt="Ledger" />
+          <PartnerLogo src={MetamaskLogo} alt="MetaMask" />
+          <PartnerLogo src={ZerionLogo} alt="Zerion" />
+        </LogosContainer>
+        <TrustedByText>& Many More</TrustedByText>
+      </TrustedBySection>
 
       <CarouselSection>
         <HomeCarousel stats={stats} isLoading={isLoading} chartData={chartData} />
