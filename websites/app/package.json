@@ -1,9 +1,10 @@
 {
-  "name": "@kleros/perma-curate",
+  "name": "@kleros/scout",
   "homepage": "./",
   "source": "src/index.html",
   "version": "0.1.0",
   "license": "MIT",
+  "type": "module",
   "alias": {
     "src": "./src",
     "utils": "./src/utils",
@@ -21,24 +22,35 @@
     "gifs": "./src/assets/gifs"
   },
   "scripts": {
-    "start": "parcel",
-    "build": "parcel build --public-url ./"
+    "clean": "rimraf node_modules dist",
+    "start": "wagmi generate && vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@cyntler/react-doc-viewer": "^1.16.3",
+    "@kleros/kleros-app": "^2.0.2",
+    "@kleros/ui-components-library": "^3.4.5",
+    "@reown/appkit": "^1.7.1",
+    "@reown/appkit-adapter-wagmi": "^1.7.1",
     "@scure/base": "^1.2.5",
     "@solana/web3.js": "^1.98.0",
-    "@tanstack/react-query": "^5.12.2",
+    "@tanstack/react-query": "^5.69.0",
+    "@wagmi/connectors": "^5.7.11",
+    "@wagmi/core": "^2.16.7",
     "bs58check": "^4.0.0",
     "cross-fetch": "^4.0.0",
     "ethers": "^6.8.0",
     "graphql": "^16.8.1",
     "graphql-request": "^6.1.0",
     "humanize-duration": "^3.32.1",
+    "json-2-csv": "^5.5.9",
     "overlayscrollbars": "^2.3.0",
     "overlayscrollbars-react": "^0.5.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-error-boundary": "^4.1.2",
+    "react-identicons": "^1.2.5",
     "react-loading-skeleton": "^3.4.0",
     "react-markdown": "^8.0.7",
     "react-modal": "^3.15.1",
@@ -47,11 +59,12 @@
     "react-select": "^5.8.0",
     "react-toastify": "^9.1.3",
     "react-use": "^17.4.0",
-    "styled-components": "^5.3.9"
+    "recharts": "^3.1.2",
+    "styled-components": "^5.3.9",
+    "viem": "^2.24.1",
+    "wagmi": "^2.14.15"
   },
   "devDependencies": {
-    "@parcel/transformer-svg-react": "2.8.3",
-    "@parcel/watcher": "~2.2.0",
     "@tanstack/eslint-plugin-query": "^5.12.1",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
@@ -59,16 +72,20 @@
     "@types/react-modal": "^3.14.1",
     "@types/react-router-dom": "5.3.3",
     "@types/styled-components": "^5.1.26",
+    "@vitejs/plugin-react-swc": "^3.10.1",
+    "@wagmi/cli": "^2.3.2",
     "autoprefixer": "^10.0.0",
     "buffer": "^5.5.0",
     "eslint": "^8.0.0",
-    "eslint-import-resolver-parcel": "^1.10.6",
     "eslint-plugin-react": "^7.0.0",
     "eslint-plugin-react-hooks": "^4.0.0",
-    "parcel": "2.8.3",
     "postcss": "^8.0.0",
     "process": "^0.11.10",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "vite": "^6.3.5",
+    "vite-plugin-node-polyfills": "^0.23.0",
+    "vite-plugin-svgr": "^4.3.0",
+    "vite-tsconfig-paths": "^5.1.4"
   },
   "eslintConfig": {
     "extends": [
@@ -93,7 +110,7 @@
     "singleQuote": true
   },
   "volta": {
-    "node": "18.19.1",
-    "yarn": "3.3.1"
+    "node": "20.18.3",
+    "yarn": "4.8.1"
   }
 }

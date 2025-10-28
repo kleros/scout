@@ -1,0 +1,8 @@
+[build]
+  publish = "dist"
+  command = "wagmi generate && yarn run build"
+
+[build.environment]
+  NODE_VERSION = "20.18.3"
+  YARN_VERSION = "4.8.1"
+  NPM_FLAGS = "--legacy-peer-deps"

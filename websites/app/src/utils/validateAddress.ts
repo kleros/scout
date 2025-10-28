@@ -1,6 +1,6 @@
 import { isAddress } from 'ethers'
 import request, { gql } from 'graphql-request'
-import { registryMap } from './fetchItems'
+import { registryMap } from './items'
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index'
 import { PublicKey } from '@solana/web3.js'
 import { chains } from 'utils/chains'
@@ -49,7 +49,7 @@ const isBip122Address = (value: string): boolean => {
 
 const isValidAddressForChain = (chainId: string, address: string): boolean => {
   const network = chains.find(
-    (chain) => `${chain.namespace}:${chain.id}` === chainId
+    (chain) => `${chain.namespace}:${chain.id}` === chainId,
   )
 
   if (!network) return false
@@ -96,7 +96,7 @@ export interface Issue {
 const getDupesInRegistry = async (
   richAddress: string,
   registryAddress: string,
-  domain?: string
+  domain?: string,
 ): Promise<number> => {
   const query = gql`
     query ($registry: String!, $richAddress: String!, $domain: String) {
@@ -112,6 +112,7 @@ const getDupesInRegistry = async (
       }
     }
   `
+
   const variables: Record<string, any> = {
     registry: registryAddress,
     richAddress: `%${richAddress}%`, // contains
@@ -131,7 +132,7 @@ const getDupesInRegistry = async (
 
 const getTokenDupesWithWebsiteCheck = async (
   richAddress: string,
-  registryAddress: string
+  registryAddress: string,
 ): Promise<number> => {
   const query = gql`
     query ($registry: String!, $richAddress: String!) {
@@ -159,9 +160,9 @@ const getTokenDupesWithWebsiteCheck = async (
     },
   })) as any
 
-  // Only count duplicates if existing entries have a website (key3)
+  // Only count duplicates if existing items have a website (key3)
   const duplicatesWithWebsite = result.litems.filter(
-    (item: any) => item?.key3 && item.key3.trim() !== ''
+    (item: any) => item?.key3 && item.key3.trim() !== '',
   )
 
   return duplicatesWithWebsite.length
@@ -175,13 +176,13 @@ export const getAddressValidationIssue = async (
   projectName?: string,
   publicNameTag?: string,
   link?: string,
-  symbol?: string
+  symbol?: string,
 ): Promise<Issue | null> => {
   const result: Issue = {}
 
   if (address && !isValidAddressForChain(chainId, address)) {
     const network = chains.find(
-      (chain) => `${chain.namespace}:${chain.id}` === chainId
+      (chain) => `${chain.namespace}:${chain.id}` === chainId,
     )
     let message = 'Invalid address for the specified chain'
 
@@ -257,17 +258,17 @@ export const getAddressValidationIssue = async (
     const ndupes = await getDupesInRegistry(
       chainId + ':' + address,
       registryMap[registry],
-      domain
+      domain,
     )
 
     if (ndupes > 0) {
       result.domain = { message: 'Duplicate submission', severity: 'error' }
     }
   } else if (registry === 'Tokens') {
-    // For tokens, only consider it a duplicate if any of the existing entries have a website
+    // For tokens, only consider it a duplicate if any of the existing items have a website
     const ndupes = await getTokenDupesWithWebsiteCheck(
       chainId + ':' + address,
-      registryMap[registry]
+      registryMap[registry],
     )
 
     if (ndupes > 0) {

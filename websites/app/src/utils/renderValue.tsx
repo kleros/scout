@@ -2,41 +2,45 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import AddressDisplay from 'components/AddressDisplay'
-import { useSearchParams } from 'react-router-dom'
-import { useScrollTop } from 'hooks/useScrollTop'
+import { useAttachment } from 'hooks/useAttachment'
+import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
 const ImageContainer = styled.div`
   margin-left: 4px;
 `
 
 const StyledButton = styled.button`
+  ${hoverShortTransitionTiming}
   cursor: pointer;
   background: none;
   border: none;
   padding: 0;
+
+  &:hover {
+    filter: brightness(0.8);
+  }
 `;
 
 export const StyledWebsiteAnchor = styled.a`
-  color: #fff;
-  text-decoration: none;
+  ${hoverShortTransitionTiming}
+  color: ${({ theme }) => theme.secondaryText};
+  text-decoration: underline;
+  font-size: 14px;
 
   &:hover {
-    text-decoration: underline;
+    color: ${({ theme }) => theme.primaryText};
   }
 `
 
 const ImageWithSkeleton = ({ src, alt }) => {
   const [imgLoaded, setImgLoaded] = useState(false)
-  const [, setSearchParams] = useSearchParams()
-
-  const scrollTop = useScrollTop();
+  const openAttachment = useAttachment();
 
   return (
     <ImageContainer>
       <StyledButton
         onClick={() => {
-          setSearchParams({ attachment: src });
-          scrollTop();
+          openAttachment(src);
         }}
       >
         {!imgLoaded && <Skeleton height={100} width={100} />}

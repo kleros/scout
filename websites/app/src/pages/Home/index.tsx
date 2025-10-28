@@ -1,287 +1,265 @@
-import React, { useEffect, useMemo } from 'react'
-import styled, { css } from 'styled-components'
-import { landscapeStyle } from 'styles/landscapeStyle'
-import { useSearchParams, createSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { fetchItems } from 'utils/fetchItems'
-import { chains } from 'utils/chains'
-import { fetchItemCounts } from 'utils/itemCounts'
-import Navbar from './Navbar'
-import RewardsPage from '../RewardsSection'
-import RegistryDetails from './RegistryDetails'
-import SubmitButton from './SubmitButton'
-import Search from './Search'
-import LoadingItems from './LoadingItems'
-import EntriesList from './EntriesList'
-import Pagination from './Pagination'
-import DetailsModal from './EntryDetailsModal'
-import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal'
-import Filters from './Filters'
-import AddEntryModal from './SubmitEntries/AddEntryModal'
-import CloseIcon from 'tsx:svgs/icons/close.svg'
-import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
+import React, { useMemo } from 'react';
+import styled, { css } from 'styled-components';
+import { useNavigate } from 'react-router-dom';
+import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle';
+import { responsiveSize } from 'styles/responsiveSize';
+import 'react-loading-skeleton/dist/skeleton.css';
+
+import { useDapplookerStats } from 'hooks/useDapplookerStats';
+import { GlobalSearch } from 'components/Dashboard/GlobalSearch';
+import { HomeCarousel } from 'components/Dashboard/HomeCarousel';
+import { HomeRecentActivity } from 'components/Dashboard/HomeRecentActivity';
+import { HomeLatestDisputes } from 'components/Dashboard/HomeLatestDisputes';
+import ScrollTop from 'components/ScrollTop';
+
+import EtherscanLogo from 'assets/pngs/partners/etherscan.png';
+import UniswapLogo from 'assets/pngs/partners/uniswap.png';
+import LedgerLogo from 'assets/pngs/partners/ledger.png';
+import MetamaskLogo from 'assets/pngs/partners/metamask.png';
+import ZerionLogo from 'assets/pngs/partners/zerion.png';
 
 const Container = styled.div`
+  width: 100%;
+  background-color: ${({ theme }) => theme.lightBackground};
+  padding: 32px 16px 40px;
+  max-width: ${MAX_WIDTH_LANDSCAPE};
+  margin: 0 auto;
+  min-height: 100vh;
+  color: ${({ theme }) => theme.primaryText};
+  font-family: "Open Sans", sans-serif;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: #08020e;
-  min-height: 100vh;
-  color: white;
-  padding-bottom: 48px;
-`
-
-const SearchAndRegistryDetailsAndSubmitContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  background: #08020e;
-  color: white;
-  width: 84vw;
-  margin-bottom: 24px;
-  gap: 16px;
-  flex-wrap: wrap;
 
   ${landscapeStyle(
     () => css`
-      width: 80%;
+      padding: 48px ${responsiveSize(0, 48)} 60px;
     `
   )}
-`
+`;
 
-const RegistryDetailsAndSubmitContainer = styled.div`
+const HeaderSection = styled.div`
   display: flex;
-  flex-direction: row;
-  gap: 24px;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+`;
+
+const Title = styled.h1`
+  color: var(--Primary-text, #FFF);
+  text-align: center;
+  font-family: "Open Sans";
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  margin: 0;
+`;
+
+const Description = styled.p`
+  color: var(--Secondary-text, #BEBEC5);
+  text-align: center;
+  font-family: "Open Sans";
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin: 8px 0 0 0;
+  max-width: 800px;
+`;
+
+const SubmitButton = styled.button`
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
+  border: none;
+  border-radius: 9999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 24px;
+
+  &:hover {
+    background: ${({ theme }) => theme.buttonWhiteHover};
+  }
+
+  &:active {
+    background: ${({ theme }) => theme.buttonWhiteActive};
+  }
+`;
+
+const SearchSection = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+  margin-bottom: 32px;
   width: 100%;
 
   ${landscapeStyle(
     () => css`
-      width: auto;
+      margin-bottom: 48px;
     `
   )}
-`
+`;
 
-export const StyledCloseButton = styled(CloseIcon)`
+const TrustedBySection = styled.div`
   display: flex;
-  z-index: 100;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 24px;
-  cursor: pointer;
-`
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 48px;
+  width: 100%;
 
-export const ClosedButtonContainer = styled.div`
+  ${landscapeStyle(
+    () => css`
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 64px;
+      flex-wrap: wrap;
+    `
+  )}
+`;
+
+const TrustedByText = styled.h3`
+  color: var(--Secondary-blue, #7186FF);
+  font-family: "Open Sans";
+  font-size: 14px;
+  font-style: italic;
+  font-weight: 400;
+  line-height: normal;
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  ${landscapeStyle(
+    () => css`
+      font-size: 16px;
+    `
+  )}
+`;
+
+const LogosContainer = styled.div`
   display: flex;
-  width: 24px;
+  align-items: center;
+  gap: 20px 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex-shrink: 1;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 64px;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    `
+  )}
+`;
+
+const PartnerLogo = styled.img`
   height: 24px;
-`
+  width: auto;
+  object-fit: contain;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
 
-export const ITEMS_PER_PAGE = 20
+  &:hover {
+    opacity: 1;
+  }
 
-const Home: React.FC = () => {
-  let [searchParams, setSearchParams] = useSearchParams()
+  ${landscapeStyle(
+    () => css`
+      height: 28px;
+    `
+  )}
+`;
 
-  const searchQueryKeys = useMemo(
-    () => [
-      searchParams.getAll('registry').toString(),
-      searchParams.getAll('status').toString(),
-      searchParams.getAll('disputed').toString(),
-      searchParams.getAll('network').toString(),
-      searchParams.get('text'),
-      searchParams.get('page'),
-      searchParams.get('orderDirection'),
-    ],
-    [searchParams]
-  )
+const CarouselSection = styled.div`
+  margin-bottom: 48px;
 
-  const isDetailsModalOpen = useMemo(
-    () => !!searchParams.get('itemdetails'),
-    [searchParams]
-  )
+  ${landscapeStyle(
+    () => css`
+      margin-bottom: 64px;
+    `
+  )}
+`;
 
-  const isRegistryDetailsModalOpen = useMemo(
-    () => !!searchParams.get('registrydetails'),
-    [searchParams]
-  )
+const BottomGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
 
-  const isAddItemOpen = useMemo(
-    () => !!searchParams.get('additem'),
-    [searchParams]
-  )
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: 65fr 35fr;
+      gap: 32px;
+    `
+  )}
+`;
 
-  const showRewardsPage = useMemo(
-    () => searchParams.get('page') === 'rewards',
-    [searchParams]
-  )
+interface IHome {}
 
-  const isAttachmentOpen = useMemo(
-    () => !!searchParams.get('attachment'),
-    [searchParams]
-  )
+const Home: React.FC<IHome> = () => {
+  const { data: stats, isLoading } = useDapplookerStats();
+  const navigate = useNavigate();
 
-  const {
-    isLoading: searchLoading,
-    data: searchData,
-  } = useQuery({
-    queryKey: ['fetch', ...searchQueryKeys],
-    queryFn: () => fetchItems(searchParams),
-  })
+  const chartData = useMemo(() => {
+    if (!stats?.submissionsVsDisputes) return [];
 
-  const {
-    isLoading: countsLoading,
-    data: countsData,
-  } = useQuery({
-    queryKey: ['counts'],
-    queryFn: () => fetchItemCounts(),
-    staleTime: Infinity,
-  })
+    return stats.submissionsVsDisputes.dates.map((date, index) => ({
+      name: date,
+      submissions: stats.submissionsVsDisputes.submissions[index],
+    }));
+  }, [stats]);
 
-  const currentItemCount = useMemo(() => {
-    const registry = searchParams.getAll('registry')
-    const status = searchParams.getAll('status')
-    const disputed = searchParams.getAll('disputed')
-    const network = searchParams.getAll('network')
-    const text = searchParams.get('text')
-    const page = searchParams.get('page')
-    if (
-      countsLoading ||
-      registry.length === 0 ||
-      status.length === 0 ||
-      disputed.length === 0 ||
-      page === null ||
-      !countsData
-    ) {
-      // defaults or counts unloaded yet
-      return undefined
-    } else if (!text && network.length === 0) {
-      // can use the subgraph category counts.
-      const getCount = (registry: 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN') => {
-        return (
-          (status.includes('Absent') && disputed.includes('false')
-            ? countsData[registry].numberOfAbsent
-            : 0) +
-          (status.includes('Registered') && disputed.includes('false')
-            ? countsData[registry].numberOfRegistered
-            : 0) +
-          (status.includes('RegistrationRequested') &&
-            disputed.includes('false')
-            ? countsData[registry].numberOfRegistrationRequested
-            : 0) +
-          (status.includes('RegistrationRequested') && disputed.includes('true')
-            ? countsData[registry].numberOfChallengedRegistrations
-            : 0) +
-          (status.includes('ClearingRequested') && disputed.includes('false')
-            ? countsData[registry].numberOfClearingRequested
-            : 0) +
-          (status.includes('ClearingRequested') && disputed.includes('true')
-            ? countsData[registry].numberOfChallengedClearing
-            : 0)
-        )
-      }
-
-      const count =
-        (registry.includes('Single_Tags') ? getCount('Single_Tags') : 0) +
-        (registry.includes('Tags_Queries') ? getCount('Tags_Queries') : 0) +
-        (registry.includes('CDN') ? getCount('CDN') : 0) +
-        (registry.includes('Tokens') ? getCount('Tokens') : 0)
-      return count
-    } else {
-      // complex query. can only be known if last query has >21 items.
-      // o.w nullify.
-      if (!searchData || searchData.length > ITEMS_PER_PAGE) return null
-      else {
-        // for each previous page, thats guaranteed 20 items
-        // + remainder of last page
-        return searchData.length + (Number(page) - 1) * ITEMS_PER_PAGE
-      }
-    }
-  }, [searchParams, countsData, countsLoading, searchData])
-
-  // If missing search params, insert defaults.
-  useEffect(() => {
-    if (searchParams.get('page') === 'rewards' || searchParams.get('attachment') || searchParams.get('itemdetails')) {
-      return
-    }
-    
-    const registry = searchParams.getAll('registry')
-    const status = searchParams.getAll('status')
-    const disputed = searchParams.getAll('disputed')
-    const text = searchParams.get('text')
-    const page = searchParams.get('page')
-    const network = searchParams.getAll('network')
-    const orderDirection = searchParams.get('orderDirection')
-    if (
-      registry.length === 0 ||
-      status.length === 0 ||
-      disputed.length === 0 ||
-      network.length === 0 ||
-      orderDirection === null ||
-      page === null
-    ) {
-      const newSearchParams = createSearchParams({
-        registry: registry.length === 0 ? ['Single_Tags'] : registry,
-        network: network.length === 0 ? [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'] : network,
-        status:
-          status.length === 0
-            ? ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']
-            : status,
-        disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
-        page: page === null ? '1' : page,
-        orderDirection: orderDirection === null ? 'desc' : orderDirection,
-      })
-      setSearchParams(newSearchParams)
-    }
-  }, [searchParams, setSearchParams])
-
-  const totalPages =
-    currentItemCount !== null && currentItemCount !== undefined
-      ? Math.ceil(currentItemCount / ITEMS_PER_PAGE)
-      : null // in complex query, cannot provide this information
-
-  const isItemDetailsOpen = searchParams.get('itemdetails');
+  const handleSubmitNowClick = () => {
+    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+  };
 
   return (
     <Container>
-      <Navbar />
-      {showRewardsPage ? (
-        <RewardsPage />
-      ) : isAttachmentOpen ? (
-        <EvidenceAttachmentDisplay />
-      ) : (
-        <>
-          {!isItemDetailsOpen && (
-            <>
-              <SearchAndRegistryDetailsAndSubmitContainer>
-                <Search />
-                <RegistryDetailsAndSubmitContainer>
-                  <RegistryDetails />
-                  <SubmitButton />
-                </RegistryDetailsAndSubmitContainer>
-              </SearchAndRegistryDetailsAndSubmitContainer>
+      <ScrollTop />
 
-              <Filters />
+      <HeaderSection>
+        <Title>Join The Largest Decentralized Database</Title>
+        <Description>
+          With one submission, smart contracts will be verified and assigned a trusted project name.
+          Partners will display these information on their dashboards and wallets making every interaction
+          safer for users and solving blind signing issues.
+        </Description>
+        <SubmitButton onClick={handleSubmitNowClick}>
+          Submit Now
+        </SubmitButton>
+      </HeaderSection>
 
-              {searchLoading || !searchData ? (
-                <LoadingItems />
-              ) : (
-                <EntriesList {...{ searchData }} />
-              )}
-              <Pagination {...{ totalPages }} />
-            </>
-          )}
+      <SearchSection>
+        <GlobalSearch />
+      </SearchSection>
 
-          {isDetailsModalOpen && <DetailsModal />}
-          {isRegistryDetailsModalOpen && <RegistryDetailsModal />}
-          {isAddItemOpen && <AddEntryModal />}
-        </>
-      )}
+      <TrustedBySection>
+        <TrustedByText>Trusted by</TrustedByText>
+        <LogosContainer>
+          <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
+          <PartnerLogo src={UniswapLogo} alt="Uniswap" />
+          <PartnerLogo src={LedgerLogo} alt="Ledger" />
+          <PartnerLogo src={MetamaskLogo} alt="MetaMask" />
+          <PartnerLogo src={ZerionLogo} alt="Zerion" />
+        </LogosContainer>
+        <TrustedByText>& Many More</TrustedByText>
+      </TrustedBySection>
+
+      <CarouselSection>
+        <HomeCarousel stats={stats} isLoading={isLoading} chartData={chartData} />
+      </CarouselSection>
+
+      <BottomGrid>
+        <HomeRecentActivity />
+        <HomeLatestDisputes />
+      </BottomGrid>
     </Container>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

@@ -1,6 +1,8 @@
 import React, { lazy, Suspense } from "react";
 import styled from "styled-components";
 
+import { MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
+
 import { useSearchParams } from "react-router-dom";
 
 import NewTabIcon from "svgs/icons/new-tab.svg";
@@ -12,11 +14,11 @@ import Header from "./Header";
 const FileViewer = lazy(() => import("components/FileViewer"));
 
 const Container = styled.div`
-  width: 90%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-width: 1110px;
+  max-width: ${MAX_WIDTH_LANDSCAPE};
 `;
 
 const LoaderContainer = styled.div`
@@ -30,18 +32,28 @@ const NewTabInfo = styled.a`
   display: flex;
   gap: 8px;
   align-items: center;
-  color: white;
+  color: ${({ theme }) => theme.secondaryBlue};
   text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
+  }
+
+  &:hover svg path {
+    fill: ${({ theme }) => theme.primaryBlue};
+  }
 `;
 
 const StyledNewTabIcon = styled(NewTabIcon)`
   path {
-    fill: white;
+    fill: ${({ theme }) => theme.secondaryBlue};
+    transition: fill 0.2s ease;
   }
 `;
 
 const LoadingImage = styled.img`
-  height: 92px;
+  height: 90px;
 `
 
 const EvidenceAttachmentDisplay: React.FC = () => {
