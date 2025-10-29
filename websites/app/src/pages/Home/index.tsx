@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled, { css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle';
@@ -13,10 +13,10 @@ import { HomeLatestDisputes } from 'components/Dashboard/HomeLatestDisputes';
 import ScrollTop from 'components/ScrollTop';
 
 import EtherscanLogo from 'assets/pngs/partners/etherscan.png';
-import UniswapLogo from 'assets/pngs/partners/uniswap.png';
 import LedgerLogo from 'assets/pngs/partners/ledger.png';
 import MetamaskLogo from 'assets/pngs/partners/metamask.png';
-import ZerionLogo from 'assets/pngs/partners/zerion.png';
+import OtterscanLogo from 'assets/pngs/partners/otterscan.png';
+import BlockscoutLogo from 'assets/pngs/partners/blockscout.png';
 
 const Container = styled.div`
   width: 100%;
@@ -158,8 +158,8 @@ const LogosContainer = styled.div`
   )}
 `;
 
-const PartnerLogo = styled.img`
-  height: 24px;
+const PartnerLogo = styled.img<{ $smaller?: boolean }>`
+  height: ${({ $smaller }) => ($smaller ? '20px' : '24px')};
   width: auto;
   object-fit: contain;
   opacity: 0.8;
@@ -171,7 +171,7 @@ const PartnerLogo = styled.img`
 
   ${landscapeStyle(
     () => css`
-      height: 28px;
+      height: ${({ $smaller }) => ($smaller ? '24px' : '28px')};
     `
   )}
 `;
@@ -202,7 +202,8 @@ const BottomGrid = styled.div`
 interface IHome {}
 
 const Home: React.FC<IHome> = () => {
-  const { data: stats, isLoading } = useDapplookerStats();
+  const [timeframeDays, setTimeframeDays] = useState(30);
+  const { data: stats, isLoading } = useDapplookerStats(timeframeDays);
   const navigate = useNavigate();
 
   const chartData = useMemo(() => {
@@ -216,6 +217,10 @@ const Home: React.FC<IHome> = () => {
 
   const handleSubmitNowClick = () => {
     navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+  };
+
+  const handleTimeframeChange = (days: number) => {
+    setTimeframeDays(days);
   };
 
   return (
@@ -242,16 +247,22 @@ const Home: React.FC<IHome> = () => {
         <TrustedByText>Trusted by</TrustedByText>
         <LogosContainer>
           <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
-          <PartnerLogo src={UniswapLogo} alt="Uniswap" />
+          <PartnerLogo src={BlockscoutLogo} alt="Blockscout" $smaller />
+          <PartnerLogo src={OtterscanLogo} alt="Otterscan" />
           <PartnerLogo src={LedgerLogo} alt="Ledger" />
           <PartnerLogo src={MetamaskLogo} alt="MetaMask" />
-          <PartnerLogo src={ZerionLogo} alt="Zerion" />
         </LogosContainer>
         <TrustedByText>& Many More</TrustedByText>
       </TrustedBySection>
 
       <CarouselSection>
-        <HomeCarousel stats={stats} isLoading={isLoading} chartData={chartData} />
+        <HomeCarousel
+          stats={stats}
+          isLoading={isLoading}
+          chartData={chartData}
+          selectedTimeframe={timeframeDays}
+          onTimeframeChange={handleTimeframeChange}
+        />
       </CarouselSection>
 
       <BottomGrid>
