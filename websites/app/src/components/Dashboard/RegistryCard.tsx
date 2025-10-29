@@ -7,9 +7,9 @@ const Card = styled.div`
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
+  border: 1px solid ${({ theme }) => theme.stroke};
   padding: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: transparent;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
@@ -17,8 +17,8 @@ const Card = styled.div`
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 24px rgba(125, 75, 255, 0.12);
-    border-color: rgba(125, 75, 255, 0.3);
+    box-shadow: 0px 8px 24px rgba(113, 134, 255, 0.12);
+    border-color: rgba(113, 134, 255, 0.3);
   }
 `;
 
@@ -59,9 +59,9 @@ const OpenButton = styled.button`
   justify-content: center;
   gap: 6px;
   padding: 8px 16px;
-  background: ${({ theme }) => theme.buttonWhite};
-  color: ${({ theme }) => theme.black};
-  border: none;
+  background: transparent;
+  color: ${({ theme }) => theme.primaryText};
+  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 600;
@@ -79,11 +79,12 @@ const OpenButton = styled.button`
   }
 
   &:hover {
-    background: ${({ theme }) => theme.buttonWhiteHover};
+    background: rgba(255, 255, 255, 0.1);
+    border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:active {
-    background: ${({ theme }) => theme.buttonWhiteActive};
+    background: rgba(255, 255, 255, 0.15);
   }
 `;
 

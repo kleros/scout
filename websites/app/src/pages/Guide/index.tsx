@@ -58,8 +58,7 @@ const CardRow = styled.div`
   display: flex;
   flex-direction: row;
   gap: 16px;
-  margin-top: 32px;
-  margin-bottom: 48px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 `;
 
@@ -114,7 +113,7 @@ const CardDescription = styled.p`
 `;
 
 const Frame = styled.div`
-  margin-bottom: 48px;
+  margin-bottom: 16px;
 `;
 
 const SectionContainer = styled.div`
@@ -250,6 +249,12 @@ const QuickGuidePage: React.FC = () => {
         </div>
       </Header>
 
+      <Frame>
+        <SubmittingItem />
+        <ChallengingSubmission />
+        <ChallengePhase />
+      </Frame>
+
       <CardRow>
         <ClickableInfoCard onClick={handleRewardsClick}>
           <BountiesIcon />
@@ -273,21 +278,15 @@ const QuickGuidePage: React.FC = () => {
         </ClickableInfoCard>
       </CardRow>
 
-    <Frame>
-      <SubmittingItem />
-      <ChallengingSubmission />
-      <ChallengePhase />
-    </Frame>
-
-    <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
-      <DocumentationIcon />
-      <CardTitleAndDescription>
-        <CardTitle>Documentation</CardTitle>
-        <CardDescription>
-          For more details check the full documentation.
-        </CardDescription>
-      </CardTitleAndDescription>
-    </ClickableInfoCard>
+      <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
+        <DocumentationIcon />
+        <CardTitleAndDescription>
+          <CardTitle>Documentation</CardTitle>
+          <CardDescription>
+            For more details check the full documentation.
+          </CardDescription>
+        </CardTitleAndDescription>
+      </ClickableInfoCard>
     </Container>
   );
 };

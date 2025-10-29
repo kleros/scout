@@ -158,8 +158,8 @@ const LogosContainer = styled.div`
   )}
 `;
 
-const PartnerLogo = styled.img<{ $smaller?: boolean }>`
-  height: ${({ $smaller }) => ($smaller ? '20px' : '24px')};
+const PartnerLogo = styled.img<{ $smaller?: boolean; $bigger?: boolean }>`
+  height: ${({ $smaller, $bigger }) => ($smaller ? '20px' : $bigger ? '30px' : '24px')};
   width: auto;
   object-fit: contain;
   opacity: 0.8;
@@ -171,7 +171,7 @@ const PartnerLogo = styled.img<{ $smaller?: boolean }>`
 
   ${landscapeStyle(
     () => css`
-      height: ${({ $smaller }) => ($smaller ? '24px' : '28px')};
+      height: ${({ $smaller, $bigger }) => ($smaller ? '24px' : $bigger ? '34px' : '28px')};
     `
   )}
 `;
@@ -249,8 +249,8 @@ const Home: React.FC<IHome> = () => {
           <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
           <PartnerLogo src={BlockscoutLogo} alt="Blockscout" $smaller />
           <PartnerLogo src={OtterscanLogo} alt="Otterscan" />
+          <PartnerLogo src={MetamaskLogo} alt="MetaMask" $bigger />
           <PartnerLogo src={LedgerLogo} alt="Ledger" />
-          <PartnerLogo src={MetamaskLogo} alt="MetaMask" />
         </LogosContainer>
         <TrustedByText>& Many More</TrustedByText>
       </TrustedBySection>

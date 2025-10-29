@@ -1,12 +1,17 @@
 import React, { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
+import styled from 'styled-components'
 import ItemCard from './ItemCard'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
 import { chains, getNamespaceForChainId } from 'utils/chains'
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
+
+const EmptyState = styled.div`
+  color: ${({ theme }) => theme.secondaryText};
+`
 
 const QUERY = `
 query PastItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [status!]!, $disputed: [Boolean!]!, $orderDirection: order_by!) {
@@ -218,7 +223,7 @@ const PastSubmissions: React.FC<Props> = ({
         <Skeleton height={100} style={{ marginBottom: 16 }} count={3} />
       </>
     )
-  if (!data || data.items.length === 0) return <>No past submissions.</>
+  if (!data || data.items.length === 0) return <EmptyState>No past submissions.</EmptyState>
 
   return (
     <>
