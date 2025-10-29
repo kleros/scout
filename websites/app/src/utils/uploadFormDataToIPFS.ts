@@ -1,5 +1,3 @@
-import { fetch } from 'cross-fetch'
-
 export async function uploadFormDataToIPFS(
   formData: FormData,
   operation: string = 'evidence',
@@ -7,7 +5,7 @@ export async function uploadFormDataToIPFS(
 ): Promise<Response> {
   const url = `https://kleros-api.netlify.app/.netlify/functions/upload-to-ipfs?operation=${operation}&pinToGraph=${pinToGraph}`
 
-  const response = await fetch(url, {
+  const response = await window.fetch(url, {
     method: 'POST',
     body: formData,
   })
