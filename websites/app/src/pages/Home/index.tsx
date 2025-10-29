@@ -148,14 +148,14 @@ const TrustedByText = styled.h3`
 const LogosContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 20px 40px;
+  gap: 24px 48px;
   flex-wrap: wrap;
   justify-content: center;
   flex-shrink: 1;
 
   ${landscapeStyle(
     () => css`
-      gap: 64px;
+      gap: 72px;
       flex-wrap: nowrap;
       flex-shrink: 0;
     `
