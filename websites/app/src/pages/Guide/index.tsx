@@ -67,9 +67,9 @@ const InfoCard = styled.div`
   padding: 24px;
   align-items: center;
   max-width: 600px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
+  background: transparent;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
+  border: 1px solid ${({ theme }) => theme.stroke};
   flex-direction: row;
   gap: 16px;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);

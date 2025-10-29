@@ -43,8 +43,6 @@ export const ModalHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid ${({ theme }) => theme.stroke};
-  padding-bottom: 20px;
 `;
 
 export const ModalTitle = styled.h2`

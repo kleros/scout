@@ -10,7 +10,7 @@ const Container = styled.div`
   ${hoverLongTransitionTiming}
   display: flex;
   align-items: center;
-  background-color: #FFFFFF0D;
+  background-color: transparent;
   border-radius: 9999px;
   border: 1px solid ${({ theme }) => theme.stroke};
   padding-left: 16px;

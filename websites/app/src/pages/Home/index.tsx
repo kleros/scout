@@ -10,6 +10,7 @@ import { GlobalSearch } from 'components/Dashboard/GlobalSearch';
 import { HomeCarousel } from 'components/Dashboard/HomeCarousel';
 import { HomeRecentActivity } from 'components/Dashboard/HomeRecentActivity';
 import { HomeLatestDisputes } from 'components/Dashboard/HomeLatestDisputes';
+import { SubmissionSelectionModal } from 'components/SubmissionSelectionModal';
 import ScrollTop from 'components/ScrollTop';
 
 import EtherscanLogo from 'assets/pngs/partners/etherscan.png';
@@ -109,7 +110,9 @@ const TrustedBySection = styled.div`
   align-items: center;
   gap: 16px;
   margin-bottom: 48px;
+  padding-bottom: 24px;
   width: 100%;
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
 
   ${landscapeStyle(
     () => css`
@@ -118,6 +121,7 @@ const TrustedBySection = styled.div`
       align-items: center;
       gap: 24px;
       margin-bottom: 64px;
+      padding-bottom: 32px;
       flex-wrap: wrap;
     `
   )}
@@ -215,8 +219,10 @@ const Home: React.FC<IHome> = () => {
     }));
   }, [stats]);
 
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+
   const handleSubmitNowClick = () => {
-    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+    setIsSubmissionModalOpen(true);
   };
 
   const handleTimeframeChange = (days: number) => {
@@ -269,6 +275,11 @@ const Home: React.FC<IHome> = () => {
         <HomeRecentActivity />
         <HomeLatestDisputes />
       </BottomGrid>
+
+      <SubmissionSelectionModal
+        isOpen={isSubmissionModalOpen}
+        onClose={() => setIsSubmissionModalOpen(false)}
+      />
     </Container>
   );
 };
