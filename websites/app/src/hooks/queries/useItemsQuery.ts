@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
-import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
 import { GraphItem, registryMap } from 'utils/items'
 import { ITEMS_PER_PAGE } from '../../pages/Registries/index'
@@ -37,8 +36,20 @@ export const useItemsQuery = ({
     disputed.length > 0 &&
     page > 0
 
+  // Build stable queryKey from individual filter parameters
+  const queryKey = [
+    'items',
+    registryName,
+    status.slice().sort().join(','),
+    disputed.slice().sort().join(','),
+    chainFilters.slice().sort().join(','),
+    text,
+    orderDirection,
+    page
+  ];
+
   return useQuery({
-    queryKey: [...queryKeys.items(searchParams), registryName, chainFilters],
+    queryKey,
     queryFn: async () => {
       if (!shouldFetch) return []
 
@@ -226,7 +237,8 @@ export const useItemsQuery = ({
       return items
     },
     enabled: shouldFetch,
-    refetchInterval: REFETCH_INTERVAL,
-    staleTime: STALE_TIME,
+    refetchInterval: false,
+    staleTime: 0, // Always refetch when queryKey changes for instant filter updates
+    gcTime: 1000 * 60 * 5, // Keep cache for 5 minutes for back/forward navigation
   })
 }

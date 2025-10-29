@@ -364,7 +364,7 @@ const Item = React.memo(
                     }}
                   >
                     <TokenLogoWrapper>
-                      {!imgLoaded && <Skeleton height={100} width={100} />}
+                      {!imgLoaded && <Skeleton circle height={100} width={100} />}
                       <img
                         src={`https://cdn.kleros.link${getPropValue('Logo')}`}
                         alt="Logo"

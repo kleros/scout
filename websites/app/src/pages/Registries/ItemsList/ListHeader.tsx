@@ -7,7 +7,7 @@ const HeaderRow = styled.div<{ registryType?: string }>`
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '1.2fr 0.3fr 0.5fr 0.6fr 2fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
+        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
       case 'Single_Tags':
         return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Period ends in
       case 'CDN':

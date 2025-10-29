@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
 import styled from 'styled-components'
@@ -51,12 +51,16 @@ interface Props {
   totalItems: number
   address?: string
   chainFilters?: string[]
+  isFilterChanging: boolean
+  setIsFilterChanging: (value: boolean) => void
 }
 
 const OngoingSubmissions: React.FC<Props> = ({
   totalItems,
   address,
   chainFilters = [],
+  isFilterChanging,
+  setIsFilterChanging,
 }) => {
   const [searchParams] = useSearchParams()
   const currentPage = parseInt(searchParams.get('page') ?? '1', 10)
@@ -84,15 +88,15 @@ const OngoingSubmissions: React.FC<Props> = ({
 
   const searchTerm = searchParams.get('search') || ''
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: [
       'ongoingItems',
       queryAddress,
       currentPage,
-      status,
-      disputed,
+      status.slice().sort().join(','),
+      disputed.slice().sort().join(','),
       orderDirection,
-      chainFilters,
+      chainFilters.slice().sort().join(','),
       searchTerm,
     ],
     enabled: !!queryAddress,
@@ -220,7 +224,29 @@ const OngoingSubmissions: React.FC<Props> = ({
     navigate(`${location.pathname}?${params.toString()}`)
   }
 
-  if (isLoading)
+  // Track when fetching starts
+  const hasFetchingStartedRef = useRef(false)
+
+  useEffect(() => {
+    if (isFetching && isFilterChanging && !hasFetchingStartedRef.current) {
+      hasFetchingStartedRef.current = true
+    }
+  }, [isFetching, isFilterChanging])
+
+  // Clear filter changing state ONLY after fetching has started AND completed
+  useEffect(() => {
+    if (!isFetching && isFilterChanging && hasFetchingStartedRef.current) {
+      setIsFilterChanging(false)
+      hasFetchingStartedRef.current = false
+    }
+  }, [isFetching, isFilterChanging, setIsFilterChanging])
+
+  // Reset fetching tracker when filter changes
+  useEffect(() => {
+    hasFetchingStartedRef.current = false
+  }, [chainFilters, searchParams])
+
+  if (isLoading || isFilterChanging)
     return (
       <>
         <Skeleton height={100} style={{ marginBottom: 16 }} count={3} />

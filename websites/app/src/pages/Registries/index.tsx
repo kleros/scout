@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import { useSearchParams, createSearchParams, useParams } from 'react-router-dom';
 import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
@@ -8,7 +8,7 @@ import SubmitButton from './SubmitButton';
 import Search from './Search';
 import LoadingItems from './LoadingItems';
 import ItemsList from './ItemsList';
-import Pagination from './Pagination';
+import { StyledPagination } from 'components/StyledPagination';
 import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
 import AddItemModal from './SubmitItems/AddItemModal';
 import FilterModal from './FilterModal';
@@ -105,6 +105,14 @@ export const ClosedButtonContainer = styled.div`
 
 export const ITEMS_PER_PAGE = 20;
 
+const EmptyState = styled.div`
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 16px;
+`;
+
 const HeroWrapper = styled.div`
   position: relative;
   width: 100%;
@@ -144,21 +152,17 @@ const HeroTitle = styled.h1`
   position: relative;
   z-index: 1;
   letter-spacing: 0.5px;
-  filter: drop-shadow(0 0 20px rgba(113, 134, 255, 0.55))
-          drop-shadow(0 0 40px rgba(113, 134, 255, 0.35))
-          drop-shadow(0 0 60px rgba(113, 134, 255, 0.2));
-  text-shadow: 0 0 25px rgba(113, 134, 255, 0.6),
-               0 0 50px rgba(113, 134, 255, 0.4),
-               0 0 75px rgba(113, 134, 255, 0.25);
+  filter: drop-shadow(0 0 12px rgba(113, 134, 255, 0.35))
+          drop-shadow(0 0 24px rgba(113, 134, 255, 0.20));
+  text-shadow: 0 0 15px rgba(113, 134, 255, 0.4),
+               0 0 30px rgba(113, 134, 255, 0.25);
 
   ${landscapeStyle(
     () => css`
-      filter: drop-shadow(0 0 25px rgba(113, 134, 255, 0.6))
-              drop-shadow(0 0 50px rgba(113, 134, 255, 0.4))
-              drop-shadow(0 0 75px rgba(113, 134, 255, 0.25));
-      text-shadow: 0 0 30px rgba(113, 134, 255, 0.65),
-                   0 0 60px rgba(113, 134, 255, 0.45),
-                   0 0 90px rgba(113, 134, 255, 0.3);
+      filter: drop-shadow(0 0 15px rgba(113, 134, 255, 0.4))
+              drop-shadow(0 0 30px rgba(113, 134, 255, 0.25));
+      text-shadow: 0 0 18px rgba(113, 134, 255, 0.45),
+                   0 0 36px rgba(113, 134, 255, 0.30);
     `
   )}
 `;
@@ -229,6 +233,7 @@ const Home: React.FC = () => {
   const [chainFilters, setChainFilters] = useState<string[]>([]);
   const [viewMode, setViewMode] = useViewMode();
   const [shouldDisableListView, setShouldDisableListView] = useState(false);
+  const [isFilterChanging, setIsFilterChanging] = useState(false);
 
   const isRegistryDetailsModalOpen = useMemo(
     () => !!searchParams.get('registrydetails'),
@@ -243,7 +248,7 @@ const Home: React.FC = () => {
     [searchParams]
   );
 
-  const { isLoading: searchLoading, data: searchData } = useItemsQuery({
+  const { isLoading: searchLoading, isFetching: searchFetching, data: searchData } = useItemsQuery({
     searchParams,
     registryName,
     chainFilters
@@ -255,33 +260,40 @@ const Home: React.FC = () => {
     const status = searchParams.getAll('status');
     const disputed = searchParams.getAll('disputed');
     const text = searchParams.get('text');
-    const page = searchParams.get('page');
+
+    // Calculate if chain filters are actually filtering (not all chains selected)
+    const allChains = [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'];
+    const hasActiveChainFilter = chainFilters.length > 0 && chainFilters.length < allChains.length;
+
+    // If filters are active (text search or chain filters), we can't know total count
+    // Return null to hide pagination page numbers and use simpler prev/next
+    if (text || hasActiveChainFilter) {
+      return null;
+    }
+
+    // Only use countsData when no filters are active
     if (
       countsLoading ||
       !registryName ||
       status.length === 0 ||
       disputed.length === 0 ||
-      page === null ||
       !countsData
     ) {
       return undefined;
-    } else if (!text && chainFilters.length > 0) {
-      const getCount = (r: 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN') => {
-        return (
-          (status.includes('Absent') && disputed.includes('false') ? countsData[r].numberOfAbsent : 0) +
-          (status.includes('Registered') && disputed.includes('false') ? countsData[r].numberOfRegistered : 0) +
-          (status.includes('RegistrationRequested') && disputed.includes('false') ? countsData[r].numberOfRegistrationRequested : 0) +
-          (status.includes('RegistrationRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedRegistrations : 0) +
-          (status.includes('ClearingRequested') && disputed.includes('false') ? countsData[r].numberOfClearingRequested : 0) +
-          (status.includes('ClearingRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedClearing : 0)
-        );
-      };
-      // Only count for the current registry from URL
-      return getCount(registryName as 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN');
-    } else {
-      if (!searchData || searchData.length > ITEMS_PER_PAGE) return null;
-      return searchData.length + (Number(page) - 1) * ITEMS_PER_PAGE;
     }
+
+    const getCount = (r: 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN') => {
+      return (
+        (status.includes('Absent') && disputed.includes('false') ? countsData[r].numberOfAbsent : 0) +
+        (status.includes('Registered') && disputed.includes('false') ? countsData[r].numberOfRegistered : 0) +
+        (status.includes('RegistrationRequested') && disputed.includes('false') ? countsData[r].numberOfRegistrationRequested : 0) +
+        (status.includes('RegistrationRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedRegistrations : 0) +
+        (status.includes('ClearingRequested') && disputed.includes('false') ? countsData[r].numberOfClearingRequested : 0) +
+        (status.includes('ClearingRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedClearing : 0)
+      );
+    };
+
+    return getCount(registryName as 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN');
   }, [searchParams, countsData, countsLoading, searchData, chainFilters, registryName]);
 
   useEffect(() => {
@@ -328,6 +340,57 @@ const Home: React.FC = () => {
       setChainFilters(defaultChains);
     }
   }, [chainFilters]);
+
+  // Reset page to 1 when filters change
+  const filterKey = useMemo(() => {
+    return [
+      searchParams.getAll('status').sort().join(','),
+      searchParams.getAll('disputed').sort().join(','),
+      searchParams.get('text') || '',
+      chainFilters.sort().join(','),
+      searchParams.get('orderDirection') || ''
+    ].join('|');
+  }, [searchParams, chainFilters]);
+
+  const prevFilterKeyRef = useRef(filterKey);
+  const hasFetchingStartedRef = useRef(false);
+
+  useEffect(() => {
+    const currentPage = searchParams.get('page');
+
+    // Only reset page if the FILTERS actually changed (not just the page number)
+    if (prevFilterKeyRef.current !== filterKey) {
+      prevFilterKeyRef.current = filterKey;
+
+      // Immediately show loading state when filters change
+      setIsFilterChanging(true);
+      hasFetchingStartedRef.current = false;
+
+      // Reset to page 1 when filters change
+      if (currentPage && currentPage !== '1') {
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev.toString());
+          newParams.set('page', '1');
+          return newParams;
+        });
+      }
+    }
+  }, [filterKey, searchParams, setSearchParams]);
+
+  // Track when fetching starts
+  useEffect(() => {
+    if (searchFetching && isFilterChanging && !hasFetchingStartedRef.current) {
+      hasFetchingStartedRef.current = true;
+    }
+  }, [searchFetching, isFilterChanging]);
+
+  // Clear filter changing state ONLY after fetching has started AND completed
+  useEffect(() => {
+    if (!searchFetching && isFilterChanging && hasFetchingStartedRef.current) {
+      setIsFilterChanging(false);
+      hasFetchingStartedRef.current = false;
+    }
+  }, [searchFetching, isFilterChanging]);
 
   const totalPages =
     currentItemCount !== null && currentItemCount !== undefined
@@ -379,8 +442,41 @@ const Home: React.FC = () => {
                 </ActionablesContainer>
               </FullWidthSection>
               <FullWidthSection>
-                {searchLoading || !searchData ? <LoadingItems /> : <ItemsList searchData={searchData} viewMode={viewMode} />}
-                <Pagination totalPages={totalPages} />
+                {searchLoading || isFilterChanging || !searchData ? (
+                  <LoadingItems />
+                ) : searchData.length === 0 ? (
+                  <EmptyState>No items found</EmptyState>
+                ) : (
+                  <ItemsList searchData={searchData} viewMode={viewMode} />
+                )}
+                {totalPages !== null && totalPages > 1 && (
+                  <StyledPagination
+                    currentPage={Number(searchParams.get('page')) || 1}
+                    numPages={totalPages}
+                    callback={(newPage) => {
+                      setSearchParams(prev => {
+                        const newParams = new URLSearchParams(prev.toString())
+                        newParams.set('page', String(newPage))
+                        return newParams
+                      })
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
+                  />
+                )}
+                {totalPages === null && searchData && searchData.length > 0 && (
+                  <StyledPagination
+                    currentPage={Number(searchParams.get('page')) || 1}
+                    numPages={searchData.length > ITEMS_PER_PAGE ? (Number(searchParams.get('page')) || 1) + 1 : (Number(searchParams.get('page')) || 1)}
+                    callback={(newPage) => {
+                      setSearchParams(prev => {
+                        const newParams = new URLSearchParams(prev.toString())
+                        newParams.set('page', String(newPage))
+                        return newParams
+                      })
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
+                  />
+                )}
               </FullWidthSection>
             </PageInner>
           {isRegistryDetailsModalOpen && <RegistryDetailsModal registryName={registryName} />}

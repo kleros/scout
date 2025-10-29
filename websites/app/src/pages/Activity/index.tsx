@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import styled, { css, createGlobalStyle } from "styled-components";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
@@ -184,6 +184,7 @@ const Activity: React.FC = () => {
   
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isFilterChanging, setIsFilterChanging] = useState(false);
   // Initialize chain filters with all available chains by default
   const [chainFilters, setChainFilters] = useState<string[]>(() => {
     const availableChains = chains.filter(chain => !chain.deprecated).map(chain => chain.id);
@@ -213,6 +214,40 @@ const Activity: React.FC = () => {
       setSearchParams(newParams, { replace: true });
     }
   }, [address, searchParams, setSearchParams]);
+
+  // Reset page to 1 when filters change
+  const filterKey = useMemo(() => {
+    return [
+      searchParams.getAll('status').sort().join(','),
+      searchParams.getAll('disputed').sort().join(','),
+      searchParams.get('search') || '',
+      chainFilters.sort().join(','),
+      searchParams.get('orderDirection') || ''
+    ].join('|');
+  }, [searchParams, chainFilters]);
+
+  const prevFilterKeyRef = useRef(filterKey);
+
+  useEffect(() => {
+    const currentPage = searchParams.get('page');
+
+    // Only reset page if the FILTERS actually changed (not just the page number)
+    if (prevFilterKeyRef.current !== filterKey) {
+      prevFilterKeyRef.current = filterKey;
+
+      // Immediately show loading state when filters change
+      setIsFilterChanging(true);
+
+      // If we're not on page 1, reset to page 1 when filters change
+      if (currentPage && currentPage !== '1') {
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev.toString());
+          newParams.set('page', '1');
+          return newParams;
+        });
+      }
+    }
+  }, [filterKey, searchParams, setSearchParams]);
   
   const addressExplorerLink = useMemo(() => {
     if (!userAddress) return null;
@@ -315,9 +350,9 @@ const Activity: React.FC = () => {
             <FilterButton onClick={() => setIsFilterModalOpen(true)} />
           </FilterControlsContainer>
           {currentTab === 0 ? (
-            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} chainFilters={chainFilters} />
+            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
           ) : (
-            <PastSubmissions totalItems={pastSubmissions} address={address} chainFilters={chainFilters} />
+            <PastSubmissions totalItems={pastSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
           )}
         </>
       ) : (
