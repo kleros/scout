@@ -20,7 +20,6 @@ import ScrollTop from "components/ScrollTop";
 
 const Container = styled.div`
   color: ${({ theme }) => theme.white};
-  min-height: 100vh;
   padding: 32px 16px 64px;
   font-family: "Open Sans", sans-serif;
   background: ${({ theme }) => theme.lightBackground};

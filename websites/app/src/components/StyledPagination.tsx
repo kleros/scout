@@ -22,7 +22,7 @@ const PageButton = styled.button<{ selected?: boolean }>`
   font-family: "Open Sans", sans-serif;
   min-width: 40px;
   min-height: 40px;
-  border-radius: 9999px;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;

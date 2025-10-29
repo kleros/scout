@@ -25,7 +25,6 @@ const Container = styled.div`
   padding: 32px 16px 40px;
   max-width: ${MAX_WIDTH_LANDSCAPE};
   margin: 0 auto;
-  min-height: 100vh;
   color: ${({ theme }) => theme.primaryText};
   font-family: "Open Sans", sans-serif;
   display: flex;
