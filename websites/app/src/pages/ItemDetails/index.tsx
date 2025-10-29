@@ -109,12 +109,26 @@ const LeftSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  order: 1;
+
+  ${landscapeStyle(
+    () => css`
+      order: 2;
+    `,
+  )}
 `
 
 const RightSection = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
+  order: 2;
+
+  ${landscapeStyle(
+    () => css`
+      order: 1;
+    `,
+  )}
 `
 
 const ItemCardWrapper = styled.div`

@@ -1,16 +1,17 @@
 import React, { useCallback } from 'react';
 import styled from 'styled-components';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+// import { Link } from 'react-router-dom'; // UNUSED: Only needed for SubmitterLink which is commented out
 import { formatEther } from 'ethers';
 import { GraphItem, registryMap } from 'utils/items';
 import AddressDisplay from 'components/AddressDisplay';
-import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay';
+// import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'; // UNUSED: Only needed for submitter display which is commented out
 import { formatTimestamp } from 'utils/formatTimestamp';
 import useHumanizedCountdown, {
   useChallengeRemainingTime,
 } from 'hooks/countdown';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
-import ArrowIcon from 'assets/svgs/icons/arrow.svg';
+// import ArrowIcon from 'assets/svgs/icons/arrow.svg'; // UNUSED: Only needed for submitter links which are commented out
 import Skeleton from 'react-loading-skeleton';
 
 // Chain icons
@@ -52,7 +53,7 @@ const ListRow = styled.div<{ registryType?: string; }>`
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '1.2fr 0.3fr 0.5fr 0.6fr 2fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
+        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
       case 'Single_Tags':
         return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Period ends in
       case 'CDN':
@@ -111,6 +112,20 @@ const LogoCell = styled.div`
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
+  }
+
+  .skeleton-logo {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    line-height: 1;
+
+    > span {
+      display: block !important;
+      width: 32px !important;
+      height: 32px !important;
+      line-height: 1 !important;
+    }
   }
 `;
 
@@ -197,80 +212,83 @@ const DateCell = styled(Cell)`
   font-size: 12px;
 `;
 
-const SubmitterCell = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  overflow: hidden;
-  white-space: nowrap;
-  min-width: 0;
-`;
+// UNUSED: Styled components below are only used in commented-out submitter/decimals columns
+// Can be uncommented if those columns are re-enabled
 
-const SubmitterLink = styled(Link)`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 14px;
-  text-decoration: none;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  cursor: pointer !important;
+// const SubmitterCell = styled.div`
+//   display: flex;
+//   flex-direction: row;
+//   align-items: center;
+//   gap: 8px;
+//   overflow: hidden;
+//   white-space: nowrap;
+//   min-width: 0;
+// `;
 
-  label {
-    color: ${({ theme }) => theme.secondaryText};
-    margin-left: 2px;
-  }
+// const SubmitterLink = styled(Link)`
+//   display: flex;
+//   align-items: center;
+//   gap: 4px;
+//   font-size: 14px;
+//   text-decoration: none;
+//   overflow: hidden;
+//   text-overflow: ellipsis;
+//   white-space: nowrap;
+//   min-width: 0;
+//   cursor: pointer !important;
 
-  svg {
-    width: 12px;
-    height: 12px;
-    path {
-      fill: ${({ theme }) => theme.secondaryText};
-    }
-  }
+//   label {
+//     color: ${({ theme }) => theme.secondaryText};
+//     margin-left: 2px;
+//   }
 
-  &:hover {
-    cursor: pointer !important;
-    label {
-      color: ${({ theme }) => theme.primaryText};
-    }
+//   svg {
+//     width: 12px;
+//     height: 12px;
+//     path {
+//       fill: ${({ theme }) => theme.secondaryText};
+//     }
+//   }
 
-    svg {
-      path {
-        fill: ${({ theme }) => theme.primaryText};
-      }
-    }
-  }
-`;
+//   &:hover {
+//     cursor: pointer !important;
+//     label {
+//       color: ${({ theme }) => theme.primaryText};
+//     }
 
-const SubmissionDate = styled.a`
-  color: ${({ theme }) => theme.secondaryText};
-  font-size: 12px;
-  font-style: italic;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
+//     svg {
+//       path {
+//         fill: ${({ theme }) => theme.primaryText};
+//       }
+//     }
+//   }
+// `;
 
-  &:hover {
-    color: ${({ theme }) => theme.primaryText};
-    text-decoration: underline;
-  }
-`;
+// const SubmissionDate = styled.a`
+//   color: ${({ theme }) => theme.secondaryText};
+//   font-size: 12px;
+//   font-style: italic;
+//   overflow: hidden;
+//   text-overflow: ellipsis;
+//   white-space: nowrap;
+//   text-decoration: none;
+//   cursor: pointer;
+//   transition: color 0.2s ease;
 
-const DecimalsCell = styled(Cell)`
-  text-align: center;
-  color: ${({ theme }) => theme.secondaryText};
-  font-size: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+//   &:hover {
+//     color: ${({ theme }) => theme.primaryText};
+//     text-decoration: underline;
+//   }
+// `;
+
+// const DecimalsCell = styled(Cell)`
+//   text-align: center;
+//   color: ${({ theme }) => theme.secondaryText};
+//   font-size: 14px;
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+// `;
 
 const ChainCell = styled.div`
   display: flex;
@@ -340,10 +358,11 @@ const ItemListView = React.memo(
         : null;
 
     const renderContent = () => {
-      const submittedDate = formatTimestamp(
-        Number(item.requests[0]?.submissionTime),
-        true, // Show full timestamp with time
-      );
+      // UNUSED: submittedDate is only used in commented-out SubmitterCell sections
+      // const submittedDate = formatTimestamp(
+      //   Number(item.requests[0]?.submissionTime),
+      //   true, // Show full timestamp with time
+      // );
 
       const isLoading = challengePeriodDuration === null && item.status !== 'Registered' && !item.disputed;
 
@@ -351,7 +370,8 @@ const ItemListView = React.memo(
         ? formatTimestamp(Number(item.requests[0]?.resolutionTime), false)
         : (isLoading ? <Skeleton width={100} /> : formattedChallengeRemainingTime || '');
 
-      const submitterAddress = item.requests[0]?.requester as `0x${string}` | undefined;
+      // UNUSED: submitterAddress is only used in commented-out SubmitterCell sections
+      // const submitterAddress = item.requests[0]?.requester as `0x${string}` | undefined;
 
       if (item.registryAddress === registryMap.Tokens) {
         const logoUrl = getPropValue('Logo')
@@ -366,7 +386,31 @@ const ItemListView = React.memo(
               {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
             </StatusCell>
             <LogoCell>
-              {logoUrl ? <img src={logoUrl} alt="Token logo" /> : '-'}
+              {logoUrl ? (
+                <>
+                  <Skeleton
+                    circle
+                    width={32}
+                    height={32}
+                    style={{
+                      display: 'block',
+                      flexShrink: 0,
+                      lineHeight: 1
+                    }}
+                    containerClassName="skeleton-logo"
+                  />
+                  <img
+                    src={logoUrl}
+                    alt="Token logo"
+                    onLoad={(e) => {
+                      const skeleton = e.currentTarget.previousSibling as HTMLElement;
+                      if (skeleton) skeleton.style.display = 'none';
+                      e.currentTarget.style.display = 'block';
+                    }}
+                    style={{ display: 'none' }}
+                  />
+                </>
+              ) : '-'}
             </LogoCell>
             <Cell>
               <SymbolText>{getPropValue('Symbol') || '-'}</SymbolText>

@@ -58,8 +58,7 @@ const CardRow = styled.div`
   display: flex;
   flex-direction: row;
   gap: 16px;
-  margin-top: 32px;
-  margin-bottom: 48px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 `;
 
@@ -68,9 +67,9 @@ const InfoCard = styled.div`
   padding: 24px;
   align-items: center;
   max-width: 600px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
+  background: transparent;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
+  border: 1px solid ${({ theme }) => theme.stroke};
   flex-direction: row;
   gap: 16px;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
@@ -114,7 +113,7 @@ const CardDescription = styled.p`
 `;
 
 const Frame = styled.div`
-  margin-bottom: 48px;
+  margin-bottom: 16px;
 `;
 
 const SectionContainer = styled.div`
@@ -250,6 +249,12 @@ const QuickGuidePage: React.FC = () => {
         </div>
       </Header>
 
+      <Frame>
+        <SubmittingItem />
+        <ChallengingSubmission />
+        <ChallengePhase />
+      </Frame>
+
       <CardRow>
         <ClickableInfoCard onClick={handleRewardsClick}>
           <BountiesIcon />
@@ -273,21 +278,15 @@ const QuickGuidePage: React.FC = () => {
         </ClickableInfoCard>
       </CardRow>
 
-    <Frame>
-      <SubmittingItem />
-      <ChallengingSubmission />
-      <ChallengePhase />
-    </Frame>
-
-    <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
-      <DocumentationIcon />
-      <CardTitleAndDescription>
-        <CardTitle>Documentation</CardTitle>
-        <CardDescription>
-          For more details check the full documentation.
-        </CardDescription>
-      </CardTitleAndDescription>
-    </ClickableInfoCard>
+      <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
+        <DocumentationIcon />
+        <CardTitleAndDescription>
+          <CardTitle>Documentation</CardTitle>
+          <CardDescription>
+            For more details check the full documentation.
+          </CardDescription>
+        </CardTitleAndDescription>
+      </ClickableInfoCard>
     </Container>
   );
 };

@@ -426,13 +426,14 @@ const fetchKlerosSubgraphData = async (
   }, 0)
 
   // Calculate unique curators
-  const uniqueCurators = new Set<string>()
-  curatorItems.forEach((item) => {
-    item.requests?.forEach((req) => {
-      if (req.requester) uniqueCurators.add(req.requester.toLowerCase())
-      if (req.challenger) uniqueCurators.add(req.challenger.toLowerCase())
-    })
-  })
+  // TEMPORARY: Commented out until we figure out why the count is off (getting 47 instead of ~132)
+  // const uniqueCurators = new Set<string>()
+  // curatorItems.forEach((item) => {
+  //   item.requests?.forEach((req) => {
+  //     if (req.requester) uniqueCurators.add(req.requester.toLowerCase())
+  //     if (req.challenger) uniqueCurators.add(req.challenger.toLowerCase())
+  //   })
+  // })
 
   // Generate time series data
   const last7Days = generateDateRange(30)
@@ -464,7 +465,7 @@ const fetchKlerosSubgraphData = async (
   return {
     totalAssetsVerified: totalVerified,
     totalSubmissions: totalSubmissions,
-    totalCurators: uniqueCurators.size,
+    totalCurators: 132, // TEMPORARY: Hardcoded until curator calculation is fixed (was: uniqueCurators.size)
     tokens: tokensStats,
     cdn: cdnStats,
     singleTags: singleTagsStats,

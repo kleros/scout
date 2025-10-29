@@ -3,9 +3,17 @@ import styled, { css } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
-import { hoverShortTransitionTiming } from "styles/commonStyles";
+import {
+  RewardCard,
+  RewardCardNewBadge,
+  RewardCardTitle,
+  RewardCardDescription,
+  RewardCardDetailRow,
+  RewardCardTopSection,
+  RewardCardBottomSection
+} from "components/Dashboard/RewardCard";
 
-import ActiveRewards from "svgs/icons/active-rewards.svg";
+import ActiveRewards from "svgs/icons/rewards.svg";
 import CalendarIcon from "svgs/icons/calendar.svg";
 import CoinIcon from "svgs/icons/coins.svg";
 import ScrollTop from "components/ScrollTop";
@@ -58,86 +66,14 @@ const CardsContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-const Card = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  padding: 24px;
-  justify-content: space-between;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  transform: scale(1);
-  ${hoverShortTransitionTiming}
+// Using shared components from components/Dashboard/RewardCard.tsx
 
-  &:hover {
-    transform: scale(1.02);
-    border-color: ${({ theme }) => theme.primary};
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
-  }
-
+const StyledRewardCard = styled(RewardCard)`
   ${landscapeStyle(
     () => css`
       width: 392px;
     `
   )}
-`;
-
-const NewBadge = styled.div`
-  position: absolute;
-  top: -12px;
-  right: 0px;
-  background: linear-gradient(90deg, #7d4bff 0%, #485fff 100%);
-  color: ${({ theme }) => theme.white};
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 6px 16px;
-`;
-
-const CardTitle = styled.h2`
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  line-height: 1.5;
-`;
-
-const CardDescription = styled.p`
-  margin: 0 0 24px 0;
-  color: ${({ theme }) => theme.secondaryText};
-  font-size: 14px;
-`;
-
-const DetailRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  margin-bottom: 12px;
-  color: ${({ theme }) => theme.secondaryText};
-
-  svg {
-    min-width: 16px;
-    min-height: 16px;
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    path {
-      fill: ${({ theme }) => theme.primary};
-    }
-  }
-`;
-
-const TopSide = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const BottomSide = styled.div`
-  display: flex;
-  flex-direction: column;
 `;
 
 const StyledCalendarValue = styled.label`
@@ -184,27 +120,27 @@ const getCurrentMonthDeadline = () => {
 
 const currentMonthDeadline = getCurrentMonthDeadline();
 
-const RewardCard = ({ title, description, onClick }) => (
-  <Card onClick={onClick}>
-    <TopSide>
-      <NewBadge>NEW</NewBadge>
-      <CardTitle>{title}</CardTitle>
-      <CardDescription>{description}</CardDescription>
-    </TopSide>
-    <BottomSide>
-      <DetailRow>
+const RewardCardComponent = ({ title, description, onClick }) => (
+  <StyledRewardCard onClick={onClick}>
+    <RewardCardTopSection>
+      <RewardCardNewBadge>NEW</RewardCardNewBadge>
+      <RewardCardTitle>{title}</RewardCardTitle>
+      <RewardCardDescription>{description}</RewardCardDescription>
+    </RewardCardTopSection>
+    <RewardCardBottomSection>
+      <RewardCardDetailRow>
         <CalendarIcon />
         <span>Deadline:</span>
         <StyledCalendarValue>{currentMonthDeadline}</StyledCalendarValue>
-      </DetailRow>
+      </RewardCardDetailRow>
       <Divider />
-      <DetailRow>
+      <RewardCardDetailRow>
         <CoinIcon />
         <span>Reward Pool:</span>
         <StyledRewardValue>100,000 PNK</StyledRewardValue>
-      </DetailRow>
-    </BottomSide>
-  </Card>
+      </RewardCardDetailRow>
+    </RewardCardBottomSection>
+  </StyledRewardCard>
 );
 
 const RewardsPage = () => {
@@ -226,10 +162,10 @@ const RewardsPage = () => {
       </Header>
       <CardsContainer>
         {rewards.map(r => (
-          <RewardCard 
-            key={r.title} 
-            title={r.title} 
-            description={r.description} 
+          <RewardCardComponent
+            key={r.title}
+            title={r.title}
+            description={r.description}
             onClick={() => handleCardClick(r.registryKey)}
           />
         ))}

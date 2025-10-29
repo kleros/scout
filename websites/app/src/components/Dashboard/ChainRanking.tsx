@@ -22,8 +22,8 @@ const fadeInUp = keyframes`
 const Container = styled.div`
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid ${({ theme }) => theme.stroke};
+  background: transparent;
   box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;

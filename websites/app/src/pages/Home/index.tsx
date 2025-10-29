@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled, { css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle';
@@ -10,13 +10,14 @@ import { GlobalSearch } from 'components/Dashboard/GlobalSearch';
 import { HomeCarousel } from 'components/Dashboard/HomeCarousel';
 import { HomeRecentActivity } from 'components/Dashboard/HomeRecentActivity';
 import { HomeLatestDisputes } from 'components/Dashboard/HomeLatestDisputes';
+import { SubmissionSelectionModal } from 'components/SubmissionSelectionModal';
 import ScrollTop from 'components/ScrollTop';
 
 import EtherscanLogo from 'assets/pngs/partners/etherscan.png';
-import UniswapLogo from 'assets/pngs/partners/uniswap.png';
 import LedgerLogo from 'assets/pngs/partners/ledger.png';
 import MetamaskLogo from 'assets/pngs/partners/metamask.png';
-import ZerionLogo from 'assets/pngs/partners/zerion.png';
+import OtterscanLogo from 'assets/pngs/partners/otterscan.png';
+import BlockscoutLogo from 'assets/pngs/partners/blockscout.png';
 
 const Container = styled.div`
   width: 100%;
@@ -109,7 +110,9 @@ const TrustedBySection = styled.div`
   align-items: center;
   gap: 16px;
   margin-bottom: 48px;
+  padding-bottom: 24px;
   width: 100%;
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
 
   ${landscapeStyle(
     () => css`
@@ -118,6 +121,7 @@ const TrustedBySection = styled.div`
       align-items: center;
       gap: 24px;
       margin-bottom: 64px;
+      padding-bottom: 32px;
       flex-wrap: wrap;
     `
   )}
@@ -144,22 +148,22 @@ const TrustedByText = styled.h3`
 const LogosContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 20px 40px;
+  gap: 24px 48px;
   flex-wrap: wrap;
   justify-content: center;
   flex-shrink: 1;
 
   ${landscapeStyle(
     () => css`
-      gap: 64px;
+      gap: 72px;
       flex-wrap: nowrap;
       flex-shrink: 0;
     `
   )}
 `;
 
-const PartnerLogo = styled.img`
-  height: 24px;
+const PartnerLogo = styled.img<{ $smaller?: boolean; $bigger?: boolean }>`
+  height: ${({ $smaller, $bigger }) => ($smaller ? '20px' : $bigger ? '30px' : '24px')};
   width: auto;
   object-fit: contain;
   opacity: 0.8;
@@ -171,7 +175,7 @@ const PartnerLogo = styled.img`
 
   ${landscapeStyle(
     () => css`
-      height: 28px;
+      height: ${({ $smaller, $bigger }) => ($smaller ? '24px' : $bigger ? '34px' : '28px')};
     `
   )}
 `;
@@ -202,7 +206,8 @@ const BottomGrid = styled.div`
 interface IHome {}
 
 const Home: React.FC<IHome> = () => {
-  const { data: stats, isLoading } = useDapplookerStats();
+  const [timeframeDays, setTimeframeDays] = useState(30);
+  const { data: stats, isLoading } = useDapplookerStats(timeframeDays);
   const navigate = useNavigate();
 
   const chartData = useMemo(() => {
@@ -214,8 +219,14 @@ const Home: React.FC<IHome> = () => {
     }));
   }, [stats]);
 
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
+
   const handleSubmitNowClick = () => {
-    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+    setIsSubmissionModalOpen(true);
+  };
+
+  const handleTimeframeChange = (days: number) => {
+    setTimeframeDays(days);
   };
 
   return (
@@ -242,22 +253,33 @@ const Home: React.FC<IHome> = () => {
         <TrustedByText>Trusted by</TrustedByText>
         <LogosContainer>
           <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
-          <PartnerLogo src={UniswapLogo} alt="Uniswap" />
+          <PartnerLogo src={BlockscoutLogo} alt="Blockscout" $smaller />
+          <PartnerLogo src={OtterscanLogo} alt="Otterscan" />
+          <PartnerLogo src={MetamaskLogo} alt="MetaMask" $bigger />
           <PartnerLogo src={LedgerLogo} alt="Ledger" />
-          <PartnerLogo src={MetamaskLogo} alt="MetaMask" />
-          <PartnerLogo src={ZerionLogo} alt="Zerion" />
         </LogosContainer>
         <TrustedByText>& Many More</TrustedByText>
       </TrustedBySection>
 
       <CarouselSection>
-        <HomeCarousel stats={stats} isLoading={isLoading} chartData={chartData} />
+        <HomeCarousel
+          stats={stats}
+          isLoading={isLoading}
+          chartData={chartData}
+          selectedTimeframe={timeframeDays}
+          onTimeframeChange={handleTimeframeChange}
+        />
       </CarouselSection>
 
       <BottomGrid>
         <HomeRecentActivity />
         <HomeLatestDisputes />
       </BottomGrid>
+
+      <SubmissionSelectionModal
+        isOpen={isSubmissionModalOpen}
+        onClose={() => setIsSubmissionModalOpen(false)}
+      />
     </Container>
   );
 };

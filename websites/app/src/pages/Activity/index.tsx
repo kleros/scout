@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import styled, { css, createGlobalStyle } from "styled-components";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ActivityIcon from "svgs/icons/activity.svg";
-import SubmissionsIcon from "svgs/icons/submissions.svg";
 import { useSubmitterStats } from "hooks/useSubmitterStats";
 import { commify } from "utils/commify";
 import { shortenAddress } from "utils/shortenAddress";
@@ -118,6 +117,11 @@ const Subtitle = styled.p`
   color: ${({ theme }) => theme.secondaryText};
 `;
 
+const TotalSubmissionsCount = styled.span`
+  color: ${({ theme }) => theme.secondaryBlue};
+  font-weight: 700;
+`;
+
 const TabsWrapper = styled.div`
   display: flex;
   gap: 40px;
@@ -131,53 +135,15 @@ const TabButton = styled.button<{ selected: boolean }>`
   padding: 0 0 12px;
   font-size: 18px;
   font-weight: 600;
-  color: ${({ theme, selected }) => (selected ? theme.primaryText : theme.secondaryText)};
-  border-bottom: 3px solid ${({ theme, selected }) => (selected ? theme.primaryText : "transparent")};
+  color: ${({ theme, selected }) => (selected ? theme.secondaryBlue : theme.secondaryText)};
+  border-bottom: 3px solid ${({ theme, selected }) => (selected ? theme.secondaryBlue : "transparent")};
   cursor: pointer;
+  transition: all 0.2s ease;
+
   &:hover {
-    color: ${({ theme }) => theme.primaryText};
+    color: ${({ theme }) => theme.primaryBlue};
+    border-bottom-color: ${({ theme }) => theme.primaryBlue};
   }
-`;
-
-const CardRow = styled.div`
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 32px;
-`;
-
-const StatCard = styled.div`
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 24px;
-  padding: 24px;
-  border-radius: 12px;
-  background: transparent;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  svg {
-    min-width: 64px;
-    min-height: 64px;
-    width: 64px;
-    height: 64px;
-    flex-shrink: 0;
-  }
-`;
-
-const StatInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const StatLabel = styled.label`
-  color: ${({ theme }) => theme.secondaryText};
-  font-size: 16px;
-`;
-
-const StatValue = styled.span`
-  font-size: 32px;
-  font-weight: 600;
 `;
 
 const ConnectWalletContainer = styled.div`
@@ -218,6 +184,7 @@ const Activity: React.FC = () => {
   
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isFilterChanging, setIsFilterChanging] = useState(false);
   // Initialize chain filters with all available chains by default
   const [chainFilters, setChainFilters] = useState<string[]>(() => {
     const availableChains = chains.filter(chain => !chain.deprecated).map(chain => chain.id);
@@ -247,6 +214,40 @@ const Activity: React.FC = () => {
       setSearchParams(newParams, { replace: true });
     }
   }, [address, searchParams, setSearchParams]);
+
+  // Reset page to 1 when filters change
+  const filterKey = useMemo(() => {
+    return [
+      searchParams.getAll('status').sort().join(','),
+      searchParams.getAll('disputed').sort().join(','),
+      searchParams.get('search') || '',
+      chainFilters.sort().join(','),
+      searchParams.get('orderDirection') || ''
+    ].join('|');
+  }, [searchParams, chainFilters]);
+
+  const prevFilterKeyRef = useRef(filterKey);
+
+  useEffect(() => {
+    const currentPage = searchParams.get('page');
+
+    // Only reset page if the FILTERS actually changed (not just the page number)
+    if (prevFilterKeyRef.current !== filterKey) {
+      prevFilterKeyRef.current = filterKey;
+
+      // Immediately show loading state when filters change
+      setIsFilterChanging(true);
+
+      // If we're not on page 1, reset to page 1 when filters change
+      if (currentPage && currentPage !== '1') {
+        setSearchParams(prev => {
+          const newParams = new URLSearchParams(prev.toString());
+          newParams.set('page', '1');
+          return newParams;
+        });
+      }
+    }
+  }, [filterKey, searchParams, setSearchParams]);
   
   const addressExplorerLink = useMemo(() => {
     if (!userAddress) return null;
@@ -331,21 +332,12 @@ const Activity: React.FC = () => {
                   : "My Activity"}
               </Title>
               <Subtitle>
-                {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase() 
-                  ? "Follow up your submissions, challenges, and other interactions with Scout."
-                  : "Follow up on submissions, challenges, and other interactions with Scout."}
+                <TotalSubmissionsCount>
+                  {isLoading ? <Skeleton inline width={30} height={16} /> : commify(totalSubmissions)}
+                </TotalSubmissionsCount> total submissions. Follow up {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase() ? 'your' : 'on'} submissions, challenges, and other interactions with Scout.
               </Subtitle>
             </div>
           </Header>
-          <CardRow>
-            <StatCard>
-              <SubmissionsIcon />
-              <StatInfo>
-                <StatLabel>Total Submissions</StatLabel>
-                <StatValue>{isLoading ? <Skeleton width={70} height={40} /> : commify(totalSubmissions)}</StatValue>
-              </StatInfo>
-            </StatCard>
-          </CardRow>
           <TabsWrapper>
             {tabs.map((tab, i) => (
               <TabButton key={tab.key} selected={i === currentTab} onClick={() => switchTab(i)}>
@@ -358,9 +350,9 @@ const Activity: React.FC = () => {
             <FilterButton onClick={() => setIsFilterModalOpen(true)} />
           </FilterControlsContainer>
           {currentTab === 0 ? (
-            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} chainFilters={chainFilters} />
+            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
           ) : (
-            <PastSubmissions totalItems={pastSubmissions} address={address} chainFilters={chainFilters} />
+            <PastSubmissions totalItems={pastSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
           )}
         </>
       ) : (

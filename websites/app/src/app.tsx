@@ -25,6 +25,14 @@ const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   width: 100vw;
 `;
 
+const LoadingContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+  width: 100%;
+`;
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -47,7 +55,7 @@ const App: React.FC = () => {
           <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Web3Provider>
               <QueryClientProvider client={queryClient}>
-                <Suspense fallback={null}>
+                <Suspense fallback={<LoadingContainer />}>
                   <Routes>
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Navigate to="home" replace />} />

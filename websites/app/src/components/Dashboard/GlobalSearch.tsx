@@ -10,6 +10,7 @@ import { getChainIcon } from 'utils/chainIcons';
 import useHumanizedCountdown, { useChallengeRemainingTime, useChallengePeriodDuration } from 'hooks/countdown';
 import Skeleton from 'react-loading-skeleton';
 import HourglassIcon from 'svgs/icons/hourglass.svg';
+import { SubmissionSelectionModal } from 'components/SubmissionSelectionModal';
 
 const Overlay = styled.div<{ $isActive: boolean }>`
   position: fixed;
@@ -44,7 +45,7 @@ const Container = styled.div`
   ${hoverLongTransitionTiming}
   display: flex;
   align-items: center;
-  background-color: #FFFFFF0D;
+  background-color: transparent;
   border-radius: 9999px;
   border: 1px solid ${({ theme }) => theme.stroke};
   padding-left: 16px;
@@ -242,6 +243,11 @@ const SubmitButton = styled.button`
   }
 `;
 
+const ModalWrapper = styled.div`
+  position: relative;
+  z-index: 1002;
+`;
+
 interface GlobalSearchProps {
   className?: string;
 }
@@ -250,6 +256,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(false);
+  const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState<boolean>(false);
   const navigate = useNavigate();
 
   useDebounce(
@@ -306,9 +313,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
   };
 
   const handleSubmitClick = () => {
-    navigate('/registry/Single_Tags?additem=Single_Tags');
-    setSearchTerm('');
-    setIsActive(false);
+    setIsSubmissionModalOpen(true);
   };
 
   const getPropValue = (item: any, label: string) => {
@@ -421,7 +426,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
 
   return (
     <>
-      <Overlay $isActive={isActive} onClick={() => { setSearchTerm(''); setIsActive(false); }} />
+      <Overlay $isActive={isActive || isSubmissionModalOpen} onClick={() => { setSearchTerm(''); setIsActive(false); }} />
       <SearchContainer $isActive={isActive} className={className}>
         <Container>
           <SearchIcon />
@@ -432,7 +437,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
             placeholder="Search for any item with keywords, address, name, etc."
           />
         </Container>
-        <ResultsDropdown $isVisible={showDropdown}>
+        <ResultsDropdown $isVisible={showDropdown && !isSubmissionModalOpen}>
           {isLoading ? (
             <LoadingMessage>Searching...</LoadingMessage>
           ) : hasResults ? (
@@ -442,11 +447,22 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
           ) : (
             <EmptyMessage>
               <div>No results found for "{debouncedSearchTerm}"</div>
-              <SubmitButton onClick={handleSubmitClick}>Submit it Now!</SubmitButton>
+              <SubmitButton onClick={handleSubmitClick}>Submit it Now</SubmitButton>
             </EmptyMessage>
           )}
         </ResultsDropdown>
       </SearchContainer>
+
+      <ModalWrapper>
+        <SubmissionSelectionModal
+          isOpen={isSubmissionModalOpen}
+          onClose={() => {
+            setIsSubmissionModalOpen(false);
+            setSearchTerm('');
+            setIsActive(false);
+          }}
+        />
+      </ModalWrapper>
     </>
   );
 };
