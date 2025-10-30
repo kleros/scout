@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
+import { SCOUT_APP_URL } from 'consts/urls'
 import ContributeAndEarn from './ContributeAndEarn'
 import HowToSubmit from 'components/HowToSubmit'
 import InstallMetamaskSnap from './InstallMetamaskSnap'
@@ -21,7 +22,7 @@ const index: React.FC = () => {
       <HowToSubmit
         titleText="How do I Submit?"
         buttonText="Start submitting & earn rewards!"
-        buttonLink="https://scout-app.kleros.io/"
+        buttonLink={SCOUT_APP_URL}
         showStats={true}
       />
       <InstallMetamaskSnap />
