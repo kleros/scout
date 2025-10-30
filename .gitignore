@@ -120,10 +120,10 @@ dist
 .vscode-test
 
 # yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
+**/.yarn/cache
+**/.yarn/unplugged
+**/.yarn/build-state.yml
+**/.yarn/install-state.gz
 .pnp.*
 
 ### Node Patch ###
@@ -185,11 +185,11 @@ tags
 ### yarn ###
 # https://yarnpkg.com/advanced/qa#which-files-should-be-gitignored
 
-.yarn/*
-!.yarn/releases
-!.yarn/plugins
-!.yarn/sdks
-!.yarn/versions
+**/.yarn/*
+!**/.yarn/releases
+!**/.yarn/plugins
+!**/.yarn/sdks
+!**/.yarn/versions
 
 # if you are NOT using Zero-installs, then:
 # comment the following lines

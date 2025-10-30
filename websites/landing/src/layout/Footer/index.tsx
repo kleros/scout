@@ -4,47 +4,52 @@ import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import SecuredByKlerosLogo from 'svgs/footer/secured-by-kleros.svg'
 import Links from './Links'
 
-const Container = styled.div`
+const FullWidthWrapper = styled.div`
   background-color: #08020e;
+  width: 100%;
+`;
+
+const Container = styled.div`
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
   padding: 32px 16px;
   gap: 32px;
   width: 100%;
   max-width: ${MAX_WIDTH_LANDSCAPE};
   margin: 0 auto;
+  box-sizing: border-box;
 
   ${landscapeStyle(
     () => css`
       flex-direction: row;
       align-items: flex-start;
+      justify-content: space-between;
       padding: 48px 48px;
       gap: 48px;
     `
   )}
+`
 
-  .secured-by-kleros {
+const LogoSection = styled.div`
+  flex-shrink: 0;
+
+  a {
+    display: block;
     min-height: 24px;
   }
+`
 
-  .socialmedia {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
+const LinksSection = styled.div`
+  width: 100%;
+  max-width: 100%;
 
-    a {
-      display: inline-block;
-      svg {
-        height: 16px;
-        width: 16px;
-        max-heigth: 16px;
-        max-width: 16px;
-        fill: white;
-      }
-    }
-  }
+  ${landscapeStyle(
+    () => css`
+      width: auto;
+      max-width: 70%;
+    `
+  )}
 `
 
 const StyledSecuredByKlerosLogo = styled(SecuredByKlerosLogo)`
@@ -53,7 +58,6 @@ const StyledSecuredByKlerosLogo = styled(SecuredByKlerosLogo)`
 
 const SecuredByKleros: React.FC = () => (
   <a
-    className="secured-by-kleros"
     href="https://kleros.io"
     target="_blank"
     rel="noreferrer"
@@ -62,22 +66,17 @@ const SecuredByKleros: React.FC = () => (
   </a>
 )
 
-// const SocialMedia = () => (
-//   <div className="socialmedia">
-//     {Object.values(socialmedia).map((site, i) => (
-//       <a key={i} href={site.url} target="_blank" rel="noreferrer">
-//         {site.icon}
-//       </a>
-//     ))}
-//   </div>
-// )
-
 const Footer: React.FC = () => (
-  <Container>
-    <SecuredByKleros />
-    <Links />
-    {/* <SocialMedia /> */}
-  </Container>
+  <FullWidthWrapper>
+    <Container>
+      <LogoSection>
+        <SecuredByKleros />
+      </LogoSection>
+      <LinksSection>
+        <Links />
+      </LinksSection>
+    </Container>
+  </FullWidthWrapper>
 )
 
 export default Footer

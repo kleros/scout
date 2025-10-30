@@ -1,5 +1,6 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
+import { SCOUT_APP_URL } from 'consts/urls'
 import Section from './Section'
 import { Button, ButtonAnchor } from 'components/Button'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -60,7 +61,7 @@ Scroll down to learn how to submit!"
         />
       </SectionsContainer>
       <StyledButtonAnchor
-        href="https://app.scout.kleros.io"
+        href={SCOUT_APP_URL}
         target="_blank"
         rel="noopener noreferrer"
       >

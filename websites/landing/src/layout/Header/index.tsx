@@ -2,6 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useNavigate } from 'react-router-dom'
+import { SCOUT_APP_URL } from 'consts/urls'
 import Sections from './Sections'
 import { Button, ButtonAnchor } from 'components/Button'
 import PromoBanner from 'components/PromoBanner'
@@ -79,7 +80,7 @@ const Navbar: React.FC = () => {
           <StyledScoutLogo />
         </Title>
         <ButtonAnchor
-          href="https://app.scout.kleros.io"
+          href={SCOUT_APP_URL}
           target="_blank"
           rel="noopener noreferrer"
         >

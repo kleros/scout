@@ -2,10 +2,10 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import etherscan from 'pngs/projects-using-scout/etherscan.png'
-import uniswap from 'pngs/projects-using-scout/uniswap.png'
+import blockscout from 'pngs/projects-using-scout/blockscout.png'
+import otterscan from 'pngs/projects-using-scout/otterscan.png'
 import ledger from 'pngs/projects-using-scout/ledger.png'
 import metamask from 'pngs/projects-using-scout/metamask.png'
-import zerion from 'pngs/projects-using-scout/zerion.png'
 
 const Container = styled.div`
   display: flex;
@@ -51,10 +51,10 @@ const LogosContainer = styled.div`
 
 const logos = [
   { src: etherscan, alt: 'Etherscan' },
-  { src: uniswap, alt: 'Uniswap' },
-  { src: ledger, alt: 'Ledger' },
+  { src: blockscout, alt: 'Blockscout' },
+  { src: otterscan, alt: 'Otterscan' },
   { src: metamask, alt: 'MetaMask' },
-  { src: zerion, alt: 'Zerion' },
+  { src: ledger, alt: 'Ledger' },
 ]
 
 const ProjectsUsingScout = () => {

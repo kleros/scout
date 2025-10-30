@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
+import { SCOUT_APP_URL } from 'consts/urls'
 import Hero from './Hero'
 import ProjectsUsingScout from 'components/ProjectsUsingScout'
 import HowToSubmit from 'components/HowToSubmit'
@@ -31,7 +32,7 @@ const Home = () => {
       <HowToSubmit
         titleText="How does it work?"
         buttonText="Submit & earn rewards!"
-        buttonLink="https://app.scout.kleros.io/"
+        buttonLink={SCOUT_APP_URL}
         showStats={true}
       />
       <SubgraphSection isForBuildersTab={false} />

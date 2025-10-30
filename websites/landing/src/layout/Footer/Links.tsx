@@ -3,21 +3,21 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { links } from 'consts/links'
 
-const Container = styled.div`
+const Container = styled.nav`
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 16px;
   font-family: 'Oxanium', sans-serif;
-  flex: 1;
+  width: 100%;
 
   ${landscapeStyle(
     () => css`
       flex-direction: row;
       flex-wrap: wrap;
-      column-gap: 48px;
-      row-gap: 16px;
+      align-items: flex-start;
       justify-content: flex-end;
+      gap: 16px 48px;
     `
   )}
 `
@@ -25,8 +25,9 @@ const Container = styled.div`
 const StyledAnchor = styled.a`
   color: #d5d5d5;
   text-decoration: none;
-  text-align: left;
   transition: color 0.2s ease;
+  font-size: 16px;
+  line-height: 1.5;
 
   &:hover {
     text-decoration: underline;
