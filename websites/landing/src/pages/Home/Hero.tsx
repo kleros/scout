@@ -127,7 +127,7 @@ const Hero: React.FC = () => {
       <RightSide>
         <StyledImg src={EtherscanAndMetamaskImage} />
         <StyledButtonAnchor
-          href="https://app.scout.kleros.io"
+          href="https://scout-app.kleros.io"
           target="_blank"
           rel="noopener noreferrer"
         >

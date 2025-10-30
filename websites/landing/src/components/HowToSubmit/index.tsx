@@ -128,7 +128,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         <br />
         They are:{' '}
         <Anchor
-          href="https://app.scout.kleros.io/#/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
+          href="https://scout-app.kleros.io/#/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -136,7 +136,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         </Anchor>
         ,{' '}
         <Anchor
-          href="https://app.scout.kleros.io/#/registry/Single_Tags?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
+          href="https://scout-app.kleros.io/#/registry/Single_Tags?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -144,7 +144,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         </Anchor>{' '}
         &{' '}
         <Anchor
-          href="https://app.scout.kleros.io/#/registry/CDN?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
+          href="https://scout-app.kleros.io/#/registry/CDN?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
           target="_blank"
           rel="noopener noreferrer"
         >

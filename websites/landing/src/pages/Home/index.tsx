@@ -31,7 +31,7 @@ const Home = () => {
       <HowToSubmit
         titleText="How does it work?"
         buttonText="Submit & earn rewards!"
-        buttonLink="https://app.scout.kleros.io/"
+        buttonLink="https://scout-app.kleros.io/"
         showStats={true}
       />
       <SubgraphSection isForBuildersTab={false} />

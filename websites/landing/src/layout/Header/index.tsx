@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
           <StyledScoutLogo />
         </Title>
         <ButtonAnchor
-          href="https://app.scout.kleros.io"
+          href="https://scout-app.kleros.io"
           target="_blank"
           rel="noopener noreferrer"
         >
