@@ -2,6 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
+import { TOKENS_REGISTRY_URL, ADDRESS_TAGS_REGISTRY_URL, CDN_REGISTRY_URL } from 'consts/urls'
 import Steps from './Steps'
 import { Button, ButtonAnchor } from '../Button'
 
@@ -128,7 +129,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         <br />
         They are:{' '}
         <Anchor
-          href="https://app.scout.kleros.io/#/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
+          href={TOKENS_REGISTRY_URL}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -136,7 +137,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         </Anchor>
         ,{' '}
         <Anchor
-          href="https://app.scout.kleros.io/#/registry/Single_Tags?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
+          href={ADDRESS_TAGS_REGISTRY_URL}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -144,7 +145,7 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
         </Anchor>{' '}
         &{' '}
         <Anchor
-          href="https://app.scout.kleros.io/#/registry/CDN?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1"
+          href={CDN_REGISTRY_URL}
           target="_blank"
           rel="noopener noreferrer"
         >

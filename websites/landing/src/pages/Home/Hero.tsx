@@ -2,6 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
+import { SCOUT_APP_URL } from 'consts/urls'
 import SecuredByKleros from 'svgs/footer/secured-by-kleros.svg'
 import EtherscanAndMetamaskImage from 'pngs/hero/etherscan-and-metamask.png'
 import { Button, ButtonAnchor } from 'components/Button'
@@ -127,7 +128,7 @@ const Hero: React.FC = () => {
       <RightSide>
         <StyledImg src={EtherscanAndMetamaskImage} />
         <StyledButtonAnchor
-          href="https://app.scout.kleros.io"
+          href={SCOUT_APP_URL}
           target="_blank"
           rel="noopener noreferrer"
         >
