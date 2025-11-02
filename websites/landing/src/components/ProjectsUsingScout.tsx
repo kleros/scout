@@ -24,14 +24,22 @@ const Container = styled.div`
   )}
 `
 
-const Logo = styled.img`
-  height: 32px;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+const Logo = styled.img<{ $smaller?: boolean; $bigger?: boolean }>`
+  height: ${({ $smaller, $bigger }) => ($smaller ? '20px' : $bigger ? '30px' : '24px')};
+  width: auto;
+  object-fit: contain;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
 
   &:hover {
-    opacity: 0.8;
-    transform: scale(1.05);
+    opacity: 1;
   }
+
+  ${landscapeStyle(
+    () => css`
+      height: ${({ $smaller, $bigger }) => ($smaller ? '24px' : $bigger ? '34px' : '28px')};
+    `
+  )}
 `
 
 const StyledText = styled.p`
@@ -43,17 +51,26 @@ const StyledText = styled.p`
 
 const LogosContainer = styled.div`
   display: flex;
-  gap: 30px;
-  flex-wrap: wrap;
   align-items: center;
+  gap: 24px 48px;
+  flex-wrap: wrap;
   justify-content: center;
+  flex-shrink: 1;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 72px;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    `
+  )}
 `
 
 const logos = [
   { src: etherscan, alt: 'Etherscan' },
-  { src: blockscout, alt: 'Blockscout' },
+  { src: blockscout, alt: 'Blockscout', smaller: true },
   { src: otterscan, alt: 'Otterscan' },
-  { src: metamask, alt: 'MetaMask' },
+  { src: metamask, alt: 'MetaMask', bigger: true },
   { src: ledger, alt: 'Ledger' },
 ]
 
@@ -63,7 +80,13 @@ const ProjectsUsingScout = () => {
       <StyledText>USED BY</StyledText>
       <LogosContainer>
         {logos.map((logo) => (
-          <Logo key={logo.alt} src={logo.src} alt={logo.alt} />
+          <Logo
+            key={logo.alt}
+            src={logo.src}
+            alt={logo.alt}
+            $smaller={logo.smaller}
+            $bigger={logo.bigger}
+          />
         ))}
       </LogosContainer>
       <StyledText>& MANY MORE</StyledText>
