@@ -286,7 +286,7 @@ const Item = React.memo(
     const openAttachment = useAttachment()
 
     const challengeRemainingTime = useChallengeRemainingTime(
-      item.requests[0]?.submissionTime,
+      item.requests?.[0]?.submissionTime,
       item.disputed,
       challengePeriodDuration,
     )
@@ -309,7 +309,7 @@ const Item = React.memo(
         <Status
           status={item.status}
           disputed={item.disputed}
-          bounty={item.requests[0].deposit}
+          bounty={item.requests?.[0]?.deposit || '0'}
         />
         <CardContent>
           <UpperCardContent>
@@ -441,26 +441,14 @@ const Item = React.memo(
               <>
                 <StyledDivider />
                 <TimersContainer>
-                  {item?.status !== 'Registered' ? (
-                    <SubmittedLabel>
-                      <CalendarIcon />
-                      Submitted on:{' '}
-                      {formatTimestamp(
-                        Number(item?.requests[0].submissionTime),
-                        false,
-                      )}
-                    </SubmittedLabel>
-                  ) : null}
-                  {item?.status === 'Registered' ? (
-                    <SubmittedLabel>
-                      <CalendarIcon />
-                      Included on:{' '}
-                      {formatTimestamp(
-                        Number(item?.requests[0].resolutionTime),
-                        false,
-                      )}
-                    </SubmittedLabel>
-                  ) : null}
+                  <SubmittedLabel>
+                    <CalendarIcon />
+                    {item?.status === 'Registered' ? 'Included' : 'Submitted'} on:{' '}
+                    {formatTimestamp(
+                      Number(item?.requests?.[item.requests.length - 1]?.submissionTime || 0),
+                      false,
+                    )}
+                  </SubmittedLabel>
                   {(isCountdownLoading || formattedChallengeRemainingTime) && (
                     <SubmittedLabel>
                       <HourglassIcon />

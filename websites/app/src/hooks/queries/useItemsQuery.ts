@@ -143,7 +143,7 @@ export const useItemsQuery = ({
               description
               isIdentifier
             }
-            requests(limit: 1, order_by: {submissionTime: desc}) {
+            requests(order_by: {submissionTime: desc}) {
               disputed
               disputeID
               submissionTime

@@ -531,19 +531,19 @@ const ItemDetails: React.FC = () => {
                 <DetailRow>
                   Submitted on:
                   <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${detailsData.requests[0].creationTx}`}
+                    href={`https://gnosisscan.io/tx/${detailsData.requests[detailsData.requests.length - 1].creationTx}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {formatTimestamp(Number(detailsData.requests[0].submissionTime), true)}
+                    {formatTimestamp(Number(detailsData.requests[detailsData.requests.length - 1].submissionTime), true)}
                   </SubmissionDate>
                   by
                   <SubmitterLink
-                    to={`/activity/ongoing?userAddress=${detailsData.requests[0].requester}`}
+                    to={`/activity/ongoing?userAddress=${detailsData.requests[detailsData.requests.length - 1].requester}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <IdenticonOrAvatar size="20" address={detailsData.requests[0].requester as `0x${string}`} />
-                    <AddressOrName address={detailsData.requests[0].requester as `0x${string}`} smallDisplay />
+                    <IdenticonOrAvatar size="20" address={detailsData.requests[detailsData.requests.length - 1].requester as `0x${string}`} />
+                    <AddressOrName address={detailsData.requests[detailsData.requests.length - 1].requester as `0x${string}`} smallDisplay />
                     <ArrowIcon />
                   </SubmitterLink>
                 </DetailRow>
