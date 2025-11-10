@@ -274,9 +274,34 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           if (round.ruling && round.ruling !== 'None' && round.appealPeriodStart && Number(round.appealPeriodStart) > 0) {
             displayedRoundNumber++
 
-            const rulingText = round.ruling === 'Accept' ? 'Accept Item' :
-                             round.ruling === 'Reject' ? 'Reject Item' :
-                             'Refuse to Arbitrate'
+            // Determine ruling text based on request type
+            let rulingText = ''
+            const normalizedRequestType = request.requestType?.toLowerCase()
+
+            if (round.ruling === 'Accept') {
+              // "Accept" means accept the request
+              if (normalizedRequestType === 'clearing' || normalizedRequestType === 'removal') {
+                rulingText = 'Accept Removal'
+              } else if (normalizedRequestType === 'registration') {
+                rulingText = 'Accept Registration'
+              } else {
+                // Fallback: try to infer from position
+                rulingText = requestIndex === 0 ? 'Accept Registration' : 'Accept Removal'
+              }
+            } else if (round.ruling === 'Reject') {
+              // "Reject" means reject the request
+              if (normalizedRequestType === 'clearing' || normalizedRequestType === 'removal') {
+                rulingText = 'Reject Removal'
+              } else if (normalizedRequestType === 'registration') {
+                rulingText = 'Reject Registration'
+              } else {
+                // Fallback: try to infer from position
+                rulingText = requestIndex === 0 ? 'Reject Registration' : 'Reject Removal'
+              }
+            } else {
+              rulingText = 'Refuse to Arbitrate'
+            }
+
             const txHashAppealPossible = round.txHashAppealPossible
 
             items.push({
@@ -332,11 +357,8 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
 
       // Resolution - only if actually resolved
       if (request?.resolved && request?.resolutionTime && Number(request.resolutionTime) > 0) {
-        // Determine the outcome based on request type and whether it was accepted
+        // Determine the outcome based on request type and dispute outcome
         let resolutionTitle = ''
-
-        // Check if this is the last request to determine final item state
-        const isLastRequest = requestIndex === sortedRequests.length - 1
 
         // Normalize requestType to handle case variations
         const normalizedRequestType = request.requestType?.toLowerCase()
@@ -346,45 +368,41 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           if (!request.disputed || request.disputeOutcome === 'Accept') {
             resolutionTitle = 'Item Included'
           } else {
-            resolutionTitle = 'Registration Rejected'
+            resolutionTitle = 'Item Rejected'
           }
         } else if (normalizedRequestType === 'clearing') {
           // Removal request was resolved
           if (!request.disputed || request.disputeOutcome === 'Accept') {
             resolutionTitle = 'Item Removed'
           } else {
-            resolutionTitle = 'Removal Rejected'
+            resolutionTitle = 'Item Kept'
           }
         } else {
           // Fallback - requestType is null/undefined or doesn't match expected values
-          // Try to infer from request outcome and position
           if (requestIndex === 0) {
             // This is the first/original request - it was always a registration
             if (!request.disputed || request.disputeOutcome === 'Accept') {
               resolutionTitle = 'Item Included'
             } else {
-              resolutionTitle = 'Registration Rejected'
-            }
-          } else if (isLastRequest) {
-            // This is the most recent request - use current item status to infer
-            if (detailsData.status === 'Registered') {
-              resolutionTitle = 'Item Included'
-            } else if (detailsData.status === 'Absent') {
-              resolutionTitle = 'Item Removed'
-            } else {
-              resolutionTitle = 'Request Resolved'
+              resolutionTitle = 'Item Rejected'
             }
           } else {
-            // Middle request - check the disputeOutcome to give better context
-            if (request.disputeOutcome === 'Accept') {
-              // Request was accepted - determine what it was
-              // If previous state was Registered, this was likely a removal
-              // If previous state was Absent, this was likely a registration
-              // Without that info, we can't be certain, so keep generic
-              resolutionTitle = 'Request Accepted'
+            // For subsequent requests (removal attempts)
+            if (!request.disputed) {
+              // Not disputed - check final status to see if removal went through
+              if (detailsData.status === 'Absent') {
+                resolutionTitle = 'Item Removed'
+              } else {
+                resolutionTitle = 'Item Kept'
+              }
+            } else if (request.disputeOutcome === 'Accept') {
+              // Dispute outcome was Accept - the removal request was accepted
+              resolutionTitle = 'Item Removed'
             } else if (request.disputeOutcome === 'Reject') {
-              resolutionTitle = 'Request Rejected'
+              // Dispute outcome was Reject - the removal request was rejected
+              resolutionTitle = 'Item Kept'
             } else {
+              // No clear outcome
               resolutionTitle = 'Request Resolved'
             }
           }
@@ -394,10 +412,10 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
 
         // Set color based on resolution outcome
         let resolutionColor = theme.primaryBlue
-        if (resolutionTitle === 'Item Removed') {
-          resolutionColor = theme.error || '#FF4D4F' // Red for removals
-        } else if (resolutionTitle === 'Item Included') {
-          resolutionColor = theme.success || '#52C41A' // Green for inclusions
+        if (resolutionTitle === 'Item Removed' || resolutionTitle === 'Item Rejected') {
+          resolutionColor = theme.error || '#FF4D4F' // Red for removals and rejections
+        } else if (resolutionTitle === 'Item Included' || resolutionTitle === 'Item Kept') {
+          resolutionColor = theme.success || '#52C41A' // Green for inclusions and kept items
         }
 
         items.push({
