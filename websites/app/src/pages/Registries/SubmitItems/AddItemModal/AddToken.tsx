@@ -223,7 +223,22 @@ const AddToken: React.FC = () => {
       );
 
       if (result?.status) {
+        // Reset form state before clearing localStorage to prevent the useEffect from saving it again
+        setNetwork({ value: 'eip155:1', label: 'Mainnet' });
+        setAddress('');
+        setDecimals('');
+        setName('');
+        setSymbol('');
+        setPath('');
+        setWebsite('');
         clearLocalStorage('addTokenForm');
+        // Close the modal by removing the additem query parameter
+        setSearchParams((prev) => {
+          const prevParams = prev.toString()
+          const newParams = new URLSearchParams(prevParams)
+          newParams.delete('additem')
+          return newParams
+        })
       }
     } catch (error) {
       console.error('Error submitting token:', error);
@@ -234,7 +249,7 @@ const AddToken: React.FC = () => {
   }
 
   const handleClose = () => {
-    clearLocalStorage('addTokenForm');
+    // Just close - preserve the draft in localStorage for later
   }
 
   const submittingDisabled = useMemo(() => {

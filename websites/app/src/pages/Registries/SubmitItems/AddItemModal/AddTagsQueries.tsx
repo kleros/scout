@@ -155,7 +155,19 @@ const AddTagsQueries: React.FC = () => {
       );
 
       if (result?.status) {
+        // Reset form state before clearing localStorage to prevent the useEffect from saving it again
+        setGithubRepository('');
+        setCommitHash('');
+        setEvmChainId('');
+        setDescription('');
         clearLocalStorage('addTagsQueriesForm');
+        // Close the modal by removing the additem query parameter
+        setSearchParams((prev) => {
+          const prevParams = prev.toString()
+          const newParams = new URLSearchParams(prevParams)
+          newParams.delete('additem')
+          return newParams
+        })
       }
     } catch (error) {
       console.error('Error submitting tags queries:', error);
@@ -166,7 +178,7 @@ const AddTagsQueries: React.FC = () => {
   };
 
   const handleClose = () => {
-    clearLocalStorage('addTagsQueriesForm');
+    // Just close - preserve the draft in localStorage for later
   };
 
   const submittingDisabled = useMemo(() => {
