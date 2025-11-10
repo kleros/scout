@@ -197,11 +197,12 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
       />
       <ItemTimeline detailsData={detailsData} />
 
-      {/* Crowdfunding Card - show for active appeals */}
-      {detailsData.disputed && !detailsData.requests[0].resolved && (
+      {/* Appeal Info Box - show for any disputed item (active or resolved) */}
+      {/* Check if the current request OR the item itself was ever disputed */}
+      {(detailsData.disputed || detailsData.requests[0].disputed) && (
         <>
-          {/* Show skeleton only if we're still loading */}
-          {(statusCode === null || registryParametersLoading) && challengePeriodDuration !== null ? (
+          {/* Show skeleton only if we're still loading and not resolved */}
+          {!detailsData.requests[0].resolved && (statusCode === null || registryParametersLoading) && challengePeriodDuration !== null ? (
             <AppealInfoBox>
               <AppealInfoItem>
                 <AppealInfoLabel>Current Ruling</AppealInfoLabel>
@@ -230,33 +231,37 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
             </AppealInfoBox>
           ) : (
             <AppealInfoBox>
-              <AppealInfoItem>
-                <AppealInfoLabel>Current Ruling</AppealInfoLabel>
-                {(() => {
-                  const ruling = currentRulingRound?.ruling
+              {/* Only show current ruling if dispute is not resolved yet */}
+              {!detailsData.requests[0].resolved && (
+                <AppealInfoItem>
+                  <AppealInfoLabel>Current Ruling</AppealInfoLabel>
+                  {(() => {
+                    const ruling = currentRulingRound?.ruling
 
-                  let badgeType = 'None'
-                  let badgeText = 'No Ruling Yet'
+                    let badgeType = 'None'
+                    let badgeText = 'No Ruling Yet'
 
-                  if (ruling === 'Accept') {
-                    badgeType = 'Accept'
-                    badgeText = 'Accept Item'
-                  } else if (ruling === 'Reject') {
-                    badgeType = 'Reject'
-                    badgeText = 'Reject Item'
-                  } else if (ruling === 'None' || ruling === 'Refuse') {
-                    badgeType = 'Refuse'
-                    badgeText = 'Pending / Refused to Arbitrate'
-                  }
+                    if (ruling === 'Accept') {
+                      badgeType = 'Accept'
+                      badgeText = 'Accept Item'
+                    } else if (ruling === 'Reject') {
+                      badgeType = 'Reject'
+                      badgeText = 'Reject Item'
+                    } else if (ruling === 'None' || ruling === 'Refuse') {
+                      badgeType = 'Refuse'
+                      badgeText = 'Pending / Refused to Arbitrate'
+                    }
 
-                  return (
-                    <RulingBadge ruling={badgeType}>
-                      {badgeText}
-                    </RulingBadge>
-                  )
-                })()}
-              </AppealInfoItem>
-              {shouldShowCrowdfunding && (
+                    return (
+                      <RulingBadge ruling={badgeType}>
+                        {badgeText}
+                      </RulingBadge>
+                    )
+                  })()}
+                </AppealInfoItem>
+              )}
+              {/* Only show crowdfunding info if dispute is not resolved yet */}
+              {!detailsData.requests[0].resolved && shouldShowCrowdfunding && (
                 <>
                   <AppealInfoItem>
                     <AppealInfoLabel>Appeal Status</AppealInfoLabel>
@@ -304,6 +309,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
                   )}
                 </>
               )}
+              {/* Always show Klerosboard link for disputed items (even after resolved) */}
               <AppealInfoItem>
                 <AppealInfoLabel>Track Case</AppealInfoLabel>
                 <CaseLink

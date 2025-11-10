@@ -329,7 +329,7 @@ const ItemListView = React.memo(
     const navigate = useNavigate();
 
     const challengeRemainingTime = useChallengeRemainingTime(
-      item.requests[0]?.submissionTime,
+      item.requests?.[0]?.submissionTime,
       item.disputed,
       challengePeriodDuration,
     );
@@ -354,7 +354,7 @@ const ItemListView = React.memo(
       (item.status === 'ClearingRequested' ||
         item.status === 'RegistrationRequested') &&
         !item.disputed
-        ? Number(formatEther(item.requests[0].deposit))
+        ? Number(formatEther(item.requests?.[0]?.deposit || '0'))
         : null;
 
     const renderContent = () => {
@@ -367,7 +367,7 @@ const ItemListView = React.memo(
       const isLoading = challengePeriodDuration === null && item.status !== 'Registered' && !item.disputed;
 
       const periodEndsIn = item.status === 'Registered'
-        ? formatTimestamp(Number(item.requests[0]?.resolutionTime), false)
+        ? formatTimestamp(Number(item.requests?.[0]?.resolutionTime || 0), false)
         : (isLoading ? <Skeleton width={100} /> : formattedChallengeRemainingTime || '');
 
       // UNUSED: submitterAddress is only used in commented-out SubmitterCell sections

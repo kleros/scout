@@ -195,148 +195,230 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
 
     const items: TimelineItem[] = []
 
-    // Submission - always present
-    const creationTx = detailsData.requests[0]?.creationTx
-    items.push({
-      title: 'Item Submitted',
-      party: detailsData.requests[0]?.requester ? (
-        <PartyWrapper>
-          <ByText>by </ByText>
-          <AddressLink to={`/activity/ongoing?userAddress=${detailsData.requests[0].requester}`}>
-            <IdenticonOrAvatar size="20" address={detailsData.requests[0].requester as `0x${string}`} />
-            <AddressOrName address={detailsData.requests[0].requester as `0x${string}`} smallDisplay />
-            <ArrowIcon />
-          </AddressLink>
-        </PartyWrapper>
-      ) : (
-        <TxLink
-          href={`https://gnosisscan.io/tx/${creationTx}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <StyledNewTabIcon />
-        </TxLink>
-      ),
-      subtitle: creationTx ? (
-        <DateLink
-          href={`https://gnosisscan.io/tx/${creationTx}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {formatTimestamp(Number(detailsData.requests[0]?.submissionTime), true)}
-        </DateLink>
-      ) : (
-        formatTimestamp(Number(detailsData.requests[0]?.submissionTime), true)
-      ),
-      rightSided: true,
-      variant: theme.secondaryPurple,
-    })
+    // Sort requests chronologically (oldest first) - requests come from GraphQL ordered by submissionTime desc
+    const sortedRequests = [...(detailsData.requests || [])].reverse()
 
-    // Challenge - only if actually disputed
-    if (detailsData.disputed && detailsData.requests[0]?.challenger) {
+    // Process each request chronologically
+    sortedRequests.forEach((request: any, requestIndex: number) => {
+      // Submission - always present for each request
+      const creationTx = request?.creationTx
+      const requestTypeLabel = request.requestType === 'Registration' ? 'Registration Requested' : 'Removal Requested'
+
       items.push({
-        title: 'Item Challenged',
-        party: (
+        title: requestIndex === 0 ? 'Item Submitted' : requestTypeLabel,
+        party: request?.requester ? (
           <PartyWrapper>
             <ByText>by </ByText>
-            <AddressLink to={`/activity/ongoing?userAddress=${detailsData.requests[0].challenger}`}>
-              <IdenticonOrAvatar size="20" address={detailsData.requests[0].challenger as `0x${string}`} />
-              <AddressOrName address={detailsData.requests[0].challenger as `0x${string}`} smallDisplay />
+            <AddressLink to={`/activity/ongoing?userAddress=${request.requester}`}>
+              <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
+              <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
               <ArrowIcon />
             </AddressLink>
           </PartyWrapper>
-        ),
-        subtitle: detailsData.requests[0]?.submissionTime ? (
-          <DateText>{formatTimestamp(Number(detailsData.requests[0].submissionTime), true)}</DateText>
-        ) : '',
-        rightSided: true,
-        variant: theme.orange,
-      })
-    }
-
-    // Jury decisions and appeals - only if there are actual rounds with rulings
-    if (detailsData.requests[0]?.rounds && detailsData.requests[0].rounds.length > 0) {
-      detailsData.requests[0].rounds.forEach((round: any, index: number) => {
-        // Only show jury decision if there's an actual ruling (not "None" or empty)
-        if (round.ruling && round.ruling !== 'None' && round.appealPeriodStart && Number(round.appealPeriodStart) > 0) {
-          const rulingText = round.ruling === 'Accept' ? 'Accept Item' :
-                           round.ruling === 'Reject' ? 'Reject Item' :
-                           'Refuse to Arbitrate'
-          const txHashAppealPossible = round.txHashAppealPossible
-
-          items.push({
-            title: `Jury Decision - Round ${index + 1}`,
-            party: rulingText,
-            subtitle: txHashAppealPossible ? (
-              <DateLink
-                href={`https://gnosisscan.io/tx/${txHashAppealPossible}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {formatTimestamp(Number(round.appealPeriodStart), true)}
-              </DateLink>
-            ) : (
-              formatTimestamp(Number(round.appealPeriodStart), true)
-            ),
-            rightSided: true,
-            variant: theme.secondaryPurple,
-          })
-        }
-
-        // Appeal - only if there's another round after this one AND BOTH sides have funded their appeals
-        // Check that the appeal period has ended (is in the past) before showing "Appealed"
-        if (index < detailsData.requests[0].rounds.length - 1 && round.appealPeriodEnd && Number(round.appealPeriodEnd) > 0) {
-          const currentTimestamp = Math.floor(Date.now() / 1000)
-          const appealPeriodEndTimestamp = Number(round.appealPeriodEnd)
-
-          // Only show "Appealed" if the appeal period has actually ended AND both sides have funded
-          if (appealPeriodEndTimestamp < currentTimestamp && round.hasPaidRequester && round.hasPaidChallenger) {
-            const txHashAppealDecision = round.txHashAppealDecision
-
-            items.push({
-              title: 'Appealed',
-              party: '',
-              subtitle: txHashAppealDecision ? (
-                <DateLink
-                  href={`https://gnosisscan.io/tx/${txHashAppealDecision}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {formatTimestamp(Number(round.appealPeriodEnd), true)}
-                </DateLink>
-              ) : (
-                formatTimestamp(Number(round.appealPeriodEnd), true)
-              ),
-              rightSided: true,
-              variant: theme.primaryBlue,
-            })
-          }
-        }
-      })
-    }
-
-    // Resolution - only if actually resolved
-    if (detailsData.requests[0]?.resolved && detailsData.requests[0]?.resolutionTime && Number(detailsData.requests[0].resolutionTime) > 0) {
-      const finalStatus = detailsData.status === 'Registered' ? 'Item Included' : 'Item Removed'
-      const resolutionTx = detailsData.requests[0]?.resolutionTx
-      items.push({
-        title: 'Resolved',
-        party: finalStatus,
-        subtitle: resolutionTx ? (
-          <DateLink
-            href={`https://gnosisscan.io/tx/${resolutionTx}`}
+        ) : (
+          <TxLink
+            href={`https://gnosisscan.io/tx/${creationTx}`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            {formatTimestamp(Number(detailsData.requests[0].resolutionTime), true)}
+            <StyledNewTabIcon />
+          </TxLink>
+        ),
+        subtitle: creationTx ? (
+          <DateLink
+            href={`https://gnosisscan.io/tx/${creationTx}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {formatTimestamp(Number(request?.submissionTime), true)}
           </DateLink>
         ) : (
-          formatTimestamp(Number(detailsData.requests[0].resolutionTime), true)
+          formatTimestamp(Number(request?.submissionTime), true)
         ),
         rightSided: true,
-        variant: theme.primaryBlue,
+        variant: theme.secondaryPurple,
       })
-    }
+
+      // Challenge - only if actually disputed
+      if (request.disputed && request?.challenger) {
+        items.push({
+          title: 'Item Challenged',
+          party: (
+            <PartyWrapper>
+              <ByText>by </ByText>
+              <AddressLink to={`/activity/ongoing?userAddress=${request.challenger}`}>
+                <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
+                <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
+                <ArrowIcon />
+              </AddressLink>
+            </PartyWrapper>
+          ),
+          subtitle: request?.submissionTime ? (
+            <DateText>{formatTimestamp(Number(request.submissionTime), true)}</DateText>
+          ) : '',
+          rightSided: true,
+          variant: theme.orange,
+        })
+      }
+
+      // Jury decisions and appeals - only if there are actual rounds with rulings
+      if (request?.rounds && request.rounds.length > 0) {
+        // Sort rounds chronologically (oldest first) - rounds come from GraphQL ordered by creationTime desc
+        const sortedRounds = [...request.rounds].reverse()
+
+        // Track the actual round number for display (only counting rounds with rulings)
+        let displayedRoundNumber = 0
+
+        sortedRounds.forEach((round: any, index: number) => {
+          // Only show jury decision if there's an actual ruling (not "None" or empty)
+          if (round.ruling && round.ruling !== 'None' && round.appealPeriodStart && Number(round.appealPeriodStart) > 0) {
+            displayedRoundNumber++
+
+            const rulingText = round.ruling === 'Accept' ? 'Accept Item' :
+                             round.ruling === 'Reject' ? 'Reject Item' :
+                             'Refuse to Arbitrate'
+            const txHashAppealPossible = round.txHashAppealPossible
+
+            items.push({
+              title: `Jury Decision - Round ${displayedRoundNumber}`,
+              party: rulingText,
+              subtitle: txHashAppealPossible ? (
+                <DateLink
+                  href={`https://gnosisscan.io/tx/${txHashAppealPossible}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {formatTimestamp(Number(round.appealPeriodStart), true)}
+                </DateLink>
+              ) : (
+                formatTimestamp(Number(round.appealPeriodStart), true)
+              ),
+              rightSided: true,
+              variant: theme.secondaryPurple,
+            })
+          }
+
+          // Appeal - only if there's another round after this one AND BOTH sides have funded their appeals
+          // Check that the appeal period has ended (is in the past) before showing "Appealed"
+          if (index < sortedRounds.length - 1 && round.appealPeriodEnd && Number(round.appealPeriodEnd) > 0) {
+            const currentTimestamp = Math.floor(Date.now() / 1000)
+            const appealPeriodEndTimestamp = Number(round.appealPeriodEnd)
+
+            // Only show "Appealed" if the appeal period has actually ended AND both sides have funded
+            if (appealPeriodEndTimestamp < currentTimestamp && round.hasPaidRequester && round.hasPaidChallenger) {
+              const txHashAppealDecision = round.txHashAppealDecision
+
+              items.push({
+                title: 'Appealed',
+                party: '',
+                subtitle: txHashAppealDecision ? (
+                  <DateLink
+                    href={`https://gnosisscan.io/tx/${txHashAppealDecision}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {formatTimestamp(Number(round.appealPeriodEnd), true)}
+                  </DateLink>
+                ) : (
+                  formatTimestamp(Number(round.appealPeriodEnd), true)
+                ),
+                rightSided: true,
+                variant: theme.primaryBlue,
+              })
+            }
+          }
+        })
+      }
+
+      // Resolution - only if actually resolved
+      if (request?.resolved && request?.resolutionTime && Number(request.resolutionTime) > 0) {
+        // Determine the outcome based on request type and whether it was accepted
+        let resolutionTitle = ''
+
+        // Check if this is the last request to determine final item state
+        const isLastRequest = requestIndex === sortedRequests.length - 1
+
+        // Normalize requestType to handle case variations
+        const normalizedRequestType = request.requestType?.toLowerCase()
+
+        if (normalizedRequestType === 'registration') {
+          // Registration request was resolved
+          if (!request.disputed || request.disputeOutcome === 'Accept') {
+            resolutionTitle = 'Item Included'
+          } else {
+            resolutionTitle = 'Registration Rejected'
+          }
+        } else if (normalizedRequestType === 'clearing') {
+          // Removal request was resolved
+          if (!request.disputed || request.disputeOutcome === 'Accept') {
+            resolutionTitle = 'Item Removed'
+          } else {
+            resolutionTitle = 'Removal Rejected'
+          }
+        } else {
+          // Fallback - requestType is null/undefined or doesn't match expected values
+          // Try to infer from request outcome and position
+          if (requestIndex === 0) {
+            // This is the first/original request - it was always a registration
+            if (!request.disputed || request.disputeOutcome === 'Accept') {
+              resolutionTitle = 'Item Included'
+            } else {
+              resolutionTitle = 'Registration Rejected'
+            }
+          } else if (isLastRequest) {
+            // This is the most recent request - use current item status to infer
+            if (detailsData.status === 'Registered') {
+              resolutionTitle = 'Item Included'
+            } else if (detailsData.status === 'Absent') {
+              resolutionTitle = 'Item Removed'
+            } else {
+              resolutionTitle = 'Request Resolved'
+            }
+          } else {
+            // Middle request - check the disputeOutcome to give better context
+            if (request.disputeOutcome === 'Accept') {
+              // Request was accepted - determine what it was
+              // If previous state was Registered, this was likely a removal
+              // If previous state was Absent, this was likely a registration
+              // Without that info, we can't be certain, so keep generic
+              resolutionTitle = 'Request Accepted'
+            } else if (request.disputeOutcome === 'Reject') {
+              resolutionTitle = 'Request Rejected'
+            } else {
+              resolutionTitle = 'Request Resolved'
+            }
+          }
+        }
+
+        const resolutionTx = request?.resolutionTx
+
+        // Set color based on resolution outcome
+        let resolutionColor = theme.primaryBlue
+        if (resolutionTitle === 'Item Removed') {
+          resolutionColor = theme.error || '#FF4D4F' // Red for removals
+        } else if (resolutionTitle === 'Item Included') {
+          resolutionColor = theme.success || '#52C41A' // Green for inclusions
+        }
+
+        items.push({
+          title: resolutionTitle,
+          party: '',
+          subtitle: resolutionTx ? (
+            <DateLink
+              href={`https://gnosisscan.io/tx/${resolutionTx}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {formatTimestamp(Number(request.resolutionTime), true)}
+            </DateLink>
+          ) : (
+            formatTimestamp(Number(request.resolutionTime), true)
+          ),
+          rightSided: true,
+          variant: resolutionColor,
+        })
+      }
+    })
 
     return items.length > 0 ? items as [TimelineItem, ...TimelineItem[]] : undefined
   }, [detailsData, theme])
