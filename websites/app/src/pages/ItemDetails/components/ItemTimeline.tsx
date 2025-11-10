@@ -241,8 +241,21 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
 
       // Challenge - only if actually disputed
       if (request.disputed && request?.challenger) {
+        // Determine what was challenged based on request type
+        const normalizedRequestType = request.requestType?.toLowerCase()
+        let challengeTitle = 'Item Challenged'
+
+        if (normalizedRequestType === 'clearing' || normalizedRequestType === 'removal') {
+          challengeTitle = 'Removal Challenged'
+        } else if (normalizedRequestType === 'registration') {
+          challengeTitle = 'Registration Challenged'
+        } else {
+          // Fallback: infer from position
+          challengeTitle = requestIndex === 0 ? 'Registration Challenged' : 'Removal Challenged'
+        }
+
         items.push({
-          title: 'Item Challenged',
+          title: challengeTitle,
           party: (
             <PartyWrapper>
               <ByText>by </ByText>
