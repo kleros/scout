@@ -185,7 +185,19 @@ const AddCDN: React.FC = () => {
       );
 
       if (result?.status) {
+        // Reset form state before clearing localStorage to prevent the useEffect from saving it again
+        setNetwork({ value: 'eip155:1', label: 'Mainnet' });
+        setAddress('');
+        setDomain('');
+        setPath('');
         clearLocalStorage('addCDNForm');
+        // Close the modal by removing the additem query parameter
+        setSearchParams((prev) => {
+          const prevParams = prev.toString()
+          const newParams = new URLSearchParams(prevParams)
+          newParams.delete('additem')
+          return newParams
+        })
       }
     } catch (error) {
       console.error('Error submitting CDN:', error);
@@ -196,7 +208,7 @@ const AddCDN: React.FC = () => {
   }
 
   const handleClose = () => {
-    clearLocalStorage('addCDNForm');
+    // Just close - preserve the draft in localStorage for later
   }
 
   const submittingDisabled = useMemo(() => {

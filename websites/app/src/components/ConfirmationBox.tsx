@@ -266,9 +266,16 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   })() : null
 
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !isLoading) {
+  const handleClose = () => {
+    if (!isLoading) {
+      // Just close the modal - preserve the draft in localStorage for retry
       setIsConfirmationOpen(false)
+    }
+  }
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      handleClose()
     }
   }
 
@@ -294,7 +301,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               })()}
             </div>
             <ClosedButtonContainer
-              onClick={() => !isLoading && setIsConfirmationOpen(false)}
+              onClick={handleClose}
               style={{ cursor: isLoading ? 'not-allowed' : 'pointer', opacity: isLoading ? 0.5 : 1 }}
             >
               <StyledCloseButton />
@@ -457,16 +464,13 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     }
 
                     if (result?.status) {
+                      // Reset form state before closing to prevent the useEffect from saving it again
                       setEvidenceTitle('')
                       setEvidenceText('')
                       setAttachedFileBase64(null)
                       setAttachedFileName(null)
-                      setFormData({
-                        evidenceTitle: '',
-                        evidenceText: '',
-                        attachedFileBase64: null,
-                        attachedFileName: null,
-                      })
+                      // Clear localStorage after state is reset
+                      localStorage.removeItem(cacheKey)
                       setIsConfirmationOpen(false)
                     }
                   } catch (error) {

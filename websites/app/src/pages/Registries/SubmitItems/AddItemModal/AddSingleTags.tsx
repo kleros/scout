@@ -214,7 +214,21 @@ const AddAddressTag: React.FC = () => {
       );
 
       if (result?.status) {
+        // Reset form state before clearing localStorage to prevent the useEffect from saving it again
+        setNetwork({ value: 'eip155:1', label: 'Mainnet' });
+        setAddress('');
+        setProjectName('');
+        setPublicNameTag('');
+        setPublicNote('');
+        setWebsite('');
         clearLocalStorage('addTagForm');
+        // Close the modal by removing the additem query parameter
+        setSearchParams((prev) => {
+          const prevParams = prev.toString()
+          const newParams = new URLSearchParams(prevParams)
+          newParams.delete('additem')
+          return newParams
+        })
       }
     } catch (error) {
       console.error('Error submitting address tag:', error);
@@ -225,7 +239,7 @@ const AddAddressTag: React.FC = () => {
   }
 
   const handleClose = () => {
-    clearLocalStorage('addTagForm');
+    // Just close - preserve the draft in localStorage for later
   }
 
     const submittingDisabled = useMemo(() => {
