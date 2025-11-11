@@ -196,7 +196,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
     sortedRequests.forEach((request: any, requestIndex: number) => {
       // Submission - always present for each request
       const creationTx = request?.creationTx
-      const requestTypeLabel = request.requestType === 'Registration' ? 'Registration Requested' : 'Removal Requested'
+      const requestTypeLabel = request.requestType === 'RegistrationRequested' ? 'Registration Requested' : 'Removal Requested'
 
       items.push({
         title: requestIndex === 0 ? 'Item Submitted' : requestTypeLabel,
@@ -239,9 +239,9 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
         const normalizedRequestType = request.requestType?.toLowerCase()
         let challengeTitle = 'Item Challenged'
 
-        if (normalizedRequestType === 'clearing' || normalizedRequestType === 'removal') {
+        if (normalizedRequestType === 'clearingrequested') {
           challengeTitle = 'Removal Challenged'
-        } else if (normalizedRequestType === 'registration') {
+        } else if (normalizedRequestType === 'registrationrequested') {
           challengeTitle = 'Registration Challenged'
         } else {
           // Fallback: infer from position
@@ -285,9 +285,9 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
 
             if (round.ruling === 'Accept') {
               // "Accept" means accept the request
-              if (normalizedRequestType === 'clearing' || normalizedRequestType === 'removal') {
+              if (normalizedRequestType === 'clearingrequested') {
                 rulingText = 'Accept Removal'
-              } else if (normalizedRequestType === 'registration') {
+              } else if (normalizedRequestType === 'registrationrequested') {
                 rulingText = 'Accept Registration'
               } else {
                 // Fallback: try to infer from position
@@ -295,9 +295,9 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
               }
             } else if (round.ruling === 'Reject') {
               // "Reject" means reject the request
-              if (normalizedRequestType === 'clearing' || normalizedRequestType === 'removal') {
+              if (normalizedRequestType === 'clearingrequested') {
                 rulingText = 'Reject Removal'
-              } else if (normalizedRequestType === 'registration') {
+              } else if (normalizedRequestType === 'registrationrequested') {
                 rulingText = 'Reject Registration'
               } else {
                 // Fallback: try to infer from position
@@ -426,14 +426,14 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
         // Normalize requestType to handle case variations
         const normalizedRequestType = request.requestType?.toLowerCase()
 
-        if (normalizedRequestType === 'registration') {
+        if (normalizedRequestType === 'registrationrequested') {
           // Registration request was resolved
           if (!request.disputed || request.disputeOutcome === 'Accept') {
             resolutionTitle = 'Item Included'
           } else {
             resolutionTitle = 'Item Rejected'
           }
-        } else if (normalizedRequestType === 'clearing') {
+        } else if (normalizedRequestType === 'clearingrequested') {
           // Removal request was resolved
           if (!request.disputed || request.disputeOutcome === 'Accept') {
             resolutionTitle = 'Item Removed'
