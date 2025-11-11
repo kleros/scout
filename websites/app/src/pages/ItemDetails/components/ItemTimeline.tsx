@@ -165,12 +165,6 @@ const DateLink = styled.a`
   }
 `
 
-const DateText = styled.span`
-  color: ${({ theme }) => theme.secondaryText};
-  font-size: 12px;
-  font-weight: 400;
-`
-
 const ByText = styled.span`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 14px;
@@ -266,9 +260,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
               </AddressLink>
             </PartyWrapper>
           ),
-          subtitle: request?.submissionTime ? (
-            <DateText>{formatTimestamp(Number(request.submissionTime), true)}</DateText>
-          ) : '',
+          subtitle: request?.submissionTime ? formatTimestamp(Number(request.submissionTime), true) : '',
           rightSided: true,
           variant: theme.orange,
         })
@@ -336,18 +328,76 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
             })
           }
 
-          // Appeal - only if there's another round after this one AND BOTH sides have funded their appeals
-          // Check that the appeal period has ended (is in the past) before showing "Appealed"
-          if (index < sortedRounds.length - 1 && round.appealPeriodEnd && Number(round.appealPeriodEnd) > 0) {
+          // Appeal funding - show who funded their appeal
+          if (round.appealPeriodEnd && Number(round.appealPeriodEnd) > 0) {
+            // Show requester funding if they paid
+            if (round.hasPaidRequester && request?.requester) {
+              // Determine if requester is on winning or losing side based on ruling
+              let fundingTitle = 'Appeal Funded by Requester'
+              if (round.ruling === 'Accept') {
+                fundingTitle = 'Winning Side Funded Appeal'
+              } else if (round.ruling === 'Reject') {
+                fundingTitle = 'Losing Side Funded Appeal'
+              }
+
+              items.push({
+                title: fundingTitle,
+                party: (
+                  <PartyWrapper>
+                    <AddressLink to={`/activity/ongoing?userAddress=${request.requester}`}>
+                      <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
+                      <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
+                      <ArrowIcon />
+                    </AddressLink>
+                  </PartyWrapper>
+                ),
+                subtitle: round.appealedAt
+                  ? formatTimestamp(Number(round.appealedAt), true)
+                  : formatTimestamp(Number(round.appealPeriodStart), true),
+                rightSided: true,
+                variant: theme.primaryBlue,
+              })
+            }
+
+            // Show challenger funding if they paid
+            if (round.hasPaidChallenger && request?.challenger) {
+              // Determine if challenger is on winning or losing side based on ruling
+              let fundingTitle = 'Appeal Funded by Challenger'
+              if (round.ruling === 'Accept') {
+                fundingTitle = 'Losing Side Funded Appeal'
+              } else if (round.ruling === 'Reject') {
+                fundingTitle = 'Winning Side Funded Appeal'
+              }
+
+              items.push({
+                title: fundingTitle,
+                party: (
+                  <PartyWrapper>
+                    <AddressLink to={`/activity/ongoing?userAddress=${request.challenger}`}>
+                      <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
+                      <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
+                      <ArrowIcon />
+                    </AddressLink>
+                  </PartyWrapper>
+                ),
+                subtitle: round.appealedAt
+                  ? formatTimestamp(Number(round.appealedAt), true)
+                  : formatTimestamp(Number(round.appealPeriodStart), true),
+                rightSided: true,
+                variant: theme.primaryBlue,
+              })
+            }
+
+            // Appeal proceeds - only if there's another round after this one AND BOTH sides have funded
             const currentTimestamp = Math.floor(Date.now() / 1000)
             const appealPeriodEndTimestamp = Number(round.appealPeriodEnd)
 
-            // Only show "Appealed" if the appeal period has actually ended AND both sides have funded
-            if (appealPeriodEndTimestamp < currentTimestamp && round.hasPaidRequester && round.hasPaidChallenger) {
+            // Only show "Appeal Proceeds" if the appeal period has actually ended AND both sides have funded
+            if (index < sortedRounds.length - 1 && appealPeriodEndTimestamp < currentTimestamp && round.hasPaidRequester && round.hasPaidChallenger) {
               const txHashAppealDecision = round.txHashAppealDecision
 
               items.push({
-                title: 'Appealed',
+                title: 'Appeal Proceeds to Next Round',
                 party: '',
                 subtitle: txHashAppealDecision ? (
                   <DateLink
