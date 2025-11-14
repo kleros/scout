@@ -245,6 +245,29 @@ const ExportModal: React.FC<ExportModalProps> = ({
     refetch()
   }
 
+  /**
+   * Normalize field labels to handle historical variations and inconsistencies.
+   *
+   * Problem: Items submitted at different times may have the same field with different
+   * descriptions (e.g., from old Curate v1 vs new Scout interface). When exported,
+   * this creates multiple columns with the same data but different headers:
+   * - "Address (The smart contract address of the token)" vs
+   *   "Address (The address of the smart contract being tagged...)"
+   *
+   * Solution: Normalize by label only, ignoring description variations.
+   * This unifies all variations of the same field into a single column.
+   */
+  const normalizeFieldLabel = (label: string): string => {
+    const normalized = label.trim()
+
+    // Normalize address field variations across registries
+    if (normalized === 'Address' || normalized === 'Contract Address' || normalized === 'Contract address') {
+      return 'Address'
+    }
+
+    return normalized
+  }
+
   useEffect(() => {
     if (!items || !ref.current || !hasClickedExport) return
 
@@ -262,17 +285,24 @@ const ExportModal: React.FC<ExportModalProps> = ({
         }
 
         if (item?.props) {
-          item.props.forEach((prop) => {
-            row[`${prop.label} (${prop.description})`] = prop.value
-          })
-        }
+          // Group props by normalized label to handle description variations
+          // This ensures items with same field label but different descriptions
+          // get merged into a single CSV column
+          const propsByLabel = new Map<string, string>()
 
-        if (item) {
-          row.key0 = item.key0
-          row.key1 = item.key1
-          row.key2 = item.key2
-          row.key3 = item.key3
-          row.key4 = item.key4
+          item.props.forEach((prop) => {
+            const normalizedLabel = normalizeFieldLabel(prop.label)
+            // Use the first non-empty value for each normalized label
+            // This handles cases where old items might have empty values
+            if (!propsByLabel.has(normalizedLabel) || !propsByLabel.get(normalizedLabel)) {
+              propsByLabel.set(normalizedLabel, prop.value || '')
+            }
+          })
+
+          // Add normalized fields to the row using clean labels (no descriptions)
+          propsByLabel.forEach((value, label) => {
+            row[label] = value
+          })
         }
 
         return row

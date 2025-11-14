@@ -289,6 +289,9 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
+      {addressIssuesData?.duplicate && (
+        <ErrorMessage>{addressIssuesData.duplicate.message}</ErrorMessage>
+      )}
       <FieldLabel>Project name</FieldLabel>
       <StyledTextInput
         placeholder="e.g. Kleros"
