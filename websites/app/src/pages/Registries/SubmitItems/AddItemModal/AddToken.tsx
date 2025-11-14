@@ -299,6 +299,9 @@ const AddToken: React.FC = () => {
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
+      {addressIssuesData?.duplicate && (
+        <ErrorMessage>{addressIssuesData.duplicate.message}</ErrorMessage>
+      )}
       <FieldLabel>Decimals</FieldLabel>
       <StyledTextInput
         placeholder="e.g. 18"

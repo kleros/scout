@@ -71,6 +71,10 @@ export interface Issue {
     severity: 'warn' | 'error'
     message: string
   }
+  duplicate?: {
+    severity: 'warn' | 'error'
+    message: string
+  }
   contract?: {
     severity: 'warn' | 'error'
     message: string
@@ -262,7 +266,7 @@ export const getAddressValidationIssue = async (
     )
 
     if (ndupes > 0) {
-      result.domain = { message: 'Duplicate submission', severity: 'error' }
+      result.duplicate = { message: 'Duplicate submission', severity: 'error' }
     }
   } else if (registry === 'Tokens') {
     // For tokens, only consider it a duplicate if any of the existing items have a website
@@ -272,7 +276,7 @@ export const getAddressValidationIssue = async (
     )
 
     if (ndupes > 0) {
-      result.domain = {
+      result.duplicate = {
         message: 'Duplicate submission - token with website already exists',
         severity: 'error',
       }

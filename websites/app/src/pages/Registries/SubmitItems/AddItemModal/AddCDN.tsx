@@ -267,6 +267,9 @@ const AddCDN: React.FC = () => {
       {addressIssuesData?.domain && (
         <ErrorMessage>{addressIssuesData.domain.message}</ErrorMessage>
       )}
+      {addressIssuesData?.duplicate && (
+        <ErrorMessage>{addressIssuesData.duplicate.message}</ErrorMessage>
+      )}
       <ImageUpload
         path={path}
         setPath={setPath}
