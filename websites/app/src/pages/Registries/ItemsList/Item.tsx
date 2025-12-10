@@ -20,6 +20,8 @@ import {
 import { StyledButton } from 'components/Button'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
 import CalendarIcon from 'svgs/icons/calendar.svg'
+import { itemToStatusCode, STATUS_CODE } from 'utils/itemStatus'
+import { useMemo } from 'react'
 
 const Card = styled.div<{ seamlessBottom?: boolean }>`
   color: white;
@@ -265,6 +267,7 @@ interface ItemProps {
   challengePeriodDuration: number | null
   showActionButtons?: boolean
   onActionButtonClick?: (actionType: string) => void
+  onExecuteButtonClick?: () => void
   actionButtonCost?: string
   hideBottomTimers?: boolean
   seamlessBottom?: boolean
@@ -276,6 +279,7 @@ const Item = React.memo(
     challengePeriodDuration,
     showActionButtons = false,
     onActionButtonClick,
+    onExecuteButtonClick,
     actionButtonCost,
     hideBottomTimers = false,
     seamlessBottom = false,
@@ -295,6 +299,15 @@ const Item = React.memo(
       2,
     )
     const isCountdownLoading = challengePeriodDuration === null && item.status !== 'Registered' && !item.disputed
+
+    // Calculate status code to determine if item is in pending execution state
+    const statusCode = useMemo(() => {
+      if (!challengePeriodDuration) return null
+      const timestamp = Math.floor(Date.now() / 1000)
+      return itemToStatusCode(item as any, timestamp, challengePeriodDuration)
+    }, [item, challengePeriodDuration])
+
+    const isPendingExecution = statusCode === STATUS_CODE.PENDING_SUBMISSION || statusCode === STATUS_CODE.PENDING_REMOVAL
 
     const handleItemDetailsClick = useCallback(() => {
       navigate(`/item/${item.id}?${searchParams.toString()}`)
@@ -419,7 +432,14 @@ const Item = React.memo(
             )}
           </UpperCardContent>
           <BottomCardContent>
-            {showActionButtons && !item.disputed && item.status !== 'Absent' ? (
+            {showActionButtons && isPendingExecution && onExecuteButtonClick ? (
+              <ActionButton
+                onClick={onExecuteButtonClick}
+              >
+                {statusCode === STATUS_CODE.PENDING_SUBMISSION && 'Execute Submission'}
+                {statusCode === STATUS_CODE.PENDING_REMOVAL && 'Execute Removal'}
+              </ActionButton>
+            ) : showActionButtons && !item.disputed && item.status !== 'Absent' ? (
               <ActionButton
                 onClick={() => {
                   if (onActionButtonClick) {

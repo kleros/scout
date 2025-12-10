@@ -195,12 +195,45 @@ export const useCurateInteractions = () => {
     }
   }, [walletClient, publicClient, address]);
 
+  const executeRequest = useCallback(async (
+    registryAddress: Address,
+    itemId: string
+  ) => {
+    if (!walletClient || !publicClient || !address) {
+      throw new Error('Wallet not connected');
+    }
+
+    setIsLoading(true);
+    try {
+      const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        address: registryAddress,
+        abi: klerosCurateAbi,
+        functionName: 'executeRequest',
+        args: [itemId as `0x${string}`],
+        account: address,
+      });
+
+      const result = await wrapWithToast(
+        async () => await walletClient.writeContract(request),
+        publicClient
+      );
+
+      return result;
+    } catch (error) {
+      console.error('Error executing request:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [walletClient, publicClient, address]);
+
   return {
     addItem,
     removeItem,
     challengeRequest,
     submitEvidence,
     fundAppeal,
+    executeRequest,
     isLoading,
   };
 };
