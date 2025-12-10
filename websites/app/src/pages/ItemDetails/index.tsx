@@ -22,7 +22,8 @@ import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
-import { errorToast } from 'utils/wrapWithToast'
+import { errorToast, successToast } from 'utils/wrapWithToast'
+import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 
 const Container = styled.div`
   display: flex;
@@ -237,6 +238,8 @@ const ItemDetails: React.FC = () => {
     [itemId],
   )
 
+  const { executeRequest, isLoading: isExecuting } = useCurateInteractions()
+
   const registryName = useMemo(() => {
     return registryParsedFromItemId ? revRegistryMap[registryParsedFromItemId] : 'Unknown'
   }, [registryParsedFromItemId])
@@ -446,6 +449,21 @@ const ItemDetails: React.FC = () => {
     navigate(registryUrl)
   }
 
+  const handleExecuteRequest = async () => {
+    if (!detailsData || isExecuting) return
+
+    try {
+      await executeRequest(
+        registryParsedFromItemId as `0x${string}`,
+        detailsData.itemID
+      )
+      successToast('Request executed successfully!')
+    } catch (error) {
+      console.error('Error executing request:', error)
+      errorToast('Failed to execute request. Please try again.')
+    }
+  }
+
   if (detailsLoading || !detailsData) {
     return (
       <Container>
@@ -521,6 +539,7 @@ const ItemDetails: React.FC = () => {
                     setIsConfirmationOpen(true)
                     setEvidenceConfirmationType(actionType)
                   }}
+                  onExecuteButtonClick={handleExecuteRequest}
                   actionButtonCost={formattedDepositCost}
                   hideBottomTimers={true}
                   seamlessBottom={true}
