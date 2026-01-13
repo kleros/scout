@@ -338,7 +338,7 @@ const AddAddressTag: React.FC = () => {
               countsData['Single_Tags'].deposits.arbitrationCost +
               countsData['Single_Tags'].deposits.submissionBaseDeposit
             ) + ' xDAI'
-            : null}{' | '}Expected Reward: $12
+            : null}
         </ExpectedPayouts>
       </PayoutsContainer>
     </AddContainer>

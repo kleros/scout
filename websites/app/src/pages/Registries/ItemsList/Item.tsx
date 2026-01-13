@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import { GraphItem, registryMap } from 'utils/items'
 import { GraphItemDetails } from 'utils/itemDetails'
@@ -145,10 +145,26 @@ const VisualProofWrapper = styled.img`
   }
 `
 
-const DetailsButton = styled(StyledButton).attrs({ variant: 'secondary', size: 'medium' })`
+const DetailsButton = styled(Link)`
   ${hoverLongTransitionTiming}
   margin: 8px 0;
   min-width: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  color: ${({ theme }) => theme.primaryText};
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
 `
 
 const ActionButton = styled(StyledButton).attrs({ variant: 'primary', size: 'medium' })`
@@ -285,9 +301,9 @@ const Item = React.memo(
     seamlessBottom = false,
   }: ItemProps) => {
     const [imgLoaded, setImgLoaded] = useState(false)
-    const [searchParams, setSearchParams] = useSearchParams()
-    const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const openAttachment = useAttachment()
+    const itemUrl = `/item/${item.id}?${searchParams.toString()}`
 
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests?.[0]?.submissionTime,
@@ -308,10 +324,6 @@ const Item = React.memo(
     }, [item, challengePeriodDuration])
 
     const isPendingExecution = statusCode === STATUS_CODE.PENDING_SUBMISSION || statusCode === STATUS_CODE.PENDING_REMOVAL
-
-    const handleItemDetailsClick = useCallback(() => {
-      navigate(`/item/${item.id}?${searchParams.toString()}`)
-    }, [navigate, item.id, searchParams])
 
     const getPropValue = (label: string) => {
       return item?.props?.find((prop) => prop.label === label)?.value || ''
@@ -453,7 +465,7 @@ const Item = React.memo(
                 {actionButtonCost ? ` — ${actionButtonCost}` : ''}
               </ActionButton>
             ) : !showActionButtons ? (
-              <DetailsButton onClick={handleItemDetailsClick}>
+              <DetailsButton to={itemUrl}>
                 Details
               </DetailsButton>
             ) : null}
@@ -463,11 +475,12 @@ const Item = React.memo(
                 <TimersContainer>
                   <SubmittedLabel>
                     <CalendarIcon />
-                    {item?.status === 'Registered' ? 'Included' : 'Submitted'} on:{' '}
-                    {formatTimestamp(
-                      Number(item?.requests?.[item.requests.length - 1]?.submissionTime || 0),
-                      false,
-                    )}
+                    {item?.status === 'Absent' ? 'Removed on: ' : item?.status === 'Registered' ? 'Included on: ' : 'Submitted on: '}
+                    {item?.status === 'Registered'
+                      ? formatTimestamp(Number((item.requests || []).find(req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved)?.resolutionTime || 0), false)
+                      : item?.status === 'Absent'
+                        ? formatTimestamp(Number(item.requests?.[0]?.resolutionTime || 0), false)
+                        : formatTimestamp(Number(item?.requests?.[0]?.submissionTime || 0), false)}
                   </SubmittedLabel>
                   {(isCountdownLoading || formattedChallengeRemainingTime) && (
                     <SubmittedLabel>

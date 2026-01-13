@@ -290,7 +290,7 @@ const AddCDN: React.FC = () => {
               countsData.CDN.deposits.arbitrationCost +
               countsData.CDN.deposits.submissionBaseDeposit
             ) + ' xDAI'
-            : null}{' | '}Expected Reward: $12
+            : null}
         </ExpectedPayouts>
       </PayoutsContainer>
     </AddContainer>

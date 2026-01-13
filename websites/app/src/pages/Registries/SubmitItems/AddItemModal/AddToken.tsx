@@ -360,7 +360,7 @@ const AddToken: React.FC = () => {
               countsData.Tokens.deposits.arbitrationCost +
               countsData.Tokens.deposits.submissionBaseDeposit
             ) + ' xDAI'
-            : null}{' | '}Expected Reward: $12
+            : null}
         </ExpectedPayouts>
       </PayoutsContainer>
     </AddContainer>

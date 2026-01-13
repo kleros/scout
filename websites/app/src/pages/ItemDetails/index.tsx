@@ -571,9 +571,20 @@ const ItemDetails: React.FC = () => {
                     Challenge period ends in: {formattedChallengeRemainingTime}
                   </DetailRow>
                 )}
-                {detailsData.status === 'Registered' && detailsData.requests[0].resolutionTime && (
+                {detailsData.status === 'Registered' && (() => {
+                  // Find the successful registration request (may not be requests[0] if a removal was challenged)
+                  const registrationRequest = detailsData.requests?.find(
+                    req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved && req.resolutionTime
+                  )
+                  return registrationRequest?.resolutionTime ? (
+                    <DetailRow>
+                      Included on: {formatTimestamp(Number(registrationRequest.resolutionTime), true)}
+                    </DetailRow>
+                  ) : null
+                })()}
+                {detailsData.status === 'Absent' && detailsData.requests?.[0]?.resolutionTime && (
                   <DetailRow>
-                    Included on: {formatTimestamp(Number(detailsData.requests[0].resolutionTime), true)}
+                    Removed on: {formatTimestamp(Number(detailsData.requests[0].resolutionTime), true)}
                   </DetailRow>
                 )}
               </SubmissionDetailsSection>

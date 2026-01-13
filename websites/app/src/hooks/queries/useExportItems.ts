@@ -158,7 +158,8 @@ export const useExportItems = (filters: ExportFilters) => {
               description
               isIdentifier
             }
-            requests(limit: 1, order_by: {submissionTime: desc}) {
+            requests(order_by: {submissionTime: desc}) {
+              requestType
               disputed
               disputeID
               submissionTime

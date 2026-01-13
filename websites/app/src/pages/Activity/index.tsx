@@ -6,6 +6,7 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ActivityIcon from "svgs/icons/activity.svg";
 import { useSubmitterStats } from "hooks/useSubmitterStats";
+import { useDisputeStats } from "hooks/useDisputeStats";
 import { commify } from "utils/commify";
 import { shortenAddress } from "utils/shortenAddress";
 import Skeleton from "react-loading-skeleton";
@@ -13,6 +14,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import ConnectWallet from "components/ConnectWallet";
 import OngoingSubmissions from "./OngoingSubmissions";
 import PastSubmissions from "./PastSubmissions";
+import Disputes from "./Disputes";
 import FilterButton from "components/FilterButton";
 import FilterModal from "./FilterModal";
 import ActivitySearchBar from "./SearchBar";
@@ -168,7 +170,65 @@ const FilterControlsContainer = styled.div`
   margin-bottom: 16px;
 `;
 
-const PATHS = ["ongoing", "past"];
+const SubTabsWrapper = styled.div`
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+`;
+
+const SubTabButton = styled.button<{ selected: boolean }>`
+  background: none;
+  border: none;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: ${({ theme, selected }) => (selected ? theme.secondaryBlue : theme.secondaryText)};
+  border-bottom: 2px solid ${({ theme, selected }) => (selected ? theme.secondaryBlue : "transparent")};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
+  }
+`;
+
+const DisputeStatsContainer = styled.div`
+  display: flex;
+  gap: 24px;
+  padding: 16px;
+  background: ${({ theme }) => theme.lightBackground};
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+`;
+
+const StatBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 80px;
+`;
+
+const StatLabel = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.secondaryText};
+  text-transform: uppercase;
+`;
+
+const StatValue = styled.span<{ color?: string }>`
+  font-size: 20px;
+  font-weight: 700;
+  color: ${({ color, theme }) => color || theme.primaryText};
+`;
+
+const StatDivider = styled.div`
+  width: 1px;
+  background: ${({ theme }) => theme.stroke};
+  align-self: stretch;
+`;
+
+const PATHS = ["ongoing", "past", "disputes"];
 
 const REGISTRATION_STATUSES = ['Registered', 'RegistrationRequested', 'ClearingRequested'];
 const CHALLENGE_STATUSES = ['true', 'false'];
@@ -179,7 +239,12 @@ const Activity: React.FC = () => {
   const userAddress = searchParams.get("userAddress");
   const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
+  const { data: disputeData, isLoading: isLoadingDisputes } = useDisputeStats(address);
   const stats = data?.submitter;
+  const disputeStats = disputeData?.disputeStats;
+
+  // Dispute sub-tab state (active vs resolved)
+  const [showResolvedDisputes, setShowResolvedDisputes] = useState(false);
   
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -266,6 +331,9 @@ const Activity: React.FC = () => {
   const ongoingSubmissions = stats?.ongoingSubmissions ?? 0;
   const pastSubmissions = stats?.pastSubmissions ?? 0;
   const totalSubmissions = stats?.totalSubmissions ?? 0;
+  const activeDisputes = disputeStats?.activeDisputes ?? 0;
+  const resolvedDisputes = disputeStats?.resolvedDisputes ?? 0;
+  const totalDisputes = activeDisputes + resolvedDisputes;
   const tabs = useMemo(
     () => [
       {
@@ -286,10 +354,19 @@ const Activity: React.FC = () => {
         ),
         path: "past",
       },
+      {
+        key: "disputes",
+        label: (
+          <>
+            Disputes ({isLoadingDisputes ? <Skeleton inline width={30} height={20} /> : commify(totalDisputes)})
+          </>
+        ),
+        path: "disputes",
+      },
     ],
-    [isLoading, ongoingSubmissions, pastSubmissions]
+    [isLoading, isLoadingDisputes, ongoingSubmissions, pastSubmissions, totalDisputes]
   );
-  const basePath = useMemo(() => location.pathname.split(/\/(ongoing|past)\b/)[0], [location.pathname]);
+  const basePath = useMemo(() => location.pathname.split(/\/(ongoing|past|disputes)\b/)[0], [location.pathname]);
   const switchTab = (n: number) => {
     setCurrentTab(n);
     const params = new URLSearchParams(location.search);
@@ -348,10 +425,94 @@ const Activity: React.FC = () => {
             <ActivitySearchBar />
             <FilterButton onClick={() => setIsFilterModalOpen(true)} />
           </FilterControlsContainer>
-          {currentTab === 0 ? (
+          {currentTab === 0 && (
             <OngoingSubmissions totalItems={ongoingSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
-          ) : (
+          )}
+          {currentTab === 1 && (
             <PastSubmissions totalItems={pastSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
+          )}
+          {currentTab === 2 && (
+            <>
+              <DisputeStatsContainer>
+                <StatBox>
+                  <StatLabel>Active</StatLabel>
+                  <StatValue>
+                    {isLoadingDisputes ? <Skeleton width={30} height={24} /> : activeDisputes}
+                  </StatValue>
+                </StatBox>
+                <StatDivider />
+                <StatBox>
+                  <StatLabel>Resolved</StatLabel>
+                  <StatValue>
+                    {isLoadingDisputes ? <Skeleton width={30} height={24} /> : resolvedDisputes}
+                  </StatValue>
+                </StatBox>
+                <StatDivider />
+                <StatBox>
+                  <StatLabel>Wins</StatLabel>
+                  <StatValue color="#65DC7F">
+                    {isLoadingDisputes ? <Skeleton width={30} height={24} /> : disputeStats?.totalWins ?? 0}
+                  </StatValue>
+                </StatBox>
+                <StatBox>
+                  <StatLabel>Losses</StatLabel>
+                  <StatValue color="#FF5A78">
+                    {isLoadingDisputes ? <Skeleton width={30} height={24} /> : disputeStats?.totalLosses ?? 0}
+                  </StatValue>
+                </StatBox>
+                <StatDivider />
+                <StatBox>
+                  <StatLabel>As Submitter</StatLabel>
+                  <StatValue>
+                    {isLoadingDisputes ? (
+                      <Skeleton width={60} height={24} />
+                    ) : (
+                      <span>
+                        <span style={{ color: '#65DC7F' }}>{disputeStats?.winsAsRequester ?? 0}W</span>
+                        {' / '}
+                        <span style={{ color: '#FF5A78' }}>{disputeStats?.lossesAsRequester ?? 0}L</span>
+                      </span>
+                    )}
+                  </StatValue>
+                </StatBox>
+                <StatBox>
+                  <StatLabel>As Challenger</StatLabel>
+                  <StatValue>
+                    {isLoadingDisputes ? (
+                      <Skeleton width={60} height={24} />
+                    ) : (
+                      <span>
+                        <span style={{ color: '#65DC7F' }}>{disputeStats?.winsAsChallenger ?? 0}W</span>
+                        {' / '}
+                        <span style={{ color: '#FF5A78' }}>{disputeStats?.lossesAsChallenger ?? 0}L</span>
+                      </span>
+                    )}
+                  </StatValue>
+                </StatBox>
+              </DisputeStatsContainer>
+              <SubTabsWrapper>
+                <SubTabButton
+                  selected={!showResolvedDisputes}
+                  onClick={() => setShowResolvedDisputes(false)}
+                >
+                  Active ({activeDisputes})
+                </SubTabButton>
+                <SubTabButton
+                  selected={showResolvedDisputes}
+                  onClick={() => setShowResolvedDisputes(true)}
+                >
+                  Resolved ({resolvedDisputes})
+                </SubTabButton>
+              </SubTabsWrapper>
+              <Disputes
+                totalItems={showResolvedDisputes ? resolvedDisputes : activeDisputes}
+                address={address}
+                chainFilters={chainFilters}
+                isFilterChanging={isFilterChanging}
+                setIsFilterChanging={setIsFilterChanging}
+                showResolved={showResolvedDisputes}
+              />
+            </>
           )}
         </>
       ) : (

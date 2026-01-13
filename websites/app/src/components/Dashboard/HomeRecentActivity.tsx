@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
 import { revRegistryMap, GraphItem } from 'utils/items';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
@@ -228,7 +228,7 @@ const ChainInfo = styled.div`
   }
 `;
 
-const ViewButton = styled.button`
+const ViewButton = styled(Link)`
   display: flex;
   align-items: center;
   gap: 4px;
@@ -245,6 +245,7 @@ const ViewButton = styled.button`
   border-color: ${({ theme }) => theme.buttonSecondaryBorder};
   flex-shrink: 0;
   white-space: nowrap;
+  text-decoration: none;
 
   @media (min-width: 768px) {
     padding: 6px 12px;
@@ -345,10 +346,10 @@ const formatRegistryName = (registryName: string): string => {
 
 interface ActivityItemProps {
   item: GraphItem;
-  onClick: () => void;
+  itemUrl: string;
 }
 
-const ActivityItem: React.FC<ActivityItemProps> = ({ item, onClick }) => {
+const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
   const registryName = revRegistryMap[item.registryAddress] || 'Unknown';
   const displayName = getDisplayName(item);
   const status = getActivityStatus(item);
@@ -400,7 +401,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, onClick }) => {
             </ChainInfo>
           )}
         </StatusGroup>
-        <ViewButton onClick={onClick}>
+        <ViewButton to={itemUrl}>
           View <ArrowIcon />
         </ViewButton>
       </RightSection>
@@ -409,8 +410,6 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, onClick }) => {
 };
 
 export const HomeRecentActivity: React.FC = () => {
-  const navigate = useNavigate();
-
   const searchParams = useMemo(() => {
     const params = new URLSearchParams();
     // Fetch from all 4 registries
@@ -435,13 +434,6 @@ export const HomeRecentActivity: React.FC = () => {
     chainFilters: [],
     enabled: true,
   });
-
-  const handleRowClick = useCallback(
-    (item: GraphItem) => {
-      navigate(`/item/${item.id}?fromHome=true`);
-    },
-    [navigate]
-  );
 
   if (isLoading) {
     return (
@@ -479,7 +471,7 @@ export const HomeRecentActivity: React.FC = () => {
           <ActivityItem
             key={item.id}
             item={item}
-            onClick={() => handleRowClick(item)}
+            itemUrl={`/item/${item.id}?fromHome=true`}
           />
         ))}
       </ActivityList>

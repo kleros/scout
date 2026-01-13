@@ -268,20 +268,70 @@ const ExportModal: React.FC<ExportModalProps> = ({
     return normalized
   }
 
+  /**
+   * Parse a CAIP-10 address (e.g., "eip155:1:0x1234...") into chain and address parts.
+   */
+  const parseCAIP10Address = (caip10: string): { chain: string; address: string } => {
+    if (!caip10) return { chain: '', address: '' }
+
+    const parts = caip10.split(':')
+    if (parts.length >= 3) {
+      // Format: namespace:chainId:address (e.g., "eip155:1:0x1234...")
+      const namespace = parts[0]
+      const chainId = parts[1]
+      const address = parts.slice(2).join(':') // In case address contains colons
+
+      // Find the chain name from chains config
+      const chainInfo = chains.find(c =>
+        `${c.namespace}:${c.id}` === `${namespace}:${chainId}` ||
+        c.id === chainId
+      )
+      const chainName = chainInfo?.name || `${namespace}:${chainId}`
+
+      return { chain: chainName, address }
+    } else if (parts.length === 2) {
+      // Format: namespace:address (e.g., "solana:0x1234...")
+      const chainInfo = chains.find(c => c.namespace === parts[0])
+      return { chain: chainInfo?.name || parts[0], address: parts[1] }
+    }
+
+    return { chain: '', address: caip10 }
+  }
+
   useEffect(() => {
     if (!items || !ref.current || !hasClickedExport) return
 
     try {
       const flattenedItems = items.map((item) => {
+        const latestRequest = item.requests?.[0]
+
+        // Determine the appropriate date based on status
+        // For Registered: find the successful registration request (may not be requests[0] if a removal was challenged)
+        // For Absent: requests[0] is always the clearing request
+        // For pending: use submissionTime
+        let eventTime = item.latestRequestSubmissionTime
+        if (item.status === 'Registered') {
+          const registrationRequest = (item.requests || []).find(
+            req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved && req.resolutionTime
+          )
+          eventTime = registrationRequest?.resolutionTime || latestRequest?.resolutionTime || item.latestRequestSubmissionTime
+        } else if (item.status === 'Absent') {
+          eventTime = latestRequest?.resolutionTime || item.latestRequestSubmissionTime
+        }
+
+        // Helper to filter out zero addresses
+        const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+        const filterZeroAddress = (addr: string | undefined) =>
+          addr && addr !== ZERO_ADDRESS ? addr : ''
+
+        // Get submitter address (from original submission - oldest request)
+        const originalRequest = item.requests?.[item.requests.length - 1]
+        const submitter = filterZeroAddress(originalRequest?.requester)
+
+        // Build row with reorganized columns
+        // Order: status, key columns (with Address split into Chain + Address), disputed, registry, submitter, itemID, eventDate
         const row: any = {
-          id: item.id,
           status: item.status,
-          disputed: item.disputed,
-          submissionTime: new Date(
-            parseInt(item.latestRequestSubmissionTime) * 1000,
-          ).toISOString(),
-          registryAddress: item.registryAddress,
-          itemID: item.itemID,
         }
 
         if (item?.props) {
@@ -300,10 +350,28 @@ const ExportModal: React.FC<ExportModalProps> = ({
           })
 
           // Add normalized fields to the row using clean labels (no descriptions)
+          // Split Address into Chain and Address columns
           propsByLabel.forEach((value, label) => {
-            row[label] = value
+            if (label === 'Address') {
+              const { chain, address } = parseCAIP10Address(value)
+              row['Chain'] = chain
+              row['Address'] = address
+            } else {
+              row[label] = value
+            }
           })
         }
+
+        // Add remaining columns at the end
+        row['disputed'] = item.disputed
+        row['registry'] = revRegistryMap[item.registryAddress] || item.registryAddress
+        row['submitter'] = submitter
+        // Get challenger if item was disputed
+        row['challenger'] = filterZeroAddress(latestRequest?.challenger)
+        row['itemID'] = item.itemID
+        // Format date, handle edge case of 0 or invalid timestamp
+        const timestamp = parseInt(eventTime) * 1000
+        row['eventDate'] = timestamp > 0 ? new Date(timestamp).toISOString() : ''
 
         return row
       })
