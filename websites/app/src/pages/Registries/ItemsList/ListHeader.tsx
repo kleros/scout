@@ -7,13 +7,13 @@ const HeaderRow = styled.div<{ registryType?: string }>`
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
+        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
       case 'Single_Tags':
-        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Period ends in
+        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
       case 'CDN':
-        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Period ends in
+        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Next/Last event
       case 'Tags_Queries':
-        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Period ends in
+        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
       default:
         return '200px 280px 180px 200px 100px 180px';
     }
@@ -80,7 +80,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
         <HeaderCell>Address</HeaderCell>
         {/* <CenteredHeaderCell>Decimals</CenteredHeaderCell> */}
         {/* <HeaderCell>Submitted by</HeaderCell> */}
-        <HeaderCell>Period ends in</HeaderCell>
+        <HeaderCell>Next/Last event</HeaderCell>
       </HeaderRow>
     );
   }
@@ -95,7 +95,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
         <HeaderCell>Website</HeaderCell>
         <HeaderCell>Address</HeaderCell>
         {/* <HeaderCell>Submitted by</HeaderCell> */}
-        <HeaderCell>Period ends in</HeaderCell>
+        <HeaderCell>Next/Last event</HeaderCell>
       </HeaderRow>
     );
   }
@@ -109,7 +109,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
         <HeaderCell>Website</HeaderCell>
         <HeaderCell>Address</HeaderCell>
         {/* <HeaderCell>Submitted by</HeaderCell> */}
-        <HeaderCell>Period ends in</HeaderCell>
+        <HeaderCell>Next/Last event</HeaderCell>
       </HeaderRow>
     );
   }
@@ -124,7 +124,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
         <HeaderCell>Commit</HeaderCell>
         <HeaderCell>Chain</HeaderCell>
         {/* <HeaderCell>Submitted by</HeaderCell> */}
-        <HeaderCell>Period ends in</HeaderCell>
+        <HeaderCell>Next/Last event</HeaderCell>
       </HeaderRow>
     );
   }

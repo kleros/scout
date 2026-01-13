@@ -236,7 +236,7 @@ const Home: React.FC<IHome> = () => {
         <Title>Join The Largest Decentralized Database</Title>
         <Description>
           With one submission, smart contracts will be verified and assigned a trusted project name.
-          Partners will display these information on their dashboards and wallets making every interaction
+          Partners will display this information on their dashboards and wallets making every interaction
           safer for users and solving blind signing issues.
         </Description>
         <SubmitButton onClick={handleSubmitNowClick}>

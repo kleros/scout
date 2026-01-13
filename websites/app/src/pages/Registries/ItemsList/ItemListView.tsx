@@ -1,7 +1,6 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-// import { Link } from 'react-router-dom'; // UNUSED: Only needed for SubmitterLink which is commented out
+import { useSearchParams, Link } from 'react-router-dom';
 import { formatEther } from 'ethers';
 import { GraphItem, registryMap } from 'utils/items';
 import AddressDisplay from 'components/AddressDisplay';
@@ -47,19 +46,19 @@ const chainIconMap: Record<string, React.ComponentType<any>> = {
   '324': ZkSyncIcon,
 };
 
-const ListRow = styled.div<{ registryType?: string; }>`
+const ListRow = styled(Link)<{ registryType?: string; }>`
   ${hoverLongTransitionTiming}
   display: grid;
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
       case 'Tokens':
-        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Period ends in
+        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
       case 'Single_Tags':
-        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Period ends in
+        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
       case 'CDN':
-        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Period ends in
+        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Next/Last event
       case 'Tags_Queries':
-        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Period ends in
+        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
       default:
         return '200px 280px 180px 200px 100px 180px';
     }
@@ -76,6 +75,7 @@ const ListRow = styled.div<{ registryType?: string; }>`
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;
+  text-decoration: none;
 
   &:first-child {
     padding-top: 0;
@@ -326,7 +326,6 @@ interface ItemListViewProps {
 const ItemListView = React.memo(
   ({ item, challengePeriodDuration }: ItemListViewProps) => {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
 
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests?.[0]?.submissionTime,
@@ -338,9 +337,7 @@ const ItemListView = React.memo(
       2,
     );
 
-    const handleClick = useCallback(() => {
-      navigate(`/item/${item.id}?${searchParams.toString()}`);
-    }, [navigate, item.id, searchParams]);
+    const itemUrl = `/item/${item.id}?${searchParams.toString()}`;
 
     const getPropValue = (label: string) => {
       return item?.props?.find((prop) => prop.label === label)?.value || '';
@@ -364,11 +361,23 @@ const ItemListView = React.memo(
       //   true, // Show full timestamp with time
       // );
 
-      const isLoading = challengePeriodDuration === null && item.status !== 'Registered' && !item.disputed;
+      const isLoading = challengePeriodDuration === null && item.status !== 'Registered' && item.status !== 'Absent' && !item.disputed;
 
-      const periodEndsIn = item.status === 'Registered'
-        ? formatTimestamp(Number(item.requests?.[0]?.resolutionTime || 0), false)
-        : (isLoading ? <Skeleton width={100} /> : formattedChallengeRemainingTime || '');
+      // Get the event display: resolution date for Registered/Absent, countdown for pending
+      // For Registered: find the successful registration request (may not be requests[0] if a removal was challenged)
+      // For Absent: requests[0] is always the clearing request
+      const getEventDisplay = () => {
+        if (item.status === 'Registered') {
+          const registrationRequest = (item.requests || []).find(
+            req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved
+          )
+          return formatTimestamp(Number(registrationRequest?.resolutionTime || 0), false)
+        } else if (item.status === 'Absent') {
+          return formatTimestamp(Number(item.requests?.[0]?.resolutionTime || 0), false)
+        }
+        return isLoading ? <Skeleton width={100} /> : formattedChallengeRemainingTime || ''
+      }
+      const eventDisplay = getEventDisplay();
 
       // UNUSED: submitterAddress is only used in commented-out SubmitterCell sections
       // const submitterAddress = item.requests[0]?.requester as `0x${string}` | undefined;
@@ -460,7 +469,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{periodEndsIn}</DateCell>
+            <DateCell>{eventDisplay}</DateCell>
           </>
         );
       }
@@ -521,7 +530,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{periodEndsIn}</DateCell>
+            <DateCell>{eventDisplay}</DateCell>
           </>
         );
       }
@@ -580,7 +589,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{periodEndsIn}</DateCell>
+            <DateCell>{eventDisplay}</DateCell>
           </>
         );
       }
@@ -645,7 +654,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{periodEndsIn}</DateCell>
+            <DateCell>{eventDisplay}</DateCell>
           </>
         );
       }
@@ -662,7 +671,7 @@ const ItemListView = React.memo(
     };
 
     return (
-      <ListRow registryType={getRegistryType()} onClick={handleClick}>
+      <ListRow registryType={getRegistryType()} to={itemUrl}>
         {renderContent()}
       </ListRow>
     );

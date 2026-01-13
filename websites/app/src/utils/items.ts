@@ -42,6 +42,7 @@ export interface Prop {
 }
 
 export interface Request {
+  requestType?: string
   disputed: boolean
   disputeID: string
   submissionTime: string

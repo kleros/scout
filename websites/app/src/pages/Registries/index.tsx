@@ -229,7 +229,10 @@ const Home: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [chainFilters, setChainFilters] = useState<string[]>([]);
+  const [chainFilters, setChainFilters] = useState<string[]>(() => [
+    ...chains.filter(c => !c.deprecated).map(c => c.id),
+    'unknown'
+  ]);
   const [viewMode, setViewMode] = useViewMode();
   const [shouldDisableListView, setShouldDisableListView] = useState(false);
   const [isFilterChanging, setIsFilterChanging] = useState(false);
@@ -333,39 +336,31 @@ const Home: React.FC = () => {
     });
   }, [setSearchParams]);
 
-  useEffect(() => {
-    if (chainFilters.length === 0) {
-      const defaultChains = [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'];
-      setChainFilters(defaultChains);
-    }
-  }, [chainFilters]);
+  // Reset page to 1 when filters change (but not on initial mount)
+  const filterKey = useMemo(() => [
+    searchParams.getAll('status').sort().join(','),
+    searchParams.getAll('disputed').sort().join(','),
+    searchParams.get('text') || '',
+    [...chainFilters].sort().join(','),
+    searchParams.get('orderDirection') || ''
+  ].join('|'), [searchParams, chainFilters]);
 
-  // Reset page to 1 when filters change
-  const filterKey = useMemo(() => {
-    return [
-      searchParams.getAll('status').sort().join(','),
-      searchParams.getAll('disputed').sort().join(','),
-      searchParams.get('text') || '',
-      chainFilters.sort().join(','),
-      searchParams.get('orderDirection') || ''
-    ].join('|');
-  }, [searchParams, chainFilters]);
-
-  const prevFilterKeyRef = useRef(filterKey);
+  const prevFilterKeyRef = useRef<string | null>(null);
   const hasFetchingStartedRef = useRef(false);
 
   useEffect(() => {
-    const currentPage = searchParams.get('page');
+    // Skip first render to preserve page number when opening in new tab
+    if (prevFilterKeyRef.current === null) {
+      prevFilterKeyRef.current = filterKey;
+      return;
+    }
 
-    // Only reset page if the FILTERS actually changed (not just the page number)
     if (prevFilterKeyRef.current !== filterKey) {
       prevFilterKeyRef.current = filterKey;
-
-      // Immediately show loading state when filters change
       setIsFilterChanging(true);
       hasFetchingStartedRef.current = false;
 
-      // Reset to page 1 when filters change
+      const currentPage = searchParams.get('page');
       if (currentPage && currentPage !== '1') {
         setSearchParams(prev => {
           const newParams = new URLSearchParams(prev.toString());

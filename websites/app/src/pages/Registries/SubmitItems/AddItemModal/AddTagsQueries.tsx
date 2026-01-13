@@ -247,7 +247,7 @@ const AddTagsQueries: React.FC = () => {
               countsData['Tags_Queries'].deposits.arbitrationCost +
               countsData['Tags_Queries'].deposits.submissionBaseDeposit
             ) + ' xDAI'
-            : null}{' | '}Expected Reward: $12
+            : null}
         </ExpectedPayouts>
       </PayoutsContainer>
     </AddContainer>

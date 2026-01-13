@@ -1,8 +1,9 @@
 import styled, { css } from 'styled-components';
+import { Link } from 'react-router-dom';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 import { landscapeStyle } from 'styles/landscapeStyle';
 
-export const RewardCard = styled.div`
+export const RewardCard = styled(Link)`
   position: relative;
   display: flex;
   flex-direction: column;
@@ -18,6 +19,8 @@ export const RewardCard = styled.div`
   min-height: 200px;
   width: 100%;
   min-width: 0;
+  text-decoration: none;
+  color: inherit;
 
   ${landscapeStyle(
     () => css`

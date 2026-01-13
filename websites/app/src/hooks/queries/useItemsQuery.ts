@@ -144,6 +144,7 @@ export const useItemsQuery = ({
               isIdentifier
             }
             requests(order_by: {submissionTime: desc}) {
+              requestType
               disputed
               disputeID
               submissionTime

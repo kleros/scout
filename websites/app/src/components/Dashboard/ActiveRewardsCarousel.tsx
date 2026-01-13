@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import styled, { css } from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import {
   RewardCard,
@@ -188,13 +187,11 @@ const getCurrentMonthDeadline = (): string => {
   });
 };
 
-export const ActiveRewardsCarousel: React.FC = () => {
-  const navigate = useNavigate();
-  const deadline = useMemo(() => getCurrentMonthDeadline(), []);
+const getRegistryUrl = (registryKey: string) =>
+  `/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`;
 
-  const handleCardClick = useCallback((registryKey: string) => {
-    navigate(`/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
-  }, [navigate]);
+export const ActiveRewardsCarousel: React.FC = () => {
+  const deadline = useMemo(() => getCurrentMonthDeadline(), []);
 
   return (
     <Container>
@@ -205,7 +202,7 @@ export const ActiveRewardsCarousel: React.FC = () => {
         {REWARDS_DATA.map((reward, index) => (
           <RewardCard
             key={index}
-            onClick={() => handleCardClick(reward.registryKey || '')}
+            to={getRegistryUrl(reward.registryKey || '')}
           >
             <RewardCardTopSection>
               <RewardCardNewBadge>NEW</RewardCardNewBadge>

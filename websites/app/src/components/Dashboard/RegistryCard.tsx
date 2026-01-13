@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import ArrowRightIcon from 'svgs/icons/arrow.svg';
 
 const Card = styled.div`
@@ -53,7 +53,7 @@ const SecondaryValue = styled.div`
   opacity: 0.8;
 `;
 
-const OpenButton = styled.button`
+const OpenButton = styled(Link)`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -68,6 +68,7 @@ const OpenButton = styled.button`
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: auto;
+  text-decoration: none;
 
   svg {
     width: 12px;
@@ -98,8 +99,10 @@ interface RegistryCardProps {
   style?: React.CSSProperties;
 }
 
+const getRegistryUrl = (registryKey: string) =>
+  `/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`;
+
 export const RegistryCard: React.FC<RegistryCardProps> = ({
-  icon,
   title,
   mainValue,
   secondaryValue,
@@ -107,13 +110,7 @@ export const RegistryCard: React.FC<RegistryCardProps> = ({
   className,
   style
 }) => {
-  const navigate = useNavigate();
-  
-  const handleOpenClick = () => {
-    navigate(`/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
-  };
-
-  const formattedMainValue = typeof mainValue === 'number' ? mainValue.toLocaleString() : 
+  const formattedMainValue = typeof mainValue === 'number' ? mainValue.toLocaleString() :
                          typeof mainValue === 'string' ? mainValue : mainValue;
 
   return (
@@ -123,7 +120,7 @@ export const RegistryCard: React.FC<RegistryCardProps> = ({
       </Header>
       <MainValue>{formattedMainValue}</MainValue>
       <SecondaryValue>{secondaryValue}</SecondaryValue>
-      <OpenButton onClick={handleOpenClick}>
+      <OpenButton to={getRegistryUrl(registryKey)}>
         Open
         <ArrowRightIcon />
       </OpenButton>
