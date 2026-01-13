@@ -152,18 +152,18 @@ const DetailsButton = styled(Link)`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 10px 16px;
+  border-radius: 9999px;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.stroke};
+  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
   color: ${({ theme }) => theme.primaryText};
-  cursor: pointer;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.05);
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: ${({ theme }) => theme.primaryText};
   }
 `
 
