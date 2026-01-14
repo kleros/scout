@@ -1,12 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { SUBGRAPH_GNOSIS_ENDPOINT } from "consts";
+import { registryMap } from "utils/items";
+
+// Only query disputes from our 4 registries
+const REGISTRY_ADDRESSES = Object.values(registryMap);
 
 // Query to fetch disputes where user is involved (as requester or challenger)
 const DISPUTE_STATS_QUERY = `
-  query DisputeStats($userAddress: String!) {
+  query DisputeStats($userAddress: String!, $registryAddresses: [String!]!) {
     # Active disputes where user is the requester
     activeAsRequester: LItem(
       where: {
+        registryAddress: {_in: $registryAddresses}
         disputed: {_eq: true}
         status: {_in: [RegistrationRequested, ClearingRequested]}
         requests: {
@@ -26,6 +31,7 @@ const DISPUTE_STATS_QUERY = `
     # Active disputes where user is the challenger
     activeAsChallenger: LItem(
       where: {
+        registryAddress: {_in: $registryAddresses}
         disputed: {_eq: true}
         status: {_in: [RegistrationRequested, ClearingRequested]}
         requests: {
@@ -45,6 +51,7 @@ const DISPUTE_STATS_QUERY = `
     # Resolved disputes where user was the requester
     resolvedAsRequester: LItem(
       where: {
+        registryAddress: {_in: $registryAddresses}
         requests: {
           disputed: {_eq: true}
           resolved: {_eq: true}
@@ -64,6 +71,7 @@ const DISPUTE_STATS_QUERY = `
     # Resolved disputes where user was the challenger
     resolvedAsChallenger: LItem(
       where: {
+        registryAddress: {_in: $registryAddresses}
         requests: {
           disputed: {_eq: true}
           resolved: {_eq: true}
@@ -123,7 +131,7 @@ export const useDisputeStats = (address?: string) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: DISPUTE_STATS_QUERY,
-          variables: { userAddress },
+          variables: { userAddress, registryAddresses: REGISTRY_ADDRESSES },
         }),
       });
       const json = await response.json();

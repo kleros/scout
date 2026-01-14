@@ -8,6 +8,10 @@ import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
 import { chains, getNamespaceForChainId } from 'utils/chains'
 import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
+import { registryMap } from 'utils/items'
+
+// Only query disputes from our 4 registries
+const REGISTRY_ADDRESSES = Object.values(registryMap)
 
 const EmptyState = styled.div`
   color: ${({ theme }) => theme.secondaryText};
@@ -15,10 +19,11 @@ const EmptyState = styled.div`
 
 // Query to fetch all disputes where user is involved (as requester or challenger)
 const QUERY = `
-query Disputes($userAddress: String!, $first: Int!, $skip: Int!, $orderDirection: order_by!) {
+query Disputes($userAddress: String!, $registryAddresses: [String!]!, $first: Int!, $skip: Int!, $orderDirection: order_by!) {
   # Disputes where user is the requester
   asRequester: LItem(
     where: {
+      registryAddress: {_in: $registryAddresses}
       requests: {
         disputed: {_eq: true}
         requester: {_eq: $userAddress}
@@ -60,6 +65,7 @@ query Disputes($userAddress: String!, $first: Int!, $skip: Int!, $orderDirection
   # Disputes where user is the challenger
   asChallenger: LItem(
     where: {
+      registryAddress: {_in: $registryAddresses}
       requests: {
         disputed: {_eq: true}
         challenger: {_eq: $userAddress}
@@ -150,6 +156,7 @@ const Disputes: React.FC<Props> = ({
           query: QUERY,
           variables: {
             userAddress: queryAddress,
+            registryAddresses: REGISTRY_ADDRESSES,
             first: fetchSize,
             skip: 0,
             orderDirection,
