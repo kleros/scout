@@ -302,7 +302,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                   </SubmissionDate>
                   by
                   <PartyLink
-                    to={`/activity/ongoing?userAddress=${evidence.party}`}
+                    to={`/profile/pending?userAddress=${evidence.party}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="20" address={evidence.party as `0x${string}`} />

@@ -3,7 +3,7 @@ import { SUBGRAPH_GNOSIS_ENDPOINT } from "consts";
 
 const SUBMITTER_STATS_QUERY = `
   query SubmitterStats($userAddress: String!) {
-    ongoing: LItem(
+    pending: LItem(
       where: {
         status: {_in: [RegistrationRequested, ClearingRequested]}
         requests: {requester: {_eq: $userAddress}}
@@ -12,7 +12,7 @@ const SUBMITTER_STATS_QUERY = `
     ) {
       id
     }
-    past: LItem(
+    resolved: LItem(
       where: {
         status: {_in: [Registered, Absent]}
         requests: {requester: {_eq: $userAddress}}
@@ -40,14 +40,14 @@ export const useSubmitterStats = (address?: string) => {
       });
       const json = await response.json();
 
-      const ongoingCount = json.data?.ongoing?.length || 0;
-      const pastCount = json.data?.past?.length || 0;
+      const pendingCount = json.data?.pending?.length || 0;
+      const resolvedCount = json.data?.resolved?.length || 0;
 
       return {
         submitter: {
-          totalSubmissions: ongoingCount + pastCount,
-          ongoingSubmissions: ongoingCount,
-          pastSubmissions: pastCount
+          totalSubmissions: pendingCount + resolvedCount,
+          pendingSubmissions: pendingCount,
+          resolvedSubmissions: resolvedCount
         }
       };
     },

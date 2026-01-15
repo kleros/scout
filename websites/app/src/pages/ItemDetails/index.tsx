@@ -406,20 +406,20 @@ const ItemDetails: React.FC = () => {
       }
     }
 
-    // Check if we came from an Activity page (has fromActivity and userAddress params)
-    const fromActivity = params.get('fromActivity')
+    // Check if we came from a Profile page (has fromProfile and userAddress params)
+    const fromProfile = params.get('fromProfile')
     const userAddress = params.get('userAddress')
 
-    if (fromActivity && userAddress && (fromActivity === 'ongoing' || fromActivity === 'past')) {
-      // Navigate back to Activity page with preserved params
+    if (fromProfile && userAddress && (fromProfile === 'pending' || fromProfile === 'resolved' || fromProfile === 'disputes')) {
+      // Navigate back to Profile page with preserved params
       params.delete('attachment')
       params.delete('tab')
-      params.delete('fromActivity') // Remove this meta param
+      params.delete('fromProfile') // Remove this meta param
 
       const queryString = params.toString()
       return {
-        registryUrl: `/activity/${fromActivity}${queryString ? `?${queryString}` : ''}`,
-        breadcrumbName: 'Activity'
+        registryUrl: `/profile/${fromProfile}${queryString ? `?${queryString}` : ''}`,
+        breadcrumbName: 'Profile'
       }
     }
 
@@ -427,7 +427,7 @@ const ItemDetails: React.FC = () => {
     // Remove item-specific params
     params.delete('attachment')
     params.delete('tab')
-    params.delete('fromActivity')
+    params.delete('fromProfile')
     params.delete('userAddress') // Don't include userAddress in registry URL
 
     const queryString = params.toString()
@@ -558,7 +558,7 @@ const ItemDetails: React.FC = () => {
                   </SubmissionDate>
                   by
                   <SubmitterLink
-                    to={`/activity/ongoing?userAddress=${detailsData.requests[detailsData.requests.length - 1].requester}`}
+                    to={`/profile/pending?userAddress=${detailsData.requests[detailsData.requests.length - 1].requester}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="20" address={detailsData.requests[detailsData.requests.length - 1].requester as `0x${string}`} />

@@ -168,13 +168,13 @@ const RewardSection: React.FC = () => {
       <div>
         <Title>Contribute to Kleros Scout and earn rewards!</Title>
         <Text>
-          The reward pool consists of 300,000 PNK (~$4300 as of March 23rd, 2025) for submitters. Here is how the
+          The reward pool consists of 300,000 PNK (~$4300 as of March 23rd, 2025). Here is how the
           reward pool is allocated to the three registries across different chains.
         </Text>
         <List>
-          <ClickableListItem onClick={navigateToTokens}>Tokens (100,000 PNK)</ClickableListItem>
-          <ClickableListItem onClick={navigateToAddressTags}>Address Tags Registry (100,000 PNK)</ClickableListItem>
-          <ClickableListItem onClick={navigateToCDN}>CDN Registry (100,000 PNK)</ClickableListItem>
+          <ClickableListItem onClick={navigateToTokens}>Tokens (93,000 PNK for submissions, 7,000 PNK for removals)</ClickableListItem>
+          <ClickableListItem onClick={navigateToAddressTags}>Address Tags Registry (93,000 PNK for submissions, 7,000 PNK for removals)</ClickableListItem>
+          <ClickableListItem onClick={navigateToCDN}>CDN Registry (93,000 PNK for submissions, 7,000 PNK for removals)</ClickableListItem>
         </List>
       </div>
       <Divider />

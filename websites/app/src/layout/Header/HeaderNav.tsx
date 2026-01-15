@@ -151,13 +151,13 @@ const HeaderNav: React.FC = () => {
     return `/registry/${value}${paramsString ? `?${paramsString}` : ''}`;
   };
 
-  // Check if My Activity should be active
-  const isActivityPage = location.pathname.startsWith("/activity");
+  // Check if My Profile should be active
+  const isProfilePage = location.pathname.startsWith("/profile");
   const searchParams = new URLSearchParams(location.search);
   const userAddressParam = searchParams.get("userAddress");
-  const isMyActivity = isActivityPage && (
+  const isMyProfile = isProfilePage && (
     !connectedAddress && !userAddressParam || // Not connected and no param (showing connect prompt)
-    (connectedAddress && userAddressParam === connectedAddress.toLowerCase()) // Viewing own activity
+    (connectedAddress && userAddressParam === connectedAddress.toLowerCase()) // Viewing own profile
   );
 
   return (
@@ -189,12 +189,12 @@ const HeaderNav: React.FC = () => {
       </DropdownContainer>
 
       <StyledLink
-        to={`/activity/ongoing${
+        to={`/profile/pending${
           connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ""
         }`}
-        $isActive={isMyActivity}
+        $isActive={isMyProfile}
       >
-        My Activity
+        My Profile
       </StyledLink>
 
       <StyledNavLink to="/rewards">Active Rewards</StyledNavLink>

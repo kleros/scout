@@ -219,16 +219,16 @@ const ItemCard = ({ item }: { item: any }) => {
     params.set('page', '1')
     params.set('orderDirection', 'desc')
 
-    // Preserve the current location (activity path + params) so ItemDetails can navigate back correctly
+    // Preserve the current location (profile path + params) so ItemDetails can navigate back correctly
     const currentSearch = new URLSearchParams(location.search)
     const userAddress = currentSearch.get('userAddress')
 
     if (userAddress) {
       params.set('userAddress', userAddress)
-      // Also preserve the activity path (ongoing or past) so we know where to go back
-      const activityPath = location.pathname.split('/').pop() // 'ongoing' or 'past'
-      if (activityPath === 'ongoing' || activityPath === 'past') {
-        params.set('fromActivity', activityPath)
+      // Also preserve the profile path (pending or resolved) so we know where to go back
+      const profilePath = location.pathname.split('/').pop() // 'pending' or 'resolved'
+      if (profilePath === 'pending' || profilePath === 'resolved') {
+        params.set('fromProfile', profilePath)
       }
     }
 

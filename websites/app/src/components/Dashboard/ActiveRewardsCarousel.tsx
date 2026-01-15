@@ -20,7 +20,8 @@ interface RewardData {
   registryKey?: string;
 }
 
-const REWARD_POOL = '100,000 PNK';
+const SUBMISSION_REWARD = '93,000 PNK';
+const REMOVAL_REWARD = '7,000 PNK';
 
 const Container = styled.div`
   width: 100%;
@@ -218,8 +219,13 @@ export const ActiveRewardsCarousel: React.FC = () => {
               <Divider />
               <DetailRow>
                 <CoinIcon />
-                <span>Reward Pool:</span>
-                <StyledRewardValue>{REWARD_POOL}</StyledRewardValue>
+                <span>Submissions:</span>
+                <StyledRewardValue>{SUBMISSION_REWARD}</StyledRewardValue>
+              </DetailRow>
+              <DetailRow>
+                <CoinIcon />
+                <span>Removals:</span>
+                <StyledRewardValue>{REMOVAL_REWARD}</StyledRewardValue>
               </DetailRow>
             </RewardCardBottomSection>
           </RewardCard>

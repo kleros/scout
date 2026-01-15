@@ -9,8 +9,8 @@ interface FilterModalProps {
   userAddress: string;
 }
 
-const ActivityFilterModal: React.FC<FilterModalProps> = (props) => {
+const ProfileFilterModal: React.FC<FilterModalProps> = (props) => {
   return <FilterModal {...props} />;
 };
 
-export default ActivityFilterModal;
+export default ProfileFilterModal;

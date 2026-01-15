@@ -13,7 +13,7 @@ import Registries from './pages/Registries/';
 import ItemDetails from './pages/ItemDetails/';
 
 const Home = lazy(() => import('pages/Home'));
-const Activity = lazy(() => import('pages/Activity'));
+const Profile = lazy(() => import('pages/Profile'));
 const Rewards = lazy(() => import('pages/Rewards'));
 const Guide = lazy(() => import('pages/Guide'));
 
@@ -39,7 +39,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Layout />}>
                 <Route index element={<Navigate to="home" replace />} />
                 <Route path="home" element={<Home />} />
-                <Route path="activity/*" element={<Activity />} />
+                <Route path="profile/*" element={<Profile />} />
                 <Route path="rewards" element={<Rewards />} />
                 <Route path="guide" element={<Guide />} />
                 <Route path="registry/:registryName" element={<Registries />} />

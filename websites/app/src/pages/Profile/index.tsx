@@ -4,7 +4,7 @@ import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
-import ActivityIcon from "svgs/icons/activity.svg";
+import ProfileIcon from "svgs/icons/activity.svg";
 import { useSubmitterStats } from "hooks/useSubmitterStats";
 import { useDisputeStats } from "hooks/useDisputeStats";
 import { commify } from "utils/commify";
@@ -12,12 +12,12 @@ import { shortenAddress } from "utils/shortenAddress";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import ConnectWallet from "components/ConnectWallet";
-import OngoingSubmissions from "./OngoingSubmissions";
-import PastSubmissions from "./PastSubmissions";
+import PendingSubmissions from "./PendingSubmissions";
+import ResolvedSubmissions from "./ResolvedSubmissions";
 import Disputes from "./Disputes";
 import FilterButton from "components/FilterButton";
 import FilterModal from "./FilterModal";
-import ActivitySearchBar from "./SearchBar";
+import ProfileSearchBar from "./SearchBar";
 import Copyable from "components/Copyable";
 import { ExternalLink } from "components/ExternalLink";
 import { DEFAULT_CHAIN, getChain } from "consts/chains";
@@ -125,26 +125,65 @@ const TotalSubmissionsCount = styled.span`
 
 const TabsWrapper = styled.div`
   display: flex;
-  gap: 40px;
-  border-bottom: 1px solid ${({ theme }) => theme.lightGrey};
+  width: 100%;
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
   margin-bottom: 24px;
 `;
 
 const TabButton = styled.button<{ selected: boolean }>`
-  background: none;
+  flex: 1;
+  background: transparent;
   border: none;
-  padding: 0 0 12px;
-  font-size: 18px;
+  padding: 16px 8px;
+  font-size: 14px;
   font-weight: 600;
   color: ${({ theme, selected }) => (selected ? theme.secondaryBlue : theme.secondaryText)};
-  border-bottom: 3px solid ${({ theme, selected }) => (selected ? theme.secondaryBlue : "transparent")};
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: ${({ theme, selected }) => (selected ? theme.secondaryBlue : "transparent")};
+    border-radius: 3px 3px 0 0;
+    transition: background 0.2s ease;
+  }
 
   &:hover {
-    color: ${({ theme }) => theme.primaryBlue};
-    border-bottom-color: ${({ theme }) => theme.primaryBlue};
+    color: ${({ theme, selected }) => (selected ? theme.secondaryBlue : theme.primaryText)};
+
+    &::after {
+      background: ${({ theme, selected }) => (selected ? theme.secondaryBlue : theme.stroke)};
+    }
   }
+
+  .tab-full {
+    display: none;
+  }
+
+  .tab-short {
+    display: inline;
+  }
+
+  ${landscapeStyle(
+    () => css`
+      font-size: 18px;
+      padding: 16px 24px;
+
+      .tab-full {
+        display: inline;
+      }
+
+      .tab-short {
+        display: none;
+      }
+    `
+  )}
 `;
 
 const ConnectWalletContainer = styled.div`
@@ -154,7 +193,7 @@ const ConnectWalletContainer = styled.div`
   align-items: center;
   color: ${({ theme }) => theme.primaryText};
   gap: 24px;
-  
+
   hr {
     width: 200px;
     border: 1px solid ${({ theme }) => theme.lightGrey};
@@ -228,12 +267,12 @@ const StatDivider = styled.div`
   align-self: stretch;
 `;
 
-const PATHS = ["ongoing", "past", "disputes"];
+const PATHS = ["pending", "resolved", "disputes"];
 
 const REGISTRATION_STATUSES = ['Registered', 'RegistrationRequested', 'ClearingRequested'];
 const CHALLENGE_STATUSES = ['true', 'false'];
 
-const Activity: React.FC = () => {
+const Profile: React.FC = () => {
   const { isConnected, address: connectedAddress } = useAccount();
   const [searchParams, setSearchParams] = useSearchParams();
   const userAddress = searchParams.get("userAddress");
@@ -264,7 +303,7 @@ const Activity: React.FC = () => {
     }
   }, [isConnected, connectedAddress, userAddress, searchParams, setSearchParams]);
 
-  // Initialize URL params with all statuses/disputed values for Activity page
+  // Initialize URL params with all statuses/disputed values for Profile page
   useEffect(() => {
     if (address && searchParams.getAll('status').length === 0 && searchParams.getAll('disputed').length === 0) {
       const newParams = new URLSearchParams(searchParams);
@@ -328,8 +367,8 @@ const Activity: React.FC = () => {
     const idx = PATHS.indexOf(currentPathSegment);
     setCurrentTab(idx > -1 ? idx : 0);
   }, [currentPathSegment]);
-  const ongoingSubmissions = stats?.ongoingSubmissions ?? 0;
-  const pastSubmissions = stats?.pastSubmissions ?? 0;
+  const pendingSubmissions = stats?.pendingSubmissions ?? 0;
+  const resolvedSubmissions = stats?.resolvedSubmissions ?? 0;
   const totalSubmissions = stats?.totalSubmissions ?? 0;
   const activeDisputes = disputeStats?.activeDisputes ?? 0;
   const resolvedDisputes = disputeStats?.resolvedDisputes ?? 0;
@@ -337,36 +376,39 @@ const Activity: React.FC = () => {
   const tabs = useMemo(
     () => [
       {
-        key: "ongoing",
+        key: "pending",
         label: (
           <>
-            Ongoing ({isLoading ? <Skeleton inline width={30} height={20} /> : commify(ongoingSubmissions)})
+            <span className="tab-short">Pending ({isLoading ? <Skeleton inline width={20} height={16} /> : commify(pendingSubmissions)})</span>
+            <span className="tab-full">Pending Submissions ({isLoading ? <Skeleton inline width={30} height={20} /> : commify(pendingSubmissions)})</span>
           </>
         ),
-        path: "ongoing",
+        path: "pending",
       },
       {
-        key: "past",
+        key: "resolved",
         label: (
           <>
-            Past ({isLoading ? <Skeleton inline width={30} height={20} /> : commify(pastSubmissions)})
+            <span className="tab-short">Resolved ({isLoading ? <Skeleton inline width={20} height={16} /> : commify(resolvedSubmissions)})</span>
+            <span className="tab-full">Resolved Submissions ({isLoading ? <Skeleton inline width={30} height={20} /> : commify(resolvedSubmissions)})</span>
           </>
         ),
-        path: "past",
+        path: "resolved",
       },
       {
         key: "disputes",
         label: (
           <>
-            Disputes ({isLoadingDisputes ? <Skeleton inline width={30} height={20} /> : commify(totalDisputes)})
+            <span className="tab-short">Disputes ({isLoadingDisputes ? <Skeleton inline width={20} height={16} /> : commify(totalDisputes)})</span>
+            <span className="tab-full">Disputes ({isLoadingDisputes ? <Skeleton inline width={30} height={20} /> : commify(totalDisputes)})</span>
           </>
         ),
         path: "disputes",
       },
     ],
-    [isLoading, isLoadingDisputes, ongoingSubmissions, pastSubmissions, totalDisputes]
+    [isLoading, isLoadingDisputes, pendingSubmissions, resolvedSubmissions, totalDisputes]
   );
-  const basePath = useMemo(() => location.pathname.split(/\/(ongoing|past|disputes)\b/)[0], [location.pathname]);
+  const basePath = useMemo(() => location.pathname.split(/\/(pending|resolved|disputes)\b/)[0], [location.pathname]);
   const switchTab = (n: number) => {
     setCurrentTab(n);
     const params = new URLSearchParams(location.search);
@@ -398,14 +440,14 @@ const Activity: React.FC = () => {
       {!shouldShowConnectWallet ? (
         <>
           <Header>
-            <ActivityIcon />
+            <ProfileIcon />
             <div>
               <Title>
-                {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase() 
-                  ? <>My Activity - {renderAddressLink(userAddress)}</>
-                  : userAddress 
-                  ? <>Activity - {renderAddressLink(userAddress)}</>
-                  : "My Activity"}
+                {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase()
+                  ? <>My Profile - {renderAddressLink(userAddress)}</>
+                  : userAddress
+                  ? <>Profile - {renderAddressLink(userAddress)}</>
+                  : "My Profile"}
               </Title>
               <Subtitle>
                 <TotalSubmissionsCount>
@@ -422,14 +464,14 @@ const Activity: React.FC = () => {
             ))}
           </TabsWrapper>
           <FilterControlsContainer>
-            <ActivitySearchBar />
+            <ProfileSearchBar />
             <FilterButton onClick={() => setIsFilterModalOpen(true)} />
           </FilterControlsContainer>
           {currentTab === 0 && (
-            <OngoingSubmissions totalItems={ongoingSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
+            <PendingSubmissions totalItems={pendingSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
           )}
           {currentTab === 1 && (
-            <PastSubmissions totalItems={pastSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
+            <ResolvedSubmissions totalItems={resolvedSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
           )}
           {currentTab === 2 && (
             <>
@@ -518,7 +560,7 @@ const Activity: React.FC = () => {
       ) : (
         <ConnectWalletContainer>
           <Title>Connect Your Wallet</Title>
-          <Subtitle>To see your activity, connect your wallet first</Subtitle>
+          <Subtitle>To see your profile, connect your wallet first</Subtitle>
           <ConnectWallet />
         </ConnectWalletContainer>
       )}
@@ -534,4 +576,4 @@ const Activity: React.FC = () => {
   );
 };
 
-export default Activity;
+export default Profile;

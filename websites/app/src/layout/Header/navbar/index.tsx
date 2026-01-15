@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAccount } from "wagmi";
 
 import HomeIcon from "svgs/navbar/home.svg";
-import ActivityIcon from "svgs/navbar/activity.svg";
+import ProfileIcon from "svgs/navbar/activity.svg";
 import RewardsIcon from "svgs/navbar/rewards.svg";
 import BookIcon from "svgs/navbar/book.svg";
 import ArrowDown from "svgs/icons/arrow-down.svg";
@@ -221,14 +221,14 @@ const NavBar: React.FC = () => {
 
               <LightButton
                 isMobileNavbar={true}
-                text="My Activity"
+                text="My Profile"
                 onClick={() => {
-                  navigate(`/activity/ongoing${
+                  navigate(`/profile/pending${
                     connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ""
                   }`);
                   toggleIsOpen();
                 }}
-                Icon={ActivityIcon}
+                Icon={ProfileIcon}
               />
 
               <LightButton

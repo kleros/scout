@@ -449,7 +449,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/activity/ongoing?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -510,7 +510,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/activity/ongoing?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -569,7 +569,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/activity/ongoing?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -634,7 +634,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/activity/ongoing?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?userAddress=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />

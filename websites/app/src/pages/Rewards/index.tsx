@@ -135,8 +135,13 @@ const RewardCardComponent = ({ title, description, onClick }) => (
       <Divider />
       <RewardCardDetailRow>
         <CoinIcon />
-        <span>Reward Pool:</span>
-        <StyledRewardValue>100,000 PNK</StyledRewardValue>
+        <span>Submissions:</span>
+        <StyledRewardValue>93,000 PNK</StyledRewardValue>
+      </RewardCardDetailRow>
+      <RewardCardDetailRow>
+        <CoinIcon />
+        <span>Removals:</span>
+        <StyledRewardValue>7,000 PNK</StyledRewardValue>
       </RewardCardDetailRow>
     </RewardCardBottomSection>
   </StyledRewardCard>
