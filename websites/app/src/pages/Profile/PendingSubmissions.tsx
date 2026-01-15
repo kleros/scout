@@ -14,7 +14,7 @@ const EmptyState = styled.div`
 `
 
 const QUERY = `
-query PastItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [status!]!, $disputed: [Boolean!]!, $orderDirection: order_by!) {
+query PendingItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [status!]!, $disputed: [Boolean!]!, $orderDirection: order_by!) {
   litems: LItem(
     where: {status: {_in: $status}, disputed: {_in: $disputed}, requests: {requester: {_eq: $userAddress}}}
     limit: $first
@@ -41,7 +41,7 @@ query PastItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [stat
       requester
       deposit
       submissionTime
-      resolutionTime
+      disputed
     }
   }
 }
@@ -55,7 +55,7 @@ interface Props {
   setIsFilterChanging: (value: boolean) => void
 }
 
-const PastSubmissions: React.FC<Props> = ({
+const PendingSubmissions: React.FC<Props> = ({
   totalItems,
   address,
   chainFilters = [],
@@ -64,22 +64,23 @@ const PastSubmissions: React.FC<Props> = ({
 }) => {
   const [searchParams] = useSearchParams()
   const currentPage = parseInt(searchParams.get('page') ?? '1', 10)
-  const itemsPerPage = 20
-  const skip = itemsPerPage * (currentPage - 1)
+  const itemsPerPage = 10
   const navigate = useNavigate()
   const location = useLocation()
   const scrollTop = useScrollTop()
   const queryAddress = address?.toLowerCase()
 
+  // Get filter parameters with defaults for pending submissions
   const statusParams = searchParams.getAll('status')
   const disputedParams = searchParams.getAll('disputed')
   const orderDirection = searchParams.get('orderDirection') || 'desc'
 
-  const defaultPastStatuses = ['Registered', 'Absent']
+  // Default pending statuses - exclude Registered and Absent
+  const defaultPendingStatuses = ['RegistrationRequested', 'ClearingRequested']
   const status =
     statusParams.length > 0
-      ? statusParams.filter((s) => defaultPastStatuses.includes(s))
-      : defaultPastStatuses
+      ? statusParams.filter((s) => defaultPendingStatuses.includes(s))
+      : defaultPendingStatuses
   const disputed =
     disputedParams.length > 0
       ? disputedParams.map((d) => d === 'true')
@@ -89,7 +90,7 @@ const PastSubmissions: React.FC<Props> = ({
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
-      'pastItems',
+      'pendingItems',
       queryAddress,
       currentPage,
       status.slice().sort().join(','),
@@ -100,6 +101,8 @@ const PastSubmissions: React.FC<Props> = ({
     ],
     enabled: !!queryAddress,
     queryFn: async () => {
+      // Fetch more items to properly calculate filtered totals
+      // We'll fetch up to 1000 items and handle pagination client-side
       const fetchSize = Math.max(1000, currentPage * itemsPerPage)
       const res = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
         method: 'POST',
@@ -109,7 +112,7 @@ const PastSubmissions: React.FC<Props> = ({
           variables: {
             userAddress: queryAddress,
             first: fetchSize,
-            skip: 0,
+            skip: 0, // Always start from 0 to get accurate totals
             status,
             disputed,
             orderDirection,
@@ -249,7 +252,7 @@ const PastSubmissions: React.FC<Props> = ({
         <Skeleton height={100} style={{ marginBottom: 16 }} count={3} />
       </>
     )
-  if (!data || data.items.length === 0) return <EmptyState>No past submissions.</EmptyState>
+  if (!data || data.items.length === 0) return <EmptyState>No pending submissions.</EmptyState>
 
   return (
     <>
@@ -267,4 +270,4 @@ const PastSubmissions: React.FC<Props> = ({
   )
 }
 
-export default PastSubmissions
+export default PendingSubmissions

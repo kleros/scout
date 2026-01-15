@@ -47,7 +47,7 @@ const StyledInput = styled.input`
   }
 `
 
-const ActivitySearchBar: React.FC = () => {
+const ProfileSearchBar: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [appliedSearch, setAppliedSearch] = useState<boolean>(true)
@@ -101,4 +101,4 @@ const ActivitySearchBar: React.FC = () => {
   )
 }
 
-export default ActivitySearchBar
+export default ProfileSearchBar

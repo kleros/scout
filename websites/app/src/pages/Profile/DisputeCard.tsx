@@ -302,7 +302,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
 
     if (userAddressParam) {
       params.set('userAddress', userAddressParam)
-      params.set('fromActivity', 'disputes')
+      params.set('fromProfile', 'disputes')
     }
 
     return `/item/${item.id}?${params.toString()}`

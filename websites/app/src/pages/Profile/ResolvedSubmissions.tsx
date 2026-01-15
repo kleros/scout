@@ -14,7 +14,7 @@ const EmptyState = styled.div`
 `
 
 const QUERY = `
-query OngoingItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [status!]!, $disputed: [Boolean!]!, $orderDirection: order_by!) {
+query ResolvedItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [status!]!, $disputed: [Boolean!]!, $orderDirection: order_by!) {
   litems: LItem(
     where: {status: {_in: $status}, disputed: {_in: $disputed}, requests: {requester: {_eq: $userAddress}}}
     limit: $first
@@ -41,7 +41,7 @@ query OngoingItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [s
       requester
       deposit
       submissionTime
-      disputed
+      resolutionTime
     }
   }
 }
@@ -55,7 +55,7 @@ interface Props {
   setIsFilterChanging: (value: boolean) => void
 }
 
-const OngoingSubmissions: React.FC<Props> = ({
+const ResolvedSubmissions: React.FC<Props> = ({
   totalItems,
   address,
   chainFilters = [],
@@ -64,23 +64,22 @@ const OngoingSubmissions: React.FC<Props> = ({
 }) => {
   const [searchParams] = useSearchParams()
   const currentPage = parseInt(searchParams.get('page') ?? '1', 10)
-  const itemsPerPage = 10
+  const itemsPerPage = 20
+  const skip = itemsPerPage * (currentPage - 1)
   const navigate = useNavigate()
   const location = useLocation()
   const scrollTop = useScrollTop()
   const queryAddress = address?.toLowerCase()
 
-  // Get filter parameters with defaults for ongoing submissions
   const statusParams = searchParams.getAll('status')
   const disputedParams = searchParams.getAll('disputed')
   const orderDirection = searchParams.get('orderDirection') || 'desc'
 
-  // Default ongoing statuses - exclude Registered and Absent
-  const defaultOngoingStatuses = ['RegistrationRequested', 'ClearingRequested']
+  const defaultResolvedStatuses = ['Registered', 'Absent']
   const status =
     statusParams.length > 0
-      ? statusParams.filter((s) => defaultOngoingStatuses.includes(s))
-      : defaultOngoingStatuses
+      ? statusParams.filter((s) => defaultResolvedStatuses.includes(s))
+      : defaultResolvedStatuses
   const disputed =
     disputedParams.length > 0
       ? disputedParams.map((d) => d === 'true')
@@ -90,7 +89,7 @@ const OngoingSubmissions: React.FC<Props> = ({
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
-      'ongoingItems',
+      'resolvedItems',
       queryAddress,
       currentPage,
       status.slice().sort().join(','),
@@ -101,8 +100,6 @@ const OngoingSubmissions: React.FC<Props> = ({
     ],
     enabled: !!queryAddress,
     queryFn: async () => {
-      // Fetch more items to properly calculate filtered totals
-      // We'll fetch up to 1000 items and handle pagination client-side
       const fetchSize = Math.max(1000, currentPage * itemsPerPage)
       const res = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
         method: 'POST',
@@ -112,7 +109,7 @@ const OngoingSubmissions: React.FC<Props> = ({
           variables: {
             userAddress: queryAddress,
             first: fetchSize,
-            skip: 0, // Always start from 0 to get accurate totals
+            skip: 0,
             status,
             disputed,
             orderDirection,
@@ -252,7 +249,7 @@ const OngoingSubmissions: React.FC<Props> = ({
         <Skeleton height={100} style={{ marginBottom: 16 }} count={3} />
       </>
     )
-  if (!data || data.items.length === 0) return <EmptyState>No ongoing submissions.</EmptyState>
+  if (!data || data.items.length === 0) return <EmptyState>No resolved submissions.</EmptyState>
 
   return (
     <>
@@ -270,4 +267,4 @@ const OngoingSubmissions: React.FC<Props> = ({
   )
 }
 
-export default OngoingSubmissions
+export default ResolvedSubmissions
