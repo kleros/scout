@@ -89,20 +89,22 @@ const Layout: React.FC = () => {
   const containerRef = useRef(null);
 
   return (
-    <OverlayScrollContext.Provider value={containerRef}>
-      <StyledOverlayScrollbarsComponent ref={containerRef} options={{ showNativeOverlaidScrollbars: true }}>
-        <Container>
-          <Header />
-          <Notifications />
-          <ContentArea>
-            <Suspense fallback={<LoadingContainer><LoadingImage src={LoadingGif} /></LoadingContainer>}>
-              <Outlet />
-            </Suspense>
-          </ContentArea>
-          <Footer />
-        </Container>
-      </StyledOverlayScrollbarsComponent>
-    </OverlayScrollContext.Provider>
+    <>
+      <Notifications />
+      <OverlayScrollContext.Provider value={containerRef}>
+        <StyledOverlayScrollbarsComponent ref={containerRef} options={{ showNativeOverlaidScrollbars: true }}>
+          <Container>
+            <Header />
+            <ContentArea>
+              <Suspense fallback={<LoadingContainer><LoadingImage src={LoadingGif} /></LoadingContainer>}>
+                <Outlet />
+              </Suspense>
+            </ContentArea>
+            <Footer />
+          </Container>
+        </StyledOverlayScrollbarsComponent>
+      </OverlayScrollContext.Provider>
+    </>
   );
 };
 

@@ -14,6 +14,11 @@ export const OPTIONS = {
   theme: "colored" as Theme,
 };
 
+export const ERROR_OPTIONS = {
+  ...OPTIONS,
+  autoClose: false as const,
+};
+
 export type WrapWithToastReturnType = {
   status: boolean;
   result?: TransactionReceipt;
@@ -21,7 +26,7 @@ export type WrapWithToastReturnType = {
 
 export const infoToast = (message: string) => toast.info(message, OPTIONS);
 export const successToast = (message: string) => toast.success(message, OPTIONS);
-export const errorToast = (message: string) => toast.error(message, OPTIONS);
+export const errorToast = (message: string) => toast.error(message, ERROR_OPTIONS);
 
 export async function wrapWithToast(
   contractWrite: () => Promise<`0x${string}`>,
@@ -36,17 +41,17 @@ export async function wrapWithToast(
           const status = res.status === "success";
 
           if (status) toast.success("Transaction mined!", OPTIONS);
-          else toast.error("Transaction reverted!", OPTIONS);
+          else toast.error("Transaction reverted!", ERROR_OPTIONS);
 
           return { status, result: res };
         })
     )
     .catch((error) => {
-      toast.error(parseWagmiError(error), OPTIONS);
+      toast.error(parseWagmiError(error), ERROR_OPTIONS);
       return { status: false };
     });
 }
 
 export async function catchShortMessage(promise: Promise<any>) {
-  return await promise.catch((error) => toast.error(parseWagmiError(error), OPTIONS));
+  return await promise.catch((error) => toast.error(parseWagmiError(error), ERROR_OPTIONS));
 }

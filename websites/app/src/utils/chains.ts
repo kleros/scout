@@ -200,5 +200,19 @@ export const chains = [
     name: "Blast",
     label: "BLAST",
     explorer: "blastscan.io"
+  },
+  {
+    id: '369',
+    namespace: 'eip155',
+    name: 'PulseChain',
+    label: 'PLS',
+    explorer: 'otter.pulsechain.com',
+  },
+  {
+    id: '4326',
+    namespace: 'eip155',
+    name: 'MegaETH',
+    label: 'MEGA',
+    explorer: 'megaeth.blockscout.com',
   }
 ]
