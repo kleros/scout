@@ -118,6 +118,20 @@ export const chains = [
     explorer: 'era.zksync.network',
   },
   {
+    id: '369',
+    namespace: 'eip155',
+    name: 'PulseChain',
+    label: 'PLS',
+    explorer: 'otter.pulsechain.com',
+  },
+  {
+    id: '4326',
+    namespace: 'eip155',
+    name: 'MegaETH',
+    label: 'MEGA',
+    explorer: 'megaeth.blockscout.com',
+  },
+  {
     id: '000000000019d6689c085ae165831e93',
     namespace: 'bip122',
     name: 'Bitcoin',
@@ -201,4 +215,4 @@ export const chains = [
     label: "BLAST",
     explorer: "blastscan.io"
   }
-]
+];
