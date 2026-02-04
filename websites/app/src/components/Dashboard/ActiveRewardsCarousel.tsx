@@ -181,10 +181,11 @@ const REWARDS_DATA: RewardData[] = [
 const getCurrentMonthDeadline = (): string => {
   const now = new Date();
   const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return lastDay.toLocaleDateString("en-GB", { 
-    day: "numeric", 
-    month: "long", 
-    year: "numeric" 
+  return lastDay.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
   });
 };
 

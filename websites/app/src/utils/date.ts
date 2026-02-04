@@ -29,10 +29,10 @@ export function formatDate(unixTimestamp: number, withTime = false): string {
         year: "numeric",
         hour: "numeric",
         minute: "numeric",
-        timeZone: "GMT",
+        timeZone: "UTC",
         timeZoneName: "short",
       }
-    : { month: "long", day: "2-digit", year: "numeric" };
+    : { month: "long", day: "2-digit", year: "numeric", timeZone: "UTC" };
   return date.toLocaleDateString("en-US", options);
 }
 
@@ -68,7 +68,7 @@ export function timeLeftUntil(isoString: string): string {
   } else if (daysLeft < 2) {
     return `in ${daysLeft} day${daysLeft > 1 ? "s" : ""}`;
   } else {
-    const options: Intl.DateTimeFormatOptions = { year: "numeric", month: "long", day: "numeric" };
+    const options: Intl.DateTimeFormatOptions = { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" };
     return `after ${targetDate.toLocaleDateString("en-US", options)}`;
   }
 }

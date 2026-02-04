@@ -474,7 +474,7 @@ const fetchKlerosSubgraphData = async (
       submissions: submissionsData,
       disputes: disputesData,
       dates: last7Days.map((d) =>
-        d.toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+        d.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
       ),
     },
     chainRanking,

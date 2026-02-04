@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
-import { format } from 'date-fns'
 import { formatEther } from 'ethers'
 import { useNavigate, useLocation } from 'react-router-dom'
 import Skeleton from 'react-loading-skeleton'
@@ -14,6 +13,7 @@ import useHumanizedCountdown, {
   useChallengePeriodDuration,
 } from 'hooks/countdown'
 import { shortenAddress } from 'utils/shortenAddress'
+import { formatTimestamp } from 'utils/formatTimestamp'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 
@@ -173,7 +173,7 @@ const ItemCard = ({ item }: { item: any }) => {
 
   const submittedOn =
     item.requests?.[0]?.submissionTime != null
-      ? format(new Date(Number(item.requests[0].submissionTime) * 1000), 'PP')
+      ? formatTimestamp(Number(item.requests[0].submissionTime))
       : '-'
 
   const deposit =
