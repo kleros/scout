@@ -7,9 +7,9 @@ export function formatTimestamp(unixTimestamp: number, withTime = false): string
         year: "numeric",
         hour: "numeric",
         minute: "numeric",
-        timeZone: "GMT",
+        timeZone: "UTC",
         timeZoneName: "short",
       }
-    : { month: "short", day: "2-digit", year: "numeric" };
+    : { month: "short", day: "2-digit", year: "numeric", timeZone: "UTC" };
   return date.toLocaleDateString("en-US", options);
 }

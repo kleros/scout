@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
-import { format } from 'date-fns'
 import { formatEther } from 'ethers'
 import { useLocation, Link } from 'react-router-dom'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
 import { revRegistryMap } from 'utils/items'
 import { shortenAddress } from 'utils/shortenAddress'
+import { formatTimestamp } from 'utils/formatTimestamp'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 
 const Card = styled.div`
@@ -263,7 +263,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
 
   const disputeDate =
     request?.submissionTime != null
-      ? format(new Date(Number(request.submissionTime) * 1000), 'PP')
+      ? formatTimestamp(Number(request.submissionTime))
       : '-'
 
   const deposit =
