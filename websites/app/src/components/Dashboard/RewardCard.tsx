@@ -123,3 +123,21 @@ export const RewardCardBottomSection = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
+export const RewardCardDivider = styled.div`
+  height: 1px;
+  background: linear-gradient(90deg, #7d4bff 0%, #485fff 100%);
+  margin-bottom: 12px;
+`;
+
+export const RewardCardCalendarValue = styled.label`
+  margin-left: auto;
+  color: ${({ theme }) => theme.secondaryPurple};
+`;
+
+export const RewardCardRewardValue = styled.label`
+  margin-left: auto;
+  font-size: 24px;
+  color: ${({ theme }) => theme.secondaryPurple};
+  font-weight: 600;
+`;

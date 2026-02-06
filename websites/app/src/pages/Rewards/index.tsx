@@ -2,20 +2,11 @@ import React from "react";
 import styled, { css } from "styled-components";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
-import {
-  RewardCard,
-  RewardCardNewBadge,
-  RewardCardTitle,
-  RewardCardDescription,
-  RewardCardDetailRow,
-  RewardCardTopSection,
-  RewardCardBottomSection
-} from "components/Dashboard/RewardCard";
+import RewardCardContent from "components/Dashboard/RewardCardContent";
 
 import ActiveRewards from "svgs/icons/rewards.svg";
-import CalendarIcon from "svgs/icons/calendar.svg";
-import CoinIcon from "svgs/icons/coins.svg";
 import ScrollTop from "components/ScrollTop";
+import { REWARDS_DATA, getCurrentMonthDeadline } from "components/Dashboard/rewardsConfig";
 
 const Container = styled.div`
   color: ${({ theme }) => theme.white};
@@ -64,9 +55,7 @@ const CardsContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-// Using shared components from components/Dashboard/RewardCard.tsx
-
-const StyledRewardCard = styled(RewardCard)`
+const StyledRewardCard = styled(RewardCardContent)`
   ${landscapeStyle(
     () => css`
       width: 392px;
@@ -74,80 +63,7 @@ const StyledRewardCard = styled(RewardCard)`
   )}
 `;
 
-const StyledCalendarValue = styled.label`
-  margin-left: auto;
-  color: ${({ theme }) => theme.secondaryPurple};
-`;
-
-const StyledRewardValue = styled.label`
-  margin-left: auto;
-  font-size: 24px;
-  color: ${({ theme }) => theme.secondaryPurple};
-  font-weight: 600;
-`;
-
-const Divider = styled.div`
-  height: 1px;
-  background: linear-gradient(90deg, #7d4bff 0%, #485fff 100%);
-  margin-bottom: 12px;
-`;
-
-const rewards = [
-  {
-    title: "Token Collection Verification",
-    description: "Verify the authenticity of new tokens and earn rewards",
-    registryKey: "Tokens"
-  },
-  {
-    title: "Address Tag Collection Verification",
-    description: "Verify the authenticity of new contract address tags and earn rewards",
-    registryKey: "Single_Tags"
-  },
-  {
-    title: "Contract Domain Name Collection Verification",
-    description: "Verify the authenticity of new contract domain name submissions and earn rewards",
-    registryKey: "CDN"
-  }
-];
-
-const getCurrentMonthDeadline = () => {
-  const now = new Date();
-  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return lastDay.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-};
-
 const currentMonthDeadline = getCurrentMonthDeadline();
-
-const getRegistryUrl = (registryKey: string) =>
-  `/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`;
-
-const RewardCardComponent = ({ title, description, registryKey }) => (
-  <StyledRewardCard to={getRegistryUrl(registryKey)}>
-    <RewardCardTopSection>
-      <RewardCardNewBadge>NEW</RewardCardNewBadge>
-      <RewardCardTitle>{title}</RewardCardTitle>
-      <RewardCardDescription>{description}</RewardCardDescription>
-    </RewardCardTopSection>
-    <RewardCardBottomSection>
-      <RewardCardDetailRow>
-        <CalendarIcon />
-        <span>Deadline:</span>
-        <StyledCalendarValue>{currentMonthDeadline}</StyledCalendarValue>
-      </RewardCardDetailRow>
-      <Divider />
-      <RewardCardDetailRow>
-        <CoinIcon />
-        <span>Submissions:</span>
-        <StyledRewardValue>93,000 PNK</StyledRewardValue>
-      </RewardCardDetailRow>
-      <RewardCardDetailRow>
-        <CoinIcon />
-        <span>Removals:</span>
-        <StyledRewardValue>7,000 PNK</StyledRewardValue>
-      </RewardCardDetailRow>
-    </RewardCardBottomSection>
-  </StyledRewardCard>
-);
 
 const RewardsPage = () => {
   return (
@@ -161,12 +77,13 @@ const RewardsPage = () => {
         </div>
       </Header>
       <CardsContainer>
-        {rewards.map(r => (
-          <RewardCardComponent
+        {REWARDS_DATA.map(r => (
+          <StyledRewardCard
             key={r.title}
             title={r.title}
             description={r.description}
             registryKey={r.registryKey}
+            deadline={currentMonthDeadline}
           />
         ))}
       </CardsContainer>
