@@ -1,6 +1,5 @@
 import React from "react";
 import styled, { css } from "styled-components";
-import { useNavigate } from "react-router-dom";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
 import {
@@ -119,8 +118,11 @@ const getCurrentMonthDeadline = () => {
 
 const currentMonthDeadline = getCurrentMonthDeadline();
 
-const RewardCardComponent = ({ title, description, onClick }) => (
-  <StyledRewardCard onClick={onClick}>
+const getRegistryUrl = (registryKey: string) =>
+  `/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`;
+
+const RewardCardComponent = ({ title, description, registryKey }) => (
+  <StyledRewardCard to={getRegistryUrl(registryKey)}>
     <RewardCardTopSection>
       <RewardCardNewBadge>NEW</RewardCardNewBadge>
       <RewardCardTitle>{title}</RewardCardTitle>
@@ -148,12 +150,6 @@ const RewardCardComponent = ({ title, description, onClick }) => (
 );
 
 const RewardsPage = () => {
-  const navigate = useNavigate();
-
-  const handleCardClick = (registryKey: string) => {
-    navigate(`/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`);
-  };
-
   return (
     <Container>
       <ScrollTop />
@@ -170,7 +166,7 @@ const RewardsPage = () => {
             key={r.title}
             title={r.title}
             description={r.description}
-            onClick={() => handleCardClick(r.registryKey)}
+            registryKey={r.registryKey}
           />
         ))}
       </CardsContainer>
