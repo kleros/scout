@@ -2,6 +2,7 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { landscapeStyle } from 'styles/landscapeStyle';
+import { REWARDS_DATA, SUBMISSION_REWARD, REMOVAL_REWARD, getRegistryUrl } from 'components/Dashboard/rewardsConfig';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
 interface StatBoxProps {
@@ -127,39 +128,27 @@ const FormulaSpan = styled.span`
 const RewardSection: React.FC = () => {
   const navigate = useNavigate();
 
-  const navigateToTokens = () => {
-    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
-  };
-
-  const navigateToAddressTags = () => {
-    navigate('/registry/Single_Tags?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
-  };
-
-  const navigateToCDN = () => {
-    navigate('/registry/CDN?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
-  };
-
-  const navigateToRewards = () => {
-    navigate('/registry/Tokens?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1');
+  const navigateToRegistry = (registryKey: string) => {
+    navigate(getRegistryUrl(registryKey));
   };
 
   return (
     <Section>
       <Grid>
         <Title>Reward Pool & Avg. Rewards</Title>
-        <StatBox borderLeft={true} onClick={navigateToRewards}>
+        <StatBox borderLeft={true} onClick={() => navigateToRegistry("Tokens")}>
           <StatNumber>300k PNK</StatNumber>
           <StatLabel>MONTHLY REWARD POOL</StatLabel>
         </StatBox>
-        <StatBox onClick={navigateToRewards}>
+        <StatBox onClick={() => navigateToRegistry("Tokens")}>
           <StatNumber>618</StatNumber>
           <StatLabel>AVG. MONTHLY SUBMISSIONS</StatLabel>
         </StatBox>
-        <StatBox onClick={navigateToRewards}>
+        <StatBox onClick={() => navigateToRegistry("Tokens")}>
           <StatNumber>$12</StatNumber>
           <StatLabel>AVG. REWARD PER SUBMISSION</StatLabel>
         </StatBox>
-        <StatBox onClick={navigateToRewards}>
+        <StatBox onClick={() => navigateToRegistry("Tokens")}>
           <StatNumber>$40</StatNumber>
           <StatLabel>AVG. REWARD PER CHALLENGE</StatLabel>
         </StatBox>
@@ -172,9 +161,11 @@ const RewardSection: React.FC = () => {
           reward pool is allocated to the three registries across different chains.
         </Text>
         <List>
-          <ClickableListItem onClick={navigateToTokens}>Tokens (93,000 PNK for submissions, 7,000 PNK for removals)</ClickableListItem>
-          <ClickableListItem onClick={navigateToAddressTags}>Address Tags Registry (93,000 PNK for submissions, 7,000 PNK for removals)</ClickableListItem>
-          <ClickableListItem onClick={navigateToCDN}>CDN Registry (93,000 PNK for submissions, 7,000 PNK for removals)</ClickableListItem>
+          {REWARDS_DATA.map((reward) => (
+            <ClickableListItem key={reward.registryKey} onClick={() => navigateToRegistry(reward.registryKey)}>
+              {reward.title} ({SUBMISSION_REWARD} for submissions, {REMOVAL_REWARD} for removals)
+            </ClickableListItem>
+          ))}
         </List>
       </div>
       <Divider />
