@@ -10,7 +10,7 @@ import Search from './Search';
 import LoadingItems from './LoadingItems';
 import ItemsList from './ItemsList';
 import { StyledPagination } from 'components/StyledPagination';
-import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
+import RegistryParams from './RegistryDetails/RegistryParams';
 import AddItemModal from './SubmitItems/AddItemModal';
 import FilterModal from './FilterModal';
 import FilterButton from 'components/FilterButton';
@@ -239,10 +239,6 @@ const Home: React.FC = () => {
   const [shouldDisableListView, setShouldDisableListView] = useState(false);
   const [isFilterChanging, setIsFilterChanging] = useState(false);
 
-  const isRegistryDetailsModalOpen = useMemo(
-    () => !!searchParams.get('registrydetails'),
-    [searchParams]
-  );
   const isAddItemOpen = useMemo(
     () => !!searchParams.get('additem'),
     [searchParams]
@@ -263,6 +259,14 @@ const Home: React.FC = () => {
   });
 
   const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
+
+  const isPolicyOpen = useMemo(() => {
+    if (!isAttachmentOpen || !registryName || !countsData) return false;
+    const policyURI = countsData[registryName]?.metadata?.policyURI;
+    if (!policyURI) return false;
+    const attachment = searchParams.get('attachment') || '';
+    return attachment.includes(policyURI);
+  }, [isAttachmentOpen, searchParams, registryName, countsData]);
 
   const currentItemCount = useMemo(() => {
     const { status, disputed, text } = filters;
@@ -368,6 +372,7 @@ const Home: React.FC = () => {
       <ScrollTop />
       {isAttachmentOpen ? (
         <PageInner>
+          {isPolicyOpen && <RegistryParams registryName={registryName} />}
           <EvidenceAttachmentDisplay />
         </PageInner>
       ) : (
@@ -422,7 +427,6 @@ const Home: React.FC = () => {
                 )}
               </FullWidthSection>
             </PageInner>
-          {isRegistryDetailsModalOpen && <RegistryDetailsModal registryName={registryName} />}
           {isAddItemOpen && <AddItemModal />}
           <FilterModal
             isOpen={isFilterModalOpen}

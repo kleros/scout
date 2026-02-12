@@ -126,18 +126,3 @@ export const formatDisputeDeadline = (lastPeriodChangeTs: string): string => {
     return `${Math.max(1, diffMinutes)}m ago`;
   }
 };
-
-export const getCourtName = (courtID: string): string => {
-  const courts: Record<string, string> = {
-    '0': 'General Court',
-    '1': 'Curation Court', // xDAI Curation Court
-    '2': 'Technical Court',
-    '3': 'Marketing Services Court',
-    '4': 'English Language Court',
-    '5': 'Video Production Court',
-    '6': 'Onboarding Court',
-    '7': 'Translation Court',
-    '8': 'Data Analysis Court',
-  };
-  return courts[courtID] || 'General Court';
-};

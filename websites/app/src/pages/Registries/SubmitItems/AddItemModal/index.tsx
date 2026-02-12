@@ -116,7 +116,7 @@ export const FieldLabel = styled.div`
   margin-bottom: 0;
 `
 
-export const SubmissionButton = styled.button`
+export const SubmissionButton = styled.a`
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.9);
@@ -129,6 +129,7 @@ export const SubmissionButton = styled.button`
   transition: all 0.2s ease;
   position: relative;
   z-index: 1;
+  text-decoration: none;
 
   :hover {
     background: rgba(255, 255, 255, 0.1);
