@@ -207,7 +207,7 @@ export const useExportItems = (filters: ExportFilters) => {
 
           let items = result.litems
 
-          // Client-side filtering for non-Tags_Queries registries
+          // Client-side filtering for non-tags-queries registries
           if (!isTagsQueriesRegistry && network.length > 0) {
             const selectedPrefixes = selectedChainIds.map((chainId) => {
               const namespace = getNamespaceForChainId(chainId)

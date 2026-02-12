@@ -99,9 +99,6 @@ interface RegistryCardProps {
   style?: React.CSSProperties;
 }
 
-const getRegistryUrl = (registryKey: string) =>
-  `/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`;
-
 export const RegistryCard: React.FC<RegistryCardProps> = ({
   title,
   mainValue,
@@ -120,7 +117,7 @@ export const RegistryCard: React.FC<RegistryCardProps> = ({
       </Header>
       <MainValue>{formattedMainValue}</MainValue>
       <SecondaryValue>{secondaryValue}</SecondaryValue>
-      <OpenButton to={getRegistryUrl(registryKey)}>
+      <OpenButton to={`/${registryKey}`}>
         Open
         <ArrowRightIcon />
       </OpenButton>

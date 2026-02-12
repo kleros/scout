@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { useParams, useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
@@ -14,7 +14,7 @@ import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 import useAppealCost from 'hooks/useAppealCost'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus'
-import { revRegistryMap } from 'utils/items'
+import { registryMap, revRegistryMap, registryDisplayNames } from 'utils/items'
 import Item from '../Registries/ItemsList/Item'
 import Breadcrumb from './components/Breadcrumb'
 import ItemDetailsContent from './components/ItemDetailsContent'
@@ -216,12 +216,16 @@ const SubmissionDate = styled.a`
 `
 
 const ItemDetails: React.FC = () => {
-  const { itemId } = useParams<{ itemId: string }>()
+  const { registryName: registryNameParam = '', itemID = '' } = useParams<{ registryName: string; itemID: string }>()
+  const registryAddress = registryMap[registryNameParam] || registryNameParam
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('')
+
+  // Reconstruct composite ID for GraphQL query (subgraph format: itemID@registryAddress)
+  const itemId = registryAddress && itemID ? `${itemID}@${registryAddress}` : ''
 
   const isAttachmentOpen = useMemo(
     () => !!searchParams.get('attachment'),
@@ -229,20 +233,13 @@ const ItemDetails: React.FC = () => {
   )
 
   const { isLoading: detailsLoading, data: detailsData } = useItemDetailsQuery({
-    itemId: itemId || '',
+    itemId: itemId,
     enabled: !!itemId,
   })
 
-  const registryParsedFromItemId = useMemo(
-    () => (itemId ? itemId.split('@')[1] : ''),
-    [itemId],
-  )
-
   const { executeRequest, isLoading: isExecuting } = useCurateInteractions()
 
-  const registryName = useMemo(() => {
-    return registryParsedFromItemId ? revRegistryMap[registryParsedFromItemId] : 'Unknown'
-  }, [registryParsedFromItemId])
+  const registryName = registryDisplayNames[registryNameParam] || registryNameParam || 'Unknown'
 
   const displayName = useMemo(() => {
     if (!detailsData) return ''
@@ -255,7 +252,7 @@ const ItemDetails: React.FC = () => {
   }, [detailsData])
 
   // Fetch registry parameters
-  const { data: registryParameters, isLoading: registryParametersLoading } = useRegistryParameters(registryParsedFromItemId)
+  const { data: registryParameters, isLoading: registryParametersLoading } = useRegistryParameters(registryAddress)
 
   const challengePeriodDuration = useMemo(() => {
     return registryParameters ? Number(registryParameters.challengePeriodDuration) : null
@@ -393,60 +390,32 @@ const ItemDetails: React.FC = () => {
   const formattedLoserTimeLeft = useHumanizedCountdown(appealRemainingTime?.loserTimeLeft || null, 2)
   const formattedWinnerTimeLeft = useHumanizedCountdown(appealRemainingTime?.winnerTimeLeft || null, 2)
 
+  // Capture navigation state on first render. location.state is set only by
+  // in-app navigation and can be wiped by setSearchParams (e.g. opening an
+  // attachment), so we snapshot it in a ref to keep it stable.
+  type NavState = { fromApp?: boolean; from?: string; profileTab?: string }
+  const navStateRef = useRef<NavState | null>(location.state as NavState | null)
+  const navState = navStateRef.current
+  const cameFromApp = !!navState?.fromApp
+
   const { registryUrl, breadcrumbName } = useMemo(() => {
-    // Get current search params to preserve filters
-    const params = new URLSearchParams(searchParams)
-
-    // Check if we came from the Home page
-    const fromHome = params.get('fromHome')
-    if (fromHome === 'true') {
-      return {
-        registryUrl: '/',
-        breadcrumbName: 'Home'
-      }
+    if (navState?.from === 'home') {
+      return { registryUrl: '/', breadcrumbName: 'Home' }
     }
 
-    // Check if we came from a Profile page (has fromProfile and userAddress params)
-    const fromProfile = params.get('fromProfile')
-    const userAddress = params.get('userAddress')
-
-    if (fromProfile && userAddress && (fromProfile === 'pending' || fromProfile === 'resolved' || fromProfile === 'disputes')) {
-      // Navigate back to Profile page with preserved params
-      params.delete('attachment')
-      params.delete('tab')
-      params.delete('fromProfile') // Remove this meta param
-
-      const queryString = params.toString()
-      return {
-        registryUrl: `/profile/${fromProfile}${queryString ? `?${queryString}` : ''}`,
-        breadcrumbName: 'Profile'
-      }
+    if (navState?.from === 'profile' && navState.profileTab) {
+      return { registryUrl: `/profile/${navState.profileTab}`, breadcrumbName: 'Profile' }
     }
 
-    // Otherwise, navigate back to Registry page
-    // Remove item-specific params
-    params.delete('attachment')
-    params.delete('tab')
-    params.delete('fromProfile')
-    params.delete('userAddress') // Don't include userAddress in registry URL
-
-    const queryString = params.toString()
-    return {
-      registryUrl: `/registry/${registryName}${queryString ? `?${queryString}` : ''}`,
-      breadcrumbName: registryName
-    }
-  }, [registryName, searchParams])
+    return { registryUrl: `/${registryNameParam}`, breadcrumbName: registryName }
+  }, [navState, registryName, registryNameParam])
 
   const handleBackClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Check if user is trying to open in new tab (Ctrl+Click, Cmd+Click, or middle click)
-    if (e.ctrlKey || e.metaKey || e.button === 1) {
-      // Let the default Link behavior handle it (opens in new tab)
-      return
-    }
+    if (e.ctrlKey || e.metaKey || e.button === 1) return
 
-    // For normal clicks, always navigate to registry page with preserved filters
     e.preventDefault()
-    navigate(registryUrl)
+    if (cameFromApp) navigate(-1)
+    else navigate(registryUrl)
   }
 
   const handleExecuteRequest = async () => {
@@ -454,7 +423,7 @@ const ItemDetails: React.FC = () => {
 
     try {
       await executeRequest(
-        registryParsedFromItemId as `0x${string}`,
+        registryAddress as `0x${string}`,
         detailsData.itemID
       )
       successToast('Request executed successfully!')
@@ -493,7 +462,7 @@ const ItemDetails: React.FC = () => {
           )}
 
           <TopBar>
-            <Breadcrumb registryName={breadcrumbName} itemName={displayName} registryUrl={registryUrl} />
+            <Breadcrumb registryName={breadcrumbName} itemName={displayName} registryUrl={registryUrl} useHistoryBack={cameFromApp} />
             <ReturnButton to={registryUrl} onClick={handleBackClick}>
               <ArrowLeftIcon />
               Return
@@ -517,7 +486,7 @@ const ItemDetails: React.FC = () => {
                 appealCost={appealCost}
                 appealCostLoading={appealCostLoading}
                 registryParameters={registryParameters}
-                registryParsedFromItemId={registryParsedFromItemId}
+                registryAddress={registryAddress}
                 evidences={evidences}
                 setIsConfirmationOpen={setIsConfirmationOpen}
                 setEvidenceConfirmationType={setEvidenceConfirmationType}
@@ -558,7 +527,7 @@ const ItemDetails: React.FC = () => {
                   </SubmissionDate>
                   by
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${detailsData.requests[detailsData.requests.length - 1].requester}`}
+                    to={`/profile/pending?address=${detailsData.requests[detailsData.requests.length - 1].requester}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="20" address={detailsData.requests[detailsData.requests.length - 1].requester as `0x${string}`} />

@@ -2,7 +2,7 @@ import React from 'react';
 import styled, { css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { landscapeStyle } from 'styles/landscapeStyle';
-import { REWARDS_DATA, SUBMISSION_REWARD, REMOVAL_REWARD, getRegistryUrl } from 'components/Dashboard/rewardsConfig';
+import { REWARDS_DATA, SUBMISSION_REWARD, REMOVAL_REWARD } from 'components/Dashboard/rewardsConfig';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
 interface StatBoxProps {
@@ -129,26 +129,26 @@ const RewardSection: React.FC = () => {
   const navigate = useNavigate();
 
   const navigateToRegistry = (registryKey: string) => {
-    navigate(getRegistryUrl(registryKey));
+    navigate(`/${registryKey}`);
   };
 
   return (
     <Section>
       <Grid>
         <Title>Reward Pool & Avg. Rewards</Title>
-        <StatBox borderLeft={true} onClick={() => navigateToRegistry("Tokens")}>
+        <StatBox borderLeft={true} onClick={() => navigateToRegistry("tokens")}>
           <StatNumber>300k PNK</StatNumber>
           <StatLabel>MONTHLY REWARD POOL</StatLabel>
         </StatBox>
-        <StatBox onClick={() => navigateToRegistry("Tokens")}>
+        <StatBox onClick={() => navigateToRegistry("tokens")}>
           <StatNumber>618</StatNumber>
           <StatLabel>AVG. MONTHLY SUBMISSIONS</StatLabel>
         </StatBox>
-        <StatBox onClick={() => navigateToRegistry("Tokens")}>
+        <StatBox onClick={() => navigateToRegistry("tokens")}>
           <StatNumber>$12</StatNumber>
           <StatLabel>AVG. REWARD PER SUBMISSION</StatLabel>
         </StatBox>
-        <StatBox onClick={() => navigateToRegistry("Tokens")}>
+        <StatBox onClick={() => navigateToRegistry("tokens")}>
           <StatNumber>$40</StatNumber>
           <StatLabel>AVG. REWARD PER CHALLENGE</StatLabel>
         </StatBox>

@@ -152,25 +152,25 @@ const SUBMISSION_OPTIONS: SubmissionOption[] = [
   {
     title: 'Kleros Tokens',
     description: 'Submit a token to verify its information and legitimacy.',
-    registryKey: 'Tokens',
+    registryKey: 'tokens',
     icon: TokensIcon,
   },
   {
     title: 'Contract Domain Name',
     description: 'Link a smart contract to a specific domain to prevent frontend attacks.',
-    registryKey: 'CDN',
+    registryKey: 'cdn',
     icon: CDNIcon,
   },
   {
     title: 'Single Tags',
     description: 'Verify the ownership and purpose of a contract.',
-    registryKey: 'Single_Tags',
+    registryKey: 'single-tags',
     icon: SingleTagsIcon,
   },
   {
     title: 'Tag Queries',
     description: 'Bulk-submit address tags stored in a decentralized domain.',
-    registryKey: 'Tags_Queries',
+    registryKey: 'tags-queries',
     icon: QueryTagsIcon,
   },
 ];
@@ -189,7 +189,7 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
   if (!isOpen) return null;
 
   const handleOptionClick = (registryKey: string) => {
-    navigate(`/registry/${registryKey}?additem=${registryKey}`);
+    navigate(`/${registryKey}?additem=${registryKey}`);
     onClose();
   };
 

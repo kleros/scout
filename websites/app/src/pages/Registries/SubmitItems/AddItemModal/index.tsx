@@ -266,13 +266,13 @@ const AddItemModal: React.FC = () => {
     <ModalOverlay onClick={handleOverlayClick}>
       <ModalContainer ref={containerRef}>
         <ModalContent>
-          {addingItemToRegistry === 'Single_Tags' ? (
+          {addingItemToRegistry === 'single-tags' ? (
             <AddAddressTag />
-          ) : addingItemToRegistry === 'Tags_Queries' ? (
+          ) : addingItemToRegistry === 'tags-queries' ? (
             <AddTagsQueries />
-          ) : addingItemToRegistry === 'CDN' ? (
+          ) : addingItemToRegistry === 'cdn' ? (
             <AddCDN />
-          ) : addingItemToRegistry === 'Tokens' ? (
+          ) : addingItemToRegistry === 'tokens' ? (
             <AddToken />
           ) : null}
         </ModalContent>

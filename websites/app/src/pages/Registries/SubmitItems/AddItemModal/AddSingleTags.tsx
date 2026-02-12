@@ -152,11 +152,11 @@ const AddAddressTag: React.FC = () => {
   }, [cacheKey])
   
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'Single_Tags', projectName, publicNameTag, website],
+    queryKey: ['addressissues', networkAddressKey, 'single-tags', projectName, publicNameTag, website],
     queryFn: async () => {
       const res = await getAddressValidationIssue(
         network.value,
-        'Single_Tags',
+        'single-tags',
         debouncedAddress,
         undefined,
         projectName,
@@ -185,7 +185,7 @@ const AddAddressTag: React.FC = () => {
   const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitAddressTag = async () => {
-    if (!countsData?.Single_Tags.deposits) return;
+    if (!countsData?.['single-tags'].deposits) return;
 
     setIsLocalLoading(true);
     try {
@@ -208,9 +208,9 @@ const AddAddressTag: React.FC = () => {
       const ipfsPath = getIPFSPath(ipfsObject)
 
       const result = await addItem(
-        registryMap.Single_Tags as `0x${string}`,
+        registryMap['single-tags'] as `0x${string}`,
         ipfsPath,
-        countsData.Single_Tags.deposits
+        countsData['single-tags'].deposits
       );
 
       if (result?.status) {
@@ -284,7 +284,7 @@ const AddAddressTag: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Single_Tags"
+        registry="single-tags"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -333,10 +333,10 @@ const AddAddressTag: React.FC = () => {
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Single_Tags']?.deposits
+          {countsData?.['single-tags']?.deposits
             ? formatEther(
-              countsData['Single_Tags'].deposits.arbitrationCost +
-              countsData['Single_Tags'].deposits.submissionBaseDeposit
+              countsData['single-tags'].deposits.arbitrationCost +
+              countsData['single-tags'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}
         </ExpectedPayouts>

@@ -13,7 +13,7 @@ import {
   RewardCardCalendarValue,
   RewardCardRewardValue,
 } from "./RewardCard";
-import { SUBMISSION_REWARD, REMOVAL_REWARD, getRegistryUrl } from "./rewardsConfig";
+import { SUBMISSION_REWARD, REMOVAL_REWARD } from "./rewardsConfig";
 
 interface RewardCardContentProps {
   title: string;
@@ -24,7 +24,7 @@ interface RewardCardContentProps {
 }
 
 const RewardCardContent: React.FC<RewardCardContentProps> = ({ title, description, registryKey, deadline, className }) => (
-  <RewardCard to={getRegistryUrl(registryKey)} className={className}>
+  <RewardCard to={`/${registryKey}`} className={className}>
     <RewardCardTopSection>
       <RewardCardNewBadge>NEW</RewardCardNewBadge>
       <RewardCardTitle>{title}</RewardCardTitle>

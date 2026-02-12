@@ -10,16 +10,16 @@ import { ViewMode } from 'components/ViewSwitcher';
 import { useRegistryParameters } from 'hooks/useRegistryParameters';
 
 const useRegistryDurations = () => {
-  const singleTagsParams = useRegistryParameters(registryMap.Single_Tags);
-  const tagsQueriesParams = useRegistryParameters(registryMap.Tags_Queries);
-  const tokensParams = useRegistryParameters(registryMap.Tokens);
-  const cdnParams = useRegistryParameters(registryMap.CDN);
+  const singleTagsParams = useRegistryParameters(registryMap['single-tags']);
+  const tagsQueriesParams = useRegistryParameters(registryMap['tags-queries']);
+  const tokensParams = useRegistryParameters(registryMap['tokens']);
+  const cdnParams = useRegistryParameters(registryMap['cdn']);
 
   return useMemo(() => ({
-    [registryMap.Single_Tags]: singleTagsParams.data ? Number(singleTagsParams.data.challengePeriodDuration) : null,
-    [registryMap.Tags_Queries]: tagsQueriesParams.data ? Number(tagsQueriesParams.data.challengePeriodDuration) : null,
-    [registryMap.Tokens]: tokensParams.data ? Number(tokensParams.data.challengePeriodDuration) : null,
-    [registryMap.CDN]: cdnParams.data ? Number(cdnParams.data.challengePeriodDuration) : null,
+    [registryMap['single-tags']]: singleTagsParams.data ? Number(singleTagsParams.data.challengePeriodDuration) : null,
+    [registryMap['tags-queries']]: tagsQueriesParams.data ? Number(tagsQueriesParams.data.challengePeriodDuration) : null,
+    [registryMap['tokens']]: tokensParams.data ? Number(tokensParams.data.challengePeriodDuration) : null,
+    [registryMap['cdn']]: cdnParams.data ? Number(cdnParams.data.challengePeriodDuration) : null,
   }), [singleTagsParams.data, tagsQueriesParams.data, tokensParams.data, cdnParams.data]);
 };
 
@@ -59,7 +59,7 @@ const ItemsList: React.FC<IItemsList> = ({ searchData, viewMode }) => {
 
   // Determine registry type from first item
   const registryAddress = searchData[0]?.registryAddress;
-  const isTokensRegistry = registryAddress === registryMap.Tokens;
+  const isTokensRegistry = registryAddress === registryMap['tokens'];
 
   // Check if screen width is sufficient for Tokens list view
   useEffect(() => {

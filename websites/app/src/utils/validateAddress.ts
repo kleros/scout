@@ -217,14 +217,14 @@ export const getAddressValidationIssue = async (
     }
   }
 
-  if (registry === 'Tokens' && projectName && projectName.length > 40) {
+  if (registry === 'tokens' && projectName && projectName.length > 40) {
     result.projectName = {
       message: 'Public Name too long (max 40 characters)',
       severity: 'warn',
     }
   }
 
-  if (registry === 'Tokens' && symbol && symbol.length > 20) {
+  if (registry === 'tokens' && symbol && symbol.length > 20) {
     result.symbol = {
       message: 'Symbol too long (max 20 characters)',
       severity: 'warn',
@@ -258,7 +258,7 @@ export const getAddressValidationIssue = async (
   if (Object.keys(result).length > 0) return result
 
   // Check for duplicates based on registry type
-  if (registry === 'Single_Tags' || registry === 'CDN') {
+  if (registry === 'single-tags' || registry === 'cdn') {
     const ndupes = await getDupesInRegistry(
       chainId + ':' + address,
       registryMap[registry],
@@ -268,7 +268,7 @@ export const getAddressValidationIssue = async (
     if (ndupes > 0) {
       result.duplicate = { message: 'Duplicate submission', severity: 'error' }
     }
-  } else if (registry === 'Tokens') {
+  } else if (registry === 'tokens') {
     // For tokens, only consider it a duplicate if any of the existing items have a website
     const ndupes = await getTokenDupesWithWebsiteCheck(
       chainId + ':' + address,

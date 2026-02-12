@@ -281,7 +281,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                     if (evidence?.fileURI) {
                       setSearchParams({
                         attachment: `https://cdn.kleros.link${evidence.fileURI}`,
-                      })
+                      }, { replace: true })
                       scrollTop()
                     }
                   }}
@@ -302,7 +302,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                   </SubmissionDate>
                   by
                   <PartyLink
-                    to={`/profile/pending?userAddress=${evidence.party}`}
+                    to={`/profile/pending?address=${evidence.party}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="20" address={evidence.party as `0x${string}`} />

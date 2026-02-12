@@ -1,13 +1,14 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { formatEther } from 'ethers'
-import { useLocation, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
-import { revRegistryMap } from 'utils/items'
-import { shortenAddress } from 'utils/shortenAddress'
+import SubmittedByLink from 'components/SubmittedByLink'
+import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress } from 'utils/items'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
+import useRegistryParameters from 'hooks/useRegistryParameters'
 
 const Card = styled.div`
   width: 100%;
@@ -211,26 +212,23 @@ const statusColors: Record<string, string> = {
   Refused: '#9CA3AF',
 }
 
-const getProp = (item: any, label: string) =>
-  item?.props?.find((p: any) => p.label === label)?.value ?? ''
-
 interface DisputeCardProps {
   item: any
   userAddress: string
 }
 
 const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
-  const location = useLocation()
-
-  const registryName = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const registryKey = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const registryName = registryDisplayNames[registryKey] ?? registryKey
   const request = item.requests?.[0]
   const userRole = item.userRole as 'requester' | 'challenger' | 'both'
+  const { data: registryParams } = useRegistryParameters(item.registryAddress)
 
   const displayName =
-    getProp(item, 'Name') ||
-    getProp(item, 'Domain name') ||
-    getProp(item, 'Public Name Tag') ||
-    getProp(item, 'Description') ||
+    getPropValue(item, 'Name') ||
+    getPropValue(item, 'Domain name') ||
+    getPropValue(item, 'Public Name Tag') ||
+    getPropValue(item, 'Description') ||
     item.itemID
 
   // Determine outcome for the user
@@ -266,47 +264,24 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
       ? formatTimestamp(Number(request.submissionTime))
       : '-'
 
-  const deposit =
-    request?.deposit != null
-      ? Number(formatEther(request.deposit)).toLocaleString('en-US', {
-          maximumFractionDigits: 0,
-        })
-      : '-'
+  const deposit = useMemo(() => {
+    if (request?.deposit == null) return '-'
+    const baseDeposit = BigInt(request.deposit)
+    const arbitrationCost = registryParams?.arbitrationCost ?? 0n
+    const total = baseDeposit + arbitrationCost
+    return Number(formatEther(total)).toLocaleString('en-US', {
+      maximumFractionDigits: 2,
+    })
+  }, [request?.deposit, registryParams?.arbitrationCost])
 
   const requester = request?.requester ?? ''
   const challenger = request?.challenger ?? ''
   const disputeID = request?.disputeID
 
-  const chainId = getProp(item, 'EVM Chain ID')
-  const itemAddrMap: Record<string, string | undefined> = {
-    Single_Tags: getProp(item, 'Contract Address'),
-    Tags_Queries: undefined,
-    Tokens: getProp(item, 'Address'),
-    CDN: getProp(item, 'Contract address'),
-  }
-  const itemAddr = itemAddrMap[registryName]
+  const chainId = getPropValue(item, 'EVM Chain ID')
+  const itemAddr = getItemAddress(item, registryKey)
 
-  // Build the item URL for the link
-  const itemUrl = useMemo(() => {
-    const params = new URLSearchParams()
-    params.append('status', 'Registered')
-    params.append('status', 'RegistrationRequested')
-    params.append('status', 'ClearingRequested')
-    params.append('disputed', 'true')
-    params.append('disputed', 'false')
-    params.set('page', '1')
-    params.set('orderDirection', 'desc')
-
-    const currentSearch = new URLSearchParams(location.search)
-    const userAddressParam = currentSearch.get('userAddress')
-
-    if (userAddressParam) {
-      params.set('userAddress', userAddressParam)
-      params.set('fromProfile', 'disputes')
-    }
-
-    return `/item/${item.id}?${params.toString()}`
-  }, [item.id, location.search])
+  const itemUrl = buildItemPath(item.id)
 
   const roleLabel =
     userRole === 'requester'
@@ -368,14 +343,14 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
             {userRole === 'requester' && challenger && (
               <LabelValue>
                 <span>Challenger:</span>
-                <span>{shortenAddress(challenger)}</span>
+                <SubmittedByLink address={challenger} />
               </LabelValue>
             )}
 
             {userRole === 'challenger' && requester && (
               <LabelValue>
                 <span>Submitter:</span>
-                <span>{shortenAddress(requester)}</span>
+                <SubmittedByLink address={requester} />
               </LabelValue>
             )}
 
@@ -404,7 +379,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
                 View Case
               </ViewCaseLink>
             )}
-            <ViewItemLink to={itemUrl}>View Item</ViewItemLink>
+            <ViewItemLink to={itemUrl} state={{ fromApp: true, from: 'profile', profileTab: 'disputes' }}>View Item</ViewItemLink>
           </ButtonsContainer>
         </MetaLine>
       </Body>

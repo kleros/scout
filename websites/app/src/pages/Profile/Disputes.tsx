@@ -1,9 +1,9 @@
-import React, { useMemo, useEffect, useRef } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
 import styled from 'styled-components'
 import DisputeCard from './DisputeCard'
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
+import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
 import { chains, getNamespaceForChainId } from 'utils/chains'
@@ -124,16 +124,14 @@ const Disputes: React.FC<Props> = ({
   setIsFilterChanging,
   showResolved,
 }) => {
-  const [searchParams] = useSearchParams()
-  const currentPage = parseInt(searchParams.get('page') ?? '1', 10)
+  const filters = useProfileFilters()
+  const currentPage = filters.page
   const itemsPerPage = 10
-  const navigate = useNavigate()
-  const location = useLocation()
   const scrollTop = useScrollTop()
   const queryAddress = address?.toLowerCase()
 
-  const orderDirection = searchParams.get('orderDirection') || 'desc'
-  const searchTerm = searchParams.get('search') || ''
+  const orderDirection = filters.orderDirection
+  const searchTerm = filters.text
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -297,29 +295,16 @@ const Disputes: React.FC<Props> = ({
 
   const handlePageChange = (newPage: number) => {
     scrollTop(true)
-    const params = new URLSearchParams(location.search)
-    params.set('page', String(newPage))
-    navigate(`${location.pathname}?${params.toString()}`)
+    filters.setPage(newPage)
   }
 
-  const hasFetchingStartedRef = useRef(false)
-
+  // Clear isFilterChanging once the query settles.
   useEffect(() => {
-    if (isFetching && isFilterChanging && !hasFetchingStartedRef.current) {
-      hasFetchingStartedRef.current = true
-    }
-  }, [isFetching, isFilterChanging])
-
-  useEffect(() => {
-    if (!isFetching && isFilterChanging && hasFetchingStartedRef.current) {
-      setIsFilterChanging(false)
-      hasFetchingStartedRef.current = false
-    }
-  }, [isFetching, isFilterChanging, setIsFilterChanging])
-
-  useEffect(() => {
-    hasFetchingStartedRef.current = false
-  }, [chainFilters, searchParams])
+    if (!isFilterChanging) return
+    if (isFetching) return
+    const timer = setTimeout(() => setIsFilterChanging(false), 50)
+    return () => clearTimeout(timer)
+  }, [isFilterChanging, isFetching, setIsFilterChanging])
 
   if (isLoading || isFilterChanging)
     return (

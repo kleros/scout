@@ -19,8 +19,8 @@ export interface FocusedRegistry {
 }
 
 export interface ItemCounts {
-  Single_Tags: FocusedRegistry
-  Tags_Queries: FocusedRegistry
-  CDN: FocusedRegistry
-  Tokens: FocusedRegistry
+  'single-tags': FocusedRegistry
+  'tags-queries': FocusedRegistry
+  'cdn': FocusedRegistry
+  'tokens': FocusedRegistry
 }

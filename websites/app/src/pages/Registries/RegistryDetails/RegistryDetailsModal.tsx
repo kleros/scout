@@ -154,7 +154,7 @@ const RegistryDetailsModal: React.FC<RegistryDetailsModalProps> = ({ registryNam
                       const newParams = new URLSearchParams(prev);
                       newParams.set('attachment', `https://cdn.kleros.link${registry.metadata.policyURI}`);
                       return newParams;
-                    });
+                    }, { replace: true });
                     scrollTop();
                   }
                 }}
@@ -166,7 +166,7 @@ const RegistryDetailsModal: React.FC<RegistryDetailsModalProps> = ({ registryNam
             <StyledImg
               src={`https://cdn.kleros.link${registry.metadata.logoURI}`}
               onLoad={() => setImgLoaded(true)}
-              style={{ filter: registry.metadata?.address === registryMap.CDN ? 'invert(1)' : '', display: imgLoaded ? 'block' : 'none' }}
+              style={{ filter: registry.metadata?.address === registryMap['cdn'] ? 'invert(1)' : '', display: imgLoaded ? 'block' : 'none' }}
             />
           </>
         ) : (

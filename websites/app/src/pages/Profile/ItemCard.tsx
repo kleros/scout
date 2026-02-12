@@ -1,21 +1,22 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { formatEther } from 'ethers'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
+import SubmittedByLink from 'components/SubmittedByLink'
 import { StyledButton } from 'components/Button'
-import { revRegistryMap } from 'utils/items'
+import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress, getDisplayStatus } from 'utils/items'
 import { useScrollTop } from 'hooks/useScrollTop'
 import useHumanizedCountdown, {
   useChallengeRemainingTime,
   useChallengePeriodDuration,
 } from 'hooks/countdown'
-import { shortenAddress } from 'utils/shortenAddress'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
+import useRegistryParameters from 'hooks/useRegistryParameters'
 
 const Card = styled.div`
   width: 100%;
@@ -136,38 +137,23 @@ const statusColors: Record<string, string> = {
   Challenged: '#E87B35',
 }
 
-const readableStatus: Record<string, string> = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-}
 
-const challengedStatus: Record<string, string> = {
-  RegistrationRequested: 'Challenged',
-  ClearingRequested: 'Challenged',
-}
-
-const getProp = (item: any, label: string) =>
-  item?.props?.find((p: any) => p.label === label)?.value ?? ''
-
-const ItemCard = ({ item }: { item: any }) => {
+const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: string }) => {
   const navigate = useNavigate()
   const scrollTop = useScrollTop()
-  const location = useLocation()
 
-  const registryName = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const registryKey = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const registryName = registryDisplayNames[registryKey] ?? registryKey
+  const { data: registryParams } = useRegistryParameters(item.registryAddress)
 
   const displayName =
-    getProp(item, 'Name') ||
-    getProp(item, 'Domain name') ||
-    getProp(item, 'Public Name Tag') ||
-    getProp(item, 'Description') ||
+    getPropValue(item, 'Name') ||
+    getPropValue(item, 'Domain name') ||
+    getPropValue(item, 'Public Name Tag') ||
+    getPropValue(item, 'Description') ||
     item.itemID
 
-  const statusText = item.disputed
-    ? challengedStatus[item.status] || 'Challenged'
-    : readableStatus[item.status] || item.status
+  const statusText = item.disputed ? 'Challenged' : getDisplayStatus(item.status, false)
 
   const bulletColor = statusColors[statusText] ?? '#9CA3AF'
 
@@ -176,23 +162,20 @@ const ItemCard = ({ item }: { item: any }) => {
       ? formatTimestamp(Number(item.requests[0].submissionTime))
       : '-'
 
-  const deposit =
-    item.requests?.[0]?.deposit != null
-      ? Number(formatEther(item.requests[0].deposit)).toLocaleString('en-US', {
-          maximumFractionDigits: 0,
-        })
-      : '-'
+  const deposit = useMemo(() => {
+    if (item.requests?.[0]?.deposit == null) return '-'
+    const baseDeposit = BigInt(item.requests[0].deposit)
+    const arbitrationCost = registryParams?.arbitrationCost ?? 0n
+    const total = baseDeposit + arbitrationCost
+    return Number(formatEther(total)).toLocaleString('en-US', {
+      maximumFractionDigits: 2,
+    })
+  }, [item.requests, registryParams?.arbitrationCost])
 
   const requester = item.requests?.[0]?.requester ?? ''
 
-  const chainId = getProp(item, 'EVM Chain ID')
-  const itemAddrMap: Record<string, string | undefined> = {
-    Single_Tags: getProp(item, 'Contract Address'),
-    Tags_Queries: undefined,
-    Tokens: getProp(item, 'Address'),
-    CDN: getProp(item, 'Contract address'),
-  }
-  const itemAddr = itemAddrMap[registryName]
+  const chainId = getPropValue(item, 'EVM Chain ID')
+  const itemAddr = getItemAddress(item, registryKey)
 
   const challengePeriodDuration = useChallengePeriodDuration(
     item.registryAddress,
@@ -210,29 +193,7 @@ const ItemCard = ({ item }: { item: any }) => {
   )
 
   const onView = () => {
-    const params = new URLSearchParams()
-    params.append('status', 'Registered')
-    params.append('status', 'RegistrationRequested')
-    params.append('status', 'ClearingRequested')
-    params.append('disputed', 'true')
-    params.append('disputed', 'false')
-    params.set('page', '1')
-    params.set('orderDirection', 'desc')
-
-    // Preserve the current location (profile path + params) so ItemDetails can navigate back correctly
-    const currentSearch = new URLSearchParams(location.search)
-    const userAddress = currentSearch.get('userAddress')
-
-    if (userAddress) {
-      params.set('userAddress', userAddress)
-      // Also preserve the profile path (pending or resolved) so we know where to go back
-      const profilePath = location.pathname.split('/').pop() // 'pending' or 'resolved'
-      if (profilePath === 'pending' || profilePath === 'resolved') {
-        params.set('fromProfile', profilePath)
-      }
-    }
-
-    navigate(`/item/${item.id}?${params.toString()}`)
+    navigate(buildItemPath(item.id), { state: { fromApp: true, from: 'profile', profileTab: fromProfile } })
     scrollTop()
   }
 
@@ -265,7 +226,8 @@ const ItemCard = ({ item }: { item: any }) => {
 
             {requester && (
               <LabelValue>
-                <span>by {shortenAddress(requester)}</span>
+                <span>by</span>
+                <SubmittedByLink address={requester} />
               </LabelValue>
             )}
 

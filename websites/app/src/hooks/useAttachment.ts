@@ -17,7 +17,7 @@ export const useAttachment = () => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', url);
       return newParams;
-    });
+    }, { replace: true });
     scrollTop();
   };
 

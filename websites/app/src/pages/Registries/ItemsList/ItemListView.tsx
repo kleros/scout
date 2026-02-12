@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useSearchParams, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { formatEther } from 'ethers';
-import { GraphItem, registryMap } from 'utils/items';
+import { GraphItem, registryMap, buildItemPath, getRegistryKey, readableStatusMap, challengedStatusMap } from 'utils/items';
 import AddressDisplay from 'components/AddressDisplay';
 // import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'; // UNUSED: Only needed for submitter display which is commented out
 import { formatTimestamp } from 'utils/formatTimestamp';
@@ -51,13 +51,13 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
   display: grid;
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
-      case 'Tokens':
+      case 'tokens':
         return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
-      case 'Single_Tags':
+      case 'single-tags':
         return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
-      case 'CDN':
+      case 'cdn':
         return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Next/Last event
-      case 'Tags_Queries':
+      case 'tags-queries':
         return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
       default:
         return '200px 280px 180px 200px 100px 180px';
@@ -306,17 +306,6 @@ const ChainCell = styled.div`
   }
 `;
 
-const readableStatusMap = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-};
-
-const challengedStatusMap = {
-  RegistrationRequested: 'Challenged Submission',
-  ClearingRequested: 'Challenged Removal',
-};
 
 interface ItemListViewProps {
   item: GraphItem;
@@ -325,8 +314,6 @@ interface ItemListViewProps {
 
 const ItemListView = React.memo(
   ({ item, challengePeriodDuration }: ItemListViewProps) => {
-    const [searchParams] = useSearchParams();
-
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests?.[0]?.submissionTime,
       item.disputed,
@@ -337,7 +324,7 @@ const ItemListView = React.memo(
       2,
     );
 
-    const itemUrl = `/item/${item.id}?${searchParams.toString()}`;
+    const itemUrl = buildItemPath(item.id);
 
     const getPropValue = (label: string) => {
       return item?.props?.find((prop) => prop.label === label)?.value || '';
@@ -382,7 +369,7 @@ const ItemListView = React.memo(
       // UNUSED: submitterAddress is only used in commented-out SubmitterCell sections
       // const submitterAddress = item.requests[0]?.requester as `0x${string}` | undefined;
 
-      if (item.registryAddress === registryMap.Tokens) {
+      if (item.registryAddress === registryMap['tokens']) {
         const logoUrl = getPropValue('Logo')
           ? `https://cdn.kleros.link${getPropValue('Logo')}`
           : '';
@@ -449,7 +436,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -474,7 +461,7 @@ const ItemListView = React.memo(
         );
       }
 
-      if (item.registryAddress === registryMap.Single_Tags) {
+      if (item.registryAddress === registryMap['single-tags']) {
         const website = getPropValue('UI/Website Link');
 
         return (
@@ -510,7 +497,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -535,7 +522,7 @@ const ItemListView = React.memo(
         );
       }
 
-      if (item.registryAddress === registryMap.CDN) {
+      if (item.registryAddress === registryMap['cdn']) {
         const domainName = getPropValue('Domain name');
         const website = domainName ? `https://${domainName}` : '';
 
@@ -569,7 +556,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -594,7 +581,7 @@ const ItemListView = React.memo(
         );
       }
 
-      if (item.registryAddress === registryMap.Tags_Queries) {
+      if (item.registryAddress === registryMap['tags-queries']) {
         const repository = getPropValue('Github Repository URL');
         const commitHash = getPropValue('Commit hash');
         const chainId = getPropValue('EVM Chain ID');
@@ -634,7 +621,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -662,16 +649,10 @@ const ItemListView = React.memo(
       return null;
     };
 
-    const getRegistryType = () => {
-      if (item.registryAddress === registryMap.Tokens) return 'Tokens';
-      if (item.registryAddress === registryMap.Single_Tags) return 'Single_Tags';
-      if (item.registryAddress === registryMap.CDN) return 'CDN';
-      if (item.registryAddress === registryMap.Tags_Queries) return 'Tags_Queries';
-      return undefined;
-    };
+    const registryType = getRegistryKey(item.registryAddress);
 
     return (
-      <ListRow registryType={getRegistryType()} to={itemUrl}>
+      <ListRow registryType={registryType} to={itemUrl} state={{ fromApp: true }}>
         {renderContent()}
       </ListRow>
     );

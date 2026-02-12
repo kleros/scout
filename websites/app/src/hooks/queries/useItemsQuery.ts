@@ -6,28 +6,32 @@ import { ITEMS_PER_PAGE } from '../../pages/Registries/index'
 import { chains, getNamespaceForChainId } from '../../utils/chains'
 
 interface UseItemsQueryParams {
-  searchParams: URLSearchParams
   registryName?: string
+  registryNames?: string[]
+  status: string[]
+  disputed: string[]
+  text: string
+  orderDirection: string
+  page: number
   chainFilters?: string[]
   enabled?: boolean
 }
 
 export const useItemsQuery = ({
-  searchParams,
   registryName,
+  registryNames,
+  status,
+  disputed,
+  text,
+  orderDirection,
+  page,
   chainFilters = [],
   enabled = true,
 }: UseItemsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
 
-  // Support both single registry (from registryName prop) and multiple registries (from searchParams for dashboard)
-  const registry = registryName ? [registryName] : searchParams.getAll('registry')
-  const status = searchParams.getAll('status')
-  const disputed = searchParams.getAll('disputed')
+  const registry = registryNames ?? (registryName ? [registryName] : [])
   const network = chainFilters
-  const text = searchParams.get('text') || ''
-  const orderDirection = searchParams.get('orderDirection') || 'desc'
-  const page = Number(searchParams.get('page')) || 1
 
   const shouldFetch =
     enabled &&
@@ -39,7 +43,7 @@ export const useItemsQuery = ({
   // Build stable queryKey from individual filter parameters
   const queryKey = [
     'items',
-    registryName,
+    registry.slice().sort().join(','),
     status.slice().sort().join(','),
     disputed.slice().sort().join(','),
     chainFilters.slice().sort().join(','),
@@ -53,7 +57,7 @@ export const useItemsQuery = ({
     queryFn: async () => {
       if (!shouldFetch) return []
 
-      const isTagsQueriesRegistry = registry.includes('Tags_Queries')
+      const isTagsQueriesRegistry = registry.includes('tags-queries')
       const selectedChainIds = network.filter((id) => id !== 'unknown')
       const includeUnknown = network.includes('unknown')
       const definedChainIds = chains.map((c) => c.id)
@@ -194,7 +198,7 @@ export const useItemsQuery = ({
 
       let items: GraphItem[] = result.litems
 
-      // Client-side filtering for non-Tags_Queries registries
+      // Client-side filtering for non-tags-queries registries
       if (!isTagsQueriesRegistry && network.length > 0) {
         const knownPrefixes = [
           ...new Set(

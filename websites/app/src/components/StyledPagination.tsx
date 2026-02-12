@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import styled, { css } from "styled-components";
-import { Link, useLocation } from "react-router-dom";
 import { secondaryButtonStyles } from './Button';
 
 interface Props {
@@ -46,7 +45,7 @@ const pageButtonStyles = css<{ selected?: boolean }>`
   }
 `;
 
-const PageButtonLink = styled(Link)<{ selected?: boolean }>`
+const PageButton = styled.button<{ selected?: boolean }>`
   ${pageButtonStyles}
 `;
 
@@ -74,16 +73,8 @@ const PageJumpInput = styled.input`
 `;
 
 const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) => {
-  const location = useLocation();
   const pages: (number | string)[] = [];
   const [pageJumpValue, setPageJumpValue] = useState<string>("");
-
-  // Build URL for a given page number
-  const buildPageUrl = (page: number) => {
-    const params = new URLSearchParams(location.search);
-    params.set('page', String(page));
-    return `${location.pathname}?${params.toString()}`;
-  };
 
   // Handle page jump input change (numeric only)
   const handlePageJumpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,53 +130,45 @@ const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) 
     pages.push(numPages);
   }
 
-  const handleClick = (page: number) => (e: React.MouseEvent) => {
-    // Only call callback for left clicks without modifiers (normal navigation)
-    if (e.button === 0 && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
-      callback(page);
-    }
-  };
-
   return (
     <PaginationWrapper>
       {currentPage === 1 ? (
         <PageButtonDisabled>❮</PageButtonDisabled>
       ) : (
-        <PageButtonLink to={buildPageUrl(currentPage - 1)} onClick={handleClick(currentPage - 1)}>
+        <PageButton onClick={() => callback(currentPage - 1)}>
           ❮
-        </PageButtonLink>
+        </PageButton>
       )}
       {pages.map((p, i) =>
         typeof p === "number" ? (
-          <PageButtonLink
+          <PageButton
             key={i}
-            to={buildPageUrl(p)}
             selected={p === currentPage}
             aria-current={p === currentPage ? "true" : undefined}
-            onClick={handleClick(p)}
+            onClick={() => callback(p)}
           >
             {p}
-          </PageButtonLink>
+          </PageButton>
         ) : (
           <PageButtonDisabled key={i}>{p}</PageButtonDisabled>
         )
       )}
+      {currentPage === numPages ? (
+        <PageButtonDisabled>❯</PageButtonDisabled>
+      ) : (
+        <PageButton onClick={() => callback(currentPage + 1)}>
+          ❯
+        </PageButton>
+      )}
       <PageJumpInput
         type="text"
-        placeholder="Jump..."
+        placeholder="Go to..."
         value={pageJumpValue}
         onChange={handlePageJumpChange}
         onKeyDown={handlePageJumpKeyDown}
         onBlur={handleJumpToPage}
-        aria-label="Jump to page"
+        aria-label="Go to page"
       />
-      {currentPage === numPages ? (
-        <PageButtonDisabled>❯</PageButtonDisabled>
-      ) : (
-        <PageButtonLink to={buildPageUrl(currentPage + 1)} onClick={handleClick(currentPage + 1)}>
-          ❯
-        </PageButtonLink>
-      )}
     </PaginationWrapper>
   );
 };

@@ -45,7 +45,7 @@ const SubmittedByLink: React.FC<SubmittedByLinkProps> = ({ address, className })
   
   return (
     <StyledSubmittedByLink
-      to={`/profile?userAddress=${address}`}
+      to={`/profile?address=${address}`}
       className={className}
     >
       {shortenedAddress}

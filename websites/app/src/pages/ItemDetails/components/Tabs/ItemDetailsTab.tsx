@@ -168,7 +168,7 @@ interface ItemDetailsTabProps {
   appealCost: any
   appealCostLoading: boolean
   registryParameters: any
-  registryParsedFromItemId: string
+  registryAddress: string
 }
 
 const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
@@ -184,7 +184,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
   appealCost,
   appealCostLoading,
   registryParameters,
-  registryParsedFromItemId,
+  registryAddress,
 }) => {
   return (
     <PaddedContent>
@@ -193,7 +193,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
       </ScoutWatermark>
       <ItemFieldsDisplay
         detailsData={detailsData}
-        registryParsedFromItemId={registryParsedFromItemId}
+        registryAddress={registryAddress}
       />
       <ItemTimeline detailsData={detailsData} />
 
@@ -358,7 +358,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
               winnerStakeMultiplier={registryParameters.winnerStakeMultiplier}
               loserStakeMultiplier={registryParameters.loserStakeMultiplier}
               MULTIPLIER_DIVISOR={registryParameters.MULTIPLIER_DIVISOR}
-              registryAddress={registryParsedFromItemId}
+              registryAddress={registryAddress}
             />
           )}
         </>

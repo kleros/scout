@@ -92,11 +92,11 @@ const AddTagsQueries: React.FC = () => {
   }, [cacheKey])
   
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', evmChainId, 'Tags_Queries', githubRepository],
+    queryKey: ['addressissues', evmChainId, 'tags-queries', githubRepository],
     queryFn: async () => {
       const res = await getAddressValidationIssue(
         evmChainId,
-        'Tags_Queries',
+        'tags-queries',
         undefined,
         undefined,
         undefined,
@@ -127,7 +127,7 @@ const AddTagsQueries: React.FC = () => {
   const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitTagsQueries = async () => {
-    if (!countsData?.Tags_Queries.deposits) return;
+    if (!countsData?.['tags-queries'].deposits) return;
 
     setIsLocalLoading(true);
     try {
@@ -149,9 +149,9 @@ const AddTagsQueries: React.FC = () => {
       const ipfsPath = getIPFSPath(ipfsObject)
 
       const result = await addItem(
-        registryMap.Tags_Queries as `0x${string}`,
+        registryMap['tags-queries'] as `0x${string}`,
         ipfsPath,
-        countsData.Tags_Queries.deposits
+        countsData['tags-queries'].deposits
       );
 
       if (result?.status) {
@@ -242,10 +242,10 @@ const AddTagsQueries: React.FC = () => {
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Tags_Queries']?.deposits
+          {countsData?.['tags-queries']?.deposits
             ? formatEther(
-              countsData['Tags_Queries'].deposits.arbitrationCost +
-              countsData['Tags_Queries'].deposits.submissionBaseDeposit
+              countsData['tags-queries'].deposits.arbitrationCost +
+              countsData['tags-queries'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}
         </ExpectedPayouts>
