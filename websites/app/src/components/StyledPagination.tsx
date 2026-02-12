@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled, { css } from "styled-components";
 import { Link, useLocation } from "react-router-dom";
 import { secondaryButtonStyles } from './Button';
@@ -59,15 +59,54 @@ const PageButtonDisabled = styled.span`
   opacity: 0.5;
 `;
 
+const PageJumpInput = styled.input`
+  ${pageButtonStyles}
+  min-width: 80px;
+  max-width: 100px;
+  text-align: center;
+  padding: 0 8px;
+  cursor: text;
+
+  ::placeholder {
+    color: ${({ theme }) => theme.secondaryText};
+    font-size: 12px;
+  }
+`;
+
 const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) => {
   const location = useLocation();
   const pages: (number | string)[] = [];
+  const [pageJumpValue, setPageJumpValue] = useState<string>("");
 
   // Build URL for a given page number
   const buildPageUrl = (page: number) => {
     const params = new URLSearchParams(location.search);
     params.set('page', String(page));
     return `${location.pathname}?${params.toString()}`;
+  };
+
+  // Handle page jump input change (numeric only)
+  const handlePageJumpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value)) {
+      setPageJumpValue(value);
+    }
+  };
+
+  // Handle page jump navigation
+  const handleJumpToPage = () => {
+    const pageNum = parseInt(pageJumpValue, 10);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= numPages) {
+      callback(pageNum);
+      setPageJumpValue("");
+    }
+  };
+
+  // Handle Enter key press
+  const handlePageJumpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleJumpToPage();
+    }
   };
 
   // Industry standard: show max 7 buttons (1, ..., current-1, current, current+1, ..., last)
@@ -79,20 +118,20 @@ const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) 
     pages.push(1);
 
     // Show ellipsis if current page is far from start
-    if (currentPage > 3) {
+    if (currentPage > 4) {
       pages.push("...");
     }
 
-    // Show pages around current (current - 1, current, current + 1)
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(numPages - 1, currentPage + 1);
+    // Show pages around current (current - 2, current - 1, current, current + 1, current + 2)
+    const start = Math.max(2, currentPage - 2);
+    const end = Math.min(numPages - 1, currentPage + 2);
 
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
 
     // Show ellipsis if current page is far from end
-    if (currentPage < numPages - 2) {
+    if (currentPage < numPages - 3) {
       pages.push("...");
     }
 
@@ -131,6 +170,15 @@ const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) 
           <PageButtonDisabled key={i}>{p}</PageButtonDisabled>
         )
       )}
+      <PageJumpInput
+        type="text"
+        placeholder="Jump..."
+        value={pageJumpValue}
+        onChange={handlePageJumpChange}
+        onKeyDown={handlePageJumpKeyDown}
+        onBlur={handleJumpToPage}
+        aria-label="Jump to page"
+      />
       {currentPage === numPages ? (
         <PageButtonDisabled>❯</PageButtonDisabled>
       ) : (
