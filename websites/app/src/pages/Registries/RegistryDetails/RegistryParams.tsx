@@ -5,6 +5,7 @@ import humanizeDuration from 'humanize-duration'
 import { responsiveSize } from 'styles/responsiveSize'
 import { FocusedRegistry } from 'utils/itemCounts'
 import { useItemCountsQuery } from 'hooks/queries'
+import Skeleton from 'react-loading-skeleton'
 
 const Container = styled.div`
   display: flex;
@@ -105,14 +106,28 @@ interface RegistryParamsProps {
 }
 
 const RegistryParams: React.FC<RegistryParamsProps> = ({ registryName }) => {
-  const { data: countsData } = useItemCountsQuery()
+  const { data: countsData, isLoading } = useItemCountsQuery()
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     if (!registryName || !countsData) return undefined
     return countsData[registryName]
   }, [registryName, countsData])
 
-  if (!registry?.deposits) return null
+  if (isLoading || !registry?.deposits) {
+    return (
+      <Container>
+        <Title>List Parameters</Title>
+        <ParamsGrid>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <ParamItem key={i}>
+              <Skeleton width={120} height={12} />
+              <Skeleton width={90} height={16} />
+            </ParamItem>
+          ))}
+        </ParamsGrid>
+      </Container>
+    )
+  }
 
   const { deposits } = registry
 

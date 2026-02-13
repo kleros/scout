@@ -372,7 +372,7 @@ const Home: React.FC = () => {
       <ScrollTop />
       {isAttachmentOpen ? (
         <PageInner>
-          {isPolicyOpen && <RegistryParams registryName={registryName} />}
+          {(isPolicyOpen || countsLoading) && <RegistryParams registryName={registryName} />}
           <EvidenceAttachmentDisplay />
         </PageInner>
       ) : (

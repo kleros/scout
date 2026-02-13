@@ -3,7 +3,6 @@ import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage';
 import { useQuery } from '@tanstack/react-query';
 import { formatEther } from 'viem';
 import { useSearchParams } from 'react-router-dom';
-import { useAttachment } from 'hooks/useAttachment';
 import { ClosedButtonContainer } from 'pages/Registries';
 import {
   AddContainer,
@@ -71,7 +70,7 @@ const AddTagsQueries: React.FC = () => {
   const [description, setDescription] = useState<string>(formData.description);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const openAttachment = useAttachment();
+
 
   useEffect(() => {
     setFormData({ githubRepository, commitHash, evmChainId, description });
@@ -192,11 +191,9 @@ const AddTagsQueries: React.FC = () => {
         <HeaderActions>
           {registry && (
             <SubmissionButton
-              onClick={() => {
-                if (registry.metadata.policyURI) {
-                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
-                }
-              }}
+              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Submission Guidelines
             </SubmissionButton>
