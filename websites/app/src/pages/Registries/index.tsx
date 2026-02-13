@@ -10,8 +10,8 @@ import Search from './Search';
 import LoadingItems from './LoadingItems';
 import ItemsList from './ItemsList';
 import { StyledPagination } from 'components/StyledPagination';
-import RegistryParams from './RegistryDetails/RegistryParams';
 import AddItemModal from './SubmitItems/AddItemModal';
+import ParametersModal from './ParametersModal';
 import FilterModal from './FilterModal';
 import FilterButton from 'components/FilterButton';
 import ViewSwitcher from 'components/ViewSwitcher';
@@ -21,6 +21,7 @@ import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
 import ExportButton from './ExportButton';
 import ExportModal from './ExportModal';
+import { hoverShortTransitionTiming } from 'styles/commonStyles';
 import HeroShadowSVG from 'svgs/header/hero-shadow.svg';
 import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle';
 import ScrollTop from 'components/ScrollTop';
@@ -76,7 +77,7 @@ const SearchAndFiltersContainer = styled.div`
   flex-direction: row;
   gap: 8px;
   flex: 1;
-  min-width: 300px;
+  min-width: 0;
   align-items: center;
 `;
 
@@ -85,6 +86,20 @@ const PolicyAndSubmitItemContainer = styled.div`
   flex-direction: row;
   align-items: center;
   gap: 24px;
+  flex-wrap: wrap;
+`;
+
+const ParametersLabel = styled.label`
+  ${hoverShortTransitionTiming}
+  cursor: pointer;
+  color: ${({ theme }) => theme.secondaryText};
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+
+  :hover {
+    color: ${({ theme }) => theme.primaryText};
+  }
 `;
 
 export const StyledCloseButton = styled(CloseIcon)`
@@ -231,6 +246,7 @@ const Home: React.FC = () => {
   const filters = useRegistryFilters();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isParamsModalOpen, setIsParamsModalOpen] = useState(false);
   const [chainFilters, setChainFilters] = useState<string[]>(() => [
     ...chains.filter(c => !c.deprecated).map(c => c.id),
     'unknown'
@@ -260,14 +276,6 @@ const Home: React.FC = () => {
   });
 
   const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
-
-  const isPolicyOpen = useMemo(() => {
-    if (!isAttachmentOpen || !registryName || !countsData) return false;
-    const policyURI = countsData[registryName]?.metadata?.policyURI;
-    if (!policyURI) return false;
-    const attachment = searchParams.get('attachment') || '';
-    return attachment.includes(policyURI);
-  }, [isAttachmentOpen, searchParams, registryName, countsData]);
 
   const currentItemCount = useMemo(() => {
     const { status, disputed, text } = filters;
@@ -374,7 +382,6 @@ const Home: React.FC = () => {
       <ScrollTop />
       {isAttachmentOpen ? (
         <PageInner>
-          {(isPolicyOpen || countsLoading) && <RegistryParams registryName={registryName} />}
           <EvidenceAttachmentDisplay />
         </PageInner>
       ) : (
@@ -394,6 +401,7 @@ const Home: React.FC = () => {
                   </SearchAndFiltersContainer>
                   <PolicyAndSubmitItemContainer>
                     <ExportButton onClick={() => setIsExportModalOpen(true)} registryName={registryName} />
+                    <ParametersLabel onClick={() => setIsParamsModalOpen(true)}>Parameters</ParametersLabel>
                     <PolicyButton registryName={registryName} />
                     <SubmitButton registryName={registryName} />
                   </PolicyAndSubmitItemContainer>
@@ -441,6 +449,12 @@ const Home: React.FC = () => {
             <ExportModal
               registryAddress={currentRegistryAddress}
               onClose={() => setIsExportModalOpen(false)}
+            />
+          )}
+          {isParamsModalOpen && (
+            <ParametersModal
+              registryName={registryName}
+              onClose={() => setIsParamsModalOpen(false)}
             />
           )}
         </>

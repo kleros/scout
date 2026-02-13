@@ -4,7 +4,6 @@ import { FocusedRegistry } from 'utils/itemCounts';
 import { useItemCountsQuery } from 'hooks/queries';
 import styled from 'styled-components';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
-import Skeleton from 'react-loading-skeleton';
 
 const StyledLabel = styled.label`
   ${hoverShortTransitionTiming}
@@ -25,21 +24,19 @@ interface PolicyButtonProps {
 
 const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
   const openAttachment = useAttachment();
-  const { data: countsData, isLoading } = useItemCountsQuery();
+  const { data: countsData } = useItemCountsQuery();
 
-  const registry: FocusedRegistry | undefined = useMemo(() => {
+  const policyURI = useMemo(() => {
     if (!registryName || !countsData) return undefined;
-    return countsData[registryName];
+    return countsData[registryName]?.metadata?.policyURI;
   }, [registryName, countsData]);
-
-  if (isLoading || !registry?.metadata?.policyURI) {
-    return <Skeleton width={42} height={18} />;
-  }
 
   return (
     <StyledLabel
       onClick={() => {
-        openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
+        if (policyURI) {
+          openAttachment(`https://cdn.kleros.link${policyURI}`);
+        }
       }}
     >
       Policy

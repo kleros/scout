@@ -190,7 +190,14 @@ export const getAddressValidationIssue = async (
     )
     let message = 'Invalid address for the specified chain'
 
-    if (network?.namespace === 'eip155' && !address.startsWith('0x')) {
+    if (network?.namespace === 'solana') {
+      const base58Regex = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
+      if (address.length >= 32 && address.length <= 44 && base58Regex.test(address)) {
+        message = 'Solana addresses are case-sensitive. Please verify the exact casing of the address.'
+      } else {
+        message = 'Invalid Solana address format'
+      }
+    } else if (network?.namespace === 'eip155' && !address.startsWith('0x')) {
       message = 'Address must start with "0x" prefix for Ethereum-like chains'
     } else if (
       network?.namespace === 'eip155' &&
