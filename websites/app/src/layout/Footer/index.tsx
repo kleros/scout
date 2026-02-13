@@ -1,5 +1,6 @@
 import React from "react";
 import styled, { css } from "styled-components";
+import { Link } from "react-router-dom";
 
 import { landscapeStyle } from "styles/landscapeStyle";
 import { hoverShortTransitionTiming } from "styles/commonStyles";
@@ -70,9 +71,25 @@ const SocialMedia = () => (
   </StyledSocialMedia>
 );
 
+const StyledToSLink = styled(Link)`
+  ${hoverShortTransitionTiming}
+  color: ${({ theme }) => theme.white}BF;
+  text-decoration: none;
+  font-size: 14px;
+  font-family: "Open Sans", sans-serif;
+
+  &:hover {
+    color: ${({ theme }) => theme.white};
+    text-decoration: underline;
+  }
+`;
+
 const Footer: React.FC = () => (
   <Container>
     <SecuredByKleros />
+    <StyledToSLink to="/terms-of-service">
+      Terms of Service
+    </StyledToSLink>
     <SocialMedia />
   </Container>
 );

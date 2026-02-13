@@ -6,6 +6,7 @@ import { responsiveSize } from 'styles/responsiveSize'
 import { FocusedRegistry } from 'utils/itemCounts'
 import { useItemCountsQuery } from 'hooks/queries'
 import Skeleton from 'react-loading-skeleton'
+import BaseTooltip from 'components/Tooltip'
 
 const Container = styled.div`
   display: flex;
@@ -65,31 +66,8 @@ const ParamLink = styled.a`
   }
 `
 
-const Tooltip = styled.span`
-  position: relative;
-  cursor: help;
+const Tooltip = styled(BaseTooltip)`
   border-bottom: 1px dotted ${({ theme }) => theme.secondaryText};
-
-  &:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 0;
-    background: ${({ theme }) => theme.backgroundThree};
-    color: ${({ theme }) => theme.primaryText};
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 400;
-    white-space: normal;
-    width: max-content;
-    max-width: 280px;
-    z-index: 10;
-    line-height: 1.4;
-    pointer-events: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    border: 1px solid ${({ theme }) => theme.stroke};
-  }
 `
 
 const truncateAddress = (addr: string) =>

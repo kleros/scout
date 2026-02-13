@@ -3,7 +3,8 @@ import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import { Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
-import { GraphItem, registryMap, buildItemPath, readableStatusMap, challengedStatusMap } from 'utils/items'
+import { GraphItem, registryMap, buildItemPath, readableStatusMap, challengedStatusMap, statusDescriptionMap } from 'utils/items'
+import Tooltip from 'components/Tooltip'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
@@ -261,8 +262,16 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
 
   return (
     <CardStatus status={label}>
-      {label}
-      {readableBounty && <BountyText> ${readableBounty}</BountyText>}
+      <Tooltip data-tooltip={statusDescriptionMap[label] || ''}>{label}</Tooltip>
+      {readableBounty && (
+        <Tooltip data-tooltip={
+          status === 'ClearingRequested'
+            ? 'Reward for successfully challenging this pending removal if the item complies with the list policy.'
+            : 'Reward for successfully challenging this pending submission if it does not comply with the list policy.'
+        }>
+          <BountyText> ${readableBounty}</BountyText>
+        </Tooltip>
+      )}
     </CardStatus>
   )
 })

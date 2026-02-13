@@ -1,14 +1,12 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
 import { formatEther } from 'ethers'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
 import SubmittedByLink from 'components/SubmittedByLink'
-import { StyledButton } from 'components/Button'
 import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress, getDisplayStatus } from 'utils/items'
-import { useScrollTop } from 'hooks/useScrollTop'
 import useHumanizedCountdown, {
   useChallengeRemainingTime,
   useChallengePeriodDuration,
@@ -116,9 +114,26 @@ const LabelValue = styled.span`
   white-space: nowrap;
 `
 
-const ViewButton = styled(StyledButton).attrs({ variant: 'secondary', size: 'medium' })`
+const ViewLink = styled(Link)`
   ${hoverLongTransitionTiming}
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
   min-width: 100px;
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
+  color: ${({ theme }) => theme.primaryText};
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: ${({ theme }) => theme.primaryText};
+    color: ${({ theme }) => theme.primaryText};
+  }
 `
 
 const StyledChainLabel = styled.span`
@@ -139,8 +154,6 @@ const statusColors: Record<string, string> = {
 
 
 const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: string }) => {
-  const navigate = useNavigate()
-  const scrollTop = useScrollTop()
 
   const registryKey = revRegistryMap[item.registryAddress] ?? 'Unknown'
   const registryName = registryDisplayNames[registryKey] ?? registryKey
@@ -192,10 +205,7 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
     [isCountdownLoading, endsIn, item.status, item.disputed],
   )
 
-  const onView = () => {
-    navigate(buildItemPath(item.id), { state: { fromApp: true, from: 'profile', profileTab: fromProfile } })
-    scrollTop()
-  }
+  const itemPath = buildItemPath(item.id)
 
   return (
     <Card>
@@ -251,7 +261,7 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
             )}
           </InfoRow>
 
-          <ViewButton onClick={onView}>View</ViewButton>
+          <ViewLink to={itemPath} state={{ fromApp: true, from: 'profile', profileTab: fromProfile }}>View</ViewLink>
         </MetaLine>
       </Body>
     </Card>

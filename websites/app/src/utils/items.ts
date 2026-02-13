@@ -59,6 +59,16 @@ export const getDisplayStatus = (status: string, disputed: boolean): string => {
   return readableStatusMap[status] || status
 }
 
+/** Tooltip descriptions for each display status */
+export const statusDescriptionMap: Record<string, string> = {
+  'Included': 'The item is in the registry and considered valid under the list policy.',
+  'Registration Requested': 'Pending registration. Can be challenged if it breaks the policy.',
+  'Removal Requested': 'Pending removal. Can be challenged if it complies with the policy and still belongs to the registry.',
+  'Removed': 'The item is not in the registry and does not comply with the policy.',
+  'Challenged Submission': 'This request has been challenged. It is waiting for evidence and an arbitrator\'s final decision.',
+  'Challenged Removal': 'This removal request has been challenged. It is waiting for evidence and an arbitrator\'s final decision.',
+}
+
 /** Resolves a registry address to its registry key */
 export const getRegistryKey = (registryAddress: string): string | undefined =>
   revRegistryMap[registryAddress]

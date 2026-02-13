@@ -17,6 +17,7 @@ const Home = lazy(() => import('pages/Home'));
 const Profile = lazy(() => import('pages/Profile'));
 const Rewards = lazy(() => import('pages/Rewards'));
 const Guide = lazy(() => import('pages/Guide'));
+const TermsOfService = lazy(() => import('pages/TermsOfService'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +45,7 @@ const App: React.FC = () => {
                 <Route path="profile/*" element={<Profile />} />
                 <Route path="rewards" element={<Rewards />} />
                 <Route path="guide" element={<Guide />} />
+                <Route path="terms-of-service" element={<TermsOfService />} />
                 <Route path=":registryName" element={<Registries />} />
                 <Route path=":registryName/:itemID" element={<ItemDetails />} />
                 <Route path="*" element={<h1>Page not found</h1>} />
