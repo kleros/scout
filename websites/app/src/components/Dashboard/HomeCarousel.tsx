@@ -334,25 +334,25 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
               title="Tokens"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.tokens?.assetsVerified || 0)}
               secondaryValue="Verified items"
-              registryKey="Tokens"
+              registryKey="tokens"
             />
             <RegistryCard
               title="Single Tags"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.singleTags?.assetsVerified || 0)}
               secondaryValue="Verified items"
-              registryKey="Single_Tags"
+              registryKey="single-tags"
             />
             <RegistryCard
               title="Query Tags"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.tagQueries?.assetsVerified || 0)}
               secondaryValue="Verified items"
-              registryKey="Tags_Queries"
+              registryKey="tags-queries"
             />
             <RegistryCard
               title="Contract Domains"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.cdn?.assetsVerified || 0)}
               secondaryValue="Verified items"
-              registryKey="CDN"
+              registryKey="cdn"
             />
           </Position3Container>
         </CarouselSlide>

@@ -68,7 +68,7 @@ const WalletAndProfile: React.FC<ISettings> = ({ toggleIsSettingsOpen }) => {
         <AddressOrName />
       </AvatarAndAddressContainer>
       <ReStyledArrowLink
-        to={address ? `/profile/pending?userAddress=${address.toLowerCase()}` : "/profile"}
+        to={address ? `/profile/pending?address=${address.toLowerCase()}` : "/profile"}
         onClick={toggleIsSettingsOpen}
       >
         My Profile <ArrowIcon />

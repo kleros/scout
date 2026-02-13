@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
 import { useDebounce } from 'react-use';
 import { useNavigate } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
-import { revRegistryMap } from 'utils/items';
+import { revRegistryMap, buildItemPath, registryDisplayNames, getItemDisplayName, getChainId as getChainIdUtil, getDisplayStatus } from 'utils/items';
 import SearchIcon from 'svgs/icons/search.svg';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
@@ -267,32 +267,15 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
     [searchTerm]
   );
 
-  const searchParams = useMemo(() => {
-    if (!debouncedSearchTerm) return null;
-
-    const params = new URLSearchParams();
-    // Search across all 4 registries
-    ['Tokens', 'CDN', 'Single_Tags', 'Tags_Queries'].forEach((registry) => {
-      params.append('registry', registry);
-    });
-    // Include all statuses
-    ['Registered', 'RegistrationRequested', 'ClearingRequested'].forEach((status) => {
-      params.append('status', status);
-    });
-    // Include both disputed and non-disputed
-    ['true', 'false'].forEach((disputed) => {
-      params.append('disputed', disputed);
-    });
-    params.set('text', debouncedSearchTerm);
-    params.set('orderDirection', 'desc');
-    params.set('page', '1');
-    return params;
-  }, [debouncedSearchTerm]);
-
   const { data: items = [], isLoading } = useItemsQuery({
-    searchParams: searchParams || new URLSearchParams(),
+    registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
+    status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
+    disputed: ['true', 'false'],
+    text: debouncedSearchTerm,
+    orderDirection: 'desc',
+    page: 1,
     chainFilters: [],
-    enabled: !!searchParams,
+    enabled: !!debouncedSearchTerm,
   });
 
   const hasResults = items.length > 0;
@@ -303,7 +286,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
   }, [searchTerm]);
 
   const handleResultClick = (itemId: string) => {
-    navigate(`/item/${itemId}?fromHome=true`);
+    navigate(buildItemPath(itemId), { state: { fromApp: true, from: 'home' } });
     setSearchTerm('');
     setIsActive(false);
   };
@@ -316,56 +299,17 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
     setIsSubmissionModalOpen(true);
   };
 
-  const getPropValue = (item: any, label: string) => {
-    return item?.props?.find((prop: any) => prop.label === label)?.value || '';
-  };
-
   const getDisplayName = (item: any): string => {
     const registryName = revRegistryMap[item.registryAddress] || 'Unknown';
-
-    if (registryName === 'Tokens') {
-      return getPropValue(item, 'Symbol') || getPropValue(item, 'Name') || 'Unnamed';
-    } else if (registryName === 'CDN') {
-      return getPropValue(item, 'Domain name') || 'Unnamed';
-    } else if (registryName === 'Single_Tags') {
-      return getPropValue(item, 'Project Name') || getPropValue(item, 'Public Name Tag') || 'Unnamed';
-    } else if (registryName === 'Tags_Queries') {
-      return getPropValue(item, 'Description') || 'Unnamed';
-    }
-    return 'Unnamed';
+    return getItemDisplayName(item, registryName);
   };
 
-  const getChainId = (item: any): string | undefined => {
-    const key0 = item?.key0;
-    if (!key0) return undefined;
-    const parts = key0.split(':');
-    return parts[1];
-  };
+  const getChainId = (item: any): string | undefined => getChainIdUtil(item);
 
-  const formatRegistryName = (registryName: string): string => {
-    if (registryName === 'Single_Tags') return 'Single Tags';
-    if (registryName === 'Tags_Queries') return 'Query Tags';
-    return registryName;
-  };
+  const formatRegistryName = (registryName: string): string =>
+    registryDisplayNames[registryName] || registryName;
 
-  const readableStatusMap: Record<string, string> = {
-    Registered: 'Included',
-    Absent: 'Removed',
-    RegistrationRequested: 'Registration Requested',
-    ClearingRequested: 'Removal Requested',
-  };
-
-  const challengedStatusMap: Record<string, string> = {
-    RegistrationRequested: 'Challenged Submission',
-    ClearingRequested: 'Challenged Removal',
-  };
-
-  const getActivityStatus = (item: any): string => {
-    if (item.disputed) {
-      return challengedStatusMap[item.status] || 'Unknown';
-    }
-    return readableStatusMap[item.status] || 'Unknown';
-  };
+  const getActivityStatus = (item: any): string => getDisplayStatus(item.status, item.disputed);
 
   const SearchResultItem: React.FC<{ item: any }> = ({ item }) => {
     const registryName = revRegistryMap[item.registryAddress] || 'Unknown';

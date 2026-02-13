@@ -11,6 +11,7 @@ import Layout from './layout'
 import Home from 'pages/Home'
 import ForUsers from './pages/ForUsers'
 import ForBuilders from './pages/ForBuilders'
+import TermsOfService from './pages/TermsOfService'
 
 const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
   height: 100vh;
@@ -35,6 +36,7 @@ const App: React.FC = () => {
                 <Route index element={<Home />} />
                 <Route path="for-users/*" element={<ForUsers />} />
                 <Route path="for-builders/*" element={<ForBuilders />} />
+                <Route path="terms-of-service" element={<TermsOfService />} />
                 <Route path="*" element={<h1>404 Not Found</h1>} />
               </Route>
             </Routes>

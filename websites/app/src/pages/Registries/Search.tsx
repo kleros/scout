@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useDebounce } from 'react-use'
-import { useSearchParams } from 'react-router-dom'
+import { useRegistryFilters } from 'context/FilterContext'
 import SearchIcon from 'svgs/icons/search.svg'
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 
@@ -48,27 +48,18 @@ const StyledInput = styled.input`
 `
 
 const Search: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [searchTerm, setSearchTerm] = useState<string>('')
+  const filters = useRegistryFilters()
+  const [searchTerm, setSearchTerm] = useState<string>(filters.text)
   const [appliedSearch, setAppliedSearch] = useState<boolean>(true)
 
   useEffect(() => {
-    setSearchTerm(searchParams.get('text') || '')
+    setSearchTerm(filters.text)
     setAppliedSearch(true)
-  }, [searchParams])
+  }, [filters.text])
 
   const applySearch = () => {
     if (!appliedSearch) {
-      setSearchParams((prev) => {
-        const prevParams = prev.toString()
-        const newParams = new URLSearchParams(prevParams)
-        newParams.delete('text')
-        newParams.append('text', searchTerm)
-        // bounce to page 1
-        newParams.delete('page')
-        newParams.append('page', '1')
-        return newParams
-      })
+      filters.setText(searchTerm)
       setAppliedSearch(true)
     }
   }

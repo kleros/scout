@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
-import { revRegistryMap, GraphItem } from 'utils/items';
+import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getDisplayStatus } from 'utils/items';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
 import useHumanizedCountdown, { useChallengeRemainingTime, useChallengePeriodDuration } from 'hooks/countdown';
@@ -292,57 +292,16 @@ const EmptyState = styled.div`
   font-size: 14px;
 `;
 
-const getPropValue = (item: GraphItem, label: string) => {
-  return item?.props?.find((prop) => prop.label === label)?.value || '';
-};
-
-const getChainId = (item: GraphItem): string | undefined => {
-  const key0 = item?.key0;
-  if (!key0) return undefined;
-
-  const parts = key0.split(':');
-  return parts[1]; // Extract chain ID from format like "eip155:1:0x..."
-};
-
 const getDisplayName = (item: GraphItem): string => {
-  const registryName = revRegistryMap[item.registryAddress] || 'Unknown';
-
-  if (registryName === 'Tokens') {
-    return getPropValue(item, 'Symbol') || getPropValue(item, 'Name') || 'Unnamed';
-  } else if (registryName === 'CDN') {
-    return getPropValue(item, 'Domain name') || 'Unnamed';
-  } else if (registryName === 'Single_Tags') {
-    return getPropValue(item, 'Project Name') || getPropValue(item, 'Public Name Tag') || 'Unnamed';
-  } else if (registryName === 'Tags_Queries') {
-    return getPropValue(item, 'Description') || 'Unnamed';
-  }
-  return 'Unnamed';
+  const registryKey = revRegistryMap[item.registryAddress] || 'Unknown';
+  return getItemDisplayName(item, registryKey);
 };
 
-const readableStatusMap = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-};
+const getActivityStatus = (item: GraphItem): string =>
+  getDisplayStatus(item.status, item.disputed);
 
-const challengedStatusMap = {
-  RegistrationRequested: 'Challenged Submission',
-  ClearingRequested: 'Challenged Removal',
-};
-
-const getActivityStatus = (item: GraphItem): string => {
-  if (item.disputed) {
-    return challengedStatusMap[item.status] || 'Unknown';
-  }
-  return readableStatusMap[item.status] || 'Unknown';
-};
-
-const formatRegistryName = (registryName: string): string => {
-  if (registryName === 'Single_Tags') return 'Single Tags';
-  if (registryName === 'Tags_Queries') return 'Query Tags';
-  return registryName;
-};
+const formatRegistryName = (registryName: string): string =>
+  registryDisplayNames[registryName] || registryName;
 
 interface ActivityItemProps {
   item: GraphItem;
@@ -401,7 +360,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
             </ChainInfo>
           )}
         </StatusGroup>
-        <ViewButton to={itemUrl}>
+        <ViewButton to={itemUrl} state={{ fromApp: true, from: 'home' }}>
           View <ArrowIcon />
         </ViewButton>
       </RightSection>
@@ -410,27 +369,13 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
 };
 
 export const HomeRecentActivity: React.FC = () => {
-  const searchParams = useMemo(() => {
-    const params = new URLSearchParams();
-    // Fetch from all 4 registries
-    ['Tokens', 'CDN', 'Single_Tags', 'Tags_Queries'].forEach((registry) => {
-      params.append('registry', registry);
-    });
-    // Include all statuses
-    ['Registered', 'RegistrationRequested', 'ClearingRequested'].forEach((status) => {
-      params.append('status', status);
-    });
-    // Include both disputed and non-disputed
-    ['true', 'false'].forEach((disputed) => {
-      params.append('disputed', disputed);
-    });
-    params.set('orderDirection', 'desc');
-    params.set('page', '1');
-    return params;
-  }, []);
-
   const { data: items = [], isLoading } = useItemsQuery({
-    searchParams,
+    registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
+    status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
+    disputed: ['true', 'false'],
+    text: '',
+    orderDirection: 'desc',
+    page: 1,
     chainFilters: [],
     enabled: true,
   });
@@ -471,7 +416,7 @@ export const HomeRecentActivity: React.FC = () => {
           <ActivityItem
             key={item.id}
             item={item}
-            itemUrl={`/item/${item.id}?fromHome=true`}
+            itemUrl={buildItemPath(item.id)}
           />
         ))}
       </ActivityList>

@@ -45,21 +45,18 @@ interface BreadcrumbProps {
   registryName: string
   itemName: string
   registryUrl: string
+  useHistoryBack?: boolean
 }
 
-const Breadcrumb: React.FC<BreadcrumbProps> = ({ registryName, itemName, registryUrl }) => {
+const Breadcrumb: React.FC<BreadcrumbProps> = ({ registryName, itemName, registryUrl, useHistoryBack }) => {
   const navigate = useNavigate()
 
   const handleRegistryClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Check if user is trying to open in new tab (Ctrl+Click, Cmd+Click, or middle click)
-    if (e.ctrlKey || e.metaKey || e.button === 1) {
-      // Let the default Link behavior handle it (opens in new tab)
-      return
-    }
+    if (e.ctrlKey || e.metaKey || e.button === 1) return
 
-    // For normal clicks, navigate to registry page with preserved filters
     e.preventDefault()
-    navigate(registryUrl)
+    if (useHistoryBack) navigate(-1)
+    else navigate(registryUrl)
   }
 
   return (

@@ -31,7 +31,6 @@ import {
   FieldLabel
 } from './index'
 import { useSearchParams } from 'react-router-dom'
-import { useAttachment } from 'hooks/useAttachment'
 import { chains } from 'utils/chains'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
 
@@ -96,7 +95,7 @@ const AddToken: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
   const [imageError, setImageError] = useState<string | null>(null);
-  const openAttachment = useAttachment();
+
 
   useEffect(() => {
     const caip10AddressParam = searchParams.get('caip10Address');
@@ -159,11 +158,11 @@ const AddToken: React.FC = () => {
   }, [cacheKey])
 
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'Tokens', name, symbol, website],
+    queryKey: ['addressissues', networkAddressKey, 'tokens', name, symbol, website],
     queryFn: async () => {
       const res = await getAddressValidationIssue(
         network.value,
-        'Tokens',
+        'tokens',
         debouncedAddress,
         undefined,
         name,
@@ -193,7 +192,7 @@ const AddToken: React.FC = () => {
   const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitToken = async () => {
-    if (!countsData?.Tokens.deposits) return;
+    if (!countsData?.['tokens']?.deposits) return;
 
     setIsLocalLoading(true);
     try {
@@ -219,7 +218,7 @@ const AddToken: React.FC = () => {
       const result = await addItem(
         '0xee1502e29795ef6c2d60f8d7120596abe3bad990' as `0x${string}`,
         ipfsPath,
-        countsData.Tokens.deposits
+        countsData['tokens'].deposits
       );
 
       if (result?.status) {
@@ -274,11 +273,9 @@ const AddToken: React.FC = () => {
         <HeaderActions>
           {registry && (
             <SubmissionButton
-              onClick={() => {
-                if (registry.metadata.policyURI) {
-                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
-                }
-              }}
+              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Submission Guidelines
             </SubmissionButton>
@@ -294,7 +291,7 @@ const AddToken: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Tokens"
+        registry="tokens"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -334,7 +331,7 @@ const AddToken: React.FC = () => {
       <ImageUpload
         path={path}
         setPath={setPath}
-        registry="Tokens"
+        registry="tokens"
         {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
@@ -355,10 +352,10 @@ const AddToken: React.FC = () => {
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.Tokens?.deposits
+          {countsData?.['tokens']?.deposits
             ? formatEther(
-              countsData.Tokens.deposits.arbitrationCost +
-              countsData.Tokens.deposits.submissionBaseDeposit
+              countsData['tokens'].deposits.arbitrationCost +
+              countsData['tokens'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}
         </ExpectedPayouts>

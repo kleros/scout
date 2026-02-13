@@ -6,11 +6,10 @@ interface FilterModalProps {
   onClose: () => void;
   chainFilters: string[];
   onChainFiltersChange: (chains: string[]) => void;
-  userAddress: string;
 }
 
 const ProfileFilterModal: React.FC<FilterModalProps> = (props) => {
-  return <FilterModal {...props} />;
+  return <FilterModal {...props} scope="profile" />;
 };
 
 export default ProfileFilterModal;

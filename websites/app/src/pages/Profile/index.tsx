@@ -22,6 +22,7 @@ import Copyable from "components/Copyable";
 import { ExternalLink } from "components/ExternalLink";
 import { DEFAULT_CHAIN, getChain } from "consts/chains";
 import { chains } from "utils/chains";
+import { useProfileFilters } from "context/FilterContext";
 import ScrollTop from "components/ScrollTop";
 
 const Container = styled.div`
@@ -269,13 +270,11 @@ const StatDivider = styled.div`
 
 const PATHS = ["pending", "resolved", "disputes"];
 
-const REGISTRATION_STATUSES = ['Registered', 'RegistrationRequested', 'ClearingRequested'];
-const CHALLENGE_STATUSES = ['true', 'false'];
-
 const Profile: React.FC = () => {
   const { isConnected, address: connectedAddress } = useAccount();
   const [searchParams, setSearchParams] = useSearchParams();
-  const userAddress = searchParams.get("userAddress");
+  const filters = useProfileFilters();
+  const userAddress = searchParams.get("address");
   const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
   const { data: disputeData, isLoading: isLoadingDisputes } = useDisputeStats(address);
@@ -284,7 +283,7 @@ const Profile: React.FC = () => {
 
   // Dispute sub-tab state (active vs resolved)
   const [showResolvedDisputes, setShowResolvedDisputes] = useState(false);
-  
+
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isFilterChanging, setIsFilterChanging] = useState(false);
@@ -297,43 +296,26 @@ const Profile: React.FC = () => {
   // Auto-add connected address to URL when user connects wallet
   useEffect(() => {
     if (isConnected && connectedAddress && !userAddress) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set('userAddress', connectedAddress.toLowerCase());
+      const newParams = new URLSearchParams();
+      newParams.set('address', connectedAddress.toLowerCase());
       setSearchParams(newParams, { replace: true });
     }
-  }, [isConnected, connectedAddress, userAddress, searchParams, setSearchParams]);
-
-  // Initialize URL params with all statuses/disputed values for Profile page
-  useEffect(() => {
-    if (address && searchParams.getAll('status').length === 0 && searchParams.getAll('disputed').length === 0) {
-      const newParams = new URLSearchParams(searchParams);
-
-      // Add all registration statuses
-      REGISTRATION_STATUSES.forEach(status => newParams.append('status', status));
-      // Add all challenge statuses
-      CHALLENGE_STATUSES.forEach(challengeValue => newParams.append('disputed', challengeValue));
-
-      // Preserve existing params like userAddress, page, etc.
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [address, searchParams, setSearchParams]);
+  }, [isConnected, connectedAddress, userAddress, setSearchParams]);
 
   // Reset page to 1 when filters change
   const filterKey = useMemo(() => {
     return [
-      searchParams.getAll('status').sort().join(','),
-      searchParams.getAll('disputed').sort().join(','),
-      searchParams.get('search') || '',
+      filters.status.slice().sort().join(','),
+      filters.disputed.slice().sort().join(','),
+      filters.text,
       chainFilters.sort().join(','),
-      searchParams.get('orderDirection') || ''
+      filters.orderDirection,
     ].join('|');
-  }, [searchParams, chainFilters]);
+  }, [filters.status, filters.disputed, filters.text, filters.orderDirection, chainFilters]);
 
   const prevFilterKeyRef = useRef(filterKey);
 
   useEffect(() => {
-    const currentPage = searchParams.get('page');
-
     // Only reset page if the FILTERS actually changed (not just the page number)
     if (prevFilterKeyRef.current !== filterKey) {
       prevFilterKeyRef.current = filterKey;
@@ -342,16 +324,12 @@ const Profile: React.FC = () => {
       setIsFilterChanging(true);
 
       // If we're not on page 1, reset to page 1 when filters change
-      if (currentPage && currentPage !== '1') {
-        setSearchParams(prev => {
-          const newParams = new URLSearchParams(prev.toString());
-          newParams.set('page', '1');
-          return newParams;
-        });
+      if (filters.page !== 1) {
+        filters.setPage(1);
       }
     }
-  }, [filterKey, searchParams, setSearchParams]);
-  
+  }, [filterKey, filters]);
+
   const addressExplorerLink = useMemo(() => {
     if (!userAddress) return null;
     return `${getChain(DEFAULT_CHAIN)?.blockExplorers?.default.url}/address/${userAddress}`;
@@ -411,9 +389,10 @@ const Profile: React.FC = () => {
   const basePath = useMemo(() => location.pathname.split(/\/(pending|resolved|disputes)\b/)[0], [location.pathname]);
   const switchTab = (n: number) => {
     setCurrentTab(n);
-    const params = new URLSearchParams(location.search);
-    params.set("page", "1");
-    navigate(`${basePath}/${tabs[n].path}?${params.toString()}`);
+    filters.setPage(1);
+    const params = new URLSearchParams();
+    if (userAddress) params.set('address', userAddress);
+    navigate(`${basePath}/${tabs[n].path}${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
   const shouldShowConnectWallet = !isConnected && !userAddress;
@@ -564,13 +543,12 @@ const Profile: React.FC = () => {
           <ConnectWallet />
         </ConnectWalletContainer>
       )}
-      
+
       <FilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
         chainFilters={chainFilters}
         onChainFiltersChange={setChainFilters}
-        userAddress={address}
       />
     </Container>
   );

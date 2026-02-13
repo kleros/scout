@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import styled, { css } from 'styled-components';
-import { useSearchParams, createSearchParams, useParams } from 'react-router-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import { useItemsQuery, useItemCountsQuery } from '../../hooks/queries';
 import { chains } from 'utils/chains';
 import { registryMap } from 'utils/items';
+import { useRegistryFilters } from 'context/FilterContext';
 import SubmitButton from './SubmitButton';
 import Search from './Search';
 import LoadingItems from './LoadingItems';
 import ItemsList from './ItemsList';
 import { StyledPagination } from 'components/StyledPagination';
-import RegistryDetailsModal from './RegistryDetails/RegistryDetailsModal';
 import AddItemModal from './SubmitItems/AddItemModal';
+import ParametersModal from './ParametersModal';
 import FilterModal from './FilterModal';
 import FilterButton from 'components/FilterButton';
 import ViewSwitcher from 'components/ViewSwitcher';
@@ -20,6 +21,7 @@ import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
 import ExportButton from './ExportButton';
 import ExportModal from './ExportModal';
+import { hoverShortTransitionTiming } from 'styles/commonStyles';
 import HeroShadowSVG from 'svgs/header/hero-shadow.svg';
 import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle';
 import ScrollTop from 'components/ScrollTop';
@@ -75,7 +77,7 @@ const SearchAndFiltersContainer = styled.div`
   flex-direction: row;
   gap: 8px;
   flex: 1;
-  min-width: 300px;
+  min-width: 0;
   align-items: center;
 `;
 
@@ -84,6 +86,20 @@ const PolicyAndSubmitItemContainer = styled.div`
   flex-direction: row;
   align-items: center;
   gap: 24px;
+  flex-wrap: wrap;
+`;
+
+const ParametersLabel = styled.label`
+  ${hoverShortTransitionTiming}
+  cursor: pointer;
+  color: ${({ theme }) => theme.secondaryText};
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+
+  :hover {
+    color: ${({ theme }) => theme.primaryText};
+  }
 `;
 
 export const StyledCloseButton = styled(CloseIcon)`
@@ -187,22 +203,22 @@ const HeroDescription = styled.p`
 `;
 
 const REGISTRY_INFO: Record<string, { title: string; subtitle?: string; description: string; }> = {
-  CDN: {
+  'cdn': {
     title: 'Contract Domain Name - CDN',
     description:
       'The Contract Domain Name (CDN) prevents front-end DNS attacks. It associates smart contracts to specific domains, ensuring users interact with the correct contract. If a website is hacked and the contract is altered, the change will be detected.'
   },
-  Single_Tags: {
+  'single-tags': {
     title: 'Single Tags',
     description:
       'A registry that links addresses to verified public tags to help users avoid scams.'
   },
-  Tags_Queries: {
+  'tags-queries': {
     title: 'Tag Queries',
     description:
       'A registry that links addresses to verified public tags to help users avoid scams.'
   },
-  Tokens: {
+  'tokens': {
     title: 'Kleros Tokens',
     description:
       'A community-curated list of safe, whitelisted cryptoassets.'
@@ -226,9 +242,11 @@ const Hero: React.FC<{ registryKey: string; }> = ({ registryKey }) => {
 
 const Home: React.FC = () => {
   const { registryName } = useParams<{ registryName: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const filters = useRegistryFilters();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isParamsModalOpen, setIsParamsModalOpen] = useState(false);
   const [chainFilters, setChainFilters] = useState<string[]>(() => [
     ...chains.filter(c => !c.deprecated).map(c => c.id),
     'unknown'
@@ -237,10 +255,6 @@ const Home: React.FC = () => {
   const [shouldDisableListView, setShouldDisableListView] = useState(false);
   const [isFilterChanging, setIsFilterChanging] = useState(false);
 
-  const isRegistryDetailsModalOpen = useMemo(
-    () => !!searchParams.get('registrydetails'),
-    [searchParams]
-  );
   const isAddItemOpen = useMemo(
     () => !!searchParams.get('additem'),
     [searchParams]
@@ -251,25 +265,28 @@ const Home: React.FC = () => {
   );
 
   const { isLoading: searchLoading, isFetching: searchFetching, data: searchData } = useItemsQuery({
-    searchParams,
     registryName,
-    chainFilters
+    status: filters.status,
+    disputed: filters.disputed,
+    hasEverBeenDisputed: filters.hasEverBeenDisputed,
+    text: filters.text,
+    orderDirection: filters.orderDirection,
+    page: filters.page,
+    chainFilters,
   });
 
   const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
 
   const currentItemCount = useMemo(() => {
-    const status = searchParams.getAll('status');
-    const disputed = searchParams.getAll('disputed');
-    const text = searchParams.get('text');
+    const { status, disputed, text } = filters;
 
     // Calculate if chain filters are actually filtering (not all chains selected)
     const allChains = [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'];
     const hasActiveChainFilter = chainFilters.length > 0 && chainFilters.length < allChains.length;
 
-    // If filters are active (text search or chain filters), we can't know total count
+    // If filters are active (text search, chain filters, or previously disputed), we can't know total count
     // Return null to hide pagination page numbers and use simpler prev/next
-    if (text || hasActiveChainFilter) {
+    if (text || hasActiveChainFilter || filters.hasEverBeenDisputed) {
       return null;
     }
 
@@ -284,7 +301,7 @@ const Home: React.FC = () => {
       return undefined;
     }
 
-    const getCount = (r: 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN') => {
+    const getCount = (r: string) => {
       return (
         (status.includes('Absent') && disputed.includes('false') ? countsData[r].numberOfAbsent : 0) +
         (status.includes('Registered') && disputed.includes('false') ? countsData[r].numberOfRegistered : 0) +
@@ -295,61 +312,24 @@ const Home: React.FC = () => {
       );
     };
 
-    return getCount(registryName as 'Single_Tags' | 'Tags_Queries' | 'Tokens' | 'CDN');
-  }, [searchParams, countsData, countsLoading, searchData, chainFilters, registryName]);
-
-  useEffect(() => {
-    setSearchParams((prev) => {
-      if (prev.get('page') === 'rewards' || prev.get('attachment') || prev.get('additem')) {
-        return prev;
-      }
-      const status = prev.getAll('status');
-      const disputed = prev.getAll('disputed');
-      const page = prev.get('page');
-      const orderDirection = prev.get('orderDirection');
-      const hasNetworkInUrl = prev.has('network');
-
-      if (
-        status.length === 0 ||
-        disputed.length === 0 ||
-        orderDirection === null ||
-        page === null ||
-        hasNetworkInUrl
-      ) {
-        const newSearchParams = createSearchParams({
-          status: status.length === 0 ? ['Registered', 'RegistrationRequested', 'ClearingRequested'] : status,
-          disputed: disputed.length === 0 ? ['true', 'false'] : disputed,
-          page: page === null ? '1' : page,
-          orderDirection: orderDirection === null ? 'desc' : orderDirection
-        });
-        const text = prev.get('text');
-        if (text) {
-          newSearchParams.set('text', text);
-        }
-        const additem = prev.get('additem');
-        if (additem) {
-          newSearchParams.set('additem', additem);
-        }
-        return newSearchParams;
-      }
-      return prev;
-    });
-  }, [setSearchParams]);
+    return getCount(registryName as string);
+  }, [filters.status, filters.disputed, filters.text, countsData, countsLoading, searchData, chainFilters, registryName]);
 
   // Reset page to 1 when filters change (but not on initial mount)
   const filterKey = useMemo(() => [
-    searchParams.getAll('status').sort().join(','),
-    searchParams.getAll('disputed').sort().join(','),
-    searchParams.get('text') || '',
+    filters.status.slice().sort().join(','),
+    filters.disputed.slice().sort().join(','),
+    String(filters.hasEverBeenDisputed),
+    filters.text,
     [...chainFilters].sort().join(','),
-    searchParams.get('orderDirection') || ''
-  ].join('|'), [searchParams, chainFilters]);
+    filters.orderDirection,
+  ].join('|'), [filters.status, filters.disputed, filters.hasEverBeenDisputed, filters.text, filters.orderDirection, chainFilters]);
 
   const prevFilterKeyRef = useRef<string | null>(null);
   const hasFetchingStartedRef = useRef(false);
 
   useEffect(() => {
-    // Skip first render to preserve page number when opening in new tab
+    // Skip first render to preserve page number
     if (prevFilterKeyRef.current === null) {
       prevFilterKeyRef.current = filterKey;
       return;
@@ -359,17 +339,8 @@ const Home: React.FC = () => {
       prevFilterKeyRef.current = filterKey;
       setIsFilterChanging(true);
       hasFetchingStartedRef.current = false;
-
-      const currentPage = searchParams.get('page');
-      if (currentPage && currentPage !== '1') {
-        setSearchParams(prev => {
-          const newParams = new URLSearchParams(prev.toString());
-          newParams.set('page', '1');
-          return newParams;
-        });
-      }
     }
-  }, [filterKey, searchParams, setSearchParams]);
+  }, [filterKey]);
 
   // Track when fetching starts
   useEffect(() => {
@@ -391,12 +362,12 @@ const Home: React.FC = () => {
       ? Math.ceil(currentItemCount / ITEMS_PER_PAGE)
       : null;
 
-  const currentRegistryAddress = registryName ? registryMap[registryName as keyof typeof registryMap] : undefined;
+  const currentRegistryAddress = registryName ? registryMap[registryName] : undefined;
 
   // Check if list view should be disabled for Tokens registry on narrow screens
   useEffect(() => {
     const checkListViewAvailability = () => {
-      const isTokensRegistry = registryName === 'Tokens';
+      const isTokensRegistry = registryName === 'tokens';
       const minWidth = 1350;
       setShouldDisableListView(isTokensRegistry && window.innerWidth < minWidth);
     };
@@ -430,6 +401,7 @@ const Home: React.FC = () => {
                   </SearchAndFiltersContainer>
                   <PolicyAndSubmitItemContainer>
                     <ExportButton onClick={() => setIsExportModalOpen(true)} registryName={registryName} />
+                    <ParametersLabel onClick={() => setIsParamsModalOpen(true)}>Parameters</ParametersLabel>
                     <PolicyButton registryName={registryName} />
                     <SubmitButton registryName={registryName} />
                   </PolicyAndSubmitItemContainer>
@@ -445,46 +417,44 @@ const Home: React.FC = () => {
                 )}
                 {totalPages !== null && totalPages > 1 && (
                   <StyledPagination
-                    currentPage={Number(searchParams.get('page')) || 1}
+                    currentPage={filters.page}
                     numPages={totalPages}
                     callback={(newPage) => {
-                      setSearchParams(prev => {
-                        const newParams = new URLSearchParams(prev.toString())
-                        newParams.set('page', String(newPage))
-                        return newParams
-                      })
+                      filters.setPage(newPage)
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
                   />
                 )}
                 {totalPages === null && searchData && searchData.length > 0 && (
                   <StyledPagination
-                    currentPage={Number(searchParams.get('page')) || 1}
-                    numPages={searchData.length > ITEMS_PER_PAGE ? (Number(searchParams.get('page')) || 1) + 1 : (Number(searchParams.get('page')) || 1)}
+                    currentPage={filters.page}
+                    numPages={searchData.length > ITEMS_PER_PAGE ? filters.page + 1 : filters.page}
                     callback={(newPage) => {
-                      setSearchParams(prev => {
-                        const newParams = new URLSearchParams(prev.toString())
-                        newParams.set('page', String(newPage))
-                        return newParams
-                      })
+                      filters.setPage(newPage)
                       window.scrollTo({ top: 0, behavior: 'smooth' })
                     }}
                   />
                 )}
               </FullWidthSection>
             </PageInner>
-          {isRegistryDetailsModalOpen && <RegistryDetailsModal registryName={registryName} />}
           {isAddItemOpen && <AddItemModal />}
           <FilterModal
             isOpen={isFilterModalOpen}
             onClose={() => setIsFilterModalOpen(false)}
             chainFilters={chainFilters}
             onChainFiltersChange={setChainFilters}
+            scope="registry"
           />
           {isExportModalOpen && currentRegistryAddress && (
             <ExportModal
               registryAddress={currentRegistryAddress}
               onClose={() => setIsExportModalOpen(false)}
+            />
+          )}
+          {isParamsModalOpen && (
+            <ParametersModal
+              registryName={registryName}
+              onClose={() => setIsParamsModalOpen(false)}
             />
           )}
         </>

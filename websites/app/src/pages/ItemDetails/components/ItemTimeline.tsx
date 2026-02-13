@@ -203,7 +203,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
         party: request?.requester ? (
           <PartyWrapper>
             <ByText>by </ByText>
-            <AddressLink to={`/profile/pending?userAddress=${request.requester}`}>
+            <AddressLink to={`/profile/pending?address=${request.requester}`}>
               <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
               <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
               <ArrowIcon />
@@ -253,7 +253,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           party: (
             <PartyWrapper>
               <ByText>by </ByText>
-              <AddressLink to={`/profile/pending?userAddress=${request.challenger}`}>
+              <AddressLink to={`/profile/pending?address=${request.challenger}`}>
                 <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
                 <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
                 <ArrowIcon />
@@ -344,7 +344,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 title: fundingTitle,
                 party: (
                   <PartyWrapper>
-                    <AddressLink to={`/profile/pending?userAddress=${request.requester}`}>
+                    <AddressLink to={`/profile/pending?address=${request.requester}`}>
                       <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
                       <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
                       <ArrowIcon />
@@ -373,7 +373,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 title: fundingTitle,
                 party: (
                   <PartyWrapper>
-                    <AddressLink to={`/profile/pending?userAddress=${request.challenger}`}>
+                    <AddressLink to={`/profile/pending?address=${request.challenger}`}>
                       <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
                       <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
                       <ArrowIcon />

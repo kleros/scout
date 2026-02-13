@@ -11,6 +11,7 @@ import BookIcon from "svgs/navbar/book.svg";
 import ArrowDown from "svgs/icons/arrow-down.svg";
 
 import { useLockOverlayScroll } from "hooks/useLockOverlayScroll";
+import { registryNavOptions } from "utils/items";
 
 import ConnectWallet from "components/ConnectWallet";
 import LightButton from "components/LightButton";
@@ -161,21 +162,8 @@ const NavBar: React.FC = () => {
   const { isOpen, toggleIsOpen } = useOpenContext();
   useLockOverlayScroll(isOpen);
 
-  const registryOptions = [
-    { label: "Tokens", value: "Tokens" },
-    { label: "Contract Domain Name", value: "CDN" },
-    { label: "Address Tags - Single Tags", value: "Single_Tags" },
-    { label: "Address Tags - Query Tags", value: "Tags_Queries" },
-  ];
-
   const handleRegistryClick = (value: string) => {
-    const currentParams = new URLSearchParams(window.location.search);
-    // Remove modal/attachment params when switching registries
-    currentParams.delete('attachment');
-    currentParams.delete('registrydetails');
-    currentParams.delete('additem');
-    const paramsString = currentParams.toString();
-    navigate(`/registry/${value}${paramsString ? `?${paramsString}` : ''}`);
+    navigate(`/${value}`);
     toggleIsOpen();
   };
 
@@ -211,7 +199,7 @@ const NavBar: React.FC = () => {
                   <StyledArrowDown isExpanded={isRegistriesExpanded} />
                 </RegistriesButton>
                 <RegistriesDropdown isExpanded={isRegistriesExpanded}>
-                  {registryOptions.map(({ label, value }) => (
+                  {registryNavOptions.map(({ label, value }) => (
                     <RegistryItem key={value} onClick={() => handleRegistryClick(value)}>
                       {label}
                     </RegistryItem>
@@ -224,7 +212,7 @@ const NavBar: React.FC = () => {
                 text="My Profile"
                 onClick={() => {
                   navigate(`/profile/pending${
-                    connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ""
+                    connectedAddress ? `?address=${connectedAddress.toLowerCase()}` : ""
                   }`);
                   toggleIsOpen();
                 }}

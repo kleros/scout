@@ -8,25 +8,22 @@ export const REWARDS_DATA: RewardData[] = [
   {
     title: "Token Collection Verification",
     description: "Verify the authenticity of new tokens and earn rewards",
-    registryKey: "Tokens",
+    registryKey: "tokens",
   },
   {
     title: "Address Tag Collection Verification",
     description: "Verify the authenticity of new contract address tags and earn rewards",
-    registryKey: "Single_Tags",
+    registryKey: "single-tags",
   },
   {
     title: "Contract Domain Name Collection Verification",
     description: "Verify the authenticity of new contract domain name submissions and earn rewards",
-    registryKey: "CDN",
+    registryKey: "cdn",
   },
 ];
 
 export const SUBMISSION_REWARD = "93,000 PNK";
 export const REMOVAL_REWARD = "7,000 PNK";
-
-export const getRegistryUrl = (registryKey: string) =>
-  `/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`;
 
 export const getCurrentMonthDeadline = (): string => {
   const now = new Date();

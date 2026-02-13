@@ -447,18 +447,18 @@ const fetchKlerosSubgraphData = async (
 
   const tokensStats = calculateRegistryStats(
     registries,
-    registryMap.Tokens,
+    registryMap['tokens'],
     items,
   )
-  const cdnStats = calculateRegistryStats(registries, registryMap.CDN, items)
+  const cdnStats = calculateRegistryStats(registries, registryMap['cdn'], items)
   const singleTagsStats = calculateRegistryStats(
     registries,
-    registryMap.Single_Tags,
+    registryMap['single-tags'],
     items,
   )
   const tagQueriesStats = calculateRegistryStats(
     registries,
-    registryMap.Tags_Queries,
+    registryMap['tags-queries'],
     items,
   )
 

@@ -31,7 +31,6 @@ import {
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
-import { useAttachment } from 'hooks/useAttachment'
 import { chains } from 'utils/chains'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
 
@@ -75,7 +74,7 @@ const AddCDN: React.FC = () => {
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
   const [searchParams, setSearchParams] = useSearchParams()
   const [imageError, setImageError] = useState<string | null>(null);
-  const openAttachment = useAttachment();
+
 
   useEffect(() => {
     const caip10AddressParam = searchParams.get('caip10Address');
@@ -137,9 +136,9 @@ const AddCDN: React.FC = () => {
   }, [cacheKey])
   
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'CDN', domain],
+    queryKey: ['addressissues', networkAddressKey, 'cdn', domain],
     queryFn: async () => {
-      const res = await getAddressValidationIssue(network.value, 'CDN', debouncedAddress, domain)
+      const res = await getAddressValidationIssue(network.value, 'cdn', debouncedAddress, domain)
       localStorage.setItem(cacheKey, JSON.stringify(res))
       return res
     },
@@ -158,7 +157,7 @@ const AddCDN: React.FC = () => {
   const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitCDN = async () => {
-    if (!countsData?.CDN.deposits) return;
+    if (!countsData?.['cdn']?.deposits) return;
 
     setIsLocalLoading(true);
     try {
@@ -181,7 +180,7 @@ const AddCDN: React.FC = () => {
       const result = await addItem(
         '0x957a53a994860be4750810131d9c876b2f52d6e1' as `0x${string}`,
         ipfsPath,
-        countsData.CDN.deposits
+        countsData['cdn'].deposits
       );
 
       if (result?.status) {
@@ -233,11 +232,9 @@ const AddCDN: React.FC = () => {
         <HeaderActions>
           {registry && (
             <SubmissionButton
-              onClick={() => {
-                if (registry.metadata.policyURI) {
-                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
-                }
-              }}
+              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Submission Guidelines
             </SubmissionButton>
@@ -253,7 +250,7 @@ const AddCDN: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="CDN"
+        registry="cdn"
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -273,7 +270,7 @@ const AddCDN: React.FC = () => {
       <ImageUpload
         path={path}
         setPath={setPath}
-        registry="CDN"
+        registry="cdn"
         {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
@@ -285,10 +282,10 @@ const AddCDN: React.FC = () => {
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.CDN?.deposits
+          {countsData?.['cdn']?.deposits
             ? formatEther(
-              countsData.CDN.deposits.arbitrationCost +
-              countsData.CDN.deposits.submissionBaseDeposit
+              countsData['cdn'].deposits.arbitrationCost +
+              countsData['cdn'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}
         </ExpectedPayouts>

@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { useSearchParams } from 'react-router-dom';
+import { useFilters } from 'context/FilterContext';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
 import { ModalButton } from './ModalButtons';
@@ -76,6 +76,7 @@ const StatusCircle = styled.div<{ status: string }>`
       case 'Absent': return '#ef4444'; // red for removed
       case 'true': return '#ef4444'; // red for challenged
       case 'false': return '#22c55e'; // green for unchallenged
+      case 'previously-disputed': return '#a855f7'; // purple for previously disputed
       default: return '#6b7280'; // gray for default
     }
   }};
@@ -114,74 +115,28 @@ interface FilterModalProps {
   onClose: () => void;
   chainFilters: string[];
   onChainFiltersChange: (chains: string[]) => void;
-  userAddress?: string;
+  scope: 'registry' | 'profile';
 }
 
-const FilterModal: React.FC<FilterModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  chainFilters, 
+const FilterModal: React.FC<FilterModalProps> = ({
+  isOpen,
+  onClose,
+  chainFilters,
   onChainFiltersChange,
-  userAddress
+  scope,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = useFilters(scope);
   const modalRef = useRef<HTMLDivElement>(null);
-  
+
   useFocusOutside(modalRef, () => onClose());
 
-  const registrationStatuses = useMemo(() => {
-    return searchParams.getAll('status');
-  }, [searchParams]);
-
-  const disputedValues = useMemo(() => {
-    return searchParams.getAll('disputed');
-  }, [searchParams]);
-
-  const orderDirection = useMemo(() => searchParams.get('orderDirection') || 'desc', [searchParams]);
-
   const handleStatusChange = useCallback((status: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      const currentStatuses = newParams.getAll('status');
-      
-      if (currentStatuses.includes(status)) {
-        // Remove this status - rebuild the list without it
-        newParams.delete('status');
-        currentStatuses.filter(s => s !== status).forEach(s => newParams.append('status', s));
-      } else {
-        // Add this status
-        newParams.append('status', status);
-      }
-      
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.toggleStatus(status);
+  }, [filters]);
 
   const handleDisputedChange = useCallback((disputed: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      const currentDisputed = newParams.getAll('disputed');
-      
-      if (currentDisputed.includes(disputed)) {
-        // Remove this disputed value - rebuild the list without it
-        newParams.delete('disputed');
-        currentDisputed.filter(d => d !== disputed).forEach(d => newParams.append('disputed', d));
-      } else {
-        // Add this disputed value
-        newParams.append('disputed', disputed);
-      }
-      
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.toggleDisputed(disputed);
+  }, [filters]);
 
   const handleNetworkChange = useCallback((networkId: string) => {
     const newChainFilters = chainFilters.includes(networkId)
@@ -191,69 +146,24 @@ const FilterModal: React.FC<FilterModalProps> = ({
   }, [chainFilters, onChainFiltersChange]);
 
   const handleOrderDirectionChange = useCallback((direction: string) => {
-    setSearchParams(prev => {
-      const newParams = new URLSearchParams(prev);
-      newParams.set('orderDirection', direction);
-      newParams.set('page', '1');
-      // Maintain userAddress filter if present
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    });
-  }, [setSearchParams, userAddress]);
+    filters.setOrderDirection(direction);
+  }, [filters]);
 
   const handleStatusOnly = useCallback((selectedStatus: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('status');
-      newParams.append('status', selectedStatus);
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setStatus([selectedStatus]);
+  }, [filters]);
 
   const handleStatusAll = useCallback(() => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('status');
-      REGISTRATION_STATUSES.forEach(status => newParams.append('status', status));
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setStatus(REGISTRATION_STATUSES);
+  }, [filters]);
 
   const handleDisputedOnly = useCallback((selectedDisputed: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('disputed');
-      newParams.append('disputed', selectedDisputed);
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setDisputed([selectedDisputed]);
+  }, [filters]);
 
   const handleDisputedAll = useCallback(() => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('disputed');
-      CHALLENGE_STATUSES.forEach(challenge => newParams.append('disputed', challenge.value));
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setDisputed(CHALLENGE_STATUSES.map(c => c.value));
+  }, [filters]);
 
   const handleNetworkOnly = useCallback((selectedNetworkId: string) => {
     onChainFiltersChange([selectedNetworkId]);
@@ -297,7 +207,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <CheckboxItem key={status}>
                       <CheckboxLabel>
                         <Checkbox
-                          checked={registrationStatuses.includes(status)}
+                          checked={filters.status.includes(status)}
                           onChange={() => handleStatusChange(status)}
                         />
                         <StatusCircle status={status} />
@@ -332,7 +242,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <CheckboxItem key={challenge.value}>
                       <CheckboxLabel>
                         <Checkbox
-                          checked={disputedValues.includes(challenge.value)}
+                          checked={filters.disputed.includes(challenge.value)}
                           onChange={() => handleDisputedChange(challenge.value)}
                         />
                         <StatusCircle status={challenge.value} />
@@ -347,6 +257,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       </OnlyButton>
                     </CheckboxItem>
                   ))}
+                  <CheckboxItem>
+                    <CheckboxLabel>
+                      <Checkbox
+                        checked={filters.hasEverBeenDisputed}
+                        onChange={() => filters.toggleHasEverBeenDisputed()}
+                      />
+                      <StatusCircle status="previously-disputed" />
+                      Previously Disputed
+                    </CheckboxLabel>
+                  </CheckboxItem>
                 </CheckboxGroup>
               </FilterGroup>
 
@@ -360,7 +280,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <RadioButton
                       name="sort"
                       value="desc"
-                      checked={orderDirection === 'desc'}
+                      checked={filters.orderDirection === 'desc'}
                       onChange={() => handleOrderDirectionChange('desc')}
                     />
                     Newest
@@ -369,7 +289,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <RadioButton
                       name="sort"
                       value="asc"
-                      checked={orderDirection === 'asc'}
+                      checked={filters.orderDirection === 'asc'}
                       onChange={() => handleOrderDirectionChange('asc')}
                     />
                     Oldest

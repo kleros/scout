@@ -56,7 +56,7 @@ const ImageUpload: React.FC<{
   const [imageFile, setImageFile] = useState<File | null>(null)
 
   const validateImage = async (file: File): Promise<string | null> => {
-    if (registry === 'Tokens') {
+    if (registry === 'tokens') {
       // Check file extension and MIME type first (basic validation)
       if (!file.type.startsWith('image/png') && !file.name.toLowerCase().endsWith('.png')) {
         return 'Only PNG images are allowed for Tokens registry.'
@@ -112,7 +112,7 @@ const ImageUpload: React.FC<{
         <StyledInput
           type="file"
           onChange={handleFileChange}
-          accept={registry === 'Tokens' ? '.png' : 'image/*'}
+          accept={registry === 'tokens' ? '.png' : 'image/*'}
         />
       </StyledLabel>
       {path && (

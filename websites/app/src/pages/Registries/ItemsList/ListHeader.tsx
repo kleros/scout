@@ -1,18 +1,18 @@
 import React from 'react';
 import styled from 'styled-components';
-import { registryMap } from 'utils/items';
+import { getRegistryKey } from 'utils/items';
 
 const HeaderRow = styled.div<{ registryType?: string }>`
   display: grid;
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
-      case 'Tokens':
+      case 'tokens':
         return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
-      case 'Single_Tags':
+      case 'single-tags':
         return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
-      case 'CDN':
+      case 'cdn':
         return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Next/Last event
-      case 'Tags_Queries':
+      case 'tags-queries':
         return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
       default:
         return '200px 280px 180px 200px 100px 180px';
@@ -60,18 +60,12 @@ interface ListHeaderProps {
 }
 
 const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
-  const getRegistryType = () => {
-    if (registryAddress === registryMap.Tokens) return 'Tokens';
-    if (registryAddress === registryMap.Single_Tags) return 'Single_Tags';
-    if (registryAddress === registryMap.CDN) return 'CDN';
-    if (registryAddress === registryMap.Tags_Queries) return 'Tags_Queries';
-    return undefined;
-  };
+  const registryType = registryAddress ? getRegistryKey(registryAddress) : undefined;
 
   // Tokens registry columns
-  if (registryAddress === registryMap.Tokens) {
+  if (registryType === 'tokens') {
     return (
-      <HeaderRow registryType={getRegistryType()}>
+      <HeaderRow registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Logo</HeaderCell>
         <HeaderCell>Symbol</HeaderCell>
@@ -86,9 +80,9 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   }
 
   // Single Tags registry columns
-  if (registryAddress === registryMap.Single_Tags) {
+  if (registryType === 'single-tags') {
     return (
-      <HeaderRow registryType={getRegistryType()}>
+      <HeaderRow registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Project</HeaderCell>
         <HeaderCell>Tag</HeaderCell>
@@ -101,9 +95,9 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   }
 
   // CDN registry columns
-  if (registryAddress === registryMap.CDN) {
+  if (registryType === 'cdn') {
     return (
-      <HeaderRow registryType={getRegistryType()}>
+      <HeaderRow registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Domain</HeaderCell>
         <HeaderCell>Website</HeaderCell>
@@ -115,9 +109,9 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   }
 
   // Tags Queries registry columns
-  if (registryAddress === registryMap.Tags_Queries) {
+  if (registryType === 'tags-queries') {
     return (
-      <HeaderRow registryType={getRegistryType()}>
+      <HeaderRow registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Description</HeaderCell>
         <HeaderCell>Repository</HeaderCell>
@@ -131,7 +125,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
 
   // Default fallback
   return (
-    <HeaderRow registryType={getRegistryType()}>
+    <HeaderRow registryType={registryType}>
       <HeaderCell>Name</HeaderCell>
       <HeaderCell>Website</HeaderCell>
       <HeaderCell>Address</HeaderCell>

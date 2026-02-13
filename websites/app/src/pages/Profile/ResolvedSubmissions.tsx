@@ -1,9 +1,9 @@
-import React, { useMemo, useEffect, useRef } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
 import styled from 'styled-components'
 import ItemCard from './ItemCard'
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
+import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
 import { chains, getNamespaceForChainId } from 'utils/chains'
@@ -62,18 +62,16 @@ const ResolvedSubmissions: React.FC<Props> = ({
   isFilterChanging,
   setIsFilterChanging,
 }) => {
-  const [searchParams] = useSearchParams()
-  const currentPage = parseInt(searchParams.get('page') ?? '1', 10)
+  const filters = useProfileFilters()
+  const currentPage = filters.page
   const itemsPerPage = 20
   const skip = itemsPerPage * (currentPage - 1)
-  const navigate = useNavigate()
-  const location = useLocation()
   const scrollTop = useScrollTop()
   const queryAddress = address?.toLowerCase()
 
-  const statusParams = searchParams.getAll('status')
-  const disputedParams = searchParams.getAll('disputed')
-  const orderDirection = searchParams.get('orderDirection') || 'desc'
+  const statusParams = filters.status
+  const disputedParams = filters.disputed
+  const orderDirection = filters.orderDirection
 
   const defaultResolvedStatuses = ['Registered', 'Absent']
   const status =
@@ -85,7 +83,7 @@ const ResolvedSubmissions: React.FC<Props> = ({
       ? disputedParams.map((d) => d === 'true')
       : [true, false]
 
-  const searchTerm = searchParams.get('search') || ''
+  const searchTerm = filters.text
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -216,32 +214,16 @@ const ResolvedSubmissions: React.FC<Props> = ({
 
   const handlePageChange = (newPage: number) => {
     scrollTop(true)
-    const params = new URLSearchParams(location.search)
-    params.set('page', String(newPage))
-    navigate(`${location.pathname}?${params.toString()}`)
+    filters.setPage(newPage)
   }
 
-  // Track when fetching starts
-  const hasFetchingStartedRef = useRef(false)
-
+  // Clear isFilterChanging once the query settles.
   useEffect(() => {
-    if (isFetching && isFilterChanging && !hasFetchingStartedRef.current) {
-      hasFetchingStartedRef.current = true
-    }
-  }, [isFetching, isFilterChanging])
-
-  // Clear filter changing state ONLY after fetching has started AND completed
-  useEffect(() => {
-    if (!isFetching && isFilterChanging && hasFetchingStartedRef.current) {
-      setIsFilterChanging(false)
-      hasFetchingStartedRef.current = false
-    }
-  }, [isFetching, isFilterChanging, setIsFilterChanging])
-
-  // Reset fetching tracker when filter changes
-  useEffect(() => {
-    hasFetchingStartedRef.current = false
-  }, [chainFilters, searchParams])
+    if (!isFilterChanging) return
+    if (isFetching) return
+    const timer = setTimeout(() => setIsFilterChanging(false), 50)
+    return () => clearTimeout(timer)
+  }, [isFilterChanging, isFetching, setIsFilterChanging])
 
   if (isLoading || isFilterChanging)
     return (
@@ -254,7 +236,7 @@ const ResolvedSubmissions: React.FC<Props> = ({
   return (
     <>
       {data.items.map((item) => (
-        <ItemCard key={item.id} item={item} />
+        <ItemCard key={item.id} item={item} fromProfile="resolved" />
       ))}
       {totalPages > 1 && (
         <StyledPagination

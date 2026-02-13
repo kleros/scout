@@ -7,6 +7,7 @@ import { GraphItemDetails } from '../../utils/itemDetails'
 const FETCH_ITEM_DETAILS_QUERY = gql`
   query FetchItemDetails($id: String!) {
     litem: LItem_by_pk(id: $id) {
+      id
       key0
       key1
       key2

@@ -8,6 +8,7 @@ export interface ExportFilters {
   registryId?: string
   status?: string[]
   disputed?: boolean[]
+  hasEverBeenDisputed?: boolean
   fromDate?: string
   toDate?: string
   network?: string[]
@@ -28,6 +29,7 @@ export const useExportItems = (filters: ExportFilters) => {
         registryId,
         status = ['Registered'],
         disputed = [false, true],
+        hasEverBeenDisputed = false,
         fromDate,
         toDate,
         network = [],
@@ -117,6 +119,7 @@ export const useExportItems = (filters: ExportFilters) => {
         `{registry_id: {_eq: "${registryId}"}}`,
         `{status: {_in: $status}}`,
         `{disputed: {_in: $disputed}}`,
+        hasEverBeenDisputed && `{requests: {disputed: {_eq: true}}}`,
         networkQueryObject && `${networkQueryObject}`,
         textFilterObject && `${textFilterObject}`,
         dateFilterObject && `${dateFilterObject}`,
@@ -207,7 +210,7 @@ export const useExportItems = (filters: ExportFilters) => {
 
           let items = result.litems
 
-          // Client-side filtering for non-Tags_Queries registries
+          // Client-side filtering for non-tags-queries registries
           if (!isTagsQueriesRegistry && network.length > 0) {
             const selectedPrefixes = selectedChainIds.map((chainId) => {
               const namespace = getNamespaceForChainId(chainId)

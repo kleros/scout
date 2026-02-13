@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
-import { useSearchParams, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
-import { GraphItem, registryMap } from 'utils/items'
+import { GraphItem, registryMap, buildItemPath, readableStatusMap, challengedStatusMap, statusDescriptionMap, bountyDescriptionMap } from 'utils/items'
+import Tooltip from 'components/Tooltip'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
@@ -237,17 +238,6 @@ const WrappedWebsiteContainer = styled.div`
   margin-top: -8px;
 `
 
-const readableStatusMap = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-}
-
-const challengedStatusMap = {
-  RegistrationRequested: 'Challenged Submission',
-  ClearingRequested: 'Challenged Removal',
-}
 
 interface StatusProps {
   status:
@@ -272,8 +262,12 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
 
   return (
     <CardStatus status={label}>
-      {label}
-      {readableBounty && <BountyText> ${readableBounty}</BountyText>}
+      <Tooltip data-tooltip={statusDescriptionMap[label] || ''}>{label}</Tooltip>
+      {readableBounty && (
+        <Tooltip data-tooltip={bountyDescriptionMap[status] || ''}>
+          <BountyText> ${readableBounty}</BountyText>
+        </Tooltip>
+      )}
     </CardStatus>
   )
 })
@@ -301,9 +295,8 @@ const Item = React.memo(
     seamlessBottom = false,
   }: ItemProps) => {
     const [imgLoaded, setImgLoaded] = useState(false)
-    const [searchParams] = useSearchParams()
     const openAttachment = useAttachment()
-    const itemUrl = `/item/${item.id}?${searchParams.toString()}`
+    const itemUrl = buildItemPath(item.id || item.itemID, item.registryAddress)
 
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests?.[0]?.submissionTime,
@@ -338,7 +331,7 @@ const Item = React.memo(
         />
         <CardContent>
           <UpperCardContent>
-            {item.registryAddress === registryMap.Tags_Queries && (
+            {item.registryAddress === registryMap['tags-queries'] && (
               <>
                 <LabelAndValue>
                   <ChainIdLabel>
@@ -362,7 +355,7 @@ const Item = React.memo(
                 </b>
               </>
             )}
-            {item.registryAddress === registryMap.Single_Tags && (
+            {item.registryAddress === registryMap['single-tags'] && (
               <>
                 <strong>
                   <AddressDisplay address={getPropValue('Contract Address')} />
@@ -378,7 +371,7 @@ const Item = React.memo(
                 </StyledWebsiteAnchor>
               </>
             )}
-            {item.registryAddress === registryMap.Tokens && (
+            {item.registryAddress === registryMap['tokens'] && (
               <>
                 <AddressDisplay address={getPropValue('Address')} />
                 {getPropValue('Logo') && (
@@ -412,7 +405,7 @@ const Item = React.memo(
                 ) : null}
               </>
             )}
-            {item.registryAddress === registryMap.CDN && (
+            {item.registryAddress === registryMap['cdn'] && (
               <>
                 <AddressDisplay address={getPropValue('Contract address')} />
                 <WrappedWebsiteContainer>
@@ -465,7 +458,7 @@ const Item = React.memo(
                 {actionButtonCost ? ` — ${actionButtonCost}` : ''}
               </ActionButton>
             ) : !showActionButtons ? (
-              <DetailsButton to={itemUrl}>
+              <DetailsButton to={itemUrl} state={{ fromApp: true }}>
                 Details
               </DetailsButton>
             ) : null}

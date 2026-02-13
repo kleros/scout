@@ -26,16 +26,16 @@ const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
   const openAttachment = useAttachment();
   const { data: countsData } = useItemCountsQuery();
 
-  const registry: FocusedRegistry | undefined = useMemo(() => {
+  const policyURI = useMemo(() => {
     if (!registryName || !countsData) return undefined;
-    return countsData[registryName];
+    return countsData[registryName]?.metadata?.policyURI;
   }, [registryName, countsData]);
 
   return (
     <StyledLabel
       onClick={() => {
-        if (registry?.metadata.policyURI) {
-          openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
+        if (policyURI) {
+          openAttachment(`https://cdn.kleros.link${policyURI}`);
         }
       }}
     >

@@ -38,12 +38,12 @@ const FieldValue = styled.span`
 
 interface ItemFieldsDisplayProps {
   detailsData: any
-  registryParsedFromItemId: string
+  registryAddress: string
 }
 
 const ItemFieldsDisplay: React.FC<ItemFieldsDisplayProps> = ({
   detailsData,
-  registryParsedFromItemId,
+  registryAddress,
 }) => {
   const fieldsToDisplay = useMemo(() => {
     const getPropValue = (label: string) => {
@@ -52,19 +52,19 @@ const ItemFieldsDisplay: React.FC<ItemFieldsDisplayProps> = ({
 
     const fields: { label: string; value: string }[] = []
 
-    if (registryParsedFromItemId === registryMap.Tokens) {
+    if (registryAddress === registryMap['tokens']) {
       // Tokens: Show Decimals (not shown in card)
       const decimals = getPropValue('Decimals')
       if (decimals) {
         fields.push({ label: 'Decimals', value: decimals })
       }
-    } else if (registryParsedFromItemId === registryMap.Single_Tags) {
+    } else if (registryAddress === registryMap['single-tags']) {
       // Address Tags: Show Public Note (not shown in card)
       const publicNote = getPropValue('Public Note')
       if (publicNote) {
         fields.push({ label: 'Public Note', value: publicNote })
       }
-    } else if (registryParsedFromItemId === registryMap.Tags_Queries) {
+    } else if (registryAddress === registryMap['tags-queries']) {
       // Tags Queries: Show Commit hash (not shown in card)
       const commitHash = getPropValue('Commit hash')
       if (commitHash) {
@@ -74,7 +74,7 @@ const ItemFieldsDisplay: React.FC<ItemFieldsDisplayProps> = ({
     // CDN has all fields shown in card, so nothing to add
 
     return fields
-  }, [detailsData, registryParsedFromItemId])
+  }, [detailsData, registryAddress])
 
   // Don't render if there are no fields to display
   if (fieldsToDisplay.length === 0) {

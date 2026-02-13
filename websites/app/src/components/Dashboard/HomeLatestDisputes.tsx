@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import styled from 'styled-components';
 import { useKlerosDisputes, getDisputePeriodName, formatDisputeDeadline } from 'hooks/useKlerosDisputes';
 import LawBalanceIcon from 'assets/svgs/icons/law-balance.svg';
@@ -112,7 +112,7 @@ const EmptyState = styled.div`
   font-size: 14px;
 `;
 
-const ViewButton = styled.button`
+const ViewButton = styled.a`
   padding: 8px 16px;
   border-radius: 9999px;
   font-size: 12px;
@@ -125,6 +125,7 @@ const ViewButton = styled.button`
   color: ${({ theme }) => theme.primaryText};
   border-color: ${({ theme }) => theme.buttonSecondaryBorder};
   flex-shrink: 0;
+  text-decoration: none;
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -151,11 +152,6 @@ interface KlerosDispute {
 
 export const HomeLatestDisputes: React.FC = () => {
   const { data: disputes = [], isLoading, error } = useKlerosDisputes(9);
-
-  const handleDisputeClick = useCallback((dispute: KlerosDispute) => {
-    const klerosboardUrl = `https://klerosboard.com/100/cases/${dispute.disputeIDNumber}`;
-    window.open(klerosboardUrl, '_blank');
-  }, []);
 
   if (isLoading) {
     return (
@@ -211,7 +207,11 @@ export const HomeLatestDisputes: React.FC = () => {
                   <span>{periodName}: {timeAgo}</span>
                 </TimeInfo>
               </DisputeInfo>
-              <ViewButton onClick={() => handleDisputeClick(dispute)}>
+              <ViewButton
+                href={`https://klerosboard.com/100/cases/${dispute.disputeIDNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 View Case
               </ViewButton>
             </DisputeRow>
