@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { formatEther } from 'ethers';
-import { GraphItem, registryMap, buildItemPath, getRegistryKey, readableStatusMap, challengedStatusMap, statusDescriptionMap } from 'utils/items';
+import { GraphItem, registryMap, buildItemPath, getRegistryKey, readableStatusMap, challengedStatusMap, statusDescriptionMap, bountyDescriptionMap } from 'utils/items';
 import Tooltip from 'components/Tooltip';
 import AddressDisplay from 'components/AddressDisplay';
 // import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'; // UNUSED: Only needed for submitter display which is commented out
@@ -381,11 +381,7 @@ const ItemListView = React.memo(
             <StatusCell status={status}>
               <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
               {readableBounty && (
-                <Tooltip data-tooltip={
-                  item.status === 'ClearingRequested'
-                    ? 'Reward for successfully challenging this pending removal if the item complies with the list policy.'
-                    : 'Reward for successfully challenging this pending submission if it does not comply with the list policy.'
-                }>
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
                   <BountyBadge> ${readableBounty}</BountyBadge>
                 </Tooltip>
               )}
@@ -478,11 +474,7 @@ const ItemListView = React.memo(
             <StatusCell status={status}>
               <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
               {readableBounty && (
-                <Tooltip data-tooltip={
-                  item.status === 'ClearingRequested'
-                    ? 'Reward for successfully challenging this pending removal if the item complies with the list policy.'
-                    : 'Reward for successfully challenging this pending submission if it does not comply with the list policy.'
-                }>
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
                   <BountyBadge> ${readableBounty}</BountyBadge>
                 </Tooltip>
               )}
@@ -548,11 +540,7 @@ const ItemListView = React.memo(
             <StatusCell status={status}>
               <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
               {readableBounty && (
-                <Tooltip data-tooltip={
-                  item.status === 'ClearingRequested'
-                    ? 'Reward for successfully challenging this pending removal if the item complies with the list policy.'
-                    : 'Reward for successfully challenging this pending submission if it does not comply with the list policy.'
-                }>
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
                   <BountyBadge> ${readableBounty}</BountyBadge>
                 </Tooltip>
               )}
@@ -617,11 +605,7 @@ const ItemListView = React.memo(
             <StatusCell status={status}>
               <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
               {readableBounty && (
-                <Tooltip data-tooltip={
-                  item.status === 'ClearingRequested'
-                    ? 'Reward for successfully challenging this pending removal if the item complies with the list policy.'
-                    : 'Reward for successfully challenging this pending submission if it does not comply with the list policy.'
-                }>
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
                   <BountyBadge> ${readableBounty}</BountyBadge>
                 </Tooltip>
               )}

@@ -76,6 +76,7 @@ const StatusCircle = styled.div<{ status: string }>`
       case 'Absent': return '#ef4444'; // red for removed
       case 'true': return '#ef4444'; // red for challenged
       case 'false': return '#22c55e'; // green for unchallenged
+      case 'previously-disputed': return '#a855f7'; // purple for previously disputed
       default: return '#6b7280'; // gray for default
     }
   }};
@@ -256,6 +257,16 @@ const FilterModal: React.FC<FilterModalProps> = ({
                       </OnlyButton>
                     </CheckboxItem>
                   ))}
+                  <CheckboxItem>
+                    <CheckboxLabel>
+                      <Checkbox
+                        checked={filters.hasEverBeenDisputed}
+                        onChange={() => filters.toggleHasEverBeenDisputed()}
+                      />
+                      <StatusCircle status="previously-disputed" />
+                      Previously Disputed
+                    </CheckboxLabel>
+                  </CheckboxItem>
                 </CheckboxGroup>
               </FilterGroup>
 

@@ -252,6 +252,7 @@ const Home: React.FC = () => {
     registryName,
     status: filters.status,
     disputed: filters.disputed,
+    hasEverBeenDisputed: filters.hasEverBeenDisputed,
     text: filters.text,
     orderDirection: filters.orderDirection,
     page: filters.page,
@@ -275,9 +276,9 @@ const Home: React.FC = () => {
     const allChains = [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'];
     const hasActiveChainFilter = chainFilters.length > 0 && chainFilters.length < allChains.length;
 
-    // If filters are active (text search or chain filters), we can't know total count
+    // If filters are active (text search, chain filters, or previously disputed), we can't know total count
     // Return null to hide pagination page numbers and use simpler prev/next
-    if (text || hasActiveChainFilter) {
+    if (text || hasActiveChainFilter || filters.hasEverBeenDisputed) {
       return null;
     }
 
@@ -310,10 +311,11 @@ const Home: React.FC = () => {
   const filterKey = useMemo(() => [
     filters.status.slice().sort().join(','),
     filters.disputed.slice().sort().join(','),
+    String(filters.hasEverBeenDisputed),
     filters.text,
     [...chainFilters].sort().join(','),
     filters.orderDirection,
-  ].join('|'), [filters.status, filters.disputed, filters.text, filters.orderDirection, chainFilters]);
+  ].join('|'), [filters.status, filters.disputed, filters.hasEverBeenDisputed, filters.text, filters.orderDirection, chainFilters]);
 
   const prevFilterKeyRef = useRef<string | null>(null);
   const hasFetchingStartedRef = useRef(false);

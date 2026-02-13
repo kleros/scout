@@ -10,6 +10,7 @@ interface UseItemsQueryParams {
   registryNames?: string[]
   status: string[]
   disputed: string[]
+  hasEverBeenDisputed?: boolean
   text: string
   orderDirection: string
   page: number
@@ -22,6 +23,7 @@ export const useItemsQuery = ({
   registryNames,
   status,
   disputed,
+  hasEverBeenDisputed = false,
   text,
   orderDirection,
   page,
@@ -46,6 +48,7 @@ export const useItemsQuery = ({
     registry.slice().sort().join(','),
     status.slice().sort().join(','),
     disputed.slice().sort().join(','),
+    hasEverBeenDisputed,
     chainFilters.slice().sort().join(','),
     text,
     orderDirection,
@@ -120,6 +123,7 @@ export const useItemsQuery = ({
             {registry_id: {_in :$registry}},
             {status: {_in: $status}},
             {disputed: {_in: $disputed}},
+            ${hasEverBeenDisputed ? '{requests: {disputed: {_eq: true}}},' : ''}
             ${networkQueryObject},
             ${text === '' ? '' : textFilterObject}
           ]

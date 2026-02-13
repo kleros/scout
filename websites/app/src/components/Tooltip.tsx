@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import styled from 'styled-components'
 
@@ -17,7 +17,7 @@ const TooltipBox = styled.div`
   font-weight: 400;
   white-space: normal;
   width: max-content;
-  max-width: 280px;
+  max-width: min(280px, calc(100vw - 16px));
   line-height: 1.4;
   pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -28,17 +28,46 @@ interface TooltipProps {
   'data-tooltip': string
   children: React.ReactNode
   className?: string
+  placement?: 'top' | 'bottom'
 }
 
-const Tooltip: React.FC<TooltipProps> = ({ 'data-tooltip': text, children, className }) => {
+const Tooltip: React.FC<TooltipProps> = ({
+  'data-tooltip': text,
+  children,
+  className,
+  placement = 'top',
+}) => {
   const [visible, setVisible] = useState(false)
-  const [pos, setPos] = useState({ top: 0, left: 0 })
-  const ref = useRef<HTMLSpanElement>(null)
+  const [style, setStyle] = useState<React.CSSProperties>({})
+  const triggerRef = useRef<HTMLSpanElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
+
+  // Measure and position after the tooltip is in the DOM but before paint.
+  useLayoutEffect(() => {
+    if (!visible || !triggerRef.current || !tooltipRef.current) return
+
+    const triggerRect = triggerRef.current.getBoundingClientRect()
+    const tooltipRect = tooltipRef.current.getBoundingClientRect()
+    const padding = 8
+
+    // Vertical
+    const top =
+      placement === 'bottom'
+        ? triggerRect.bottom + 6
+        : triggerRect.top - 6 - tooltipRect.height
+
+    // Horizontal: center on trigger, then clamp within viewport
+    let left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
+    left = Math.max(
+      padding,
+      Math.min(left, window.innerWidth - tooltipRect.width - padding),
+    )
+
+    setStyle({ top, left })
+  }, [visible, placement])
 
   const show = useCallback(() => {
-    if (!ref.current || !text) return
-    const rect = ref.current.getBoundingClientRect()
-    setPos({ top: rect.top - 6, left: rect.left })
+    if (!text) return
     setVisible(true)
   }, [text])
 
@@ -46,16 +75,21 @@ const Tooltip: React.FC<TooltipProps> = ({ 'data-tooltip': text, children, class
 
   return (
     <>
-      <Trigger ref={ref} className={className} onMouseEnter={show} onMouseLeave={hide}>
+      <Trigger
+        ref={triggerRef}
+        className={className}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+      >
         {children}
       </Trigger>
       {visible &&
         text &&
         createPortal(
-          <TooltipBox style={{ top: pos.top, left: pos.left, transform: 'translateY(-100%)' }}>
+          <TooltipBox ref={tooltipRef} style={style}>
             {text}
           </TooltipBox>,
-          document.body
+          document.body,
         )}
     </>
   )

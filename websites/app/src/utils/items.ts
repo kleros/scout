@@ -69,6 +69,12 @@ export const statusDescriptionMap: Record<string, string> = {
   'Challenged Removal': 'This removal request has been challenged. It is waiting for evidence and an arbitrator\'s final decision.',
 }
 
+/** Tooltip descriptions for the bounty/reward amount next to status */
+export const bountyDescriptionMap: Record<string, string> = {
+  'ClearingRequested': 'Reward for successfully challenging this pending removal if the item complies with the list policy.',
+  'RegistrationRequested': 'Reward for successfully challenging this pending submission if it does not comply with the list policy.',
+}
+
 /** Resolves a registry address to its registry key */
 export const getRegistryKey = (registryAddress: string): string | undefined =>
   revRegistryMap[registryAddress]

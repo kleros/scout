@@ -8,6 +8,7 @@ export interface ExportFilters {
   registryId?: string
   status?: string[]
   disputed?: boolean[]
+  hasEverBeenDisputed?: boolean
   fromDate?: string
   toDate?: string
   network?: string[]
@@ -28,6 +29,7 @@ export const useExportItems = (filters: ExportFilters) => {
         registryId,
         status = ['Registered'],
         disputed = [false, true],
+        hasEverBeenDisputed = false,
         fromDate,
         toDate,
         network = [],
@@ -117,6 +119,7 @@ export const useExportItems = (filters: ExportFilters) => {
         `{registry_id: {_eq: "${registryId}"}}`,
         `{status: {_in: $status}}`,
         `{disputed: {_in: $disputed}}`,
+        hasEverBeenDisputed && `{requests: {disputed: {_eq: true}}}`,
         networkQueryObject && `${networkQueryObject}`,
         textFilterObject && `${textFilterObject}`,
         dateFilterObject && `${dateFilterObject}`,

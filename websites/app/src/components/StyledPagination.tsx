@@ -15,6 +15,7 @@ const PaginationWrapper = styled.nav`
   display: flex;
   gap: 8px;
   justify-content: center;
+  flex-wrap: wrap;
 `;
 
 const pageButtonStyles = css<{ selected?: boolean }>`

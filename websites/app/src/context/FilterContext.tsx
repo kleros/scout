@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react'
 export interface FilterState {
   status: string[]
   disputed: string[]
+  hasEverBeenDisputed: boolean
   page: number
   orderDirection: string
   text: string
@@ -13,6 +14,7 @@ export interface FilterActions {
   toggleStatus: (status: string) => void
   setDisputed: (disputed: string[]) => void
   toggleDisputed: (disputed: string) => void
+  toggleHasEverBeenDisputed: () => void
   setPage: (page: number) => void
   setOrderDirection: (dir: string) => void
   setText: (text: string) => void
@@ -23,6 +25,7 @@ export type FilterSlice = FilterState & FilterActions
 const REGISTRY_DEFAULTS: FilterState = {
   status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
   disputed: ['true', 'false'],
+  hasEverBeenDisputed: false,
   page: 1,
   orderDirection: 'desc',
   text: '',
@@ -31,6 +34,7 @@ const REGISTRY_DEFAULTS: FilterState = {
 const PROFILE_DEFAULTS: FilterState = {
   status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
   disputed: ['true', 'false'],
+  hasEverBeenDisputed: false,
   page: 1,
   orderDirection: 'desc',
   text: '',
@@ -63,6 +67,10 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
     }))
   }, [])
 
+  const toggleHasEverBeenDisputed = useCallback(() => {
+    setState(prev => ({ ...prev, hasEverBeenDisputed: !prev.hasEverBeenDisputed, page: 1 }))
+  }, [])
+
   const setPage = useCallback((page: number) => {
     setState(prev => ({ ...prev, page }))
   }, [])
@@ -79,6 +87,7 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
     ...state,
     setStatus, toggleStatus,
     setDisputed, toggleDisputed,
+    toggleHasEverBeenDisputed,
     setPage, setOrderDirection, setText,
   }
 }
