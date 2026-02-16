@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
 import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getItemDisplayStatus } from 'utils/items';
@@ -48,7 +49,7 @@ const ActivityRow = styled.div`
   align-items: flex-start;
   gap: 8px;
   row-gap: 8px;
-  padding: 12px 0;
+  padding: 10px 0;
   border-bottom: 1px solid ${({ theme }) => theme.divider};
   transition: all 0.2s ease;
   flex-wrap: wrap;
@@ -66,9 +67,11 @@ const ActivityRow = styled.div`
     border-radius: 8px;
   }
 
-  @media (max-width: 767px) {
-    padding: 10px 0;
-  }
+  ${landscapeStyle(
+    () => css`
+      padding: 12px 0;
+    `
+  )}
 `;
 
 const LeftSection = styled.div`
@@ -76,14 +79,17 @@ const LeftSection = styled.div`
   align-items: center;
   gap: 8px;
   row-gap: 6px;
-  flex: 1 1 auto;
+  flex: 1 1 100%;
+  max-width: 100%;
   min-width: 0;
   flex-wrap: wrap;
 
-  @media (max-width: 767px) {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
+  ${landscapeStyle(
+    () => css`
+      flex: 1 1 auto;
+      max-width: none;
+    `
+  )}
 `;
 
 const ItemName = styled.span`
@@ -94,48 +100,39 @@ const ItemName = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-shrink: 1;
-  max-width: 100px;
+  max-width: 150px;
 
-  @media (min-width: 480px) {
-    max-width: 150px;
-  }
-
-  @media (min-width: 768px) {
-    max-width: 180px;
-  }
+  ${landscapeStyle(
+    () => css`
+      max-width: 180px;
+    `
+  )}
 `;
 
 const RegistryName = styled.span`
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   color: ${({ theme }) => theme.secondaryText};
   flex-shrink: 0;
   white-space: nowrap;
 
-  @media (max-width: 767px) {
-    font-size: 13px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 14px;
+    `
+  )}
 `;
 
 const TimeInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
   flex-shrink: 0;
   flex-wrap: nowrap;
   white-space: nowrap;
-  flex-basis: 100%;
-
-  @media (min-width: 480px) {
-    flex-basis: auto;
-    font-size: 12px;
-  }
-
-  @media (min-width: 768px) {
-    flex-basis: auto;
-  }
+  flex-basis: auto;
 
   svg {
     width: 12px;
@@ -143,10 +140,12 @@ const TimeInfo = styled.div`
     flex-shrink: 0;
     opacity: 0.8;
 
-    @media (min-width: 768px) {
-      width: 14px;
-      height: 14px;
-    }
+    ${landscapeStyle(
+      () => css`
+        width: 14px;
+        height: 14px;
+      `
+    )}
   }
 
   span {
@@ -160,18 +159,18 @@ const RightSection = styled.div`
   align-items: center;
   gap: 8px;
   row-gap: 6px;
+  flex: 0 0 100%;
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: space-between;
 
-  @media (min-width: 768px) {
-    gap: 12px;
-    justify-content: flex-start;
-  }
-
-  @media (max-width: 767px) {
-    flex: 0 0 100%;
-  }
+  ${landscapeStyle(
+    () => css`
+      flex: initial;
+      gap: 12px;
+      justify-content: flex-start;
+    `
+  )}
 `;
 
 const StatusBadge = styled.div<{ status: string }>`
@@ -183,9 +182,11 @@ const StatusBadge = styled.div<{ status: string }>`
   white-space: nowrap;
   flex-shrink: 0;
 
-  @media (min-width: 768px) {
-    font-size: 13px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 13px;
+    `
+  )}
 
   &:before {
     content: '';
@@ -213,9 +214,11 @@ const StatusGroup = styled.div`
   gap: 8px;
   flex-wrap: nowrap;
 
-  @media (min-width: 768px) {
-    gap: 12px;
-  }
+  ${landscapeStyle(
+    () => css`
+      gap: 12px;
+    `
+  )}
 `;
 
 const ChainInfo = styled.div`
@@ -248,19 +251,23 @@ const ViewButton = styled(Link)`
   white-space: nowrap;
   text-decoration: none;
 
-  @media (min-width: 768px) {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
+  ${landscapeStyle(
+    () => css`
+      padding: 6px 12px;
+      font-size: 12px;
+    `
+  )}
 
   svg {
     width: 10px;
     height: 10px;
 
-    @media (min-width: 768px) {
-      width: 12px;
-      height: 12px;
-    }
+    ${landscapeStyle(
+      () => css`
+        width: 12px;
+        height: 12px;
+      `
+    )}
 
     path {
       fill: ${({ theme }) => theme.primaryText};

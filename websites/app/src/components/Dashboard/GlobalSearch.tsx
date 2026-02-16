@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { useDebounce } from 'react-use';
 import { useNavigate } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
@@ -142,9 +143,11 @@ const ResultName = styled.span`
   text-overflow: ellipsis;
   max-width: 150px;
 
-  @media (min-width: 768px) {
-    max-width: none;
-  }
+  ${landscapeStyle(
+    () => css`
+      max-width: none;
+    `
+  )}
 `;
 
 const ResultRegistry = styled.span`

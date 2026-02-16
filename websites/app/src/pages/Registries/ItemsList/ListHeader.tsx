@@ -1,5 +1,6 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { getRegistryKey } from 'utils/items';
 
 const HeaderRow = styled.div<{ registryType?: string }>`
@@ -42,10 +43,12 @@ const HeaderCell = styled.div`
   min-width: 0;
   padding: 0;
 
-  @media (min-width: 1200px) {
-    font-size: 12px;
-    letter-spacing: 0.6px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 12px;
+      letter-spacing: 0.6px;
+    `
+  )}
 `;
 
 const CenteredHeaderCell = styled(HeaderCell)`

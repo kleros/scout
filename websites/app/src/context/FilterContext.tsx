@@ -105,6 +105,11 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
         disputed: next && !prev.disputed.includes('false')
           ? [...prev.disputed, 'false']
           : prev.disputed,
+        // When enabling, also ensure "Absent" (Removed/Rejected) is selected
+        // since many previously challenged items end up removed
+        status: next && !prev.status.includes('Absent')
+          ? [...prev.status, 'Absent']
+          : prev.status,
         page: 1,
       }
     })
@@ -117,6 +122,10 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
         ? [...disputed, 'false']
         : disputed,
       hasEverBeenDisputed,
+      // When enabling previously disputed, ensure "Absent" (Removed/Rejected) is selected
+      status: hasEverBeenDisputed && !prev.status.includes('Absent')
+        ? [...prev.status, 'Absent']
+        : prev.status,
       page: 1,
     }))
   }, [])

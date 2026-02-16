@@ -1,5 +1,6 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
 import Skeleton from 'react-loading-skeleton'
 import { responsiveSize } from 'styles/responsiveSize'
 import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
@@ -11,21 +12,24 @@ import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
 
 const AppealInfoBox = styled.div`
   background: transparent;
-  padding: 20px 0;
   margin: 16px 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px 48px;
-  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
   position: relative;
   z-index: 1;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-    padding: 16px 0;
-  }
+  ${landscapeStyle(
+    () => css`
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 24px 48px;
+      align-items: center;
+      padding: 20px 0;
+    `
+  )}
 `
 
 const AppealInfoItem = styled.div`

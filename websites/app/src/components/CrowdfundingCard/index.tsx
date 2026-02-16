@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
-import styled, { useTheme } from 'styled-components'
+import styled, { css, useTheme } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
 import { PARTY, SUBGRAPH_RULING, itemToStatusCode, STATUS_CODE } from '../../utils/itemStatus'
 import useRequiredFees from '../../hooks/useRequiredFees'
@@ -40,12 +41,14 @@ const CardDescription = styled.p`
 
 const Content = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 24px;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: repeat(2, 1fr);
+    `
+  )}
 `
 
 const Section = styled.div`

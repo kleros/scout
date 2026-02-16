@@ -113,11 +113,7 @@ const ItemName = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-shrink: 1;
-  max-width: 120px;
-
-  @media (min-width: 480px) {
-    max-width: 180px;
-  }
+  max-width: 180px;
 `;
 
 const EventInfo = styled.div`

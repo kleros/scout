@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
-import styled, { useTheme } from 'styled-components'
+import styled, { css, useTheme } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
 import { Link } from 'react-router-dom'
 import { CustomTimeline } from '@kleros/ui-components-library'
 import { formatTimestamp } from 'utils/formatTimestamp'
@@ -30,15 +31,17 @@ const StyledTimeline = styled(CustomTimeline)`
     margin-bottom: 0;
 
     > div:not(:first-child) {
-      margin-left: 20px;
-      margin-bottom: 18px;
-      gap: 2px;
+      margin-left: 16px;
+      margin-bottom: 16px;
+      gap: 4px;
 
-      @media (max-width: 900px) {
-        margin-left: 16px;
-        margin-bottom: 16px;
-        gap: 4px;
-      }
+      ${landscapeStyle(
+        () => css`
+          margin-left: 20px;
+          margin-bottom: 18px;
+          gap: 2px;
+        `
+      )}
     }
 
     &:last-child > div:not(:first-child) {

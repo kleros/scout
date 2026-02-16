@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { useFilters, DateRangeOption, DATE_RANGE_PRESETS } from 'context/FilterContext';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
 import { ModalButton } from './ModalButtons';
@@ -41,8 +42,14 @@ const SortBySectionTitle = styled(FilterGroupTitle)`
 
 const SectionGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
+
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: 1fr 1fr;
+    `
+  )}
 `;
 
 const FilterColumn = styled.div`

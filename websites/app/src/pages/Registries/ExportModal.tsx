@@ -64,12 +64,15 @@ const HeaderContent = styled.div`
 
 const StatusAndDateRow = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 32px;
-  flex-wrap: wrap;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
+  ${landscapeStyle(
+    () => css`
+      flex-direction: row;
+      flex-wrap: wrap;
+    `
+  )}
 `
 
 const ExportButton = styled(ModalButton)<{ disabled: boolean }>`

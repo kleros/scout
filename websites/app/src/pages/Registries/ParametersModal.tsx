@@ -1,5 +1,6 @@
 import React, { useMemo, useRef } from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther } from 'ethers'
 import humanizeDuration from 'humanize-duration'
 import Skeleton from 'react-loading-skeleton'
@@ -20,12 +21,14 @@ import {
 
 const ParamsGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 14px 32px;
 
-  @media (max-width: 600px) {
-    grid-template-columns: 1fr;
-  }
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: 1fr 1fr;
+    `
+  )}
 `
 
 const ParamItem = styled.div`

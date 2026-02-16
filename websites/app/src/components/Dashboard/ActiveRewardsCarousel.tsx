@@ -50,11 +50,6 @@ const CardsGrid = styled.div`
   gap: 12px;
   width: 100%;
 
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-  }
-
   ${landscapeStyle(
     () => css`
       grid-template-columns: repeat(3, 1fr);
