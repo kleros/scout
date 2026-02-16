@@ -129,7 +129,7 @@ export const chains = [
     namespace: 'eip155',
     name: 'MegaETH',
     label: 'MEGA',
-    explorer: 'megaeth.blockscout.com',
+    explorer: 'mega.etherscan.io',
   },
   {
     id: '000000000019d6689c085ae165831e93',
