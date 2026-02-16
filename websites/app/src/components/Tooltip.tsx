@@ -20,7 +20,7 @@ const TooltipBox = styled.div`
   max-width: min(280px, calc(100vw - 16px));
   line-height: 1.4;
   pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowTooltip};
   border: 1px solid ${({ theme }) => theme.stroke};
 `
 

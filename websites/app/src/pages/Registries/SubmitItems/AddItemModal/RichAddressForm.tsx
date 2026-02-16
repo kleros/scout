@@ -4,6 +4,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import Select, { components } from 'react-select'
 import { chains } from 'utils/chains'
 import { StyledWholeField, FieldLabel } from './index'
+import Tooltip from 'components/Tooltip'
 
 import EthereumIcon from 'svgs/chains/ethereum.svg'
 import SolanaIcon from 'svgs/chains/solana.svg'
@@ -165,7 +166,7 @@ const getCustomSelectStyles = (theme: any) => ({
     borderRadius: '12px',
     marginTop: '4px',
     overflow: 'hidden',
-    boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.4)',
+    boxShadow: theme.shadowModal,
   }),
   menuPortal: (provided: any) => ({
     ...provided,
@@ -238,12 +239,15 @@ const RichAddressForm: React.FC<{
   setAddress: Dispatch<SetStateAction<string>>
   registry: string
   domain?: string // checks for dupe richAddress - domain pairs, in domains.
+  tooltip?: string
 }> = (p) => {
   const theme = useTheme()
 
   return (
     <StyledWholeField>
-      <FieldLabel>Address</FieldLabel>
+      <FieldLabel>
+        {p.tooltip ? <Tooltip data-tooltip={p.tooltip}>Address</Tooltip> : 'Address'}
+      </FieldLabel>
       <StyledAddressDiv>
         <StyledNetworkSelect
           onChange={p.setNetwork}

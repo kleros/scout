@@ -38,13 +38,13 @@ const StyledTransactionButton = styled.button<{
 
   &:hover:not(:disabled) {
     background: ${({ theme, $variant }) =>
-      $variant === 'secondary' ? 'rgba(255, 255, 255, 0.05)' : theme.buttonWhiteHover};
+      $variant === 'secondary' ? theme.subtleBackground : theme.buttonWhiteHover};
     transform: translateY(-1px);
   }
 
   &:active:not(:disabled) {
     background: ${({ theme, $variant }) =>
-      $variant === 'secondary' ? 'rgba(255, 255, 255, 0.08)' : theme.buttonWhiteActive};
+      $variant === 'secondary' ? theme.selectedBackground : theme.buttonWhiteActive};
     transform: translateY(0);
   }
 

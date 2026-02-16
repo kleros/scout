@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import styled from 'styled-components'
+import styled, { useTheme } from 'styled-components'
 import { formatEther, parseEther } from 'ethers'
 import { PARTY, SUBGRAPH_RULING, itemToStatusCode, STATUS_CODE } from '../../utils/itemStatus'
 import useRequiredFees from '../../hooks/useRequiredFees'
@@ -291,6 +291,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   MULTIPLIER_DIVISOR,
   registryAddress,
 }) => {
+  const theme = useTheme()
   const [selectedSide, setSelectedSide] = useState<PARTY>(PARTY.NONE)
   const [contributionShare, setContributionShare] = useState(1)
   const nativeCurrency = useNativeCurrency()
@@ -431,7 +432,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                 <span>Still Needed:</span>
                 <strong>{Number(formatEther(fees.amountStillRequired)).toFixed(4)} {nativeCurrency}</strong>
               </InfoRow>
-              <InfoRow style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <InfoRow style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.hoverBackground}` }}>
                 <span>Potential Reward:</span>
                 <RewardAmount>{Number(formatEther(potentialRewardForContribution)).toFixed(4)} {nativeCurrency}</RewardAmount>
               </InfoRow>
@@ -445,7 +446,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
             {selectedSide !== PARTY.NONE && (
               <ContributeButton
                 onClick={() => setSelectedSide(PARTY.NONE)}
-                style={{ marginTop: '8px', background: 'transparent', border: `1px solid rgba(255,255,255,0.2)`, color: 'inherit' }}
+                style={{ marginTop: '8px', background: 'transparent', border: `1px solid ${theme.borderSubtle}`, color: 'inherit' }}
               >
                 Cancel
               </ContributeButton>

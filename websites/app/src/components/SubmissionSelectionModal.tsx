@@ -52,7 +52,7 @@ const OptionCard = styled.div`
   gap: 12px;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.06) 100%);
+  background: ${({ theme }) => theme.gradientCard};
   cursor: pointer;
   transition: all 0.4s ease;
   opacity: 0.7;
@@ -71,7 +71,7 @@ const OptionCard = styled.div`
 
   &:hover {
     opacity: 1;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.10) 100%);
+    background: ${({ theme }) => theme.gradientHover};
     transform: translateX(2px);
   }
 

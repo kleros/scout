@@ -59,12 +59,23 @@ export const getDisplayStatus = (status: string, disputed: boolean): string => {
   return readableStatusMap[status] || status
 }
 
+/** Returns the display status for an item, distinguishing Rejected from Removed for Absent items. */
+export const getItemDisplayStatus = (item: { status: string; disputed: boolean; requests?: Array<{ requestType?: string }> }): string => {
+  if (item.disputed) return challengedStatusMap[item.status] || 'Challenged'
+  if (item.status === 'Absent') {
+    const latestRequestType = item.requests?.[0]?.requestType
+    if (latestRequestType === 'RegistrationRequested') return 'Rejected'
+  }
+  return readableStatusMap[item.status] || item.status
+}
+
 /** Tooltip descriptions for each display status */
 export const statusDescriptionMap: Record<string, string> = {
   'Included': 'The item is in the registry and considered valid under the list policy.',
   'Registration Requested': 'Pending registration. Can be challenged if it breaks the policy.',
   'Removal Requested': 'Pending removal. Can be challenged if it complies with the policy and still belongs to the registry.',
-  'Removed': 'The item is not in the registry and does not comply with the policy.',
+  'Removed': 'The item was previously registered but has been successfully removed from the registry.',
+  'Rejected': 'The submission was challenged and rejected. It never made it into the registry.',
   'Challenged Submission': 'This request has been challenged. It is waiting for evidence and an arbitrator\'s final decision.',
   'Challenged Removal': 'This removal request has been challenged. It is waiting for evidence and an arbitrator\'s final decision.',
 }
@@ -82,6 +93,15 @@ export const getRegistryKey = (registryAddress: string): string | undefined =>
 /** Gets a prop value from an item by label */
 export const getPropValue = (item: { props?: Array<{ label: string; value: string }> }, label: string): string =>
   item.props?.find((p) => p.label === label)?.value ?? ''
+
+/** Gets the thumbnail URL for an item (token logo or CDN visual proof) */
+export const getItemThumbnailUrl = (item: { props?: Array<{ label: string; value: string }>; registryAddress: string }): string | null => {
+  const registryKey = revRegistryMap[item.registryAddress] || ''
+  const prop = registryKey === 'tokens' ? getPropValue(item, 'Logo')
+    : registryKey === 'cdn' ? getPropValue(item, 'Visual proof')
+    : ''
+  return prop ? `https://cdn.kleros.link${prop}` : null
+}
 
 /** Gets the contract/token address from an item based on its registry type */
 export const getItemAddress = (item: { props?: Array<{ label: string; value: string }> }, registryKey: string): string | undefined => {

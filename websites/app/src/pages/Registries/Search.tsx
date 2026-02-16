@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useDebounce } from 'react-use'
-import { useRegistryFilters } from 'context/FilterContext'
 import SearchIcon from 'svgs/icons/search.svg'
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 
@@ -16,10 +15,12 @@ const Container = styled.div`
   padding-left: 16px;
   width: 100%;
   height: 40px;
+  flex: 1 1 100%;
+  min-width: 0;
 
   ${landscapeStyle(
     () => css`
-      width: 630px;
+      flex: 0 1 316px;
     `
   )}
 
@@ -28,7 +29,7 @@ const Container = styled.div`
   }
 
   :hover {
-    background-color: #FFFFFF1D;
+    background-color: ${({ theme }) => theme.hoverBackground};
   }
 `
 
@@ -47,19 +48,25 @@ const StyledInput = styled.input`
   }
 `
 
-const Search: React.FC = () => {
-  const filters = useRegistryFilters()
-  const [searchTerm, setSearchTerm] = useState<string>(filters.text)
+interface SearchBarProps {
+  text: string
+  setText: (value: string) => void
+  className?: string
+  placeholder?: string
+}
+
+export const SearchBar: React.FC<SearchBarProps> = ({ text, setText, className, placeholder = "Search with keywords, address, etc." }) => {
+  const [searchTerm, setSearchTerm] = useState<string>(text)
   const [appliedSearch, setAppliedSearch] = useState<boolean>(true)
 
   useEffect(() => {
-    setSearchTerm(filters.text)
+    setSearchTerm(text)
     setAppliedSearch(true)
-  }, [filters.text])
+  }, [text])
 
   const applySearch = () => {
     if (!appliedSearch) {
-      filters.setText(searchTerm)
+      setText(searchTerm)
       setAppliedSearch(true)
     }
   }
@@ -72,22 +79,22 @@ const Search: React.FC = () => {
     [searchTerm]
   )
 
-  const changeSearchTerm = (text: string) => {
+  const changeSearchTerm = (value: string) => {
     setAppliedSearch(false)
-    setSearchTerm(text)
+    setSearchTerm(value)
   }
 
   return (
-    <Container>
+    <Container className={className}>
       <SearchIcon />
       <StyledInput
         type="text"
         value={searchTerm}
         onChange={(e) => changeSearchTerm(e.target.value)}
-        placeholder="Search with keywords, address, etc."
+        placeholder={placeholder}
       />
     </Container>
   )
 }
 
-export default Search
+export default SearchBar

@@ -33,6 +33,7 @@ import { useSearchParams } from 'react-router-dom'
 import { registryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
+import Tooltip from 'components/Tooltip'
 
 const columns = [
   {
@@ -282,6 +283,7 @@ const AddAddressTag: React.FC = () => {
         address={address}
         setAddress={setAddress}
         registry="single-tags"
+        tooltip={columns[0].description}
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -289,7 +291,7 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.duplicate && (
         <ErrorMessage>{addressIssuesData.duplicate.message}</ErrorMessage>
       )}
-      <FieldLabel>Project name</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[2].description}>Project name</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. Kleros"
         value={projectName}
@@ -298,7 +300,7 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.projectName && (
         <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
       )}
-      <FieldLabel>Public Name Tag</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[1].description}>Public Name Tag</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. PNK Merkle Drop"
         value={publicNameTag}
@@ -307,13 +309,13 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.publicNameTag && (
         <ErrorMessage>{addressIssuesData.publicNameTag.message}</ErrorMessage>
       )}
-      <FieldLabel>Public note</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[4].description}>Public note</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. This contract is used for..."
         value={publicNote}
         onChange={(e) => setPublicNote(e.target.value)}
       />
-      <FieldLabel>UI/Website link</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[3].description}>UI/Website link</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://kleros.io"
         value={website}

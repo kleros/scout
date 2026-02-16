@@ -43,12 +43,12 @@ export const secondaryButtonStyles = css`
   border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
 
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:active:not(:disabled) {
-    background: rgba(255, 255, 255, 0.15);
+    background: ${({ theme }) => theme.activeBackground};
   }
 
   &:disabled {

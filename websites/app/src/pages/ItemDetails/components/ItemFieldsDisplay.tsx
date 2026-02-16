@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import styled from 'styled-components'
-import { registryMap } from 'utils/items'
+import { registryMap, getPropValue as getItemProp } from 'utils/items'
 
 const FieldsContainer = styled.div`
   display: flex;
@@ -46,9 +46,7 @@ const ItemFieldsDisplay: React.FC<ItemFieldsDisplayProps> = ({
   registryAddress,
 }) => {
   const fieldsToDisplay = useMemo(() => {
-    const getPropValue = (label: string) => {
-      return detailsData?.props?.find((prop: any) => prop.label === label)?.value || ''
-    }
+    const getPropValue = (label: string) => getItemProp(detailsData, label)
 
     const fields: { label: string; value: string }[] = []
 

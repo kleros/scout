@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { formatEther } from 'ethers';
-import { GraphItem, registryMap, buildItemPath, getRegistryKey, readableStatusMap, challengedStatusMap, statusDescriptionMap, bountyDescriptionMap } from 'utils/items';
+import { GraphItem, registryMap, buildItemPath, getRegistryKey, getItemThumbnailUrl, getItemDisplayStatus, statusDescriptionMap, bountyDescriptionMap, getPropValue as getItemProp } from 'utils/items';
 import Tooltip from 'components/Tooltip';
 import AddressDisplay from 'components/AddressDisplay';
 // import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'; // UNUSED: Only needed for submitter display which is commented out
@@ -57,7 +57,7 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
       case 'single-tags':
         return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
       case 'cdn':
-        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Next/Last event
+        return '1.2fr 0.3fr 1fr 1fr 1.2fr 1fr'; // Status, Proof, Domain, Website, Address, Next/Last event
       case 'tags-queries':
         return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
       default:
@@ -68,7 +68,7 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
   align-items: center;
   padding: 8px 0;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
   border-radius: 0;
   background: transparent;
   color: ${({ theme }) => theme.primaryText};
@@ -83,7 +83,7 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${({ theme }) => theme.subtleBackground};
   }
 
   &:last-child {
@@ -142,14 +142,15 @@ const StatusCell = styled(Cell) <{ status: string; }>`
     display: inline-block;
     width: 6px;
     height: 6px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
     ({
-      Included: '#90EE90',
-      'Registration Requested': '#FFEA00',
-      'Challenged Submission': '#E87B35',
-      'Challenged Removal': '#E87B35',
-      Removed: 'red',
-    })[status] || 'gray'};
+      Included: theme.statusIncluded,
+      'Registration Requested': theme.statusRegistrationRequested,
+      'Challenged Submission': theme.statusChallenged,
+      'Challenged Removal': theme.statusChallenged,
+      Removed: theme.statusAbsent,
+      Rejected: theme.statusRejected,
+    })[status] || theme.statusGray};
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -327,13 +328,9 @@ const ItemListView = React.memo(
 
     const itemUrl = buildItemPath(item.id);
 
-    const getPropValue = (label: string) => {
-      return item?.props?.find((prop) => prop.label === label)?.value || '';
-    };
+    const getPropValue = (label: string) => getItemProp(item, label);
 
-    const status = item.disputed
-      ? challengedStatusMap[item.status]
-      : readableStatusMap[item.status];
+    const status = getItemDisplayStatus(item);
 
     const readableBounty =
       (item.status === 'ClearingRequested' ||
@@ -371,9 +368,7 @@ const ItemListView = React.memo(
       // const submitterAddress = item.requests[0]?.requester as `0x${string}` | undefined;
 
       if (item.registryAddress === registryMap['tokens']) {
-        const logoUrl = getPropValue('Logo')
-          ? `https://cdn.kleros.link${getPropValue('Logo')}`
-          : '';
+        const logoUrl = getItemThumbnailUrl(item) || '';
         const website = getPropValue('Website');
 
         return (
@@ -534,6 +529,7 @@ const ItemListView = React.memo(
       if (item.registryAddress === registryMap['cdn']) {
         const domainName = getPropValue('Domain name');
         const website = domainName ? `https://${domainName}` : '';
+        const proofUrl = getItemThumbnailUrl(item) || '';
 
         return (
           <>
@@ -545,6 +541,33 @@ const ItemListView = React.memo(
                 </Tooltip>
               )}
             </StatusCell>
+            <LogoCell>
+              {proofUrl ? (
+                <>
+                  <Skeleton
+                    width={32}
+                    height={32}
+                    style={{
+                      display: 'block',
+                      flexShrink: 0,
+                      lineHeight: 1,
+                      borderRadius: '4px',
+                    }}
+                    containerClassName="skeleton-logo"
+                  />
+                  <img
+                    src={proofUrl}
+                    alt="Visual proof"
+                    style={{ display: 'none', borderRadius: '4px' }}
+                    onLoad={(e) => {
+                      const skeleton = e.currentTarget.previousSibling as HTMLElement;
+                      if (skeleton) skeleton.style.display = 'none';
+                      e.currentTarget.style.display = 'block';
+                    }}
+                  />
+                </>
+              ) : '-'}
+            </LogoCell>
             <Cell>
               <SymbolText>{domainName || '-'}</SymbolText>
             </Cell>

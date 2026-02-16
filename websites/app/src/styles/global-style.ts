@@ -33,7 +33,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   .ReactModal__Overlay {
-    background-color: #000000E6 !important;
+    background-color: ${({ theme }) => theme.tooltipBackground} !important;
   }
 
   h1 {
@@ -124,7 +124,7 @@ export const GlobalStyle = createGlobalStyle`
     border-radius: 8px !important;
     font-size: 12px !important;
     font-weight: 500 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: ${({ theme }) => theme.shadowTooltip} !important;
     z-index: 9999 !important;
     border: none !important;
   }

@@ -8,6 +8,7 @@ import { ActiveRewardsCarousel } from 'components/Dashboard/ActiveRewardsCarouse
 import { RegistryCard } from 'components/Dashboard/RegistryCard';
 import AssetsVerifiedIcon from 'svgs/icons/assets-verified.svg';
 import CuratorsIcon from 'svgs/icons/curators.svg';
+import DisputesIcon from 'svgs/icons/law-balance.svg';
 import Skeleton from 'react-loading-skeleton';
 
 const CAROUSEL_INTERVAL = 8000;
@@ -15,11 +16,16 @@ const CAROUSEL_INTERVAL = 8000;
 const Container = styled.div`
   position: relative;
   width: 100%;
+`;
+
+const TrackWrapper = styled.div`
   overflow: hidden;
+  transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 `;
 
 const CarouselTrack = styled.div<{ $activeIndex: number }>`
   display: flex;
+  align-items: flex-start;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(-${({ $activeIndex }) => $activeIndex * 100}%);
   will-change: transform;
@@ -61,18 +67,18 @@ const Position1Left = styled.div`
 `;
 
 const StatisticsTitle = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
   font-weight: 400;
   line-height: normal;
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
 
   ${landscapeStyle(
     () => css`
       font-size: 16px;
-      margin: 0 0 20px 0;
+      margin: 0 0 12px 0;
     `
   )}
 `;
@@ -111,7 +117,7 @@ const Position3Container = styled.div`
 `;
 
 const Position3Title = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
@@ -160,8 +166,8 @@ const LoadingContainer = styled.div`
   padding: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  background: ${({ theme }) => theme.gradientCard};
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   height: 100%;
   width: 100%;
@@ -193,7 +199,7 @@ const ChainRankingLoadingItem = styled.div<{ $isLast?: boolean }>`
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
-  border-bottom: ${({ $isLast }) => $isLast ? 'none' : '1px solid rgba(255, 255, 255, 0.1)'};
+  border-bottom: ${({ $isLast, theme }) => $isLast ? 'none' : `1px solid ${theme.divider}`};
 
   ${landscapeStyle(
     () => css`
@@ -223,7 +229,25 @@ interface HomeCarouselProps {
 export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, chartData }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [trackHeight, setTrackHeight] = useState<number | undefined>(undefined);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Measure active slide height and animate the wrapper
+  useEffect(() => {
+    const activeSlide = slideRefs.current[activeIndex];
+    if (!activeSlide) return;
+
+    const updateHeight = () => {
+      setTrackHeight(activeSlide.scrollHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(activeSlide);
+    return () => observer.disconnect();
+  }, [activeIndex, isLoading, stats]);
 
   const startCarousel = useCallback(() => {
     if (intervalRef.current) {
@@ -269,9 +293,10 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
 
   return (
     <Container onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <TrackWrapper style={{ height: trackHeight !== undefined ? `${trackHeight}px` : 'auto' }}>
       <CarouselTrack $activeIndex={activeIndex}>
         {/* Position 1: Metrics (left), Chart (middle), Chain Ranking (right) */}
-        <CarouselSlide>
+        <CarouselSlide ref={(el) => { slideRefs.current[0] = el; }}>
           <Position1Container>
             <Position1Left>
               <StatisticsTitle>Statistics</StatisticsTitle>
@@ -284,6 +309,11 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
                 icon={<CuratorsIcon />}
                 title="Curators"
                 mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.totalCurators || 0)}
+              />
+              <StatCard
+                icon={<DisputesIcon />}
+                title="Total Solved Disputes"
+                mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.totalSolvedDisputes || 0)}
               />
             </Position1Left>
 
@@ -320,14 +350,14 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
         </CarouselSlide>
 
         {/* Position 2: 3 Active Rewards cards horizontal */}
-        <CarouselSlide>
+        <CarouselSlide ref={(el) => { slideRefs.current[1] = el; }}>
           <Position2Container>
             <ActiveRewardsCarousel />
           </Position2Container>
         </CarouselSlide>
 
         {/* Position 3: Registry Stats */}
-        <CarouselSlide>
+        <CarouselSlide ref={(el) => { slideRefs.current[2] = el; }}>
           <Position3Container>
             <Position3Title>Items Verified per Registry</Position3Title>
             <RegistryCard
@@ -357,6 +387,7 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
           </Position3Container>
         </CarouselSlide>
       </CarouselTrack>
+      </TrackWrapper>
 
       <DotsContainer>
         <Dot $active={activeIndex === 0} onClick={() => handleDotClick(0)} />

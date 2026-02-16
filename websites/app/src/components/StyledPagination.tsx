@@ -36,12 +36,12 @@ const pageButtonStyles = css<{ selected?: boolean }>`
   ${({ selected, theme }) =>
     selected &&
     `
-    background: rgba(255, 255, 255, 0.15);
+    background: ${theme.activeBackground};
     border-color: ${theme.primaryText};
   `}
 
   &:hover:not(:disabled):not([aria-current="true"]) {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 `;

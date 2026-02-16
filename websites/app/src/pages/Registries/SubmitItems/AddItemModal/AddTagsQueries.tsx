@@ -28,6 +28,7 @@ import { registryMap } from 'utils/items';
 import getAddressValidationIssue from 'utils/validateAddress';
 import { EnsureChain } from '../../../../components/EnsureChain';
 import { infoToast, errorToast } from 'utils/wrapWithToast';
+import Tooltip from 'components/Tooltip';
 
 const columns = [
   {
@@ -204,7 +205,7 @@ const AddTagsQueries: React.FC = () => {
         </HeaderActions>
       </AddHeader>
       <Divider />
-      <FieldLabel>Github Repository</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[0].description}>Github Repository</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://github.com/kleros/scout-snap.git"
         value={githubRepository}
@@ -213,19 +214,19 @@ const AddTagsQueries: React.FC = () => {
       {addressIssuesData?.link && (
         <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
       )}
-      <FieldLabel>Commit Hash</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[1].description}>Commit Hash</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. c8baafd"
         value={commitHash}
         onChange={(e) => setCommitHash(e.target.value)}
       />
-      <FieldLabel>EVM Chain ID</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[2].description}>EVM Chain ID</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. 1 (for Ethereum Mainnet)"
         value={evmChainId}
         onChange={(e) => setEvmChainId(e.target.value)}
       />
-      <FieldLabel>Description</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[3].description}>Description</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. An item for retrieving SushiSwap v3 tags on..."
         value={description}

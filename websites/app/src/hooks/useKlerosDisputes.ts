@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { gql } from 'graphql-request';
-import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT } from 'consts';
+import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, XDAI_CURATION_COURT_ID } from 'consts';
 
 interface KlerosDispute {
   id: string;
@@ -35,9 +35,6 @@ const KLEROS_DISPUTES_QUERY = gql`
     }
   }
 `;
-
-// xDAI Curation Court ID
-const XDAI_CURATION_COURT_ID = '1';
 
 const CACHE_CONFIG = {
   staleTime: 2 * 60 * 1000, // 2 minutes

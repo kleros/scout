@@ -11,7 +11,7 @@ const HeaderRow = styled.div<{ registryType?: string }>`
       case 'single-tags':
         return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
       case 'cdn':
-        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Next/Last event
+        return '1.2fr 0.3fr 1fr 1fr 1.2fr 1fr'; // Status, Proof, Domain, Website, Address, Next/Last event
       case 'tags-queries':
         return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
       default:
@@ -24,7 +24,7 @@ const HeaderRow = styled.div<{ registryType?: string }>`
   border-radius: 0;
   background: transparent;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
   font-family: "Open Sans", sans-serif;
   margin-bottom: 0;
   width: 100%;
@@ -99,6 +99,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
     return (
       <HeaderRow registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
+        <HeaderCell>Proof</HeaderCell>
         <HeaderCell>Domain</HeaderCell>
         <HeaderCell>Website</HeaderCell>
         <HeaderCell>Address</HeaderCell>

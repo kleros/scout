@@ -1,28 +1,18 @@
 import React from 'react'
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 import CardsIcon from 'svgs/icons/cards.svg'
 import ListsIcon from 'svgs/icons/lists.svg'
-import { landscapeStyle } from 'styles/landscapeStyle'
 
 const Container = styled.div<{ hide?: boolean }>`
-  display: none;
+  display: ${({ hide }) => (hide ? 'none' : 'flex')};
   align-items: center;
   gap: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(153, 153, 153, 0.08) 100%
-  );
+  background: ${({ theme }) => theme.gradientCard};
   border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 9999px;
   padding: 0;
   height: 40px;
-
-  ${landscapeStyle(
-    () => css`
-      display: ${({ hide }) => (hide ? 'none' : 'flex')};
-    `
-  )}
+  flex-shrink: 0;
 `
 
 const ViewButton = styled.button<{ isActive: boolean; disabled?: boolean }>`
@@ -69,7 +59,7 @@ const ViewButton = styled.button<{ isActive: boolean; disabled?: boolean }>`
         ? 'transparent'
         : isActive
           ? theme.backgroundFour
-          : 'rgba(255, 255, 255, 0.1)'};
+          : theme.hoverBackground};
     color: ${({ isActive, disabled, theme }) =>
       disabled
         ? theme.secondaryText

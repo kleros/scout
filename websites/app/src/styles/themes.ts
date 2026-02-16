@@ -118,4 +118,93 @@ export const darkTheme = {
   limeGreen: "#F3FFD9",
 
   watermarkFill: "rgba(27, 32, 48, 0.40)",
+
+  // Semantic background/overlay colors
+  subtleBackground: "rgba(255, 255, 255, 0.05)",
+  selectedBackground: "rgba(255, 255, 255, 0.08)",
+  hoverBackground: "rgba(255, 255, 255, 0.1)",
+  activeBackground: "rgba(255, 255, 255, 0.15)",
+  divider: "rgba(255, 255, 255, 0.08)",
+  borderHover: "rgba(255, 255, 255, 0.3)",
+  modalOverlay: "rgba(0, 0, 0, 0.75)",
+  tooltipBackground: "rgba(0, 0, 0, 0.9)",
+
+  // Shadows
+  shadowCard: "0px 1px 2px 0px rgba(0, 0, 0, 0.3)",
+  shadowTooltip: "0 4px 12px rgba(0, 0, 0, 0.3)",
+  shadowDropdown: "0px 8px 32px rgba(0, 0, 0, 0.3)",
+  shadowModal: "0px 8px 32px rgba(0, 0, 0, 0.4)",
+  glowPurple: "0px 8px 32px rgba(125, 75, 255, 0.15)",
+  glowBlue: "0px 8px 24px rgba(113, 134, 255, 0.12)",
+  glowOrange: "0px 8px 32px rgba(231, 123, 53, 0.1)",
+
+  // Unified status colors
+  statusIncluded: "#65DC7F",
+  statusRegistrationRequested: "#60A5FA",
+  statusClearingRequested: "#FBBF24",
+  statusAbsent: "#FF5A78",
+  statusChallenged: "#E87B35",
+  statusRejected: "#F87171",
+  statusPreviouslyDisputed: "#a855f7",
+  statusGray: "#6b7280",
+
+  // Chart colors
+  chartPrimary: "#7d4bff",
+  chartSecondary: "#485fff",
+
+  // Gradients
+  gradientCard: "linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%)",
+  gradientCardSubtle: "linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%)",
+  gradientChart: "linear-gradient(135deg, #7d4bff 0%, #485fff 100%)",
+  gradientDivider: "linear-gradient(90deg, #7d4bff 0%, #485fff 100%)",
+  gradientDispute: "linear-gradient(135deg, #E87B35 0%, #D45A42 100%)",
+  gradientBadge: "linear-gradient(270deg, #0E1E75 0%, #432D77 100%)",
+  gradientHover: "linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.10) 100%)",
+  shimmerGradient: "linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%)",
+
+  // Border/opacity
+  borderSubtle: "rgba(255, 255, 255, 0.2)",
+  textHighOpacity: "rgba(255, 255, 255, 0.9)",
+
+  // Fallback chain color
+  chainColorDefault: "#3A4050",
+
+  // Purple shades
+  purpleBright: "#9C46FF",
+  purpleTint: "#CD9DFF",
+  purpleDarkBorder: "#5A2393",
+
+  // Chain brand colors
+  chainColors: {
+    'eip155:1': '#3B6898',
+    'eip155:56': '#8B7428',
+    'eip155:100': '#2A6865',
+    'eip155:137': '#5838A0',
+    'bip122:000000000019d6689c085ae165831e93': '#8B6828',
+    'solana:4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ': '#985828',
+    'eip155:8453': '#3A5880',
+    'eip155:42161': '#286D4A',
+    'eip155:1284': '#404DA0',
+    'eip155:59144': '#3E4D6A',
+    'eip155:10': '#983030',
+    'eip155:250': '#2B5090',
+    'eip155:1285': '#3D2E90',
+    'eip155:43114': '#982828',
+    'eip155:25': '#1B4570',
+    'eip155:199': '#6B3030',
+    'eip155:1101': '#5D3898',
+    'eip155:1111': '#384050',
+    'eip155:534352': '#8B6530',
+    'eip155:42220': '#286848',
+    'eip155:122': '#8B5D28',
+    'eip155:288': '#2D5855',
+    'eip155:324': '#4838A0',
+    'eip155:1666600000': '#2D6060',
+    'eip155:1313161554': '#2D6858',
+    'eip155:146': '#7A2850',
+    'eip155:369': '#5B2D8E',
+    'eip155:4326': '#2E4A7A',
+    'eip155:81457': '#7A7028',
+    'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': '#985828',
+  } as Record<string, string>,
 };

@@ -88,7 +88,7 @@ const DropdownMenu = styled.div`
   border-radius: 12px;
   min-width: 260px;
   padding: 8px 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowTooltip};
   z-index: 1000;
 `;
 

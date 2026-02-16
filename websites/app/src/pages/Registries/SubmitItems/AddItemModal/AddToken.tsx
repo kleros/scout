@@ -33,6 +33,7 @@ import {
 import { useSearchParams } from 'react-router-dom'
 import { chains } from 'utils/chains'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
+import Tooltip from 'components/Tooltip'
 
 const columns = [
   {
@@ -292,6 +293,7 @@ const AddToken: React.FC = () => {
         address={address}
         setAddress={setAddress}
         registry="tokens"
+        tooltip={columns[0].description}
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -299,7 +301,7 @@ const AddToken: React.FC = () => {
       {addressIssuesData?.duplicate && (
         <ErrorMessage>{addressIssuesData.duplicate.message}</ErrorMessage>
       )}
-      <FieldLabel>Decimals</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[3].description}>Decimals</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. 18"
         value={decimals}
@@ -310,7 +312,7 @@ const AddToken: React.FC = () => {
           }
         }}
       />
-      <FieldLabel>Name</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[1].description}>Name</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. Pinakion"
         value={name}
@@ -319,7 +321,7 @@ const AddToken: React.FC = () => {
       {addressIssuesData?.projectName && (
         <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
       )}
-      <FieldLabel>Symbol</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[2].description}>Symbol</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. PNK"
         value={symbol}
@@ -332,10 +334,11 @@ const AddToken: React.FC = () => {
         path={path}
         setPath={setPath}
         registry="tokens"
+        tooltip={columns[4].description}
         {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
-      <FieldLabel>Website</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[5].description}>Website</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://kleros.io"
         value={website}

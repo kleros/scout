@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import { Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
-import { GraphItem, registryMap, buildItemPath, readableStatusMap, challengedStatusMap, statusDescriptionMap, bountyDescriptionMap } from 'utils/items'
+import { GraphItem, registryMap, buildItemPath, statusDescriptionMap, bountyDescriptionMap, getPropValue as getItemProp, getItemDisplayStatus } from 'utils/items'
 import Tooltip from 'components/Tooltip'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
@@ -25,7 +25,7 @@ import { itemToStatusCode, STATUS_CODE } from 'utils/itemStatus'
 import { useMemo } from 'react'
 
 const Card = styled.div<{ seamlessBottom?: boolean }>`
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   font-family: "Open Sans", sans-serif;
   box-sizing: border-box;
   word-break: break-word;
@@ -56,14 +56,15 @@ const CardStatus = styled.div<{ status: string }>`
     width: 8px;
     height: 8px;
     margin-bottom: 0px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
       ({
-        Included: '#90EE90',
-        'Registration Requested': '#FFEA00',
-        'Challenged Submission': '#E87B35',
-        'Challenged Removal': '#E87B35',
-        Removed: 'red',
-      })[status] || 'gray'};
+        Included: theme.statusIncluded,
+        'Registration Requested': theme.statusRegistrationRequested,
+        'Challenged Submission': theme.statusChallenged,
+        'Challenged Removal': theme.statusChallenged,
+        Removed: theme.statusAbsent,
+        Rejected: theme.statusRejected,
+      })[status] || theme.statusGray};
     border-radius: 50%;
     margin-right: 10px;
   }
@@ -137,7 +138,8 @@ const VisualProofWrapper = styled.img`
   ${hoverShortTransitionTiming}
   object-fit: cover;
   align-self: stretch;
-  width: 90%;
+  max-width: 240px;
+  max-height: 160px;
   margin-top: 8px;
   cursor: pointer;
 
@@ -163,7 +165,7 @@ const DetailsButton = styled(Link)`
   color: ${({ theme }) => theme.primaryText};
 
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 `
@@ -247,12 +249,11 @@ interface StatusProps {
     | 'ClearingRequested'
   disputed: boolean
   bounty: string
+  requests?: Array<{ requestType?: string }>
 }
 
-const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
-  const label = disputed
-    ? challengedStatusMap[status]
-    : readableStatusMap[status]
+const Status = React.memo(({ status, disputed, bounty, requests }: StatusProps) => {
+  const label = getItemDisplayStatus({ status, disputed, requests })
 
   const readableBounty =
     (status === 'ClearingRequested' || status === 'RegistrationRequested') &&
@@ -318,9 +319,7 @@ const Item = React.memo(
 
     const isPendingExecution = statusCode === STATUS_CODE.PENDING_SUBMISSION || statusCode === STATUS_CODE.PENDING_REMOVAL
 
-    const getPropValue = (label: string) => {
-      return item?.props?.find((prop) => prop.label === label)?.value || ''
-    }
+    const getPropValue = (label: string) => getItemProp(item, label)
 
     return (
       <Card seamlessBottom={seamlessBottom}>
@@ -328,6 +327,7 @@ const Item = React.memo(
           status={item.status}
           disputed={item.disputed}
           bounty={item.requests?.[0]?.deposit || '0'}
+          requests={item.requests}
         />
         <CardContent>
           <UpperCardContent>
@@ -424,7 +424,7 @@ const Item = React.memo(
                       openAttachment(visualProofURI)
                     }}
                   >
-                    {!imgLoaded && <Skeleton height={100} width={150} />}
+                    {!imgLoaded && <Skeleton height={140} width={240} />}
                     <VisualProofWrapper
                       src={`https://cdn.kleros.link${getPropValue('Visual proof')}`}
                       alt="Visual proof"

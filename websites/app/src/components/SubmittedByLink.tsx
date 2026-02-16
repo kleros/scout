@@ -15,8 +15,8 @@ const StyledSubmittedByLink = styled(Link)`
   padding: 2px 4px;
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background-color: ${({ theme }) => theme.hoverBackground};
+    color: ${({ theme }) => theme.white};
     
     svg {
       transform: translateX(2px);

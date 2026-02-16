@@ -476,9 +476,9 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
         // Set color based on resolution outcome
         let resolutionColor = theme.primaryBlue
         if (resolutionTitle === 'Item Removed' || resolutionTitle === 'Item Rejected') {
-          resolutionColor = theme.error || '#FF4D4F' // Red for removals and rejections
+          resolutionColor = theme.error
         } else if (resolutionTitle === 'Item Included' || resolutionTitle === 'Item Kept') {
-          resolutionColor = theme.success || '#52C41A' // Green for inclusions and kept items
+          resolutionColor = theme.success
         }
 
         items.push({

@@ -16,7 +16,7 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: ${({ theme }) => theme.modalOverlay};
   display: flex;
   justify-content: center;
   align-items: center;
@@ -32,7 +32,7 @@ const ModalContainer = styled.div`
   max-width: 900px;
   max-height: 85vh;
   position: relative;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: ${({ theme }) => theme.shadowModal};
   display: flex;
   flex-direction: column;
 
@@ -96,7 +96,7 @@ export const Divider = styled.div`
 `
 
 export const StyledGoogleFormAnchor = styled.a`
-  color: #fff;
+  color: ${({ theme }) => theme.white};
   text-decoration: none;
 
   :hover {
@@ -118,13 +118,13 @@ export const FieldLabel = styled.div`
 
 export const SubmissionButton = styled.a`
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid ${({ theme }) => theme.borderSubtle};
+  color: ${({ theme }) => theme.textHighOpacity};
   font-family: "Open Sans", sans-serif;
   align-self: center;
   padding: 8px 16px;
   font-size: 14px;
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => theme.subtleBackground};
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -132,7 +132,7 @@ export const SubmissionButton = styled.a`
   text-decoration: none;
 
   :hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.stroke};
     transform: translateY(-1px);
   }
@@ -214,7 +214,7 @@ export const ExpectedPayouts = styled.p`
 `
 
 export const ErrorMessage = styled.div`
-  color: red;
+  color: ${({ theme }) => theme.error};
   margin-top: -10px;
   font-size: 14px;
 `

@@ -32,7 +32,7 @@ const Container = styled.div`
   border-radius: 3px;
   border: 1px solid ${({ theme }) => theme.stroke};
   background-color: ${({ theme }) => theme.whiteBackground};
-  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: ${({ theme }) => theme.cardShadow};
 
   svg {
     visibility: visible;

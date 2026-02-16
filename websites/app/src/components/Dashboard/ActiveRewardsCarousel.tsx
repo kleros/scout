@@ -28,7 +28,7 @@ const Header = styled.div`
 `;
 
 const Title = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;

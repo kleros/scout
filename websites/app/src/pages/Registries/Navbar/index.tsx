@@ -12,13 +12,13 @@ const Container = styled.div`
   width: 100%;
   height: 108px;
   flex-direction: column;
-  background: #000000;
+  background: ${({ theme }) => theme.black};
   align-items: center;
   justify-content: center;
   margin-bottom: ${responsiveSize(20, 24)};
   padding-bottom: ${responsiveSize(18, 0)};
   gap: 8px;
-  border-bottom: 1px solid #CD9DFF;
+  border-bottom: 1px solid ${({ theme }) => theme.purpleTint};
   
   ${landscapeStyle(
     () => css`
@@ -60,7 +60,7 @@ const StyledButton = styled.button<{ isSelected: boolean }>`
   font-family: "Open Sans", sans-serif;
   background: none;
   border: none;
-  color: #fff;
+  color: ${({ theme }) => theme.white};
   cursor: pointer;
   font-size: 1rem;
 

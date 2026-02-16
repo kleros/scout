@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled, { useTheme } from 'styled-components'
 import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
@@ -43,7 +43,7 @@ const IconWrapper = styled.div`
 
 const StyledSpan = styled.span<{ bgColor: string }>`
   padding: 2px 6px;
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   border-radius: 40px;
   font-size: 10px;
   font-weight: 500;
@@ -99,10 +99,11 @@ interface IAddressDisplay {
 }
 
 const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
+  const theme = useTheme()
   const parts = address?.split(':')
   const keyForReference = `${parts?.[0]}:${parts?.[1]}`
   const reference = chains.find((ref) => `${ref.namespace}:${ref.id}` === keyForReference)
-  const bgColor = chainColorMap[keyForReference] || '#a0aec0'
+  const bgColor = chainColorMap[keyForReference] || theme.statusGray
   const ChainIcon = chainIconMap[reference?.id ?? '']
 
   return (

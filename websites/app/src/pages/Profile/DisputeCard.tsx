@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
-import styled from 'styled-components'
+import styled, { useTheme } from 'styled-components'
 import { formatEther } from 'ethers'
-import { Link } from 'react-router-dom'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
 import SubmittedByLink from 'components/SubmittedByLink'
@@ -9,25 +8,10 @@ import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getI
 import { formatTimestamp } from 'utils/formatTimestamp'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import useRegistryParameters from 'hooks/useRegistryParameters'
-
-const Card = styled.div`
-  width: 100%;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  background: transparent;
-`
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  flex-wrap: wrap;
-`
+import {
+  Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
+  MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer, ViewLink,
+} from './profileCardStyles'
 
 const HeaderLeft = styled.div`
   display: inline-flex;
@@ -43,30 +27,6 @@ const HeaderRight = styled.div`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-`
-
-const Bullet = styled.span<{ color: string }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ color }) => color};
-  flex: 0 0 8px;
-`
-
-const Title = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.primaryText};
-`
-
-const Registry = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-`
-
-const StatusLabel = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.primaryText};
 `
 
 const RoleBadge = styled.span<{ role: 'requester' | 'challenger' | 'both' }>`
@@ -95,84 +55,25 @@ const OutcomeBadge = styled.span<{ outcome: 'won' | 'lost' | 'pending' | 'refuse
   border-radius: 4px;
   background: ${({ outcome, theme }) =>
     outcome === 'won'
-      ? '#65DC7F30'
+      ? `${theme.success}30`
       : outcome === 'lost'
-      ? '#FF5A7830'
+      ? `${theme.error}30`
       : outcome === 'refused'
       ? theme.secondaryText + '30'
       : theme.warning + '30'};
   color: ${({ outcome, theme }) =>
     outcome === 'won'
-      ? '#65DC7F'
+      ? theme.success
       : outcome === 'lost'
-      ? '#FF5A78'
+      ? theme.error
       : outcome === 'refused'
       ? theme.secondaryText
       : theme.warning};
 `
 
-const Divider = styled.hr`
-  border: none;
-  border-top: 1px solid ${({ theme }) => theme.stroke};
-  margin: 0;
-`
-
-const Body = styled.div`
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`
-
-const MetaLine = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-`
-
-const InfoRow = styled.div`
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-  flex: 1;
-  min-width: 0;
-`
-
-const LabelValue = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-`
-
 const ButtonsContainer = styled.div`
   display: flex;
   gap: 8px;
-`
-
-const ViewItemLink = styled(Link)`
-  ${hoverLongTransitionTiming}
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border-radius: 9999px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  background: transparent;
-  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
-  color: ${({ theme }) => theme.primaryText};
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: ${({ theme }) => theme.primaryText};
-    color: ${({ theme }) => theme.primaryText};
-  }
 `
 
 const ViewCaseLink = styled.a`
@@ -197,27 +98,21 @@ const ViewCaseLink = styled.a`
   }
 `
 
-const StyledChainLabel = styled.span`
-  margin-bottom: 8px;
-`
-
-const StyledChainContainer = styled(LabelValue)`
-  margin-bottom: -8px;
-`
-
-const statusColors: Record<string, string> = {
-  'Active Dispute': '#E87B35',
-  Won: '#65DC7F',
-  Lost: '#FF5A78',
-  Refused: '#9CA3AF',
-}
-
 interface DisputeCardProps {
   item: any
   userAddress: string
 }
 
 const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
+  const theme = useTheme()
+
+  const statusColors: Record<string, string> = {
+    'Active Dispute': theme.statusChallenged,
+    Won: theme.success,
+    Lost: theme.error,
+    Refused: theme.statusGray,
+  }
+
   const registryKey = revRegistryMap[item.registryAddress] ?? 'Unknown'
   const registryName = registryDisplayNames[registryKey] ?? registryKey
   const request = item.requests?.[0]
@@ -257,7 +152,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
       : 'Refused'
     : 'Active Dispute'
 
-  const bulletColor = statusColors[statusText] ?? '#9CA3AF'
+  const bulletColor = statusColors[statusText] ?? theme.statusGray
 
   const disputeDate =
     request?.submissionTime != null
@@ -379,7 +274,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
                 View Case
               </ViewCaseLink>
             )}
-            <ViewItemLink to={itemUrl} state={{ fromApp: true, from: 'profile', profileTab: 'disputes' }}>View Item</ViewItemLink>
+            <ViewLink to={itemUrl} state={{ fromApp: true, from: 'profile', profileTab: 'disputes' }}>View Item</ViewLink>
           </ButtonsContainer>
         </MetaLine>
       </Body>

@@ -8,7 +8,7 @@ const Button = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #FFFFFF0D;
+  background-color: ${({ theme }) => theme.subtleBackground};
   border-radius: 9999px;
   border: 1px solid ${({ theme }) => theme.stroke};
   padding: 8px 16px;
@@ -19,9 +19,10 @@ const Button = styled.button`
   cursor: pointer;
   gap: 8px;
   white-space: nowrap;
+  flex-shrink: 0;
 
   &:hover {
-    background-color: #FFFFFF1D;
+    background-color: ${({ theme }) => theme.hoverBackground};
   }
 
   svg {

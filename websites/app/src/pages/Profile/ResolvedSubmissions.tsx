@@ -1,17 +1,13 @@
-import React, { useMemo, useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
-import styled from 'styled-components'
 import ItemCard from './ItemCard'
 import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
-import { chains, getNamespaceForChainId } from 'utils/chains'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
-
-const EmptyState = styled.div`
-  color: ${({ theme }) => theme.secondaryText};
-`
+import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
+import { fetchSubgraph } from 'utils/fetchSubgraph'
+import { EmptyState } from 'styles/commonStyles'
 
 const QUERY = `
 query ResolvedItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [status!]!, $disputed: [Boolean!]!, $orderDirection: order_by!) {
@@ -38,6 +34,7 @@ query ResolvedItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [
       label
     }
     requests(limit: 1, order_by: {submissionTime: desc}) {
+      requestType
       requester
       deposit
       submissionTime
@@ -53,6 +50,7 @@ interface Props {
   chainFilters?: string[]
   isFilterChanging: boolean
   setIsFilterChanging: (value: boolean) => void
+  onFilteredCountChange?: (count: number) => void
 }
 
 const ResolvedSubmissions: React.FC<Props> = ({
@@ -61,11 +59,11 @@ const ResolvedSubmissions: React.FC<Props> = ({
   chainFilters = [],
   isFilterChanging,
   setIsFilterChanging,
+  onFilteredCountChange,
 }) => {
   const filters = useProfileFilters()
   const currentPage = filters.page
   const itemsPerPage = 20
-  const skip = itemsPerPage * (currentPage - 1)
   const scrollTop = useScrollTop()
   const queryAddress = address?.toLowerCase()
 
@@ -84,6 +82,7 @@ const ResolvedSubmissions: React.FC<Props> = ({
       : [true, false]
 
   const searchTerm = filters.text
+  const dateRange = filters.dateRange
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -95,118 +94,35 @@ const ResolvedSubmissions: React.FC<Props> = ({
       orderDirection,
       chainFilters.slice().sort().join(','),
       searchTerm,
+      dateRange,
     ],
     enabled: !!queryAddress,
     queryFn: async () => {
       const fetchSize = Math.max(1000, currentPage * itemsPerPage)
-      const res = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: QUERY,
-          variables: {
-            userAddress: queryAddress,
-            first: fetchSize,
-            skip: 0,
-            status,
-            disputed,
-            orderDirection,
-          },
-        }),
+      const json = await fetchSubgraph(QUERY, {
+        userAddress: queryAddress,
+        first: fetchSize,
+        skip: 0,
+        status,
+        disputed,
+        orderDirection,
       })
-      const json = await res.json()
       if (json.errors) return { items: [], totalFiltered: 0 }
       let items = json.data.litems as any[]
 
-      // Client-side filtering by chains
-      if (chainFilters.length > 0) {
-        const selectedChainIds = chainFilters.filter((id) => id !== 'unknown')
-        const includeUnknown = chainFilters.includes('unknown')
+      items = filterItemsByChain(items, chainFilters)
+      items = filterItemsByDateRange(items, dateRange)
+      items = filterItemsBySearchTerm(items, searchTerm)
 
-        const knownPrefixes = [
-          ...new Set(
-            chains.map((chain) => {
-              if (chain.namespace === 'solana') {
-                return 'solana:'
-              }
-              return `${chain.namespace}:${chain.id}:`
-            }),
-          ),
-        ]
-
-        const selectedPrefixes = selectedChainIds.map((chainId) => {
-          const namespace = getNamespaceForChainId(chainId)
-          if (namespace === 'solana') {
-            return 'solana:'
-          }
-          return `${namespace}:${chainId}:`
-        })
-
-        items = items.filter((item: any) => {
-          const key0 = item?.key0?.toLowerCase() || ''
-          const matchesSelectedChain =
-            selectedPrefixes.length > 0
-              ? selectedPrefixes.some((prefix) =>
-                  key0.startsWith(prefix.toLowerCase()),
-                )
-              : false
-
-          const isUnknownChain = !knownPrefixes.some((prefix) =>
-            key0.startsWith(prefix.toLowerCase()),
-          )
-
-          return (
-            (selectedPrefixes.length > 0 && matchesSelectedChain) ||
-            (includeUnknown && isUnknownChain)
-          )
-        })
-      }
-
-      // Client-side text search filtering
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase()
-        items = items.filter((item: any) => {
-          // Search through metadata props
-          const propsText =
-            item?.props
-              ?.map((prop: any) => `${prop.label}: ${prop.value}`)
-              .join(' ')
-              .toLowerCase() || ''
-
-          // Search through keys
-          const keysText = [
-            item?.key0,
-            item?.key1,
-            item?.key2,
-            item?.key3,
-            item?.key4,
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
-
-          // Search through basic fields
-          const basicText = [item.id, item.itemID, item.registryAddress]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
-
-          const searchableText = `${propsText} ${keysText} ${basicText}`
-          return searchableText.includes(searchLower)
-        })
-      }
-
-      // Calculate total filtered count
-      const totalFiltered = items.length
-
-      // Apply pagination to filtered results
-      const startIndex = (currentPage - 1) * itemsPerPage
-      const endIndex = startIndex + itemsPerPage
-      const paginatedItems = items.slice(startIndex, endIndex)
-
-      return { items: paginatedItems, totalFiltered }
+      return paginateItems(items, currentPage, itemsPerPage)
     },
   })
+  useEffect(() => {
+    if (data && onFilteredCountChange) {
+      onFilteredCountChange(data.totalFiltered)
+    }
+  }, [data?.totalFiltered, onFilteredCountChange])
+
   const totalPages = useMemo(() => {
     if (!data) return 1
     return Math.max(1, Math.ceil(data.totalFiltered / itemsPerPage))
@@ -217,13 +133,7 @@ const ResolvedSubmissions: React.FC<Props> = ({
     filters.setPage(newPage)
   }
 
-  // Clear isFilterChanging once the query settles.
-  useEffect(() => {
-    if (!isFilterChanging) return
-    if (isFetching) return
-    const timer = setTimeout(() => setIsFilterChanging(false), 50)
-    return () => clearTimeout(timer)
-  }, [isFilterChanging, isFetching, setIsFilterChanging])
+  useFilterChangeEffect(isFilterChanging, isFetching, setIsFilterChanging)
 
   if (isLoading || isFilterChanging)
     return (

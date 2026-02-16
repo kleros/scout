@@ -68,16 +68,16 @@ const StatusCircle = styled.div<{ status: string }>`
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: ${({ status }) => {
+  background: ${({ status, theme }) => {
     switch (status) {
-      case 'Registered': return '#22c55e'; // green for included
-      case 'RegistrationRequested': return '#eab308'; // yellow for registration requested
-      case 'ClearingRequested': return '#f97316'; // orange for removal requested
-      case 'Absent': return '#ef4444'; // red for removed
-      case 'true': return '#ef4444'; // red for challenged
-      case 'false': return '#22c55e'; // green for unchallenged
-      case 'previously-disputed': return '#a855f7'; // purple for previously disputed
-      default: return '#6b7280'; // gray for default
+      case 'Registered': return theme.statusIncluded;
+      case 'RegistrationRequested': return theme.statusRegistrationRequested;
+      case 'ClearingRequested': return theme.statusClearingRequested;
+      case 'Absent': return theme.statusAbsent;
+      case 'true': return theme.statusChallenged;
+      case 'false': return theme.statusIncluded;
+      case 'previously-disputed': return theme.statusPreviouslyDisputed;
+      default: return theme.statusGray;
     }
   }};
 `;
@@ -96,11 +96,11 @@ const SortOption = styled.label`
   cursor: pointer;
 `;
 
-const STATUS_LABELS = {
+const STATUS_LABELS: Record<string, string> = {
   'Registered': 'Included',
   'RegistrationRequested': 'Registration Requested',
   'ClearingRequested': 'Removal Requested',
-  'Absent': 'Removed'
+  'Absent': 'Removed / Rejected',
 };
 
 const REGISTRATION_STATUSES = Object.keys(STATUS_LABELS);

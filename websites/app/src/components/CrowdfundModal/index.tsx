@@ -15,7 +15,7 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: ${({ theme }) => theme.modalOverlay};
   display: flex;
   justify-content: center;
   align-items: center;
@@ -34,7 +34,7 @@ const Modal = styled.div`
   max-width: 900px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: ${({ theme }) => theme.shadowModal};
 
   ${landscapeStyle(
     () => css`
@@ -115,7 +115,7 @@ const Input = styled.input`
   padding: 12px 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: ${({ theme }) => theme.subtleBackground};
   color: ${({ theme }) => theme.primaryText};
   font-size: 16px;
 
@@ -205,7 +205,7 @@ const Button = styled.button<{ primary?: boolean }>`
     color: ${theme.primaryText};
     border: 1px solid ${theme.lightGrey};
     &:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: ${({ theme }) => theme.subtleBackground};
     }
   `}
 `
@@ -224,7 +224,7 @@ const Link = styled.a`
 `
 
 const Skeleton = styled.div`
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%);
+  background: ${({ theme }) => theme.shimmerGradient};
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 4px;

@@ -1,39 +1,22 @@
 import React, { useMemo } from 'react'
-import styled from 'styled-components'
+import styled, { useTheme } from 'styled-components'
 import { formatEther } from 'ethers'
-import { Link } from 'react-router-dom'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
 import SubmittedByLink from 'components/SubmittedByLink'
-import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress, getDisplayStatus } from 'utils/items'
+import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress, getItemDisplayStatus } from 'utils/items'
 import useHumanizedCountdown, {
   useChallengeRemainingTime,
   useChallengePeriodDuration,
 } from 'hooks/countdown'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
-import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import useRegistryParameters from 'hooks/useRegistryParameters'
-
-const Card = styled.div`
-  width: 100%;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  background: transparent;
-`
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  flex-wrap: wrap;
-`
+import {
+  Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
+  MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer, ViewLink,
+} from './profileCardStyles'
 
 const HeaderLeft = styled.div`
   display: inline-flex;
@@ -52,108 +35,17 @@ const HeaderRight = styled.div`
   white-space: nowrap;
 `
 
-const Bullet = styled.span<{ color: string }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ color }) => color};
-  flex: 0 0 8px;
-`
-
-const Title = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.primaryText};
-`
-
-const Registry = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-`
-
-const StatusLabel = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.primaryText};
-`
-
-const Divider = styled.hr`
-  border: none;
-  border-top: 1px solid ${({ theme }) => theme.stroke};
-  margin: 0;
-`
-
-const Body = styled.div`
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`
-
-const MetaLine = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-`
-
-const InfoRow = styled.div`
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-  flex: 1;
-  min-width: 0;
-`
-
-const LabelValue = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-`
-
-const ViewLink = styled(Link)`
-  ${hoverLongTransitionTiming}
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border-radius: 9999px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  min-width: 100px;
-  background: transparent;
-  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
-  color: ${({ theme }) => theme.primaryText};
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: ${({ theme }) => theme.primaryText};
-    color: ${({ theme }) => theme.primaryText};
-  }
-`
-
-const StyledChainLabel = styled.span`
-  margin-bottom: 8px;
-`
-
-const StyledChainContainer = styled(LabelValue)`
-  margin-bottom: -8px;
-`
-
-const statusColors: Record<string, string> = {
-  Included: '#65DC7F',
-  Removed: '#FF5A78',
-  'Registration Requested': '#60A5FA',
-  'Removal Requested': '#FBBF24',
-  Challenged: '#E87B35',
-}
-
-
 const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: string }) => {
+  const theme = useTheme()
+
+  const statusColors: Record<string, string> = {
+    Included: theme.statusIncluded,
+    Removed: theme.statusAbsent,
+    Rejected: theme.statusRejected,
+    'Registration Requested': theme.statusRegistrationRequested,
+    'Removal Requested': theme.statusClearingRequested,
+    Challenged: theme.statusChallenged,
+  }
 
   const registryKey = revRegistryMap[item.registryAddress] ?? 'Unknown'
   const registryName = registryDisplayNames[registryKey] ?? registryKey
@@ -166,9 +58,9 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
     getPropValue(item, 'Description') ||
     item.itemID
 
-  const statusText = item.disputed ? 'Challenged' : getDisplayStatus(item.status, false)
+  const statusText = getItemDisplayStatus(item)
 
-  const bulletColor = statusColors[statusText] ?? '#9CA3AF'
+  const bulletColor = statusColors[statusText] ?? theme.statusGray
 
   const submittedOn =
     item.requests?.[0]?.submissionTime != null

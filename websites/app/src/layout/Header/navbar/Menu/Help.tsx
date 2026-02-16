@@ -29,7 +29,7 @@ const Container = styled.div`
   border: 0.1px solid ${({ theme }) => theme.stroke};
   background-color: ${({ theme }) => theme.lightBackground};
   border-radius: 12px;
-  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: ${({ theme }) => theme.cardShadow};
 
   ${landscapeStyle(
     () => css`

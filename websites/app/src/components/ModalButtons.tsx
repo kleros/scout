@@ -39,12 +39,12 @@ export const ModalButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
       border-color: ${theme.buttonSecondaryBorder};
 
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: ${theme.hoverBackground};
         border-color: ${theme.primaryText};
       }
 
       &:active {
-        background: rgba(255, 255, 255, 0.15);
+        background: ${theme.activeBackground};
       }
 
       &:disabled {

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 
+export type DateRangeOption = 'all' | '7d' | '30d' | '90d' | '1y'
+
 export interface FilterState {
   status: string[]
   disputed: string[]
@@ -7,6 +9,7 @@ export interface FilterState {
   page: number
   orderDirection: string
   text: string
+  dateRange: DateRangeOption
 }
 
 export interface FilterActions {
@@ -18,6 +21,7 @@ export interface FilterActions {
   setPage: (page: number) => void
   setOrderDirection: (dir: string) => void
   setText: (text: string) => void
+  setDateRange: (range: DateRangeOption) => void
 }
 
 export type FilterSlice = FilterState & FilterActions
@@ -29,6 +33,7 @@ const REGISTRY_DEFAULTS: FilterState = {
   page: 1,
   orderDirection: 'desc',
   text: '',
+  dateRange: 'all',
 }
 
 const PROFILE_DEFAULTS: FilterState = {
@@ -38,6 +43,7 @@ const PROFILE_DEFAULTS: FilterState = {
   page: 1,
   orderDirection: 'desc',
   text: '',
+  dateRange: 'all',
 }
 
 function useFilterSlice(defaults: FilterState): FilterSlice {
@@ -83,12 +89,17 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
     setState(prev => ({ ...prev, text, page: 1 }))
   }, [])
 
+  const setDateRange = useCallback((dateRange: DateRangeOption) => {
+    setState(prev => ({ ...prev, dateRange, page: 1 }))
+  }, [])
+
   return {
     ...state,
     setStatus, toggleStatus,
     setDisputed, toggleDisputed,
     toggleHasEverBeenDisputed,
     setPage, setOrderDirection, setText,
+    setDateRange,
   }
 }
 
@@ -118,3 +129,16 @@ export const useFilters = (scope: 'registry' | 'profile'): FilterSlice => {
 
 export const useRegistryFilters = (): FilterSlice => useFilters('registry')
 export const useProfileFilters = (): FilterSlice => useFilters('profile')
+
+/** Returns a Unix timestamp (seconds) for the start of the given date range, or 0 for 'all'. */
+export const getDateRangeTimestamp = (range: DateRangeOption): number => {
+  if (range === 'all') return 0
+  const now = Date.now()
+  const msMap: Record<string, number> = {
+    '7d': 7 * 24 * 60 * 60 * 1000,
+    '30d': 30 * 24 * 60 * 60 * 1000,
+    '90d': 90 * 24 * 60 * 60 * 1000,
+    '1y': 365 * 24 * 60 * 60 * 1000,
+  }
+  return Math.floor((now - msMap[range]) / 1000)
+}

@@ -66,27 +66,46 @@ const ActionablesContainer = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  gap: 24px;
+  gap: 12px;
   width: 100%;
   align-items: center;
   flex-wrap: wrap;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 24px;
+    `
+  )}
 `;
 
 const SearchAndFiltersContainer = styled.div`
   display: flex;
   flex-direction: row;
   gap: 8px;
-  flex: 1;
-  min-width: 0;
   align-items: center;
+  flex-wrap: wrap;
+  flex: 1 1 100%;
+
+  ${landscapeStyle(
+    () => css`
+      flex: 1 1 auto;
+      flex-wrap: nowrap;
+    `
+  )}
 `;
 
 const PolicyAndSubmitItemContainer = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
   flex-wrap: wrap;
+
+  ${landscapeStyle(
+    () => css`
+      gap: 24px;
+    `
+  )}
 `;
 
 const ParametersLabel = styled.label`
@@ -107,7 +126,7 @@ export const StyledCloseButton = styled(CloseIcon)`
   z-index: 100;
   background: transparent;
   border: none;
-  color: #fff;
+  color: ${({ theme }) => theme.white};
   font-size: 24px;
   cursor: pointer;
 `;
@@ -167,17 +186,17 @@ const HeroTitle = styled.h1`
   position: relative;
   z-index: 1;
   letter-spacing: 0.5px;
-  filter: drop-shadow(0 0 12px rgba(113, 134, 255, 0.35))
-          drop-shadow(0 0 24px rgba(113, 134, 255, 0.20));
-  text-shadow: 0 0 15px rgba(113, 134, 255, 0.4),
-               0 0 30px rgba(113, 134, 255, 0.25);
+  filter: drop-shadow(0 0 12px ${({ theme }) => theme.secondaryBlue}59)
+          drop-shadow(0 0 24px ${({ theme }) => theme.secondaryBlue}33);
+  text-shadow: 0 0 15px ${({ theme }) => theme.secondaryBlue}66,
+               0 0 30px ${({ theme }) => theme.secondaryBlue}40;
 
   ${landscapeStyle(
     () => css`
-      filter: drop-shadow(0 0 15px rgba(113, 134, 255, 0.4))
-              drop-shadow(0 0 30px rgba(113, 134, 255, 0.25));
-      text-shadow: 0 0 18px rgba(113, 134, 255, 0.45),
-                   0 0 36px rgba(113, 134, 255, 0.30);
+      filter: drop-shadow(0 0 15px ${({ theme }) => theme.secondaryBlue}66)
+              drop-shadow(0 0 30px ${({ theme }) => theme.secondaryBlue}40);
+      text-shadow: 0 0 18px ${({ theme }) => theme.secondaryBlue}73,
+                   0 0 36px ${({ theme }) => theme.secondaryBlue}4D;
     `
   )}
 `;
@@ -252,7 +271,6 @@ const Home: React.FC = () => {
     'unknown'
   ]);
   const [viewMode, setViewMode] = useViewMode();
-  const [shouldDisableListView, setShouldDisableListView] = useState(false);
   const [isFilterChanging, setIsFilterChanging] = useState(false);
 
   const isAddItemOpen = useMemo(
@@ -337,10 +355,11 @@ const Home: React.FC = () => {
 
     if (prevFilterKeyRef.current !== filterKey) {
       prevFilterKeyRef.current = filterKey;
+      filters.setPage(1);
       setIsFilterChanging(true);
       hasFetchingStartedRef.current = false;
     }
-  }, [filterKey]);
+  }, [filterKey, filters]);
 
   // Track when fetching starts
   useEffect(() => {
@@ -364,18 +383,6 @@ const Home: React.FC = () => {
 
   const currentRegistryAddress = registryName ? registryMap[registryName] : undefined;
 
-  // Check if list view should be disabled for Tokens registry on narrow screens
-  useEffect(() => {
-    const checkListViewAvailability = () => {
-      const isTokensRegistry = registryName === 'tokens';
-      const minWidth = 1350;
-      setShouldDisableListView(isTokensRegistry && window.innerWidth < minWidth);
-    };
-
-    checkListViewAvailability();
-    window.addEventListener('resize', checkListViewAvailability);
-    return () => window.removeEventListener('resize', checkListViewAvailability);
-  }, [registryName]);
 
   return (
     <Container>
@@ -391,12 +398,11 @@ const Home: React.FC = () => {
                 {registryName && REGISTRY_INFO[registryName] && <Hero registryKey={registryName} />}
                 <ActionablesContainer>
                   <SearchAndFiltersContainer>
-                    <Search />
+                    <Search text={filters.text} setText={filters.setText} />
                     <FilterButton onClick={() => setIsFilterModalOpen(true)} />
                     <ViewSwitcher
                       viewMode={viewMode}
                       onViewModeChange={setViewMode}
-                      disableListView={shouldDisableListView}
                     />
                   </SearchAndFiltersContainer>
                   <PolicyAndSubmitItemContainer>

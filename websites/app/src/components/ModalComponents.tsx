@@ -7,7 +7,7 @@ export const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: ${({ theme }) => theme.modalOverlay};
   display: flex;
   justify-content: center;
   align-items: center;
@@ -36,7 +36,7 @@ export const ModalContainer = styled.div`
   flex-direction: column;
   gap: 24px;
   position: relative;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: ${({ theme }) => theme.shadowModal};
 `;
 
 export const ModalHeader = styled.div`

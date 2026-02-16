@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { pulse } from 'styles/commonStyles';
 import { useKlerosDisputes, getDisputePeriodName, formatDisputeDeadline } from 'hooks/useKlerosDisputes';
 import LawBalanceIcon from 'assets/svgs/icons/law-balance.svg';
 import HourglassIcon from 'assets/svgs/icons/hourglass.svg';
@@ -9,18 +10,18 @@ const Container = styled.div`
   border-radius: 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 32px rgba(231, 123, 53, 0.1);
+    box-shadow: ${({ theme }) => theme.glowOrange};
   }
 `;
 
 const Title = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 16px;
   font-style: italic;
@@ -97,12 +98,7 @@ const LoadingCard = styled.div`
   border: 1px solid ${({ theme }) => theme.stroke};
   background: transparent;
   height: 60px;
-  animation: pulse 2s infinite;
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
+  animation: ${pulse} 2s infinite;
 `;
 
 const EmptyState = styled.div`
@@ -128,12 +124,12 @@ const ViewButton = styled.a`
   text-decoration: none;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:active {
-    background: rgba(255, 255, 255, 0.15);
+    background: ${({ theme }) => theme.activeBackground};
   }
 `;
 

@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import styled, { css } from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle';
 import { responsiveSize } from 'styles/responsiveSize';
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -45,7 +44,7 @@ const HeaderSection = styled.div`
 `;
 
 const Title = styled.h1`
-  color: var(--Primary-text, #FFF);
+  color: ${({ theme }) => theme.primaryText};
   text-align: center;
   font-family: "Open Sans";
   font-size: 24px;
@@ -56,7 +55,7 @@ const Title = styled.h1`
 `;
 
 const Description = styled.p`
-  color: var(--Secondary-text, #BEBEC5);
+  color: ${({ theme }) => theme.secondaryText};
   text-align: center;
   font-family: "Open Sans";
   font-size: 16px;
@@ -127,7 +126,7 @@ const TrustedBySection = styled.div`
 `;
 
 const TrustedByText = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
@@ -205,9 +204,7 @@ const BottomGrid = styled.div`
 interface IHome {}
 
 const Home: React.FC<IHome> = () => {
-  const [timeframeDays, setTimeframeDays] = useState(30);
-  const { data: stats, isLoading } = useDapplookerStats(timeframeDays);
-  const navigate = useNavigate();
+  const { data: stats, isLoading } = useDapplookerStats();
 
   const chartData = useMemo(() => {
     if (!stats?.submissionsVsDisputes) return [];
@@ -222,10 +219,6 @@ const Home: React.FC<IHome> = () => {
 
   const handleSubmitNowClick = () => {
     setIsSubmissionModalOpen(true);
-  };
-
-  const handleTimeframeChange = (days: number) => {
-    setTimeframeDays(days);
   };
 
   return (
@@ -265,8 +258,6 @@ const Home: React.FC<IHome> = () => {
           stats={stats}
           isLoading={isLoading}
           chartData={chartData}
-          selectedTimeframe={timeframeDays}
-          onTimeframeChange={handleTimeframeChange}
         />
       </CarouselSection>
 

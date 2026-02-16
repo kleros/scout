@@ -1,25 +1,15 @@
 import React, { useMemo } from 'react';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, AreaChart, Area, Tooltip, Legend } from 'recharts';
-import styled, { useTheme, keyframes, css } from 'styled-components';
+import styled, { useTheme, css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
-
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
+import { fadeIn } from 'styles/commonStyles';
 
 const ChartContainer = styled.div`
   padding: 16px;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  background: ${({ theme }) => theme.gradientCardSubtle};
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   animation: ${fadeIn} 0.6s ease-out;
@@ -33,7 +23,7 @@ const ChartContainer = styled.div`
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
+    box-shadow: ${({ theme }) => theme.glowPurple};
   }
 `;
 
@@ -44,7 +34,7 @@ const ChartTitle = styled.h3`
   margin: 0 0 16px 0;
   text-align: center;
   letter-spacing: -0.3px;
-  background: linear-gradient(135deg, #7d4bff 0%, #485fff 100%);
+  background: ${({ theme }) => theme.gradientChart};
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -84,13 +74,6 @@ interface StatsChartProps {
   title: string;
 }
 
-const CHART_COLORS = {
-  primary: '#7d4bff',
-  secondary: '#485fff',
-  tooltip: 'rgba(0, 0, 0, 0.8)',
-  cursor: '#7d4bff',
-} as const;
-
 const CHART_CONFIG = {
   margin: { top: 20, right: 30, left: 20, bottom: 20 },
   strokeWidth: 2,
@@ -104,19 +87,24 @@ const CHART_CONFIG = {
 export const StatsChart: React.FC<StatsChartProps> = ({ data, title }) => {
   const theme = useTheme();
   
+  const chartColors = useMemo(() => ({
+    primary: theme.chartPrimary,
+    secondary: theme.chartSecondary,
+  }), [theme.chartPrimary, theme.chartSecondary]);
+
   const tooltipStyle = useMemo(() => ({
-    backgroundColor: CHART_COLORS.tooltip,
+    backgroundColor: theme.tooltipBackground,
     border: 'none',
     borderRadius: '8px',
-    color: '#fff',
+    color: theme.white,
     fontSize: '12px'
-  }), []);
+  }), [theme.tooltipBackground, theme.white]);
 
   const cursorStyle = useMemo(() => ({
-    stroke: CHART_COLORS.cursor,
+    stroke: theme.chartPrimary,
     strokeWidth: 1,
     strokeDasharray: '3 3'
-  }), []);
+  }), [theme.chartPrimary]);
 
   const legendStyle = useMemo(() => ({
     paddingTop: '20px',
@@ -136,12 +124,12 @@ export const StatsChart: React.FC<StatsChartProps> = ({ data, title }) => {
           <AreaChart data={data} margin={CHART_CONFIG.margin}>
             <defs>
               <linearGradient id="submissionsGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={CHART_CONFIG.opacity.gradientStart}/>
-                <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={CHART_CONFIG.opacity.gradientEnd}/>
+                <stop offset="5%" stopColor={chartColors.primary} stopOpacity={CHART_CONFIG.opacity.gradientStart}/>
+                <stop offset="95%" stopColor={chartColors.primary} stopOpacity={CHART_CONFIG.opacity.gradientEnd}/>
               </linearGradient>
               <linearGradient id="disputesGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={CHART_COLORS.secondary} stopOpacity={CHART_CONFIG.opacity.gradientStart}/>
-                <stop offset="95%" stopColor={CHART_COLORS.secondary} stopOpacity={CHART_CONFIG.opacity.gradientEnd}/>
+                <stop offset="5%" stopColor={chartColors.secondary} stopOpacity={CHART_CONFIG.opacity.gradientStart}/>
+                <stop offset="95%" stopColor={chartColors.secondary} stopOpacity={CHART_CONFIG.opacity.gradientEnd}/>
               </linearGradient>
             </defs>
             <CartesianGrid 
@@ -170,7 +158,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ data, title }) => {
             <Area
               type="monotone"
               dataKey="submissions"
-              stroke={CHART_COLORS.primary}
+              stroke={chartColors.primary}
               fillOpacity={1}
               fill="url(#submissionsGradient)"
               strokeWidth={CHART_CONFIG.strokeWidth}
@@ -178,7 +166,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({ data, title }) => {
             <Area
               type="monotone"
               dataKey="disputes"
-              stroke={CHART_COLORS.secondary}
+              stroke={chartColors.secondary}
               fillOpacity={1}
               fill="url(#disputesGradient)"
               strokeWidth={CHART_CONFIG.strokeWidth}

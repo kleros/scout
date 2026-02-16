@@ -33,6 +33,7 @@ import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
 import { chains } from 'utils/chains'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
+import Tooltip from 'components/Tooltip'
 
 const columns = [
   {
@@ -251,11 +252,12 @@ const AddCDN: React.FC = () => {
         address={address}
         setAddress={setAddress}
         registry="cdn"
+        tooltip={columns[0].description}
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
       )}
-      <FieldLabel>Domain</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[1].description}>Domain</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. kleros.io"
         value={domain}
@@ -271,6 +273,7 @@ const AddCDN: React.FC = () => {
         path={path}
         setPath={setPath}
         registry="cdn"
+        tooltip={columns[2].description}
         {...{setImageError}}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}

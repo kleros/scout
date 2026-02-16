@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
-import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getDisplayStatus } from 'utils/items';
+import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getItemDisplayStatus } from 'utils/items';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
 import useHumanizedCountdown, { useChallengeRemainingTime, useChallengePeriodDuration } from 'hooks/countdown';
@@ -15,18 +15,18 @@ const Container = styled.div`
   border-radius: 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
+    box-shadow: ${({ theme }) => theme.glowPurple};
   }
 `;
 
 const Title = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 16px;
   font-style: italic;
@@ -49,7 +49,7 @@ const ActivityRow = styled.div`
   gap: 8px;
   row-gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
   transition: all 0.2s ease;
   flex-wrap: wrap;
 
@@ -58,7 +58,7 @@ const ActivityRow = styled.div`
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${({ theme }) => theme.subtleBackground};
     padding-left: 8px;
     padding-right: 8px;
     margin-left: -8px;
@@ -192,15 +192,16 @@ const StatusBadge = styled.div<{ status: string }>`
     display: inline-block;
     width: 6px;
     height: 6px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
     ({
-      'Included': '#90EE90',
-      'Registration Requested': '#FFEA00',
-      'Challenged Submission': '#E87B35',
-      'Challenged Removal': '#E87B35',
-      'Removal Requested': '#E87B35',
-      'Removed': 'red',
-    })[status] || 'gray'};
+      'Included': theme.statusIncluded,
+      'Registration Requested': theme.statusRegistrationRequested,
+      'Challenged Submission': theme.statusChallenged,
+      'Challenged Removal': theme.statusChallenged,
+      'Removal Requested': theme.statusChallenged,
+      'Removed': theme.statusAbsent,
+      'Rejected': theme.statusRejected,
+    })[status] || theme.statusGray};
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -267,18 +268,18 @@ const ViewButton = styled(Link)`
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:active {
-    background: rgba(255, 255, 255, 0.15);
+    background: ${({ theme }) => theme.activeBackground};
   }
 `;
 
 const LoadingRow = styled.div`
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
 
   &:last-child {
     border-bottom: none;
@@ -298,7 +299,7 @@ const getDisplayName = (item: GraphItem): string => {
 };
 
 const getActivityStatus = (item: GraphItem): string =>
-  getDisplayStatus(item.status, item.disputed);
+  getItemDisplayStatus(item);
 
 const formatRegistryName = (registryName: string): string =>
   registryDisplayNames[registryName] || registryName;

@@ -5,6 +5,7 @@ import { getIPFSPath } from 'utils/getIPFSPath'
 import { isPngFile } from 'utils/pngValidation'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
+import Tooltip from 'components/Tooltip'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -52,7 +53,8 @@ const ImageUpload: React.FC<{
   setPath: Dispatch<SetStateAction<string>>
   setImageError: Dispatch<SetStateAction<string | null>>
   registry: string
-}> = ({ path, setPath, setImageError, registry }) => {
+  tooltip?: string
+}> = ({ path, setPath, setImageError, registry, tooltip }) => {
   const [imageFile, setImageFile] = useState<File | null>(null)
 
   const validateImage = async (file: File): Promise<string | null> => {
@@ -106,7 +108,9 @@ const ImageUpload: React.FC<{
 
   return (
     <>
-      <FieldLabel>Image</FieldLabel>
+      <FieldLabel>
+        {tooltip ? <Tooltip data-tooltip={tooltip}>Image</Tooltip> : 'Image'}
+      </FieldLabel>
       <StyledLabel>
         Upload Image <StyledUploadIcon />
         <StyledInput

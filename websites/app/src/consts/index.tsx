@@ -12,3 +12,11 @@ export const SUBGRAPH_GNOSIS_ENDPOINT =
 export const SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT =
   import.meta.env.REACT_APP_SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT ||
   'https://api.studio.thegraph.com/query/61738/kleros-display-gnosis/version/latest'
+
+export const KLEROS_CDN_BASE = 'https://cdn.kleros.link'
+
+// xDAI Curation Court ID on Kleros
+export const XDAI_CURATION_COURT_ID = '1'
+
+// DappLooker chart ID for curators count
+export const CURATORS_CHART_ID = 'f531beb6-120f-4fa9-b71d-5176488785d4'

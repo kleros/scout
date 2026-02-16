@@ -3,7 +3,7 @@ import styled, { css } from 'styled-components';
 import { useDebounce } from 'react-use';
 import { useNavigate } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
-import { revRegistryMap, buildItemPath, registryDisplayNames, getItemDisplayName, getChainId as getChainIdUtil, getDisplayStatus } from 'utils/items';
+import { revRegistryMap, buildItemPath, registryDisplayNames, getItemDisplayName, getChainId as getChainIdUtil, getItemDisplayStatus } from 'utils/items';
 import SearchIcon from 'svgs/icons/search.svg';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
@@ -57,7 +57,7 @@ const Container = styled.div`
   }
 
   :hover {
-    background-color: #FFFFFF1D;
+    background-color: ${({ theme }) => theme.hoverBackground};
   }
 `;
 
@@ -89,7 +89,7 @@ const ResultsDropdown = styled.div<{ $isVisible: boolean }>`
   opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
   pointer-events: ${({ $isVisible }) => ($isVisible ? 'auto' : 'none')};
   transition: opacity 0.2s ease;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowDropdown};
   z-index: 1001;
 `;
 
@@ -97,14 +97,14 @@ const ResultItem = styled.div`
   ${hoverLongTransitionTiming}
   padding: 12px 16px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
 
   &:last-child {
     border-bottom: none;
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${({ theme }) => theme.subtleBackground};
   }
 `;
 
@@ -166,15 +166,16 @@ const StatusBadge = styled.div<{ status: string }>`
     display: inline-block;
     width: 6px;
     height: 6px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
     ({
-      'Included': '#90EE90',
-      'Registration Requested': '#FFEA00',
-      'Challenged Submission': '#E87B35',
-      'Challenged Removal': '#E87B35',
-      'Removal Requested': '#E87B35',
-      'Removed': 'red',
-    })[status] || 'gray'};
+      'Included': theme.statusIncluded,
+      'Registration Requested': theme.statusRegistrationRequested,
+      'Challenged Submission': theme.statusChallenged,
+      'Challenged Removal': theme.statusChallenged,
+      'Removal Requested': theme.statusChallenged,
+      'Removed': theme.statusAbsent,
+      'Rejected': theme.statusRejected,
+    })[status] || theme.statusGray};
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -309,7 +310,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
   const formatRegistryName = (registryName: string): string =>
     registryDisplayNames[registryName] || registryName;
 
-  const getActivityStatus = (item: any): string => getDisplayStatus(item.status, item.disputed);
+  const getActivityStatus = (item: any): string => getItemDisplayStatus(item);
 
   const SearchResultItem: React.FC<{ item: any }> = ({ item }) => {
     const registryName = revRegistryMap[item.registryAddress] || 'Unknown';

@@ -12,10 +12,10 @@ interface StatBoxProps {
 }
 
 const Section = styled.section`
-  background-color: black;
+  background-color: ${({ theme }) => theme.black};
   padding: 1.5rem;
   border-radius: 0.5rem;
-  border: 1px solid #CD9DFF;
+  border: 1px solid ${({ theme }) => theme.purpleTint};
   width: 80%;
   font-size: 20px;
   font-family: "Open Sans", sans-serif;
@@ -52,7 +52,7 @@ const StatBox = styled.div<StatBoxProps>`
   
   ${landscapeStyle(
     () => css`
-      ${props => props.borderLeft && 'border-left: 1px solid #fff;'}
+      ${props => props.borderLeft && `border-left: 1px solid ${props.theme.white};`}
     `
   )}
 `;
@@ -60,28 +60,28 @@ const StatBox = styled.div<StatBoxProps>`
 const StatNumber = styled.p`
   font-size: 40px;
   font-weight: bold;
-  color: #9C46FF;
+  color: ${({ theme }) => theme.purpleBright};
   margin-bottom: 0;
   font-family: "Open Sans", sans-serif;
 `;
 
 const StatLabel = styled.p`
   font-size: 16px;
-  color: white;
+  color: ${({ theme }) => theme.white};
 `;
 
 const Divider = styled.hr`
-  border-color: white;
+  border-color: ${({ theme }) => theme.white};
 `;
 
 const Text = styled.p`
-  color: white;
+  color: ${({ theme }) => theme.white};
 `;
 
 const List = styled.ul`
   list-style-type: disc;
   list-style-position: inside;
-  color: white;
+  color: ${({ theme }) => theme.white};
 `;
 
 const ClickableListItem = styled.li`
@@ -90,15 +90,15 @@ const ClickableListItem = styled.li`
   
   &:hover {
     transform: scale(1.02);
-    color: #9C46FF;
+    color: ${({ theme }) => theme.purpleBright};
   }
 `;
 
 const FormulaBox = styled.div`
-  background-color: #000000;
+  background-color: ${({ theme }) => theme.black};
   padding: 1rem;
   border-radius: 0.5rem;
-  border: 1px solid #5A2393;
+  border: 1px solid ${({ theme }) => theme.purpleDarkBorder};
   word-break: break-all;
   display: flex;
 
@@ -111,18 +111,18 @@ const FormulaBox = styled.div`
 `;
 
 const FormulaText = styled.p`
-  color: #CD9DFF;
+  color: ${({ theme }) => theme.purpleTint};
   padding: 0 1rem;
-  border-right: 1px solid white;
+  border-right: 1px solid ${({ theme }) => theme.white};
 `;
 
 const Formula = styled.p`
-  color: #E87B35;
+  color: ${({ theme }) => theme.orange};
   padding: 0 1rem;
 `;
 
 const FormulaSpan = styled.span`
-  color: #fff;
+  color: ${({ theme }) => theme.white};
 `;
 
 const RewardSection: React.FC = () => {

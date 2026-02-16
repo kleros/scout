@@ -62,6 +62,13 @@ const Tooltip = styled(BaseTooltip)`
   border-bottom: 1px dotted ${({ theme }) => theme.secondaryText};
 `
 
+const REGISTRY_DISPLAY_NAMES: Record<string, string> = {
+  tokens: 'Tokens',
+  cdn: 'CDN',
+  'single-tags': 'Single Tags',
+  'tags-queries': 'Tag Queries',
+}
+
 const truncateAddress = (addr: string) =>
   `${addr.slice(0, 6)}...${addr.slice(-4)}`
 
@@ -109,7 +116,11 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
       <ModalWrapper>
         <ModalContainer ref={modalRef}>
           <ModalHeader>
-            <ModalTitle>List Parameters</ModalTitle>
+            <ModalTitle>
+              List Parameters{registryName && REGISTRY_DISPLAY_NAMES[registryName]
+                ? ` - ${REGISTRY_DISPLAY_NAMES[registryName]}`
+                : ''}
+            </ModalTitle>
             <CloseButton onClick={onClose}>×</CloseButton>
           </ModalHeader>
 
