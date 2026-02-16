@@ -4,6 +4,7 @@ import { useGraphqlBatcher } from './useGraphqlBatcher'
 import { GraphItem, registryMap } from 'utils/items'
 import { ITEMS_PER_PAGE } from '../../pages/Registries/index'
 import { chains, getNamespaceForChainId } from '../../utils/chains'
+import { DateRangeOption, getDateRangeTimestamp, getCustomDateTimestamps } from 'context/FilterContext'
 
 interface UseItemsQueryParams {
   registryName?: string
@@ -15,6 +16,9 @@ interface UseItemsQueryParams {
   orderDirection: string
   page: number
   chainFilters?: string[]
+  dateRange?: DateRangeOption
+  customDateFrom?: string | null
+  customDateTo?: string | null
   enabled?: boolean
 }
 
@@ -28,6 +32,9 @@ export const useItemsQuery = ({
   orderDirection,
   page,
   chainFilters = [],
+  dateRange = 'all',
+  customDateFrom = null,
+  customDateTo = null,
   enabled = true,
 }: UseItemsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
@@ -52,7 +59,10 @@ export const useItemsQuery = ({
     chainFilters.slice().sort().join(','),
     text,
     orderDirection,
-    page
+    page,
+    dateRange,
+    customDateFrom,
+    customDateTo,
   ];
 
   return useQuery({
@@ -91,6 +101,19 @@ export const useItemsQuery = ({
           conditions.length > 0 ? `{_or: [${conditions.join(',')}]}` : '{}'
       }
 
+      // Build date filter
+      let dateFilterObject = ''
+      if (dateRange === 'custom') {
+        const { fromTs, toTs } = getCustomDateTimestamps(customDateFrom, customDateTo)
+        const conditions: string[] = []
+        if (fromTs > 0) conditions.push(`{latestRequestSubmissionTime: {_gte: "${fromTs}"}}`)
+        if (toTs > 0) conditions.push(`{latestRequestSubmissionTime: {_lte: "${toTs}"}}`)
+        if (conditions.length > 0) dateFilterObject = conditions.join(',')
+      } else if (dateRange !== 'all') {
+        const ts = getDateRangeTimestamp(dateRange)
+        if (ts > 0) dateFilterObject = `{latestRequestSubmissionTime: {_gte: "${ts}"}}`
+      }
+
       const textFilterObject = text
         ? `{_or: [
         {key0: {_ilike: $text}},
@@ -124,8 +147,9 @@ export const useItemsQuery = ({
             {status: {_in: $status}},
             {disputed: {_in: $disputed}},
             ${hasEverBeenDisputed ? '{requests: {disputed: {_eq: true}}},' : ''}
-            ${networkQueryObject},
-            ${text === '' ? '' : textFilterObject}
+            ${networkQueryObject}
+            ${textFilterObject ? `,${textFilterObject}` : ''}
+            ${dateFilterObject ? `,${dateFilterObject}` : ''}
           ]
             }
         offset: $skip

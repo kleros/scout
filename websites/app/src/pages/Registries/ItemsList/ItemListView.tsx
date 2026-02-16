@@ -13,39 +13,7 @@ import useHumanizedCountdown, {
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 // import ArrowIcon from 'assets/svgs/icons/arrow.svg'; // UNUSED: Only needed for submitter links which are commented out
 import Skeleton from 'react-loading-skeleton';
-
-// Chain icons
-import ArbitrumIcon from 'assets/svgs/chains/arbitrum.svg';
-import AvalancheIcon from 'assets/svgs/chains/avalanche.svg';
-import BaseIcon from 'assets/svgs/chains/base.svg';
-import BnbIcon from 'assets/svgs/chains/bnb.svg';
-import CeloIcon from 'assets/svgs/chains/celo.svg';
-import EthereumIcon from 'assets/svgs/chains/ethereum.svg';
-import FantomIcon from 'assets/svgs/chains/fantom.svg';
-import GnosisIcon from 'assets/svgs/chains/gnosis.svg';
-import OptimismIcon from 'assets/svgs/chains/optimism.svg';
-import PolygonIcon from 'assets/svgs/chains/polygon.svg';
-import ScrollIcon from 'assets/svgs/chains/scroll.svg';
-import SolanaIcon from 'assets/svgs/chains/solana.svg';
-import ZkSyncIcon from 'assets/svgs/chains/zksync.svg';
-
-// Chain icon mapping
-const chainIconMap: Record<string, React.ComponentType<any>> = {
-  '42161': ArbitrumIcon,
-  '43114': AvalancheIcon,
-  '8453': BaseIcon,
-  '56': BnbIcon,
-  '42220': CeloIcon,
-  '1': EthereumIcon,
-  '250': FantomIcon,
-  '100': GnosisIcon,
-  '10': OptimismIcon,
-  '137': PolygonIcon,
-  '534352': ScrollIcon,
-  '4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ': SolanaIcon,
-  '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': SolanaIcon,
-  '324': ZkSyncIcon,
-};
+import { getChainIcon } from 'utils/chainIcons';
 
 const ListRow = styled(Link)<{ registryType?: string; }>`
   ${hoverLongTransitionTiming}
@@ -621,7 +589,7 @@ const ItemListView = React.memo(
         const repository = getPropValue('Github Repository URL');
         const commitHash = getPropValue('Commit hash');
         const chainId = getPropValue('EVM Chain ID');
-        const ChainIcon = chainIconMap[chainId];
+        const ChainIcon = getChainIcon(chainId);
 
         return (
           <>

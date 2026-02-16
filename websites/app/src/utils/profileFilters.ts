@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { chains, getNamespaceForChainId } from 'utils/chains'
-import { getDateRangeTimestamp, DateRangeOption } from 'context/FilterContext'
+import { getDateRangeTimestamp, getCustomDateTimestamps, DateRangeOption } from 'context/FilterContext'
 
 /** Filters items by chain based on key0 prefix matching. */
 export const filterItemsByChain = (items: any[], chainFilters: string[]): any[] => {
@@ -43,7 +43,23 @@ export const filterItemsByChain = (items: any[], chainFilters: string[]): any[] 
 }
 
 /** Filters items by date range using latestRequestSubmissionTime. */
-export const filterItemsByDateRange = (items: any[], dateRange: DateRangeOption): any[] => {
+export const filterItemsByDateRange = (
+  items: any[],
+  dateRange: DateRangeOption,
+  customDateFrom?: string | null,
+  customDateTo?: string | null,
+): any[] => {
+  if (dateRange === 'custom') {
+    const { fromTs, toTs } = getCustomDateTimestamps(customDateFrom ?? null, customDateTo ?? null)
+    if (fromTs <= 0 && toTs <= 0) return items
+    return items.filter((item: any) => {
+      const ts = parseInt(item.latestRequestSubmissionTime, 10)
+      if (fromTs > 0 && ts < fromTs) return false
+      if (toTs > 0 && ts > toTs) return false
+      return true
+    })
+  }
+
   const dateRangeTs = getDateRangeTimestamp(dateRange)
   if (dateRangeTs <= 0) return items
 

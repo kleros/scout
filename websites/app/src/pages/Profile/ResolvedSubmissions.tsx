@@ -83,6 +83,8 @@ const ResolvedSubmissions: React.FC<Props> = ({
 
   const searchTerm = filters.text
   const dateRange = filters.dateRange
+  const customDateFrom = filters.customDateFrom
+  const customDateTo = filters.customDateTo
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -95,6 +97,8 @@ const ResolvedSubmissions: React.FC<Props> = ({
       chainFilters.slice().sort().join(','),
       searchTerm,
       dateRange,
+      customDateFrom,
+      customDateTo,
     ],
     enabled: !!queryAddress,
     queryFn: async () => {
@@ -111,7 +115,7 @@ const ResolvedSubmissions: React.FC<Props> = ({
       let items = json.data.litems as any[]
 
       items = filterItemsByChain(items, chainFilters)
-      items = filterItemsByDateRange(items, dateRange)
+      items = filterItemsByDateRange(items, dateRange, customDateFrom, customDateTo)
       items = filterItemsBySearchTerm(items, searchTerm)
 
       return paginateItems(items, currentPage, itemsPerPage)

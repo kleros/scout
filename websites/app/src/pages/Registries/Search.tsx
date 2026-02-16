@@ -20,7 +20,7 @@ const Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      flex: 0 1 316px;
+      flex: 0 1 396px;
     `
   )}
 

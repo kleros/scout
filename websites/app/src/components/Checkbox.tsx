@@ -31,6 +31,11 @@ const Checkbox = styled.input.attrs({ type: 'checkbox' })`
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
   }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 `
 
 export default Checkbox

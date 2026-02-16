@@ -115,7 +115,7 @@ export const chains = [
     namespace: 'eip155',
     name: 'zkSync',
     label: 'zkSync',
-    explorer: 'era.zksync.network',
+    explorer: 'explorer.zksync.io',
   },
   {
     id: '369',

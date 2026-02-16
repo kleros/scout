@@ -2,11 +2,9 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import styled, { css, createGlobalStyle, useTheme } from "styled-components";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
-import { hoverLongTransitionTiming } from "styles/commonStyles";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ProfileIcon from "svgs/icons/activity.svg";
-import ArrowDown from "svgs/icons/arrow-down.svg";
 import { useSubmitterStats } from "hooks/useSubmitterStats";
 import { useDisputeStats } from "hooks/useDisputeStats";
 import { commify } from "utils/commify";
@@ -18,13 +16,13 @@ import PendingSubmissions from "./PendingSubmissions";
 import ResolvedSubmissions from "./ResolvedSubmissions";
 import Disputes from "./Disputes";
 import FilterButton from "components/FilterButton";
-import FilterModal from "./FilterModal";
+import FilterModal from "components/FilterModal";
 import { SearchBar as ProfileSearchBar } from "pages/Registries/Search";
 import Copyable from "components/Copyable";
 import { ExternalLink } from "components/ExternalLink";
 import { DEFAULT_CHAIN, getChain } from "consts/chains";
 import { chains } from "utils/chains";
-import { useProfileFilters, DateRangeOption } from "context/FilterContext";
+import { useProfileFilters } from "context/FilterContext";
 import ScrollTop from "components/ScrollTop";
 
 const Container = styled.div`
@@ -213,79 +211,6 @@ const FilterControlsContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-const DateRangeWrapper = styled.div`
-  position: relative;
-  flex-shrink: 0;
-`;
-
-const DateRangeTrigger = styled.button<{ $isOpen: boolean }>`
-  ${hoverLongTransitionTiming}
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background-color: ${({ $isOpen, theme }) => ($isOpen ? theme.hoverBackground : theme.subtleBackground)};
-  color: ${({ theme }) => theme.secondaryText};
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 9999px;
-  padding: 8px 16px;
-  height: 40px;
-  font-size: 14px;
-  font-weight: 500;
-  font-family: "Open Sans", sans-serif;
-  cursor: pointer;
-  outline: none;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.hoverBackground};
-  }
-
-  svg {
-    width: 8px;
-    height: 8px;
-    margin-right: 4px;
-    transition: transform 0.2s ease;
-    transform: ${({ $isOpen }) => ($isOpen ? 'rotate(180deg)' : 'rotate(0)')};
-  }
-`;
-
-const DateRangeMenu = styled.div<{ $isVisible: boolean }>`
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  min-width: 100%;
-  background: ${({ theme }) => theme.lightBackground};
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 12px;
-  overflow: hidden;
-  opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
-  pointer-events: ${({ $isVisible }) => ($isVisible ? 'auto' : 'none')};
-  transform: ${({ $isVisible }) => ($isVisible ? 'translateY(0)' : 'translateY(-4px)')};
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  box-shadow: ${({ theme }) => theme.shadowDropdown};
-  z-index: 100;
-`;
-
-const DateRangeMenuItem = styled.button<{ $isSelected: boolean }>`
-  ${hoverLongTransitionTiming}
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 10px 16px;
-  border: none;
-  background: ${({ $isSelected, theme }) => ($isSelected ? theme.selectedBackground : 'transparent')};
-  color: ${({ theme, $isSelected }) => ($isSelected ? theme.secondaryBlue : theme.primaryText)};
-  font-size: 14px;
-  font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 400)};
-  font-family: "Open Sans", sans-serif;
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background: ${({ theme }) => theme.hoverBackground};
-  }
-`;
-
 const SubTabsWrapper = styled.div`
   display: flex;
   gap: 24px;
@@ -344,14 +269,6 @@ const StatDivider = styled.div`
   align-self: stretch;
 `;
 
-const DATE_RANGE_OPTIONS: { value: DateRangeOption; label: string }[] = [
-  { value: 'all', label: 'All time' },
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' },
-  { value: '1y', label: 'Last year' },
-];
-
 const PATHS = ["pending", "resolved", "disputes"];
 
 const Profile: React.FC = () => {
@@ -372,9 +289,6 @@ const Profile: React.FC = () => {
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isFilterChanging, setIsFilterChanging] = useState(false);
-  // Date range dropdown state
-  const [isDateRangeOpen, setIsDateRangeOpen] = useState(false);
-  const dateRangeRef = useRef<HTMLDivElement>(null);
   // Initialize chain filters with all available chains by default
   const [chainFilters, setChainFilters] = useState<string[]>(() => {
     const availableChains = chains.filter(chain => !chain.deprecated).map(chain => chain.id);
@@ -391,20 +305,9 @@ const Profile: React.FC = () => {
     setFilteredPendingCount(null);
     setFilteredResolvedCount(null);
     setFilteredDisputeCounts(null);
-  }, [filters.dateRange]);
+  }, [filters.dateRange, filters.customDateFrom, filters.customDateTo]);
 
   const showFilteredCounts = filters.dateRange !== 'all';
-
-  // Close date range dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dateRangeRef.current && !dateRangeRef.current.contains(e.target as Node)) {
-        setIsDateRangeOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Auto-add connected address to URL when user connects wallet
   useEffect(() => {
@@ -424,8 +327,10 @@ const Profile: React.FC = () => {
       chainFilters.sort().join(','),
       filters.orderDirection,
       filters.dateRange,
+      filters.customDateFrom,
+      filters.customDateTo,
     ].join('|');
-  }, [filters.status, filters.disputed, filters.text, filters.orderDirection, chainFilters, filters.dateRange]);
+  }, [filters.status, filters.disputed, filters.text, filters.orderDirection, chainFilters, filters.dateRange, filters.customDateFrom, filters.customDateTo]);
 
   const prevFilterKeyRef = useRef(filterKey);
 
@@ -567,29 +472,6 @@ const Profile: React.FC = () => {
           </Header>
           <FilterControlsContainer>
             <ProfileSearchBar text={filters.text} setText={filters.setText} />
-            <DateRangeWrapper ref={dateRangeRef}>
-              <DateRangeTrigger
-                $isOpen={isDateRangeOpen}
-                onClick={() => setIsDateRangeOpen((prev) => !prev)}
-              >
-                {DATE_RANGE_OPTIONS.find((o) => o.value === filters.dateRange)?.label ?? 'All time'}
-                <ArrowDown />
-              </DateRangeTrigger>
-              <DateRangeMenu $isVisible={isDateRangeOpen}>
-                {DATE_RANGE_OPTIONS.map((option) => (
-                  <DateRangeMenuItem
-                    key={option.value}
-                    $isSelected={filters.dateRange === option.value}
-                    onClick={() => {
-                      filters.setDateRange(option.value);
-                      setIsDateRangeOpen(false);
-                    }}
-                  >
-                    {option.label}
-                  </DateRangeMenuItem>
-                ))}
-              </DateRangeMenu>
-            </DateRangeWrapper>
             <FilterButton onClick={() => setIsFilterModalOpen(true)} />
           </FilterControlsContainer>
           <TabsWrapper>
@@ -703,6 +585,7 @@ const Profile: React.FC = () => {
         onClose={() => setIsFilterModalOpen(false)}
         chainFilters={chainFilters}
         onChainFiltersChange={setChainFilters}
+        scope="profile"
       />
     </Container>
   );

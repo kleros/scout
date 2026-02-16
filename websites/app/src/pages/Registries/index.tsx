@@ -12,7 +12,7 @@ import ItemsList from './ItemsList';
 import { StyledPagination } from 'components/StyledPagination';
 import AddItemModal from './SubmitItems/AddItemModal';
 import ParametersModal from './ParametersModal';
-import FilterModal from './FilterModal';
+import FilterModal from 'components/FilterModal';
 import FilterButton from 'components/FilterButton';
 import ViewSwitcher from 'components/ViewSwitcher';
 import { useViewMode } from 'hooks/useViewMode';
@@ -291,6 +291,9 @@ const Home: React.FC = () => {
     orderDirection: filters.orderDirection,
     page: filters.page,
     chainFilters,
+    dateRange: filters.dateRange,
+    customDateFrom: filters.customDateFrom,
+    customDateTo: filters.customDateTo,
   });
 
   const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
@@ -304,7 +307,7 @@ const Home: React.FC = () => {
 
     // If filters are active (text search, chain filters, or previously disputed), we can't know total count
     // Return null to hide pagination page numbers and use simpler prev/next
-    if (text || hasActiveChainFilter || filters.hasEverBeenDisputed) {
+    if (text || hasActiveChainFilter || filters.hasEverBeenDisputed || filters.dateRange !== 'all') {
       return null;
     }
 
@@ -341,7 +344,10 @@ const Home: React.FC = () => {
     filters.text,
     [...chainFilters].sort().join(','),
     filters.orderDirection,
-  ].join('|'), [filters.status, filters.disputed, filters.hasEverBeenDisputed, filters.text, filters.orderDirection, chainFilters]);
+    filters.dateRange,
+    filters.customDateFrom,
+    filters.customDateTo,
+  ].join('|'), [filters.status, filters.disputed, filters.hasEverBeenDisputed, filters.text, filters.orderDirection, chainFilters, filters.dateRange, filters.customDateFrom, filters.customDateTo]);
 
   const prevFilterKeyRef = useRef<string | null>(null);
   const hasFetchingStartedRef = useRef(false);

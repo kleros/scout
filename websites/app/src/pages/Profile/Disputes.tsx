@@ -131,6 +131,8 @@ const Disputes: React.FC<Props> = ({
   const orderDirection = filters.orderDirection
   const searchTerm = filters.text
   const dateRange = filters.dateRange
+  const customDateFrom = filters.customDateFrom
+  const customDateTo = filters.customDateTo
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -141,6 +143,8 @@ const Disputes: React.FC<Props> = ({
       chainFilters.slice().sort().join(','),
       searchTerm,
       dateRange,
+      customDateFrom,
+      customDateTo,
       showResolved,
     ],
     enabled: !!queryAddress,
@@ -182,7 +186,7 @@ const Disputes: React.FC<Props> = ({
 
       // Apply filters to all items first (before splitting by active/resolved)
       allItems = filterItemsByChain(allItems, chainFilters)
-      allItems = filterItemsByDateRange(allItems, dateRange)
+      allItems = filterItemsByDateRange(allItems, dateRange, customDateFrom, customDateTo)
       allItems = filterItemsBySearchTerm(allItems, searchTerm)
 
       // Split into active and resolved

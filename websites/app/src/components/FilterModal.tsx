@@ -1,13 +1,15 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { useFilters } from 'context/FilterContext';
+import { useFilters, DateRangeOption, DATE_RANGE_PRESETS } from 'context/FilterContext';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
 import { ModalButton } from './ModalButtons';
 import Checkbox from './Checkbox';
 import RadioButton from './RadioButton';
+import DateRangeCalendar from './DateRangeCalendar';
 import FiltersIcon from 'svgs/icons/filters.svg';
 import SortIcon from 'svgs/icons/sort.svg';
+import CalendarIcon from 'svgs/icons/calendar.svg';
 import { getChainIcon } from 'utils/chainIcons';
 import {
   ModalOverlay,
@@ -29,25 +31,11 @@ import {
   NetworkItem,
   NetworkLabel,
   FooterButtons,
+  DateRangeOptions,
+  DateRangeChip,
 } from './ModalComponents';
 
-const SectionTitle = styled.h3`
-  color: ${({ theme }) => theme.secondaryBlue};
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  svg {
-    width: 14px;
-    height: 14px;
-    fill: ${({ theme }) => theme.secondaryBlue};
-  }
-`;
-
-const SortBySectionTitle = styled(SectionTitle)`
+const SortBySectionTitle = styled(FilterGroupTitle)`
   margin-bottom: 4px;
 `
 
@@ -158,16 +146,28 @@ const FilterModal: React.FC<FilterModalProps> = ({
   }, [filters]);
 
   const handleDisputedOnly = useCallback((selectedDisputed: string) => {
-    filters.setDisputed([selectedDisputed]);
+    filters.setChallengeFilters([selectedDisputed], false);
   }, [filters]);
 
   const handleDisputedAll = useCallback(() => {
-    filters.setDisputed(CHALLENGE_STATUSES.map(c => c.value));
+    filters.setChallengeFilters(CHALLENGE_STATUSES.map(c => c.value), false);
+  }, [filters]);
+
+  const handlePreviouslyDisputedOnly = useCallback(() => {
+    filters.setChallengeFilters(['false'], true);
   }, [filters]);
 
   const handleNetworkOnly = useCallback((selectedNetworkId: string) => {
     onChainFiltersChange([selectedNetworkId]);
   }, [onChainFiltersChange]);
+
+  const handleDateRangeChange = useCallback((range: DateRangeOption) => {
+    filters.setDateRange(range);
+  }, [filters]);
+
+  const handleCustomDateChange = useCallback((from: string | null, to: string | null) => {
+    filters.setCustomDateRange(from, to);
+  }, [filters]);
 
   const availableChains = useMemo(() => {
     return chains.filter(chain => !chain.deprecated);
@@ -238,25 +238,31 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   </ActionButton>
                 </GroupHeader>
                 <CheckboxGroup>
-                  {CHALLENGE_STATUSES.map((challenge) => (
-                    <CheckboxItem key={challenge.value}>
-                      <CheckboxLabel>
-                        <Checkbox
-                          checked={filters.disputed.includes(challenge.value)}
-                          onChange={() => handleDisputedChange(challenge.value)}
-                        />
-                        <StatusCircle status={challenge.value} />
-                        {challenge.label}
-                      </CheckboxLabel>
-                      <OnlyButton
-                        className="only-button"
-                        onClick={() => handleDisputedOnly(challenge.value)}
-                        type="button"
-                      >
-                        Only
-                      </OnlyButton>
-                    </CheckboxItem>
-                  ))}
+                  {CHALLENGE_STATUSES.map((challenge) => {
+                    const isLockedOn = challenge.value === 'false' && filters.hasEverBeenDisputed;
+                    return (
+                      <CheckboxItem key={challenge.value}>
+                        <CheckboxLabel style={isLockedOn ? { opacity: 0.5 } : undefined}>
+                          <Checkbox
+                            checked={filters.disputed.includes(challenge.value)}
+                            onChange={() => handleDisputedChange(challenge.value)}
+                            disabled={isLockedOn}
+                          />
+                          <StatusCircle status={challenge.value} />
+                          {challenge.label}
+                        </CheckboxLabel>
+                        {!isLockedOn && (
+                          <OnlyButton
+                            className="only-button"
+                            onClick={() => handleDisputedOnly(challenge.value)}
+                            type="button"
+                          >
+                            Only
+                          </OnlyButton>
+                        )}
+                      </CheckboxItem>
+                    );
+                  })}
                   <CheckboxItem>
                     <CheckboxLabel>
                       <Checkbox
@@ -264,8 +270,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         onChange={() => filters.toggleHasEverBeenDisputed()}
                       />
                       <StatusCircle status="previously-disputed" />
-                      Previously Disputed
+                      Previously Challenged
                     </CheckboxLabel>
+                    <OnlyButton
+                      className="only-button"
+                      onClick={() => handlePreviouslyDisputedOnly()}
+                      type="button"
+                    >
+                      Only
+                    </OnlyButton>
                   </CheckboxItem>
                 </CheckboxGroup>
               </FilterGroup>
@@ -302,10 +315,42 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
         <FilterSection>
           <GroupHeader>
-            <SectionTitle>
+            <FilterGroupTitle>
+              <CalendarIcon />
+              Date Range
+            </FilterGroupTitle>
+            {filters.dateRange !== 'all' && (
+              <ActionButton onClick={() => filters.setDateRange('all')}>
+                Reset
+              </ActionButton>
+            )}
+          </GroupHeader>
+          <DateRangeOptions>
+            {DATE_RANGE_PRESETS.map((preset) => (
+              <DateRangeChip
+                key={preset.value}
+                $isSelected={filters.dateRange === preset.value}
+                onClick={() => handleDateRangeChange(preset.value)}
+              >
+                {preset.label}
+              </DateRangeChip>
+            ))}
+          </DateRangeOptions>
+          {filters.dateRange === 'custom' && (
+            <DateRangeCalendar
+              from={filters.customDateFrom}
+              to={filters.customDateTo}
+              onChange={handleCustomDateChange}
+            />
+          )}
+        </FilterSection>
+
+        <FilterSection>
+          <GroupHeader>
+            <FilterGroupTitle>
               <FiltersIcon />
               Networks
-            </SectionTitle>
+            </FilterGroupTitle>
             <ActionButton onClick={handleNetworkAll}>
               All
             </ActionButton>

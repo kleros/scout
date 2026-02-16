@@ -2,22 +2,9 @@ import React from 'react'
 import styled, { useTheme } from 'styled-components'
 import { chains } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
+import { getChainIcon } from 'utils/chainIcons'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import Copyable from 'components/Copyable'
-
-import ArbitrumIcon from 'svgs/chains/arbitrum.svg'
-import AvalancheIcon from 'svgs/chains/avalanche.svg'
-import BaseIcon from 'svgs/chains/base.svg'
-import BnbIcon from 'svgs/chains/bnb.svg'
-import CeloIcon from 'svgs/chains/celo.svg'
-import EthereumIcon from 'svgs/chains/ethereum.svg'
-import FantomIcon from 'svgs/chains/fantom.svg'
-import GnosisIcon from 'svgs/chains/gnosis.svg'
-import OptimismIcon from 'svgs/chains/optimism.svg'
-import PolygonIcon from 'svgs/chains/polygon.svg'
-import ScrollIcon from 'svgs/chains/scroll.svg'
-import SolanaIcon from 'svgs/chains/solana.svg'
-import ZkSyncIcon from 'svgs/chains/zksync.svg'
 
 const Container = styled.div`
   display: flex;
@@ -77,23 +64,6 @@ const StyledCopyable = styled(Copyable)`
 
 const truncateAddress = (addr: string) => `${addr?.substring(0, 6)}...${addr?.substring(addr.length - 4)}`
 
-const chainIconMap: Record<string, React.ComponentType<any>> = {
-  '42161': ArbitrumIcon,
-  '43114': AvalancheIcon,
-  '8453': BaseIcon,
-  '56': BnbIcon,
-  '42220': CeloIcon,
-  '1': EthereumIcon,
-  '250': FantomIcon,
-  '100': GnosisIcon,
-  '10': OptimismIcon,
-  '137': PolygonIcon,
-  '534352': ScrollIcon,
-  '4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ': SolanaIcon,
-  '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': SolanaIcon,
-  '324': ZkSyncIcon,
-}
-
 interface IAddressDisplay {
   address: string
 }
@@ -104,7 +74,7 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
   const keyForReference = `${parts?.[0]}:${parts?.[1]}`
   const reference = chains.find((ref) => `${ref.namespace}:${ref.id}` === keyForReference)
   const bgColor = chainColorMap[keyForReference] || theme.statusGray
-  const ChainIcon = chainIconMap[reference?.id ?? '']
+  const ChainIcon = getChainIcon(reference?.id ?? '')
 
   return (
     <Container>
