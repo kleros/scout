@@ -19,7 +19,13 @@ interface UseItemsQueryParams {
   dateRange?: DateRangeOption
   customDateFrom?: string | null
   customDateTo?: string | null
+  includeCount?: boolean
   enabled?: boolean
+}
+
+export interface ItemsQueryResult {
+  items: GraphItem[]
+  totalCount: number
 }
 
 export const useItemsQuery = ({
@@ -35,6 +41,7 @@ export const useItemsQuery = ({
   dateRange = 'all',
   customDateFrom = null,
   customDateTo = null,
+  includeCount = false,
   enabled = true,
 }: UseItemsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
@@ -63,12 +70,13 @@ export const useItemsQuery = ({
     dateRange,
     customDateFrom,
     customDateTo,
+    includeCount,
   ];
 
-  return useQuery({
+  return useQuery<ItemsQueryResult>({
     queryKey,
-    queryFn: async () => {
-      if (!shouldFetch) return []
+    queryFn: async (): Promise<ItemsQueryResult> => {
+      if (!shouldFetch) return { items: [], totalCount: 0 }
 
       const isTagsQueriesRegistry = registry.includes('tags-queries')
       const selectedChainIds = network.filter((id) => id !== 'unknown')
@@ -124,7 +132,20 @@ export const useItemsQuery = ({
       ]}`
         : ''
 
-      // Build the complete query with filters
+      // Shared where clause for both items query and aggregate count
+      const whereClause = `{
+        _and: [
+          {registry_id: {_in :$registry}},
+          {status: {_in: $status}},
+          {disputed: {_in: $disputed}},
+          ${hasEverBeenDisputed ? '{requests: {disputed: {_eq: true}}},' : ''}
+          ${networkQueryObject}
+          ${textFilterObject ? `,${textFilterObject}` : ''}
+          ${dateFilterObject ? `,${dateFilterObject}` : ''}
+        ]
+      }`
+
+      // Build the complete query with filters and aggregate count
       const queryWithFilters = gql`
         query FetchItems(
           $registry: [String]
@@ -141,20 +162,10 @@ export const useItemsQuery = ({
           }
         ) {
           litems: LItem(
-            where: {
-          _and: [
-            {registry_id: {_in :$registry}},
-            {status: {_in: $status}},
-            {disputed: {_in: $disputed}},
-            ${hasEverBeenDisputed ? '{requests: {disputed: {_eq: true}}},' : ''}
-            ${networkQueryObject}
-            ${textFilterObject ? `,${textFilterObject}` : ''}
-            ${dateFilterObject ? `,${dateFilterObject}` : ''}
-          ]
-            }
-        offset: $skip
-        limit: $first
-        order_by: {latestRequestSubmissionTime : $orderDirection }
+            where: ${whereClause}
+            offset: $skip
+            limit: $first
+            order_by: {latestRequestSubmissionTime : $orderDirection }
           ) {
             id
             latestRequestSubmissionTime
@@ -197,6 +208,12 @@ export const useItemsQuery = ({
               }
             }
           }
+          ${includeCount ? `countItems: LItem(
+            where: ${whereClause}
+            limit: 1000
+          ) {
+            id
+          }` : ''}
         }
       `
 
@@ -225,6 +242,7 @@ export const useItemsQuery = ({
       )
 
       let items: GraphItem[] = result.litems
+      const totalCount: number = includeCount ? (result.countItems?.length ?? 0) : 0
 
       // Client-side filtering for non-tags-queries registries
       if (!isTagsQueriesRegistry && network.length > 0) {
@@ -267,7 +285,7 @@ export const useItemsQuery = ({
         })
       }
 
-      return items
+      return { items, totalCount }
     },
     enabled: shouldFetch,
     refetchInterval: false,

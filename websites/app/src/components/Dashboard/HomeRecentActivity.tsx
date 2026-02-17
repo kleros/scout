@@ -377,7 +377,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
 };
 
 export const HomeRecentActivity: React.FC = () => {
-  const { data: items = [], isLoading } = useItemsQuery({
+  const { data: searchResult, isLoading } = useItemsQuery({
     registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
     status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
     disputed: ['true', 'false'],
@@ -387,6 +387,8 @@ export const HomeRecentActivity: React.FC = () => {
     chainFilters: [],
     enabled: true,
   });
+
+  const items = searchResult?.items ?? [];
 
   if (isLoading) {
     return (

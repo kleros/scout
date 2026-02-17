@@ -282,7 +282,11 @@ const Home: React.FC = () => {
     [searchParams]
   );
 
-  const { isLoading: searchLoading, isFetching: searchFetching, data: searchData } = useItemsQuery({
+  // Only fetch count when complex filters are active (simple filters use precise countsData instead)
+  const allChains = useMemo(() => [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'], []);
+  const hasComplexFilters = !!(filters.text || (chainFilters.length > 0 && chainFilters.length < allChains.length) || filters.hasEverBeenDisputed || filters.dateRange !== 'all');
+
+  const { isLoading: searchLoading, isFetching: searchFetching, data: searchResult } = useItemsQuery({
     registryName,
     status: filters.status,
     disputed: filters.disputed,
@@ -294,47 +298,34 @@ const Home: React.FC = () => {
     dateRange: filters.dateRange,
     customDateFrom: filters.customDateFrom,
     customDateTo: filters.customDateTo,
+    includeCount: hasComplexFilters,
   });
+
+  const searchData = searchResult?.items;
+  const totalCount = searchResult?.totalCount ?? 0;
 
   const { isLoading: countsLoading, data: countsData } = useItemCountsQuery();
 
+  // Use precise pre-computed counts for simple filters, fall back to totalCount from query for complex filters
   const currentItemCount = useMemo(() => {
-    const { status, disputed, text } = filters;
+    if (hasComplexFilters) return null;
 
-    // Calculate if chain filters are actually filtering (not all chains selected)
-    const allChains = [...chains.filter(c => !c.deprecated).map(c => c.id), 'unknown'];
-    const hasActiveChainFilter = chainFilters.length > 0 && chainFilters.length < allChains.length;
-
-    // If filters are active (text search, chain filters, or previously disputed), we can't know total count
-    // Return null to hide pagination page numbers and use simpler prev/next
-    if (text || hasActiveChainFilter || filters.hasEverBeenDisputed || filters.dateRange !== 'all') {
-      return null;
-    }
-
-    // Only use countsData when no filters are active
-    if (
-      countsLoading ||
-      !registryName ||
-      status.length === 0 ||
-      disputed.length === 0 ||
-      !countsData
-    ) {
+    const { status, disputed } = filters;
+    if (countsLoading || !registryName || status.length === 0 || disputed.length === 0 || !countsData) {
       return undefined;
     }
 
-    const getCount = (r: string) => {
-      return (
-        (status.includes('Absent') && disputed.includes('false') ? countsData[r].numberOfAbsent : 0) +
-        (status.includes('Registered') && disputed.includes('false') ? countsData[r].numberOfRegistered : 0) +
-        (status.includes('RegistrationRequested') && disputed.includes('false') ? countsData[r].numberOfRegistrationRequested : 0) +
-        (status.includes('RegistrationRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedRegistrations : 0) +
-        (status.includes('ClearingRequested') && disputed.includes('false') ? countsData[r].numberOfClearingRequested : 0) +
-        (status.includes('ClearingRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedClearing : 0)
-      );
-    };
+    const getCount = (r: string) => (
+      (status.includes('Absent') && disputed.includes('false') ? countsData[r].numberOfAbsent : 0) +
+      (status.includes('Registered') && disputed.includes('false') ? countsData[r].numberOfRegistered : 0) +
+      (status.includes('RegistrationRequested') && disputed.includes('false') ? countsData[r].numberOfRegistrationRequested : 0) +
+      (status.includes('RegistrationRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedRegistrations : 0) +
+      (status.includes('ClearingRequested') && disputed.includes('false') ? countsData[r].numberOfClearingRequested : 0) +
+      (status.includes('ClearingRequested') && disputed.includes('true') ? countsData[r].numberOfChallengedClearing : 0)
+    );
 
     return getCount(registryName as string);
-  }, [filters.status, filters.disputed, filters.text, countsData, countsLoading, searchData, chainFilters, registryName]);
+  }, [hasComplexFilters, filters.status, filters.disputed, countsData, countsLoading, registryName]);
 
   // Reset page to 1 when filters change (but not on initial mount)
   const filterKey = useMemo(() => [
@@ -382,10 +373,13 @@ const Home: React.FC = () => {
     }
   }, [searchFetching, isFilterChanging]);
 
-  const totalPages =
-    currentItemCount !== null && currentItemCount !== undefined
-      ? Math.ceil(currentItemCount / ITEMS_PER_PAGE)
-      : null;
+  // Use precise countsData when available (simple filters), fall back to totalCount from query (complex filters)
+  const totalPages = useMemo(() => {
+    if (currentItemCount !== null && currentItemCount !== undefined) {
+      return Math.ceil(currentItemCount / ITEMS_PER_PAGE);
+    }
+    return totalCount > 0 ? Math.ceil(totalCount / ITEMS_PER_PAGE) : 0;
+  }, [currentItemCount, totalCount]);
 
   const currentRegistryAddress = registryName ? registryMap[registryName] : undefined;
 
@@ -427,20 +421,10 @@ const Home: React.FC = () => {
                 ) : (
                   <ItemsList searchData={searchData} viewMode={viewMode} />
                 )}
-                {totalPages !== null && totalPages > 1 && (
+                {totalPages > 1 && (
                   <StyledPagination
                     currentPage={filters.page}
                     numPages={totalPages}
-                    callback={(newPage) => {
-                      filters.setPage(newPage)
-                      window.scrollTo({ top: 0, behavior: 'smooth' })
-                    }}
-                  />
-                )}
-                {totalPages === null && searchData && searchData.length > 0 && (
-                  <StyledPagination
-                    currentPage={filters.page}
-                    numPages={searchData.length > ITEMS_PER_PAGE ? filters.page + 1 : filters.page}
                     callback={(newPage) => {
                       filters.setPage(newPage)
                       window.scrollTo({ top: 0, behavior: 'smooth' })

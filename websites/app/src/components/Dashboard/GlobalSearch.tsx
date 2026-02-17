@@ -271,7 +271,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
     [searchTerm]
   );
 
-  const { data: items = [], isLoading } = useItemsQuery({
+  const { data: searchResult, isLoading } = useItemsQuery({
     registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
     status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
     disputed: ['true', 'false'],
@@ -282,6 +282,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
     enabled: !!debouncedSearchTerm,
   });
 
+  const items = searchResult?.items ?? [];
   const hasResults = items.length > 0;
   const showDropdown = isActive && debouncedSearchTerm.length > 0;
 
