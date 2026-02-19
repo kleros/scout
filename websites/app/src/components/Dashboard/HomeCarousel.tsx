@@ -302,8 +302,8 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
               <StatisticsTitle>Statistics</StatisticsTitle>
               <StatCard
                 icon={<AssetsVerifiedIcon />}
-                title="Total Assets Verified"
-                mainValue={isLoading ? <Skeleton width={80} height={32} /> : (stats?.totalAssetsVerified || 0)}
+                title="Total Submissions"
+                mainValue={isLoading ? <Skeleton width={80} height={32} /> : (stats?.totalSubmissions || 0)}
               />
               <StatCard
                 icon={<CuratorsIcon />}

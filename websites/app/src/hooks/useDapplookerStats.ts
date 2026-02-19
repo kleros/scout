@@ -8,6 +8,7 @@ import {
   SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT,
   XDAI_CURATION_COURT_ID,
   CURATORS_CHART_ID,
+  TOTAL_SUBMISSIONS_CHART_ID,
 } from 'consts'
 
 type ChainName = 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base'
@@ -182,6 +183,29 @@ const fetchCuratorsCount = async (): Promise<number> => {
   } catch {
     return 0
   }
+}
+
+// Fetch total submissions from DappLooker chart API
+const fetchTotalSubmissions = async (): Promise<number | null> => {
+  if (!DAPPLOOKER_API_KEY) return null
+  try {
+    const url = `https://api.dapplooker.com/chart/${TOTAL_SUBMISSIONS_CHART_ID}?api_key=${DAPPLOOKER_API_KEY}&output_format=json`
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (Array.isArray(data) && data.length > 0) {
+        const firstRow = data[0]
+        const value = firstRow.count ?? firstRow.Count ?? firstRow.total ?? firstRow.Total ?? Object.values(firstRow)[0]
+        const parsed = typeof value === 'number' ? value : parseInt(String(value), 10)
+        if (!isNaN(parsed) && parsed > 0) return parsed
+      }
+    }
+  } catch { /* fall through */ }
+  return null
 }
 
 // Fetch total solved disputes from Kleros Display subgraph (xDAI Curation Court)
@@ -412,20 +436,21 @@ const fetchKlerosSubgraphData = async (
 ): Promise<DapplookerStatsData> => {
   const statsRequestId = `stats-${Date.now()}-${Math.random()}`
 
-  const [statsResult, totalCurators, totalSolvedDisputes] = await Promise.all([
+  const [statsResult, totalCurators, totalSolvedDisputes, dapplookerSubmissions] = await Promise.all([
     graphqlBatcher.request(
       statsRequestId,
       getCurateStatsQuery(),
     ) as Promise<SubgraphResponse>,
     fetchCuratorsCount(),
     fetchTotalSolvedDisputes(),
+    fetchTotalSubmissions(),
   ])
 
   const registries = statsResult.lregistries || []
   const items = statsResult.litems || []
 
-  // Calculate totals
-  const totalSubmissions = registries.reduce((total, reg) => {
+  // Calculate totals — prefer DappLooker chart data
+  const subgraphSubmissions = registries.reduce((total, reg) => {
     return (
       total +
       (parseInt(reg.numberOfRegistered, 10) || 0) +
@@ -433,6 +458,7 @@ const fetchKlerosSubgraphData = async (
       (parseInt(reg.numberOfClearingRequested, 10) || 0)
     )
   }, 0)
+  const totalSubmissions = dapplookerSubmissions ?? subgraphSubmissions
 
   // Generate time series data
   const last7Days = generateDateRange(30)

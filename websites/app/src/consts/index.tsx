@@ -18,5 +18,6 @@ export const KLEROS_CDN_BASE = 'https://cdn.kleros.link'
 // xDAI Curation Court ID on Kleros
 export const XDAI_CURATION_COURT_ID = '1'
 
-// DappLooker chart ID for curators count
+// DappLooker chart IDs
 export const CURATORS_CHART_ID = 'f531beb6-120f-4fa9-b71d-5176488785d4'
+export const TOTAL_SUBMISSIONS_CHART_ID = '70035d4e-d24c-43db-85e9-d66e60aaa1f9'
