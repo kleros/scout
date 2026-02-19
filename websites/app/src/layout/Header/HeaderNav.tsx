@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ArrowDown from "svgs/icons/arrow-down.svg";
+import { registryNavOptions } from "utils/items";
 
 const Container = styled.div`
   display: flex;
@@ -87,7 +88,7 @@ const DropdownMenu = styled.div`
   border-radius: 12px;
   min-width: 260px;
   padding: 8px 0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowTooltip};
   z-index: 1000;
 `;
 
@@ -126,35 +127,21 @@ const HeaderNav: React.FC = () => {
     };
   }, [registriesOpen]);
 
-  const registryOptions = [
-    { label: "Tokens", value: "Tokens" },
-    { label: "Contract Domain Name", value: "CDN" },
-    { label: "Address Tags - Single Tags", value: "Single_Tags" },
-    { label: "Address Tags - Query Tags", value: "Tags_Queries" },
-  ];
-
   const handleDropdownItemClick = () => {
     setRegistriesOpen(false);
   };
 
-  const isRegistryActive = location.pathname.startsWith("/registry/");
-  const currentRegistryName = location.pathname.split('/registry/')[1]?.split('?')[0];
+  const registryNames = ['tokens', 'cdn', 'single-tags', 'tags-queries'];
+  const pathSegment = location.pathname.split('/')[1];
+  const isRegistryActive = registryNames.includes(pathSegment);
+  const currentRegistryName = isRegistryActive ? pathSegment : undefined;
 
-  // Preserve URL params when switching registries (except attachment)
-  const getRegistryPath = (value: string) => {
-    const currentParams = new URLSearchParams(location.search);
-    // Remove attachment param when switching registries
-    currentParams.delete('attachment');
-    currentParams.delete('registrydetails');
-    currentParams.delete('additem');
-    const paramsString = currentParams.toString();
-    return `/registry/${value}${paramsString ? `?${paramsString}` : ''}`;
-  };
+  const getRegistryPath = (value: string) => `/${value}`;
 
   // Check if My Profile should be active
   const isProfilePage = location.pathname.startsWith("/profile");
   const searchParams = new URLSearchParams(location.search);
-  const userAddressParam = searchParams.get("userAddress");
+  const userAddressParam = searchParams.get("address");
   const isMyProfile = isProfilePage && (
     !connectedAddress && !userAddressParam || // Not connected and no param (showing connect prompt)
     (connectedAddress && userAddressParam === connectedAddress.toLowerCase()) // Viewing own profile
@@ -174,7 +161,7 @@ const HeaderNav: React.FC = () => {
         </StyledToggle>
         {registriesOpen && (
           <DropdownMenu>
-            {registryOptions.map(({ label, value }) => (
+            {registryNavOptions.map(({ label, value }) => (
               <DropdownItem
                 key={value}
                 isActive={currentRegistryName === value}
@@ -190,7 +177,7 @@ const HeaderNav: React.FC = () => {
 
       <StyledLink
         to={`/profile/pending${
-          connectedAddress ? `?userAddress=${connectedAddress.toLowerCase()}` : ""
+          connectedAddress ? `?address=${connectedAddress.toLowerCase()}` : ""
         }`}
         $isActive={isMyProfile}
       >

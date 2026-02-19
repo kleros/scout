@@ -5,6 +5,7 @@ import { getIPFSPath } from 'utils/getIPFSPath'
 import { isPngFile } from 'utils/pngValidation'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
+import Tooltip from 'components/Tooltip'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -52,11 +53,12 @@ const ImageUpload: React.FC<{
   setPath: Dispatch<SetStateAction<string>>
   setImageError: Dispatch<SetStateAction<string | null>>
   registry: string
-}> = ({ path, setPath, setImageError, registry }) => {
+  tooltip?: string
+}> = ({ path, setPath, setImageError, registry, tooltip }) => {
   const [imageFile, setImageFile] = useState<File | null>(null)
 
   const validateImage = async (file: File): Promise<string | null> => {
-    if (registry === 'Tokens') {
+    if (registry === 'tokens') {
       // Check file extension and MIME type first (basic validation)
       if (!file.type.startsWith('image/png') && !file.name.toLowerCase().endsWith('.png')) {
         return 'Only PNG images are allowed for Tokens registry.'
@@ -106,13 +108,15 @@ const ImageUpload: React.FC<{
 
   return (
     <>
-      <FieldLabel>Image</FieldLabel>
+      <FieldLabel>
+        {tooltip ? <Tooltip data-tooltip={tooltip}>Image</Tooltip> : 'Image'}
+      </FieldLabel>
       <StyledLabel>
         Upload Image <StyledUploadIcon />
         <StyledInput
           type="file"
           onChange={handleFileChange}
-          accept={registry === 'Tokens' ? '.png' : 'image/*'}
+          accept={registry === 'tokens' ? '.png' : 'image/*'}
         />
       </StyledLabel>
       {path && (

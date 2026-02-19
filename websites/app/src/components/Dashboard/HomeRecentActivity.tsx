@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
-import styled from 'styled-components';
+import React from 'react';
+import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
-import { revRegistryMap, GraphItem } from 'utils/items';
+import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getItemDisplayStatus } from 'utils/items';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
 import useHumanizedCountdown, { useChallengeRemainingTime, useChallengePeriodDuration } from 'hooks/countdown';
@@ -15,18 +16,18 @@ const Container = styled.div`
   border-radius: 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
+    box-shadow: ${({ theme }) => theme.glowPurple};
   }
 `;
 
 const Title = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 16px;
   font-style: italic;
@@ -48,8 +49,8 @@ const ActivityRow = styled.div`
   align-items: flex-start;
   gap: 8px;
   row-gap: 8px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 0;
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
   transition: all 0.2s ease;
   flex-wrap: wrap;
 
@@ -58,7 +59,7 @@ const ActivityRow = styled.div`
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${({ theme }) => theme.subtleBackground};
     padding-left: 8px;
     padding-right: 8px;
     margin-left: -8px;
@@ -66,9 +67,11 @@ const ActivityRow = styled.div`
     border-radius: 8px;
   }
 
-  @media (max-width: 767px) {
-    padding: 10px 0;
-  }
+  ${landscapeStyle(
+    () => css`
+      padding: 12px 0;
+    `
+  )}
 `;
 
 const LeftSection = styled.div`
@@ -76,14 +79,17 @@ const LeftSection = styled.div`
   align-items: center;
   gap: 8px;
   row-gap: 6px;
-  flex: 1 1 auto;
+  flex: 1 1 100%;
+  max-width: 100%;
   min-width: 0;
   flex-wrap: wrap;
 
-  @media (max-width: 767px) {
-    flex: 1 1 100%;
-    max-width: 100%;
-  }
+  ${landscapeStyle(
+    () => css`
+      flex: 1 1 auto;
+      max-width: none;
+    `
+  )}
 `;
 
 const ItemName = styled.span`
@@ -94,48 +100,39 @@ const ItemName = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   flex-shrink: 1;
-  max-width: 100px;
+  max-width: 150px;
 
-  @media (min-width: 480px) {
-    max-width: 150px;
-  }
-
-  @media (min-width: 768px) {
-    max-width: 180px;
-  }
+  ${landscapeStyle(
+    () => css`
+      max-width: 180px;
+    `
+  )}
 `;
 
 const RegistryName = styled.span`
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   color: ${({ theme }) => theme.secondaryText};
   flex-shrink: 0;
   white-space: nowrap;
 
-  @media (max-width: 767px) {
-    font-size: 13px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 14px;
+    `
+  )}
 `;
 
 const TimeInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
   flex-shrink: 0;
   flex-wrap: nowrap;
   white-space: nowrap;
-  flex-basis: 100%;
-
-  @media (min-width: 480px) {
-    flex-basis: auto;
-    font-size: 12px;
-  }
-
-  @media (min-width: 768px) {
-    flex-basis: auto;
-  }
+  flex-basis: auto;
 
   svg {
     width: 12px;
@@ -143,10 +140,12 @@ const TimeInfo = styled.div`
     flex-shrink: 0;
     opacity: 0.8;
 
-    @media (min-width: 768px) {
-      width: 14px;
-      height: 14px;
-    }
+    ${landscapeStyle(
+      () => css`
+        width: 14px;
+        height: 14px;
+      `
+    )}
   }
 
   span {
@@ -160,18 +159,18 @@ const RightSection = styled.div`
   align-items: center;
   gap: 8px;
   row-gap: 6px;
+  flex: 0 0 100%;
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: space-between;
 
-  @media (min-width: 768px) {
-    gap: 12px;
-    justify-content: flex-start;
-  }
-
-  @media (max-width: 767px) {
-    flex: 0 0 100%;
-  }
+  ${landscapeStyle(
+    () => css`
+      flex: initial;
+      gap: 12px;
+      justify-content: flex-start;
+    `
+  )}
 `;
 
 const StatusBadge = styled.div<{ status: string }>`
@@ -183,24 +182,27 @@ const StatusBadge = styled.div<{ status: string }>`
   white-space: nowrap;
   flex-shrink: 0;
 
-  @media (min-width: 768px) {
-    font-size: 13px;
-  }
+  ${landscapeStyle(
+    () => css`
+      font-size: 13px;
+    `
+  )}
 
   &:before {
     content: '';
     display: inline-block;
     width: 6px;
     height: 6px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
     ({
-      'Included': '#90EE90',
-      'Registration Requested': '#FFEA00',
-      'Challenged Submission': '#E87B35',
-      'Challenged Removal': '#E87B35',
-      'Removal Requested': '#E87B35',
-      'Removed': 'red',
-    })[status] || 'gray'};
+      'Included': theme.statusIncluded,
+      'Registration Requested': theme.statusRegistrationRequested,
+      'Challenged Submission': theme.statusChallenged,
+      'Challenged Removal': theme.statusChallenged,
+      'Removal Requested': theme.statusClearingRequested,
+      'Removed': theme.statusAbsent,
+      'Rejected': theme.statusRejected,
+    })[status] || theme.statusGray};
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -212,9 +214,11 @@ const StatusGroup = styled.div`
   gap: 8px;
   flex-wrap: nowrap;
 
-  @media (min-width: 768px) {
-    gap: 12px;
-  }
+  ${landscapeStyle(
+    () => css`
+      gap: 12px;
+    `
+  )}
 `;
 
 const ChainInfo = styled.div`
@@ -247,19 +251,23 @@ const ViewButton = styled(Link)`
   white-space: nowrap;
   text-decoration: none;
 
-  @media (min-width: 768px) {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
+  ${landscapeStyle(
+    () => css`
+      padding: 6px 12px;
+      font-size: 12px;
+    `
+  )}
 
   svg {
     width: 10px;
     height: 10px;
 
-    @media (min-width: 768px) {
-      width: 12px;
-      height: 12px;
-    }
+    ${landscapeStyle(
+      () => css`
+        width: 12px;
+        height: 12px;
+      `
+    )}
 
     path {
       fill: ${({ theme }) => theme.primaryText};
@@ -267,18 +275,18 @@ const ViewButton = styled(Link)`
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:active {
-    background: rgba(255, 255, 255, 0.15);
+    background: ${({ theme }) => theme.activeBackground};
   }
 `;
 
 const LoadingRow = styled.div`
   padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
 
   &:last-child {
     border-bottom: none;
@@ -292,57 +300,16 @@ const EmptyState = styled.div`
   font-size: 14px;
 `;
 
-const getPropValue = (item: GraphItem, label: string) => {
-  return item?.props?.find((prop) => prop.label === label)?.value || '';
-};
-
-const getChainId = (item: GraphItem): string | undefined => {
-  const key0 = item?.key0;
-  if (!key0) return undefined;
-
-  const parts = key0.split(':');
-  return parts[1]; // Extract chain ID from format like "eip155:1:0x..."
-};
-
 const getDisplayName = (item: GraphItem): string => {
-  const registryName = revRegistryMap[item.registryAddress] || 'Unknown';
-
-  if (registryName === 'Tokens') {
-    return getPropValue(item, 'Symbol') || getPropValue(item, 'Name') || 'Unnamed';
-  } else if (registryName === 'CDN') {
-    return getPropValue(item, 'Domain name') || 'Unnamed';
-  } else if (registryName === 'Single_Tags') {
-    return getPropValue(item, 'Project Name') || getPropValue(item, 'Public Name Tag') || 'Unnamed';
-  } else if (registryName === 'Tags_Queries') {
-    return getPropValue(item, 'Description') || 'Unnamed';
-  }
-  return 'Unnamed';
+  const registryKey = revRegistryMap[item.registryAddress] || 'Unknown';
+  return getItemDisplayName(item, registryKey);
 };
 
-const readableStatusMap = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-};
+const getActivityStatus = (item: GraphItem): string =>
+  getItemDisplayStatus(item);
 
-const challengedStatusMap = {
-  RegistrationRequested: 'Challenged Submission',
-  ClearingRequested: 'Challenged Removal',
-};
-
-const getActivityStatus = (item: GraphItem): string => {
-  if (item.disputed) {
-    return challengedStatusMap[item.status] || 'Unknown';
-  }
-  return readableStatusMap[item.status] || 'Unknown';
-};
-
-const formatRegistryName = (registryName: string): string => {
-  if (registryName === 'Single_Tags') return 'Single Tags';
-  if (registryName === 'Tags_Queries') return 'Query Tags';
-  return registryName;
-};
+const formatRegistryName = (registryName: string): string =>
+  registryDisplayNames[registryName] || registryName;
 
 interface ActivityItemProps {
   item: GraphItem;
@@ -401,7 +368,7 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
             </ChainInfo>
           )}
         </StatusGroup>
-        <ViewButton to={itemUrl}>
+        <ViewButton to={itemUrl} state={{ fromApp: true, from: 'home' }}>
           View <ArrowIcon />
         </ViewButton>
       </RightSection>
@@ -410,30 +377,18 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
 };
 
 export const HomeRecentActivity: React.FC = () => {
-  const searchParams = useMemo(() => {
-    const params = new URLSearchParams();
-    // Fetch from all 4 registries
-    ['Tokens', 'CDN', 'Single_Tags', 'Tags_Queries'].forEach((registry) => {
-      params.append('registry', registry);
-    });
-    // Include all statuses
-    ['Registered', 'RegistrationRequested', 'ClearingRequested'].forEach((status) => {
-      params.append('status', status);
-    });
-    // Include both disputed and non-disputed
-    ['true', 'false'].forEach((disputed) => {
-      params.append('disputed', disputed);
-    });
-    params.set('orderDirection', 'desc');
-    params.set('page', '1');
-    return params;
-  }, []);
-
-  const { data: items = [], isLoading } = useItemsQuery({
-    searchParams,
+  const { data: searchResult, isLoading } = useItemsQuery({
+    registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
+    status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
+    disputed: ['true', 'false'],
+    text: '',
+    orderDirection: 'desc',
+    page: 1,
     chainFilters: [],
     enabled: true,
   });
+
+  const items = searchResult?.items ?? [];
 
   if (isLoading) {
     return (
@@ -471,7 +426,7 @@ export const HomeRecentActivity: React.FC = () => {
           <ActivityItem
             key={item.id}
             item={item}
-            itemUrl={`/item/${item.id}?fromHome=true`}
+            itemUrl={buildItemPath(item.id)}
           />
         ))}
       </ActivityList>

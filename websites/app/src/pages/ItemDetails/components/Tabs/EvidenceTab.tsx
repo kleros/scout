@@ -64,7 +64,7 @@ const Evidence = styled.div`
   z-index: 1;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: ${({ theme }) => theme.borderHover};
   }
 `
 
@@ -158,7 +158,7 @@ const AttachmentButton = styled.button`
   cursor: pointer;
   color: ${({ theme }) => theme.primaryText};
   background: transparent;
-  border: 1px solid rgba(113, 134, 255, 0.3);
+  border: 1px solid ${({ theme }) => theme.secondaryBlue}4D;
   border-radius: 8px;
   padding: 8px 12px;
   gap: ${responsiveSize(6, 8)};
@@ -170,7 +170,7 @@ const AttachmentButton = styled.button`
   margin: 8px 0;
 
   &:hover {
-    border-color: rgba(113, 134, 255, 0.8);
+    border-color: ${({ theme }) => theme.secondaryBlue}CC;
     transform: translateY(-1px);
   }
 
@@ -281,7 +281,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                     if (evidence?.fileURI) {
                       setSearchParams({
                         attachment: `https://cdn.kleros.link${evidence.fileURI}`,
-                      })
+                      }, { replace: true })
                       scrollTop()
                     }
                   }}
@@ -302,7 +302,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                   </SubmissionDate>
                   by
                   <PartyLink
-                    to={`/profile/pending?userAddress=${evidence.party}`}
+                    to={`/profile/pending?address=${evidence.party}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="20" address={evidence.party as `0x${string}`} />

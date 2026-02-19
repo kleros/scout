@@ -1,25 +1,15 @@
 import React, { useMemo } from 'react';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
-import styled, { useTheme, keyframes, css } from 'styled-components';
+import styled, { useTheme, css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
-
-const fadeIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
+import { fadeIn } from 'styles/commonStyles';
 
 const ChartContainer = styled.div`
   padding: 12px;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.stroke};
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   animation: ${fadeIn} 0.6s ease-out;
@@ -37,12 +27,12 @@ const ChartContainer = styled.div`
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
+    box-shadow: ${({ theme }) => theme.glowPurple};
   }
 `;
 
 const ChartTitle = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
@@ -91,12 +81,6 @@ interface SubmissionsChartProps {
   title?: string;
 }
 
-const CHART_COLORS = {
-  primary: '#7186FF',
-  tooltip: 'rgba(0, 0, 0, 0.8)',
-  cursor: '#7186FF',
-} as const;
-
 const CHART_CONFIG = {
   margin: { top: 5, right: 5, left: -5, bottom: 5 },
   strokeWidth: 2,
@@ -110,19 +94,21 @@ const CHART_CONFIG = {
 export const SubmissionsChart: React.FC<SubmissionsChartProps> = ({ data, title = "Submissions (Daily)" }) => {
   const theme = useTheme();
 
+  const chartPrimary = theme.secondaryBlue;
+
   const tooltipStyle = useMemo(() => ({
-    backgroundColor: CHART_COLORS.tooltip,
+    backgroundColor: theme.tooltipBackground,
     border: 'none',
     borderRadius: '8px',
-    color: '#fff',
+    color: theme.white,
     fontSize: '12px'
-  }), []);
+  }), [theme.tooltipBackground, theme.white]);
 
   const cursorStyle = useMemo(() => ({
-    stroke: CHART_COLORS.cursor,
+    stroke: chartPrimary,
     strokeWidth: 1,
     strokeDasharray: '3 3'
-  }), []);
+  }), [chartPrimary]);
 
   const tickStyle = useMemo(() => ({
     fill: theme.secondaryText,
@@ -137,8 +123,8 @@ export const SubmissionsChart: React.FC<SubmissionsChartProps> = ({ data, title 
           <AreaChart data={data} margin={CHART_CONFIG.margin}>
             <defs>
               <linearGradient id="submissionsGradientHome" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={CHART_CONFIG.opacity.gradientStart}/>
-                <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={CHART_CONFIG.opacity.gradientEnd}/>
+                <stop offset="5%" stopColor={chartPrimary} stopOpacity={CHART_CONFIG.opacity.gradientStart}/>
+                <stop offset="95%" stopColor={chartPrimary} stopOpacity={CHART_CONFIG.opacity.gradientEnd}/>
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -166,7 +152,7 @@ export const SubmissionsChart: React.FC<SubmissionsChartProps> = ({ data, title 
             <Area
               type="monotone"
               dataKey="submissions"
-              stroke={CHART_COLORS.primary}
+              stroke={chartPrimary}
               fillOpacity={1}
               fill="url(#submissionsGradientHome)"
               strokeWidth={CHART_CONFIG.strokeWidth}

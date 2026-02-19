@@ -3,7 +3,6 @@ import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage';
 import { useQuery } from '@tanstack/react-query';
 import { formatEther } from 'viem';
 import { useSearchParams } from 'react-router-dom';
-import { useAttachment } from 'hooks/useAttachment';
 import { ClosedButtonContainer } from 'pages/Registries';
 import {
   AddContainer,
@@ -29,6 +28,7 @@ import { registryMap } from 'utils/items';
 import getAddressValidationIssue from 'utils/validateAddress';
 import { EnsureChain } from '../../../../components/EnsureChain';
 import { infoToast, errorToast } from 'utils/wrapWithToast';
+import Tooltip from 'components/Tooltip';
 
 const columns = [
   {
@@ -71,7 +71,7 @@ const AddTagsQueries: React.FC = () => {
   const [description, setDescription] = useState<string>(formData.description);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const openAttachment = useAttachment();
+
 
   useEffect(() => {
     setFormData({ githubRepository, commitHash, evmChainId, description });
@@ -92,11 +92,11 @@ const AddTagsQueries: React.FC = () => {
   }, [cacheKey])
   
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', evmChainId, 'Tags_Queries', githubRepository],
+    queryKey: ['addressissues', evmChainId, 'tags-queries', githubRepository],
     queryFn: async () => {
       const res = await getAddressValidationIssue(
         evmChainId,
-        'Tags_Queries',
+        'tags-queries',
         undefined,
         undefined,
         undefined,
@@ -127,7 +127,7 @@ const AddTagsQueries: React.FC = () => {
   const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitTagsQueries = async () => {
-    if (!countsData?.Tags_Queries.deposits) return;
+    if (!countsData?.['tags-queries'].deposits) return;
 
     setIsLocalLoading(true);
     try {
@@ -149,9 +149,9 @@ const AddTagsQueries: React.FC = () => {
       const ipfsPath = getIPFSPath(ipfsObject)
 
       const result = await addItem(
-        registryMap.Tags_Queries as `0x${string}`,
+        registryMap['tags-queries'] as `0x${string}`,
         ipfsPath,
-        countsData.Tags_Queries.deposits
+        countsData['tags-queries'].deposits
       );
 
       if (result?.status) {
@@ -192,11 +192,9 @@ const AddTagsQueries: React.FC = () => {
         <HeaderActions>
           {registry && (
             <SubmissionButton
-              onClick={() => {
-                if (registry.metadata.policyURI) {
-                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
-                }
-              }}
+              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Submission Guidelines
             </SubmissionButton>
@@ -207,7 +205,7 @@ const AddTagsQueries: React.FC = () => {
         </HeaderActions>
       </AddHeader>
       <Divider />
-      <FieldLabel>Github Repository</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[0].description}>Github Repository</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://github.com/kleros/scout-snap.git"
         value={githubRepository}
@@ -216,19 +214,19 @@ const AddTagsQueries: React.FC = () => {
       {addressIssuesData?.link && (
         <ErrorMessage>{addressIssuesData.link.message}</ErrorMessage>
       )}
-      <FieldLabel>Commit Hash</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[1].description}>Commit Hash</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. c8baafd"
         value={commitHash}
         onChange={(e) => setCommitHash(e.target.value)}
       />
-      <FieldLabel>EVM Chain ID</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[2].description}>EVM Chain ID</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. 1 (for Ethereum Mainnet)"
         value={evmChainId}
         onChange={(e) => setEvmChainId(e.target.value)}
       />
-      <FieldLabel>Description</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[3].description}>Description</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. An item for retrieving SushiSwap v3 tags on..."
         value={description}
@@ -242,10 +240,10 @@ const AddTagsQueries: React.FC = () => {
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Tags_Queries']?.deposits
+          {countsData?.['tags-queries']?.deposits
             ? formatEther(
-              countsData['Tags_Queries'].deposits.arbitrationCost +
-              countsData['Tags_Queries'].deposits.submissionBaseDeposit
+              countsData['tags-queries'].deposits.arbitrationCost +
+              countsData['tags-queries'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}
         </ExpectedPayouts>

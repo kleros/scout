@@ -95,7 +95,7 @@ const Header: React.FC = () => {
       const newParams = new URLSearchParams(prev);
       newParams.delete('attachment');
       return newParams;
-    });
+    }, { replace: true });
   };
 
   return (

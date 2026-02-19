@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { gql } from 'graphql-request';
-import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT } from 'consts';
+import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, XDAI_CURATION_COURT_ID } from 'consts';
 
 interface KlerosDispute {
   id: string;
@@ -35,9 +35,6 @@ const KLEROS_DISPUTES_QUERY = gql`
     }
   }
 `;
-
-// xDAI Curation Court ID
-const XDAI_CURATION_COURT_ID = '1';
 
 const CACHE_CONFIG = {
   staleTime: 2 * 60 * 1000, // 2 minutes
@@ -125,19 +122,4 @@ export const formatDisputeDeadline = (lastPeriodChangeTs: string): string => {
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
     return `${Math.max(1, diffMinutes)}m ago`;
   }
-};
-
-export const getCourtName = (courtID: string): string => {
-  const courts: Record<string, string> = {
-    '0': 'General Court',
-    '1': 'Curation Court', // xDAI Curation Court
-    '2': 'Technical Court',
-    '3': 'Marketing Services Court',
-    '4': 'English Language Court',
-    '5': 'Video Production Court',
-    '6': 'Onboarding Court',
-    '7': 'Translation Court',
-    '8': 'Data Analysis Court',
-  };
-  return courts[courtID] || 'General Court';
 };

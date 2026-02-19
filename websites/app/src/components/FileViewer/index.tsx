@@ -10,7 +10,7 @@ import MarkdownRenderer from "./Viewers/MarkdownViewer";
 const Wrapper = styled.div`
   background-color: ${({ theme }) => theme.whiteBackground};
   border-radius: 3px;
-  box-shadow: 0px 2px 3px 0px rgba(0, 0, 0, 0.06);
+  box-shadow: ${({ theme }) => theme.cardShadow};
   max-height: 80vh;
   overflow: scroll;
 `;

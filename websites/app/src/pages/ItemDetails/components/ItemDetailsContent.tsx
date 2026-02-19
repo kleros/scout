@@ -74,7 +74,7 @@ interface ItemDetailsContentProps {
   appealCost: any
   appealCostLoading: boolean
   registryParameters: any
-  registryParsedFromItemId: string
+  registryAddress: string
   evidences: any[]
   setIsConfirmationOpen: (open: boolean) => void
   setEvidenceConfirmationType: (type: string) => void
@@ -95,7 +95,7 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
   appealCost,
   appealCostLoading,
   registryParameters,
-  registryParsedFromItemId,
+  registryAddress,
   evidences,
   setIsConfirmationOpen,
   setEvidenceConfirmationType,
@@ -136,7 +136,7 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
             appealCost={appealCost}
             appealCostLoading={appealCostLoading}
             registryParameters={registryParameters}
-            registryParsedFromItemId={registryParsedFromItemId}
+            registryAddress={registryAddress}
           />
         ) : (
           <EvidenceWrapper>

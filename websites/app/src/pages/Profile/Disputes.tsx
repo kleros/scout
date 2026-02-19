@@ -1,21 +1,17 @@
-import React, { useMemo, useEffect, useRef } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
-import styled from 'styled-components'
 import DisputeCard from './DisputeCard'
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
+import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
-import { chains, getNamespaceForChainId } from 'utils/chains'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
 import { registryMap } from 'utils/items'
+import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
+import { fetchSubgraph } from 'utils/fetchSubgraph'
+import { EmptyState } from 'styles/commonStyles'
 
 // Only query disputes from our 4 registries
 const REGISTRY_ADDRESSES = Object.values(registryMap)
-
-const EmptyState = styled.div`
-  color: ${({ theme }) => theme.secondaryText};
-`
 
 // Query to fetch all disputes where user is involved (as requester or challenger)
 const QUERY = `
@@ -114,6 +110,7 @@ interface Props {
   isFilterChanging: boolean
   setIsFilterChanging: (value: boolean) => void
   showResolved: boolean
+  onFilteredCountsChange?: (counts: { active: number; resolved: number }) => void
 }
 
 const Disputes: React.FC<Props> = ({
@@ -123,17 +120,19 @@ const Disputes: React.FC<Props> = ({
   isFilterChanging,
   setIsFilterChanging,
   showResolved,
+  onFilteredCountsChange,
 }) => {
-  const [searchParams] = useSearchParams()
-  const currentPage = parseInt(searchParams.get('page') ?? '1', 10)
+  const filters = useProfileFilters()
+  const currentPage = filters.page
   const itemsPerPage = 10
-  const navigate = useNavigate()
-  const location = useLocation()
   const scrollTop = useScrollTop()
   const queryAddress = address?.toLowerCase()
 
-  const orderDirection = searchParams.get('orderDirection') || 'desc'
-  const searchTerm = searchParams.get('search') || ''
+  const orderDirection = filters.orderDirection
+  const searchTerm = filters.text
+  const dateRange = filters.dateRange
+  const customDateFrom = filters.customDateFrom
+  const customDateTo = filters.customDateTo
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -143,28 +142,23 @@ const Disputes: React.FC<Props> = ({
       orderDirection,
       chainFilters.slice().sort().join(','),
       searchTerm,
+      dateRange,
+      customDateFrom,
+      customDateTo,
       showResolved,
     ],
     enabled: !!queryAddress,
     queryFn: async () => {
       // Fetch more items to properly calculate filtered totals
       const fetchSize = Math.max(1000, currentPage * itemsPerPage)
-      const res = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: QUERY,
-          variables: {
-            userAddress: queryAddress,
-            registryAddresses: REGISTRY_ADDRESSES,
-            first: fetchSize,
-            skip: 0,
-            orderDirection,
-          },
-        }),
+      const json = await fetchSubgraph(QUERY, {
+        userAddress: queryAddress,
+        registryAddresses: REGISTRY_ADDRESSES,
+        first: fetchSize,
+        skip: 0,
+        orderDirection,
       })
-      const json = await res.json()
-      if (json.errors) return { items: [], totalFiltered: 0 }
+      if (json.errors) return { items: [], totalFiltered: 0, activeCount: 0, resolvedCount: 0 }
 
       const asRequester = json.data.asRequester as any[]
       const asChallenger = json.data.asChallenger as any[]
@@ -188,107 +182,46 @@ const Disputes: React.FC<Props> = ({
         }
       }
 
-      let items = Array.from(itemMap.values())
+      let allItems = Array.from(itemMap.values())
 
-      // Filter by resolved status
-      items = items.filter((item) => {
+      // Apply filters to all items first (before splitting by active/resolved)
+      allItems = filterItemsByChain(allItems, chainFilters)
+      allItems = filterItemsByDateRange(allItems, dateRange, customDateFrom, customDateTo)
+      allItems = filterItemsBySearchTerm(allItems, searchTerm)
+
+      // Split into active and resolved
+      const activeItems = allItems.filter((item) => {
         const request = item.requests?.[0]
-        const isResolved = request?.resolved === true
-        return showResolved ? isResolved : !isResolved
+        return request?.resolved !== true
+      })
+      const resolvedItems = allItems.filter((item) => {
+        const request = item.requests?.[0]
+        return request?.resolved === true
       })
 
+      // Pick the set for the current sub-tab
+      const visibleItems = showResolved ? resolvedItems : activeItems
+
       // Sort by submission time
-      items.sort((a, b) => {
+      visibleItems.sort((a, b) => {
         const timeA = Number(a.latestRequestSubmissionTime || 0)
         const timeB = Number(b.latestRequestSubmissionTime || 0)
         return orderDirection === 'desc' ? timeB - timeA : timeA - timeB
       })
 
-      // Client-side filtering by chains
-      if (chainFilters.length > 0) {
-        const selectedChainIds = chainFilters.filter((id) => id !== 'unknown')
-        const includeUnknown = chainFilters.includes('unknown')
-
-        const knownPrefixes = [
-          ...new Set(
-            chains.map((chain) => {
-              if (chain.namespace === 'solana') {
-                return 'solana:'
-              }
-              return `${chain.namespace}:${chain.id}:`
-            }),
-          ),
-        ]
-
-        const selectedPrefixes = selectedChainIds.map((chainId) => {
-          const namespace = getNamespaceForChainId(chainId)
-          if (namespace === 'solana') {
-            return 'solana:'
-          }
-          return `${namespace}:${chainId}:`
-        })
-
-        items = items.filter((item: any) => {
-          const key0 = item?.key0?.toLowerCase() || ''
-          const matchesSelectedChain =
-            selectedPrefixes.length > 0
-              ? selectedPrefixes.some((prefix) =>
-                  key0.startsWith(prefix.toLowerCase()),
-                )
-              : false
-
-          const isUnknownChain = !knownPrefixes.some((prefix) =>
-            key0.startsWith(prefix.toLowerCase()),
-          )
-
-          return (
-            (selectedPrefixes.length > 0 && matchesSelectedChain) ||
-            (includeUnknown && isUnknownChain)
-          )
-        })
+      return {
+        ...paginateItems(visibleItems, currentPage, itemsPerPage),
+        activeCount: activeItems.length,
+        resolvedCount: resolvedItems.length,
       }
-
-      // Client-side text search filtering
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase()
-        items = items.filter((item: any) => {
-          const propsText =
-            item?.props
-              ?.map((prop: any) => `${prop.label}: ${prop.value}`)
-              .join(' ')
-              .toLowerCase() || ''
-
-          const keysText = [
-            item?.key0,
-            item?.key1,
-            item?.key2,
-            item?.key3,
-            item?.key4,
-          ]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
-
-          const basicText = [item.id, item.itemID, item.registryAddress]
-            .filter(Boolean)
-            .join(' ')
-            .toLowerCase()
-
-          const searchableText = `${propsText} ${keysText} ${basicText}`
-          return searchableText.includes(searchLower)
-        })
-      }
-
-      const totalFiltered = items.length
-
-      // Apply pagination
-      const startIndex = (currentPage - 1) * itemsPerPage
-      const endIndex = startIndex + itemsPerPage
-      const paginatedItems = items.slice(startIndex, endIndex)
-
-      return { items: paginatedItems, totalFiltered }
     },
   })
+
+  useEffect(() => {
+    if (data && onFilteredCountsChange) {
+      onFilteredCountsChange({ active: data.activeCount, resolved: data.resolvedCount })
+    }
+  }, [data?.activeCount, data?.resolvedCount, onFilteredCountsChange])
 
   const totalPages = useMemo(() => {
     if (!data) return 1
@@ -297,29 +230,10 @@ const Disputes: React.FC<Props> = ({
 
   const handlePageChange = (newPage: number) => {
     scrollTop(true)
-    const params = new URLSearchParams(location.search)
-    params.set('page', String(newPage))
-    navigate(`${location.pathname}?${params.toString()}`)
+    filters.setPage(newPage)
   }
 
-  const hasFetchingStartedRef = useRef(false)
-
-  useEffect(() => {
-    if (isFetching && isFilterChanging && !hasFetchingStartedRef.current) {
-      hasFetchingStartedRef.current = true
-    }
-  }, [isFetching, isFilterChanging])
-
-  useEffect(() => {
-    if (!isFetching && isFilterChanging && hasFetchingStartedRef.current) {
-      setIsFilterChanging(false)
-      hasFetchingStartedRef.current = false
-    }
-  }, [isFetching, isFilterChanging, setIsFilterChanging])
-
-  useEffect(() => {
-    hasFetchingStartedRef.current = false
-  }, [chainFilters, searchParams])
+  useFilterChangeEffect(isFilterChanging, isFetching, setIsFilterChanging)
 
   if (isLoading || isFilterChanging)
     return (

@@ -12,7 +12,7 @@ const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: ${({ theme }) => theme.borderHover};
   }
 
   &:checked {
@@ -30,6 +30,11 @@ const Checkbox = styled.input.attrs({ type: 'checkbox' })`
     border: solid ${({ theme }) => theme.black};
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 `
 

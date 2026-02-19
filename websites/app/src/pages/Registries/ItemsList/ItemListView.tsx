@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import { useSearchParams, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { formatEther } from 'ethers';
-import { GraphItem, registryMap } from 'utils/items';
+import { GraphItem, registryMap, buildItemPath, getRegistryKey, getItemThumbnailUrl, getItemDisplayStatus, statusDescriptionMap, bountyDescriptionMap, getPropValue as getItemProp } from 'utils/items';
+import Tooltip from 'components/Tooltip';
 import AddressDisplay from 'components/AddressDisplay';
 // import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'; // UNUSED: Only needed for submitter display which is commented out
 import { formatTimestamp } from 'utils/formatTimestamp';
@@ -12,52 +13,20 @@ import useHumanizedCountdown, {
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 // import ArrowIcon from 'assets/svgs/icons/arrow.svg'; // UNUSED: Only needed for submitter links which are commented out
 import Skeleton from 'react-loading-skeleton';
-
-// Chain icons
-import ArbitrumIcon from 'assets/svgs/chains/arbitrum.svg';
-import AvalancheIcon from 'assets/svgs/chains/avalanche.svg';
-import BaseIcon from 'assets/svgs/chains/base.svg';
-import BnbIcon from 'assets/svgs/chains/bnb.svg';
-import CeloIcon from 'assets/svgs/chains/celo.svg';
-import EthereumIcon from 'assets/svgs/chains/ethereum.svg';
-import FantomIcon from 'assets/svgs/chains/fantom.svg';
-import GnosisIcon from 'assets/svgs/chains/gnosis.svg';
-import OptimismIcon from 'assets/svgs/chains/optimism.svg';
-import PolygonIcon from 'assets/svgs/chains/polygon.svg';
-import ScrollIcon from 'assets/svgs/chains/scroll.svg';
-import SolanaIcon from 'assets/svgs/chains/solana.svg';
-import ZkSyncIcon from 'assets/svgs/chains/zksync.svg';
-
-// Chain icon mapping
-const chainIconMap: Record<string, React.ComponentType<any>> = {
-  '42161': ArbitrumIcon,
-  '43114': AvalancheIcon,
-  '8453': BaseIcon,
-  '56': BnbIcon,
-  '42220': CeloIcon,
-  '1': EthereumIcon,
-  '250': FantomIcon,
-  '100': GnosisIcon,
-  '10': OptimismIcon,
-  '137': PolygonIcon,
-  '534352': ScrollIcon,
-  '4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ': SolanaIcon,
-  '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': SolanaIcon,
-  '324': ZkSyncIcon,
-};
+import { getChainIcon } from 'utils/chainIcons';
 
 const ListRow = styled(Link)<{ registryType?: string; }>`
   ${hoverLongTransitionTiming}
   display: grid;
   grid-template-columns: ${({ registryType }) => {
     switch (registryType) {
-      case 'Tokens':
+      case 'tokens':
         return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
-      case 'Single_Tags':
+      case 'single-tags':
         return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
-      case 'CDN':
-        return '1.2fr 1fr 1fr 1.2fr 1fr'; // Status, Domain, Website, Address, Next/Last event
-      case 'Tags_Queries':
+      case 'cdn':
+        return '1.2fr 0.3fr 1fr 1fr 1.2fr 1fr'; // Status, Proof, Domain, Website, Address, Next/Last event
+      case 'tags-queries':
         return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
       default:
         return '200px 280px 180px 200px 100px 180px';
@@ -67,7 +36,7 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
   align-items: center;
   padding: 8px 0;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
   border-radius: 0;
   background: transparent;
   color: ${({ theme }) => theme.primaryText};
@@ -82,7 +51,7 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${({ theme }) => theme.subtleBackground};
   }
 
   &:last-child {
@@ -141,14 +110,16 @@ const StatusCell = styled(Cell) <{ status: string; }>`
     display: inline-block;
     width: 6px;
     height: 6px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
     ({
-      Included: '#90EE90',
-      'Registration Requested': '#FFEA00',
-      'Challenged Submission': '#E87B35',
-      'Challenged Removal': '#E87B35',
-      Removed: 'red',
-    })[status] || 'gray'};
+      Included: theme.statusIncluded,
+      'Registration Requested': theme.statusRegistrationRequested,
+      'Removal Requested': theme.statusClearingRequested,
+      'Challenged Submission': theme.statusChallenged,
+      'Challenged Removal': theme.statusChallenged,
+      Removed: theme.statusAbsent,
+      Rejected: theme.statusRejected,
+    })[status] || theme.statusGray};
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -306,17 +277,6 @@ const ChainCell = styled.div`
   }
 `;
 
-const readableStatusMap = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-};
-
-const challengedStatusMap = {
-  RegistrationRequested: 'Challenged Submission',
-  ClearingRequested: 'Challenged Removal',
-};
 
 interface ItemListViewProps {
   item: GraphItem;
@@ -325,8 +285,6 @@ interface ItemListViewProps {
 
 const ItemListView = React.memo(
   ({ item, challengePeriodDuration }: ItemListViewProps) => {
-    const [searchParams] = useSearchParams();
-
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests?.[0]?.submissionTime,
       item.disputed,
@@ -337,15 +295,11 @@ const ItemListView = React.memo(
       2,
     );
 
-    const itemUrl = `/item/${item.id}?${searchParams.toString()}`;
+    const itemUrl = buildItemPath(item.id);
 
-    const getPropValue = (label: string) => {
-      return item?.props?.find((prop) => prop.label === label)?.value || '';
-    };
+    const getPropValue = (label: string) => getItemProp(item, label);
 
-    const status = item.disputed
-      ? challengedStatusMap[item.status]
-      : readableStatusMap[item.status];
+    const status = getItemDisplayStatus(item);
 
     const readableBounty =
       (item.status === 'ClearingRequested' ||
@@ -382,17 +336,19 @@ const ItemListView = React.memo(
       // UNUSED: submitterAddress is only used in commented-out SubmitterCell sections
       // const submitterAddress = item.requests[0]?.requester as `0x${string}` | undefined;
 
-      if (item.registryAddress === registryMap.Tokens) {
-        const logoUrl = getPropValue('Logo')
-          ? `https://cdn.kleros.link${getPropValue('Logo')}`
-          : '';
+      if (item.registryAddress === registryMap['tokens']) {
+        const logoUrl = getItemThumbnailUrl(item) || '';
         const website = getPropValue('Website');
 
         return (
           <>
             <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
+              {readableBounty && (
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
+                  <BountyBadge> ${readableBounty}</BountyBadge>
+                </Tooltip>
+              )}
             </StatusCell>
             <LogoCell>
               {logoUrl ? (
@@ -449,7 +405,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -474,14 +430,18 @@ const ItemListView = React.memo(
         );
       }
 
-      if (item.registryAddress === registryMap.Single_Tags) {
+      if (item.registryAddress === registryMap['single-tags']) {
         const website = getPropValue('UI/Website Link');
 
         return (
           <>
             <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
+              {readableBounty && (
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
+                  <BountyBadge> ${readableBounty}</BountyBadge>
+                </Tooltip>
+              )}
             </StatusCell>
             <Cell>
               <SymbolText>{getPropValue('Project Name') || '-'}</SymbolText>
@@ -510,7 +470,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -535,16 +495,48 @@ const ItemListView = React.memo(
         );
       }
 
-      if (item.registryAddress === registryMap.CDN) {
+      if (item.registryAddress === registryMap['cdn']) {
         const domainName = getPropValue('Domain name');
         const website = domainName ? `https://${domainName}` : '';
+        const proofUrl = getItemThumbnailUrl(item) || '';
 
         return (
           <>
             <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
+              {readableBounty && (
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
+                  <BountyBadge> ${readableBounty}</BountyBadge>
+                </Tooltip>
+              )}
             </StatusCell>
+            <LogoCell>
+              {proofUrl ? (
+                <>
+                  <Skeleton
+                    width={32}
+                    height={32}
+                    style={{
+                      display: 'block',
+                      flexShrink: 0,
+                      lineHeight: 1,
+                      borderRadius: '4px',
+                    }}
+                    containerClassName="skeleton-logo"
+                  />
+                  <img
+                    src={proofUrl}
+                    alt="Visual proof"
+                    style={{ display: 'none', borderRadius: '4px' }}
+                    onLoad={(e) => {
+                      const skeleton = e.currentTarget.previousSibling as HTMLElement;
+                      if (skeleton) skeleton.style.display = 'none';
+                      e.currentTarget.style.display = 'block';
+                    }}
+                  />
+                </>
+              ) : '-'}
+            </LogoCell>
             <Cell>
               <SymbolText>{domainName || '-'}</SymbolText>
             </Cell>
@@ -569,7 +561,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -594,17 +586,21 @@ const ItemListView = React.memo(
         );
       }
 
-      if (item.registryAddress === registryMap.Tags_Queries) {
+      if (item.registryAddress === registryMap['tags-queries']) {
         const repository = getPropValue('Github Repository URL');
         const commitHash = getPropValue('Commit hash');
         const chainId = getPropValue('EVM Chain ID');
-        const ChainIcon = chainIconMap[chainId];
+        const ChainIcon = getChainIcon(chainId);
 
         return (
           <>
             <StatusCell status={status}>
-              {status}
-              {readableBounty && <BountyBadge> ${readableBounty}</BountyBadge>}
+              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
+              {readableBounty && (
+                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
+                  <BountyBadge> ${readableBounty}</BountyBadge>
+                </Tooltip>
+              )}
             </StatusCell>
             <Cell>
               <NameText>{getPropValue('Description') || '-'}</NameText>
@@ -634,7 +630,7 @@ const ItemListView = React.memo(
               {submitterAddress ? (
                 <>
                   <SubmitterLink
-                    to={`/profile/pending?userAddress=${submitterAddress}`}
+                    to={`/profile/pending?address=${submitterAddress}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <IdenticonOrAvatar size="16" address={submitterAddress} />
@@ -662,16 +658,10 @@ const ItemListView = React.memo(
       return null;
     };
 
-    const getRegistryType = () => {
-      if (item.registryAddress === registryMap.Tokens) return 'Tokens';
-      if (item.registryAddress === registryMap.Single_Tags) return 'Single_Tags';
-      if (item.registryAddress === registryMap.CDN) return 'CDN';
-      if (item.registryAddress === registryMap.Tags_Queries) return 'Tags_Queries';
-      return undefined;
-    };
+    const registryType = getRegistryKey(item.registryAddress);
 
     return (
-      <ListRow registryType={getRegistryType()} to={itemUrl}>
+      <ListRow registryType={registryType} to={itemUrl} state={{ fromApp: true }}>
         {renderContent()}
       </ListRow>
     );

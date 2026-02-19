@@ -1,5 +1,6 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
+import { Link } from 'react-router-dom'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { links } from 'consts/links'
 
@@ -22,7 +23,7 @@ const Container = styled.nav`
   )}
 `
 
-const StyledAnchor = styled.a`
+const linkStyles = css`
   color: #d5d5d5;
   text-decoration: none;
   transition: color 0.2s ease;
@@ -35,8 +36,17 @@ const StyledAnchor = styled.a`
   }
 `
 
+const StyledAnchor = styled.a`
+  ${linkStyles}
+`
+
+const StyledLink = styled(Link)`
+  ${linkStyles}
+`
+
 const Links = () => (
   <Container>
+    <StyledLink to="/terms-of-service">Terms of Service</StyledLink>
     {Object.values(links).map((site, i) => (
       <StyledAnchor key={i} href={site.link} target="_blank" rel="noreferrer">
         {site.name}

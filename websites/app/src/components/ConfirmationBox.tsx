@@ -21,7 +21,7 @@ const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: ${({ theme }) => theme.modalOverlay};
   display: ${({ $isOpen }) => ($isOpen ? 'flex' : 'none')};
   justify-content: center;
   align-items: center;
@@ -39,7 +39,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   backdrop-filter: blur(50px);
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: ${({ theme }) => theme.shadowModal};
   max-height: 90vh;
   overflow-y: auto;
 
@@ -140,7 +140,7 @@ const FileUploadButton = styled.label`
 
   &:hover {
     background: ${({ theme }) => theme.backgroundFour};
-    border-color: rgba(113, 134, 255, 0.5);
+    border-color: ${({ theme }) => theme.secondaryBlue}80;
   }
 
   svg {

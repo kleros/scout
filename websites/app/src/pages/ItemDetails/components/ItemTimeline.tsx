@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
-import styled, { useTheme } from 'styled-components'
+import styled, { css, useTheme } from 'styled-components'
+import { landscapeStyle } from 'styles/landscapeStyle'
 import { Link } from 'react-router-dom'
 import { CustomTimeline } from '@kleros/ui-components-library'
 import { formatTimestamp } from 'utils/formatTimestamp'
@@ -30,15 +31,17 @@ const StyledTimeline = styled(CustomTimeline)`
     margin-bottom: 0;
 
     > div:not(:first-child) {
-      margin-left: 20px;
-      margin-bottom: 18px;
-      gap: 2px;
+      margin-left: 16px;
+      margin-bottom: 16px;
+      gap: 4px;
 
-      @media (max-width: 900px) {
-        margin-left: 16px;
-        margin-bottom: 16px;
-        gap: 4px;
-      }
+      ${landscapeStyle(
+        () => css`
+          margin-left: 20px;
+          margin-bottom: 18px;
+          gap: 2px;
+        `
+      )}
     }
 
     &:last-child > div:not(:first-child) {
@@ -203,7 +206,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
         party: request?.requester ? (
           <PartyWrapper>
             <ByText>by </ByText>
-            <AddressLink to={`/profile/pending?userAddress=${request.requester}`}>
+            <AddressLink to={`/profile/pending?address=${request.requester}`}>
               <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
               <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
               <ArrowIcon />
@@ -253,7 +256,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           party: (
             <PartyWrapper>
               <ByText>by </ByText>
-              <AddressLink to={`/profile/pending?userAddress=${request.challenger}`}>
+              <AddressLink to={`/profile/pending?address=${request.challenger}`}>
                 <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
                 <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
                 <ArrowIcon />
@@ -344,7 +347,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 title: fundingTitle,
                 party: (
                   <PartyWrapper>
-                    <AddressLink to={`/profile/pending?userAddress=${request.requester}`}>
+                    <AddressLink to={`/profile/pending?address=${request.requester}`}>
                       <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
                       <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
                       <ArrowIcon />
@@ -373,7 +376,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 title: fundingTitle,
                 party: (
                   <PartyWrapper>
-                    <AddressLink to={`/profile/pending?userAddress=${request.challenger}`}>
+                    <AddressLink to={`/profile/pending?address=${request.challenger}`}>
                       <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
                       <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
                       <ArrowIcon />
@@ -476,9 +479,9 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
         // Set color based on resolution outcome
         let resolutionColor = theme.primaryBlue
         if (resolutionTitle === 'Item Removed' || resolutionTitle === 'Item Rejected') {
-          resolutionColor = theme.error || '#FF4D4F' // Red for removals and rejections
+          resolutionColor = theme.error
         } else if (resolutionTitle === 'Item Included' || resolutionTitle === 'Item Kept') {
-          resolutionColor = theme.success || '#52C41A' // Green for inclusions and kept items
+          resolutionColor = theme.success
         }
 
         items.push({

@@ -12,7 +12,7 @@ export const RewardCard = styled(Link)`
   padding: 16px;
   justify-content: space-between;
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   cursor: pointer;
   transform: scale(1);
   ${hoverShortTransitionTiming}
@@ -32,7 +32,7 @@ export const RewardCard = styled(Link)`
   &:hover {
     transform: scale(1.02);
     border-color: ${({ theme }) => theme.primary};
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
+    box-shadow: ${({ theme }) => theme.shadowDropdown};
   }
 `;
 
@@ -40,8 +40,8 @@ export const RewardCardNewBadge = styled.div`
   position: absolute;
   top: -12px;
   right: 8px;
-  background: linear-gradient(270deg, #0E1E75 0%, #432D77 100%);
-  color: var(--Secondary-blue, #7186FF);
+  background: ${({ theme }) => theme.gradientBadge};
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: normal;
@@ -50,7 +50,7 @@ export const RewardCardNewBadge = styled.div`
   border-radius: 3px;
   padding: 6px 16px;
   z-index: 1;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.10), 0 4px 6px -4px rgba(0, 0, 0, 0.10);
+  box-shadow: ${({ theme }) => theme.shadowTooltip};
 `;
 
 export const RewardCardTitle = styled.h2`
@@ -126,7 +126,7 @@ export const RewardCardBottomSection = styled.div`
 
 export const RewardCardDivider = styled.div`
   height: 1px;
-  background: linear-gradient(90deg, #7d4bff 0%, #485fff 100%);
+  background: ${({ theme }) => theme.gradientDivider};
   margin-bottom: 12px;
 `;
 

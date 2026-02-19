@@ -30,10 +30,10 @@ import {
 } from './index'
 import { useDebounce } from 'react-use'
 import { useSearchParams } from 'react-router-dom'
-import { useAttachment } from 'hooks/useAttachment'
 import { registryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
+import Tooltip from 'components/Tooltip'
 
 const columns = [
   {
@@ -91,7 +91,7 @@ const AddAddressTag: React.FC = () => {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const [debouncedAddress, setDebouncedAddress] = useState<string>('')
-  const openAttachment = useAttachment();
+
 
   useEffect(() => {
     const caip10AddressParam = searchParams.get('caip10Address');
@@ -152,11 +152,11 @@ const AddAddressTag: React.FC = () => {
   }, [cacheKey])
   
   const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'Single_Tags', projectName, publicNameTag, website],
+    queryKey: ['addressissues', networkAddressKey, 'single-tags', projectName, publicNameTag, website],
     queryFn: async () => {
       const res = await getAddressValidationIssue(
         network.value,
-        'Single_Tags',
+        'single-tags',
         debouncedAddress,
         undefined,
         projectName,
@@ -185,7 +185,7 @@ const AddAddressTag: React.FC = () => {
   const isSubmitting = isLocalLoading || isContractLoading;
 
   const submitAddressTag = async () => {
-    if (!countsData?.Single_Tags.deposits) return;
+    if (!countsData?.['single-tags'].deposits) return;
 
     setIsLocalLoading(true);
     try {
@@ -208,9 +208,9 @@ const AddAddressTag: React.FC = () => {
       const ipfsPath = getIPFSPath(ipfsObject)
 
       const result = await addItem(
-        registryMap.Single_Tags as `0x${string}`,
+        registryMap['single-tags'] as `0x${string}`,
         ipfsPath,
-        countsData.Single_Tags.deposits
+        countsData['single-tags'].deposits
       );
 
       if (result?.status) {
@@ -264,11 +264,9 @@ const AddAddressTag: React.FC = () => {
         <HeaderActions>
           {registry && (
             <SubmissionButton
-              onClick={() => {
-                if (registry.metadata.policyURI) {
-                  openAttachment(`https://cdn.kleros.link${registry.metadata.policyURI}`);
-                }
-              }}
+              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Submission Guidelines
             </SubmissionButton>
@@ -284,7 +282,8 @@ const AddAddressTag: React.FC = () => {
         setNetwork={setNetwork}
         address={address}
         setAddress={setAddress}
-        registry="Single_Tags"
+        registry="single-tags"
+        tooltip={columns[0].description}
       />
       {addressIssuesData?.address && (
         <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
@@ -292,7 +291,7 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.duplicate && (
         <ErrorMessage>{addressIssuesData.duplicate.message}</ErrorMessage>
       )}
-      <FieldLabel>Project name</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[2].description}>Project name</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. Kleros"
         value={projectName}
@@ -301,7 +300,7 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.projectName && (
         <ErrorMessage>{addressIssuesData.projectName.message}</ErrorMessage>
       )}
-      <FieldLabel>Public Name Tag</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[1].description}>Public Name Tag</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. PNK Merkle Drop"
         value={publicNameTag}
@@ -310,13 +309,13 @@ const AddAddressTag: React.FC = () => {
       {addressIssuesData?.publicNameTag && (
         <ErrorMessage>{addressIssuesData.publicNameTag.message}</ErrorMessage>
       )}
-      <FieldLabel>Public note</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[4].description}>Public note</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. This contract is used for..."
         value={publicNote}
         onChange={(e) => setPublicNote(e.target.value)}
       />
-      <FieldLabel>UI/Website link</FieldLabel>
+      <FieldLabel><Tooltip data-tooltip={columns[3].description}>UI/Website link</Tooltip></FieldLabel>
       <StyledTextInput
         placeholder="e.g. https://kleros.io"
         value={website}
@@ -333,10 +332,10 @@ const AddAddressTag: React.FC = () => {
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {countsData?.['Single_Tags']?.deposits
+          {countsData?.['single-tags']?.deposits
             ? formatEther(
-              countsData['Single_Tags'].deposits.arbitrationCost +
-              countsData['Single_Tags'].deposits.submissionBaseDeposit
+              countsData['single-tags'].deposits.arbitrationCost +
+              countsData['single-tags'].deposits.submissionBaseDeposit
             ) + ' xDAI'
             : null}
         </ExpectedPayouts>

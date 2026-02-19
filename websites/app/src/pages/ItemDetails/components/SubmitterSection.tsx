@@ -29,7 +29,7 @@ const Info = styled.div`
   color: ${({ theme }) => theme.secondaryText};
 
   a {
-    color: #CD9DFF;
+    color: ${({ theme }) => theme.purpleTint};
     text-decoration: none;
 
     &:hover {

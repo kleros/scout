@@ -71,7 +71,7 @@ const InfoCard = styled.div`
   border: 1px solid ${({ theme }) => theme.stroke};
   flex-direction: row;
   gap: 16px;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  box-shadow: ${({ theme }) => theme.shadowCard};
 
   svg {
     min-width: 64px;
@@ -86,7 +86,7 @@ const InfoCard = styled.div`
   &:hover {
     transform: scale(1.02);
     border-color: ${({ theme }) => theme.primary};
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.15);
+    box-shadow: ${({ theme }) => theme.shadowDropdown};
   }
 `;
 

@@ -52,7 +52,7 @@ const OptionCard = styled.div`
   gap: 12px;
   padding: 16px;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.06) 100%);
+  background: ${({ theme }) => theme.gradientCard};
   cursor: pointer;
   transition: all 0.4s ease;
   opacity: 0.7;
@@ -71,7 +71,7 @@ const OptionCard = styled.div`
 
   &:hover {
     opacity: 1;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.10) 100%);
+    background: ${({ theme }) => theme.gradientHover};
     transform: translateX(2px);
   }
 
@@ -152,25 +152,25 @@ const SUBMISSION_OPTIONS: SubmissionOption[] = [
   {
     title: 'Kleros Tokens',
     description: 'Submit a token to verify its information and legitimacy.',
-    registryKey: 'Tokens',
+    registryKey: 'tokens',
     icon: TokensIcon,
   },
   {
     title: 'Contract Domain Name',
     description: 'Link a smart contract to a specific domain to prevent frontend attacks.',
-    registryKey: 'CDN',
+    registryKey: 'cdn',
     icon: CDNIcon,
   },
   {
     title: 'Single Tags',
     description: 'Verify the ownership and purpose of a contract.',
-    registryKey: 'Single_Tags',
+    registryKey: 'single-tags',
     icon: SingleTagsIcon,
   },
   {
     title: 'Tag Queries',
     description: 'Bulk-submit address tags stored in a decentralized domain.',
-    registryKey: 'Tags_Queries',
+    registryKey: 'tags-queries',
     icon: QueryTagsIcon,
   },
 ];
@@ -189,7 +189,7 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
   if (!isOpen) return null;
 
   const handleOptionClick = (registryKey: string) => {
-    navigate(`/registry/${registryKey}?additem=${registryKey}`);
+    navigate(`/${registryKey}?additem=${registryKey}`);
     onClose();
   };
 

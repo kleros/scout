@@ -1,40 +1,22 @@
 import React, { useMemo } from 'react'
-import styled from 'styled-components'
+import styled, { useTheme } from 'styled-components'
 import { formatEther } from 'ethers'
-import { useNavigate, useLocation } from 'react-router-dom'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
-import { StyledButton } from 'components/Button'
-import { revRegistryMap } from 'utils/items'
-import { useScrollTop } from 'hooks/useScrollTop'
+import SubmittedByLink from 'components/SubmittedByLink'
+import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress, getItemDisplayStatus } from 'utils/items'
 import useHumanizedCountdown, {
   useChallengeRemainingTime,
   useChallengePeriodDuration,
 } from 'hooks/countdown'
-import { shortenAddress } from 'utils/shortenAddress'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
-import { hoverLongTransitionTiming } from 'styles/commonStyles'
-
-const Card = styled.div`
-  width: 100%;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  background: transparent;
-`
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  flex-wrap: wrap;
-`
+import useRegistryParameters from 'hooks/useRegistryParameters'
+import {
+  Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
+  MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer, ViewLink,
+} from './profileCardStyles'
 
 const HeaderLeft = styled.div`
   display: inline-flex;
@@ -53,146 +35,52 @@ const HeaderRight = styled.div`
   white-space: nowrap;
 `
 
-const Bullet = styled.span<{ color: string }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ color }) => color};
-  flex: 0 0 8px;
-`
+const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: string }) => {
+  const theme = useTheme()
 
-const Title = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.primaryText};
-`
+  const statusColors: Record<string, string> = {
+    Included: theme.statusIncluded,
+    Removed: theme.statusAbsent,
+    Rejected: theme.statusRejected,
+    'Registration Requested': theme.statusRegistrationRequested,
+    'Removal Requested': theme.statusClearingRequested,
+    Challenged: theme.statusChallenged,
+  }
 
-const Registry = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-`
-
-const StatusLabel = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.primaryText};
-`
-
-const Divider = styled.hr`
-  border: none;
-  border-top: 1px solid ${({ theme }) => theme.stroke};
-  margin: 0;
-`
-
-const Body = styled.div`
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`
-
-const MetaLine = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-`
-
-const InfoRow = styled.div`
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-  flex: 1;
-  min-width: 0;
-`
-
-const LabelValue = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-`
-
-const ViewButton = styled(StyledButton).attrs({ variant: 'secondary', size: 'medium' })`
-  ${hoverLongTransitionTiming}
-  min-width: 100px;
-`
-
-const StyledChainLabel = styled.span`
-  margin-bottom: 8px;
-`
-
-const StyledChainContainer = styled(LabelValue)`
-  margin-bottom: -8px;
-`
-
-const statusColors: Record<string, string> = {
-  Included: '#65DC7F',
-  Removed: '#FF5A78',
-  'Registration Requested': '#60A5FA',
-  'Removal Requested': '#FBBF24',
-  Challenged: '#E87B35',
-}
-
-const readableStatus: Record<string, string> = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-}
-
-const challengedStatus: Record<string, string> = {
-  RegistrationRequested: 'Challenged',
-  ClearingRequested: 'Challenged',
-}
-
-const getProp = (item: any, label: string) =>
-  item?.props?.find((p: any) => p.label === label)?.value ?? ''
-
-const ItemCard = ({ item }: { item: any }) => {
-  const navigate = useNavigate()
-  const scrollTop = useScrollTop()
-  const location = useLocation()
-
-  const registryName = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const registryKey = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const registryName = registryDisplayNames[registryKey] ?? registryKey
+  const { data: registryParams } = useRegistryParameters(item.registryAddress)
 
   const displayName =
-    getProp(item, 'Name') ||
-    getProp(item, 'Domain name') ||
-    getProp(item, 'Public Name Tag') ||
-    getProp(item, 'Description') ||
+    getPropValue(item, 'Name') ||
+    getPropValue(item, 'Domain name') ||
+    getPropValue(item, 'Public Name Tag') ||
+    getPropValue(item, 'Description') ||
     item.itemID
 
-  const statusText = item.disputed
-    ? challengedStatus[item.status] || 'Challenged'
-    : readableStatus[item.status] || item.status
+  const statusText = getItemDisplayStatus(item)
 
-  const bulletColor = statusColors[statusText] ?? '#9CA3AF'
+  const bulletColor = statusColors[statusText] ?? theme.statusGray
 
   const submittedOn =
     item.requests?.[0]?.submissionTime != null
       ? formatTimestamp(Number(item.requests[0].submissionTime))
       : '-'
 
-  const deposit =
-    item.requests?.[0]?.deposit != null
-      ? Number(formatEther(item.requests[0].deposit)).toLocaleString('en-US', {
-          maximumFractionDigits: 0,
-        })
-      : '-'
+  const deposit = useMemo(() => {
+    if (item.requests?.[0]?.deposit == null) return '-'
+    const baseDeposit = BigInt(item.requests[0].deposit)
+    const arbitrationCost = registryParams?.arbitrationCost ?? 0n
+    const total = baseDeposit + arbitrationCost
+    return Number(formatEther(total)).toLocaleString('en-US', {
+      maximumFractionDigits: 2,
+    })
+  }, [item.requests, registryParams?.arbitrationCost])
 
   const requester = item.requests?.[0]?.requester ?? ''
 
-  const chainId = getProp(item, 'EVM Chain ID')
-  const itemAddrMap: Record<string, string | undefined> = {
-    Single_Tags: getProp(item, 'Contract Address'),
-    Tags_Queries: undefined,
-    Tokens: getProp(item, 'Address'),
-    CDN: getProp(item, 'Contract address'),
-  }
-  const itemAddr = itemAddrMap[registryName]
+  const chainId = getPropValue(item, 'EVM Chain ID')
+  const itemAddr = getItemAddress(item, registryKey)
 
   const challengePeriodDuration = useChallengePeriodDuration(
     item.registryAddress,
@@ -209,32 +97,7 @@ const ItemCard = ({ item }: { item: any }) => {
     [isCountdownLoading, endsIn, item.status, item.disputed],
   )
 
-  const onView = () => {
-    const params = new URLSearchParams()
-    params.append('status', 'Registered')
-    params.append('status', 'RegistrationRequested')
-    params.append('status', 'ClearingRequested')
-    params.append('disputed', 'true')
-    params.append('disputed', 'false')
-    params.set('page', '1')
-    params.set('orderDirection', 'desc')
-
-    // Preserve the current location (profile path + params) so ItemDetails can navigate back correctly
-    const currentSearch = new URLSearchParams(location.search)
-    const userAddress = currentSearch.get('userAddress')
-
-    if (userAddress) {
-      params.set('userAddress', userAddress)
-      // Also preserve the profile path (pending or resolved) so we know where to go back
-      const profilePath = location.pathname.split('/').pop() // 'pending' or 'resolved'
-      if (profilePath === 'pending' || profilePath === 'resolved') {
-        params.set('fromProfile', profilePath)
-      }
-    }
-
-    navigate(`/item/${item.id}?${params.toString()}`)
-    scrollTop()
-  }
+  const itemPath = buildItemPath(item.id)
 
   return (
     <Card>
@@ -265,7 +128,8 @@ const ItemCard = ({ item }: { item: any }) => {
 
             {requester && (
               <LabelValue>
-                <span>by {shortenAddress(requester)}</span>
+                <span>by</span>
+                <SubmittedByLink address={requester} />
               </LabelValue>
             )}
 
@@ -289,7 +153,7 @@ const ItemCard = ({ item }: { item: any }) => {
             )}
           </InfoRow>
 
-          <ViewButton onClick={onView}>View</ViewButton>
+          <ViewLink to={itemPath} state={{ fromApp: true, from: 'profile', profileTab: fromProfile }}>View</ViewLink>
         </MetaLine>
       </Body>
     </Card>

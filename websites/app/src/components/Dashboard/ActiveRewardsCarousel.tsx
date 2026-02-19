@@ -28,7 +28,7 @@ const Header = styled.div`
 `;
 
 const Title = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
@@ -49,11 +49,6 @@ const CardsGrid = styled.div`
   grid-template-columns: 1fr;
   gap: 12px;
   width: 100%;
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 16px;
-  }
 
   ${landscapeStyle(
     () => css`

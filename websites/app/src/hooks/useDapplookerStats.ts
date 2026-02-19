@@ -2,7 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { useGraphqlBatcher } from './queries/useGraphqlBatcher'
 import { registryMap } from 'utils/items'
-import { DAPPLOOKER_API_KEY } from 'consts'
+import {
+  DAPPLOOKER_API_KEY,
+  SUBGRAPH_GNOSIS_ENDPOINT,
+  SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT,
+  XDAI_CURATION_COURT_ID,
+  CURATORS_CHART_ID,
+  TOTAL_SUBMISSIONS_CHART_ID,
+} from 'consts'
 
 type ChainName = 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base'
 
@@ -45,6 +52,7 @@ interface DapplookerStatsData {
   totalAssetsVerified: number
   totalSubmissions: number
   totalCurators: number
+  totalSolvedDisputes: number
   tokens: {
     assetsVerified: number
     assetsVerifiedChange: number
@@ -73,8 +81,6 @@ interface DapplookerStatsData {
   }[]
 }
 
-const DASHBOARD_ID = 'f5dcef21-ad65-4671-a930-58d3ec67f6a2'
-
 const CHAIN_PREFIXES: Record<string, ChainName> = {
   'eip155:1:': 'ethereum',
   'eip155:137:': 'polygon',
@@ -93,12 +99,156 @@ const EMPTY_STATS: DapplookerStatsData = {
   totalAssetsVerified: 0,
   totalSubmissions: 0,
   totalCurators: 0,
+  totalSolvedDisputes: 0,
   tokens: { assetsVerified: 0, assetsVerifiedChange: 0 },
   cdn: { assetsVerified: 0, assetsVerifiedChange: 0 },
   singleTags: { assetsVerified: 0, assetsVerifiedChange: 0 },
   tagQueries: { assetsVerified: 0, assetsVerifiedChange: 0 },
   submissionsVsDisputes: { submissions: [], disputes: [], dates: [] },
   chainRanking: [],
+}
+
+
+const REGISTRY_ADDRESSES = Object.values(registryMap)
+
+// Fetch curators count: DappLooker chart API (primary) → Curate subgraph unique requesters/challengers (fallback)
+const fetchCuratorsCount = async (): Promise<number> => {
+  // Try DappLooker chart API first
+  if (DAPPLOOKER_API_KEY) {
+    try {
+      const url = `https://api.dapplooker.com/chart/${CURATORS_CHART_ID}?api_key=${DAPPLOOKER_API_KEY}&output_format=json`
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'application/json' },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (Array.isArray(data) && data.length > 0) {
+          const firstRow = data[0]
+          const value = firstRow.count ?? firstRow.Count ?? firstRow.curators ?? firstRow.Curators ?? Object.values(firstRow)[0]
+          const parsed = typeof value === 'number' ? value : parseInt(String(value), 10)
+          if (!isNaN(parsed) && parsed > 0) return parsed
+        }
+      }
+    } catch { /* fall through to subgraph */ }
+  }
+
+  // Fallback: count unique requesters + challengers from Curate subgraph
+  try {
+    const uniqueAddresses = new Set<string>()
+    let offset = 0
+    let hasMore = true
+
+    while (hasMore) {
+      const response = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            query CuratorStats($offset: Int!, $registryAddresses: [String!]!) {
+              LItem(
+                limit: 1000,
+                offset: $offset,
+                where: { registryAddress: { _in: $registryAddresses } }
+              ) {
+                requests {
+                  requester
+                  challenger
+                }
+              }
+            }
+          `,
+          variables: { offset, registryAddresses: REGISTRY_ADDRESSES },
+        }),
+      })
+
+      if (!response.ok) break
+
+      const result = await response.json()
+      const items = result.data?.LItem || []
+
+      for (const item of items) {
+        for (const req of (item.requests || [])) {
+          if (req.requester) uniqueAddresses.add(req.requester.toLowerCase())
+          if (req.challenger) uniqueAddresses.add(req.challenger.toLowerCase())
+        }
+      }
+
+      if (items.length < 1000) hasMore = false
+      else offset += 1000
+    }
+
+    return uniqueAddresses.size
+  } catch {
+    return 0
+  }
+}
+
+// Fetch total submissions from DappLooker chart API
+const fetchTotalSubmissions = async (): Promise<number | null> => {
+  if (!DAPPLOOKER_API_KEY) return null
+  try {
+    const url = `https://api.dapplooker.com/chart/${TOTAL_SUBMISSIONS_CHART_ID}?api_key=${DAPPLOOKER_API_KEY}&output_format=json`
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (Array.isArray(data) && data.length > 0) {
+        const firstRow = data[0]
+        const value = firstRow.count ?? firstRow.Count ?? firstRow.total ?? firstRow.Total ?? Object.values(firstRow)[0]
+        const parsed = typeof value === 'number' ? value : parseInt(String(value), 10)
+        if (!isNaN(parsed) && parsed > 0) return parsed
+      }
+    }
+  } catch { /* fall through */ }
+  return null
+}
+
+// Fetch total solved disputes from Kleros Display subgraph (xDAI Curation Court)
+const fetchTotalSolvedDisputes = async (): Promise<number> => {
+  try {
+    let total = 0
+    let skip = 0
+    let hasMore = true
+
+    while (hasMore) {
+      const response = await fetch(SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `
+            query SolvedDisputes($first: Int!, $skip: Int!, $court: String!) {
+              disputes(
+                first: $first,
+                skip: $skip,
+                where: { court: $court, ruled: true }
+              ) {
+                id
+              }
+            }
+          `,
+          variables: { first: 1000, skip, court: XDAI_CURATION_COURT_ID },
+        }),
+      })
+
+      if (!response.ok) break
+
+      const result = await response.json()
+      const disputes = result.data?.disputes || []
+      total += disputes.length
+
+      if (disputes.length < 1000) hasMore = false
+      else skip += 1000
+    }
+
+    return total
+  } catch {
+    return 0
+  }
 }
 
 const getCurateStatsQuery = () => {
@@ -152,116 +302,6 @@ const getCurateStatsQuery = () => {
   `
 }
 
-// Query to get curator statistics
-const CURATOR_STATS_QUERY = gql`
-  query CuratorStats {
-    litems: LItem(limit: 1000) {
-      requests {
-        requester
-        challenger
-      }
-    }
-  }
-`
-
-const getCardType = (cardName: string): string => {
-  if (cardName.includes('curators')) return 'curators'
-  if (cardName.includes('total submissions')) return 'totalSubmissions'
-  if (cardName.includes('chain ranking')) return 'chainRanking'
-  if (cardName.includes('tokens v2')) return 'tokens'
-  if (cardName.includes('cdn v2')) return 'cdn'
-  if (cardName.includes('address tags v2')) return 'singleTags'
-  if (cardName.includes('3x security registries')) return 'tagQueries'
-  return 'unknown'
-}
-
-const fetchDapplookerData = async (
-  graphqlBatcher: any,
-): Promise<DapplookerStatsData | null> => {
-  if (!DAPPLOOKER_API_KEY) {
-    return null
-  }
-
-  try {
-    const apiUrl = `/api/dapplooker/public/api/public/dashboard/${DASHBOARD_ID}`
-
-    let dashboardResponse = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!dashboardResponse.ok) {
-      const fallbackUrl = `/api/dapplooker/public/api/public/dashboard/${DASHBOARD_ID}`
-
-      dashboardResponse = await fetch(fallbackUrl, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-      })
-    }
-
-    if (dashboardResponse.ok) {
-      const responseText = await dashboardResponse.text()
-
-      let dashboardInfo
-      try {
-        dashboardInfo = JSON.parse(responseText)
-      } catch (jsonError) {
-        return null
-      }
-
-      if (
-        dashboardInfo.ordered_cards &&
-        Array.isArray(dashboardInfo.ordered_cards)
-      ) {
-        const cardDataPromises = []
-
-        for (const cardWrapper of dashboardInfo.ordered_cards) {
-          const card = cardWrapper.card
-          if (!card?.id || !card?.name) continue
-
-          const cardName = card.name.toLowerCase()
-          const isRelevantCard =
-            card.display === 'scalar' ||
-            cardName.includes('chain ranking') ||
-            cardName.includes('tokens v2 - submission') ||
-            cardName.includes('cdn v2 - submission') ||
-            cardName.includes('address tags v2 - submission') ||
-            cardName.includes('3x security registries - stacked by registry')
-
-          if (isRelevantCard) {
-            cardDataPromises.push(
-              Promise.resolve({
-                id: card.id,
-                name: card.name,
-                display: card.display,
-                cardType: getCardType(cardName),
-              }),
-            )
-          }
-        }
-
-        if (cardDataPromises.length > 0) {
-          const cardResults = await Promise.all(cardDataPromises)
-          const validCardResults = cardResults.filter(Boolean)
-
-          if (validCardResults.length > 0) {
-            return await fetchKlerosSubgraphData(graphqlBatcher)
-          }
-        }
-      }
-    }
-
-    return null
-  } catch (error) {
-    return null
-  }
-}
 
 const getChainFromKey = (key0: string): ChainName | null => {
   for (const [prefix, chain] of Object.entries(CHAIN_PREFIXES)) {
@@ -395,28 +435,22 @@ const fetchKlerosSubgraphData = async (
   graphqlBatcher: any,
 ): Promise<DapplookerStatsData> => {
   const statsRequestId = `stats-${Date.now()}-${Math.random()}`
-  const curatorRequestId = `curator-${Date.now()}-${Math.random()}`
 
-  const [statsResult, curatorResult] = await Promise.all([
+  const [statsResult, totalCurators, totalSolvedDisputes, dapplookerSubmissions] = await Promise.all([
     graphqlBatcher.request(
       statsRequestId,
       getCurateStatsQuery(),
     ) as Promise<SubgraphResponse>,
-    graphqlBatcher.request(curatorRequestId, CURATOR_STATS_QUERY) as Promise<{
-      litems: ItemData[]
-    }>,
+    fetchCuratorsCount(),
+    fetchTotalSolvedDisputes(),
+    fetchTotalSubmissions(),
   ])
 
   const registries = statsResult.lregistries || []
   const items = statsResult.litems || []
-  const curatorItems = curatorResult.litems || []
 
-  // Calculate totals
-  const totalVerified = registries.reduce((total, reg) => {
-    return total + (parseInt(reg.numberOfRegistered, 10) || 0)
-  }, 0)
-
-  const totalSubmissions = registries.reduce((total, reg) => {
+  // Calculate totals — prefer DappLooker chart data
+  const subgraphSubmissions = registries.reduce((total, reg) => {
     return (
       total +
       (parseInt(reg.numberOfRegistered, 10) || 0) +
@@ -424,16 +458,7 @@ const fetchKlerosSubgraphData = async (
       (parseInt(reg.numberOfClearingRequested, 10) || 0)
     )
   }, 0)
-
-  // Calculate unique curators
-  // TEMPORARY: Commented out until we figure out why the count is off (getting 47 instead of ~132)
-  // const uniqueCurators = new Set<string>()
-  // curatorItems.forEach((item) => {
-  //   item.requests?.forEach((req) => {
-  //     if (req.requester) uniqueCurators.add(req.requester.toLowerCase())
-  //     if (req.challenger) uniqueCurators.add(req.challenger.toLowerCase())
-  //   })
-  // })
+  const totalSubmissions = dapplookerSubmissions ?? subgraphSubmissions
 
   // Generate time series data
   const last7Days = generateDateRange(30)
@@ -447,25 +472,33 @@ const fetchKlerosSubgraphData = async (
 
   const tokensStats = calculateRegistryStats(
     registries,
-    registryMap.Tokens,
+    registryMap['tokens'],
     items,
   )
-  const cdnStats = calculateRegistryStats(registries, registryMap.CDN, items)
+  const cdnStats = calculateRegistryStats(registries, registryMap['cdn'], items)
   const singleTagsStats = calculateRegistryStats(
     registries,
-    registryMap.Single_Tags,
+    registryMap['single-tags'],
     items,
   )
   const tagQueriesStats = calculateRegistryStats(
     registries,
-    registryMap.Tags_Queries,
+    registryMap['tags-queries'],
     items,
   )
 
+  // Total verified addresses: dynamic sum of all registries
+  const totalAssetsVerified = registries.reduce((total, reg) => {
+    return total + (parseInt(reg.numberOfRegistered, 10) || 0)
+  }, 0)
+
+  // Curators: DappLooker chart API → Curate subgraph unique requesters/challengers
+
   return {
-    totalAssetsVerified: totalVerified,
-    totalSubmissions: totalSubmissions,
-    totalCurators: 132, // TEMPORARY: Hardcoded until curator calculation is fixed (was: uniqueCurators.size)
+    totalAssetsVerified,
+    totalSubmissions,
+    totalCurators,
+    totalSolvedDisputes,
     tokens: tokensStats,
     cdn: cdnStats,
     singleTags: singleTagsStats,
@@ -488,13 +521,6 @@ export const useDapplookerStats = () => {
     queryKey: ['dapplooker-stats'],
     queryFn: async (): Promise<DapplookerStatsData> => {
       try {
-        if (DAPPLOOKER_API_KEY) {
-          const enhancedData = await fetchDapplookerData(graphqlBatcher)
-          if (enhancedData) {
-            return enhancedData
-          }
-        }
-
         return await fetchKlerosSubgraphData(graphqlBatcher)
       } catch (error) {
         return EMPTY_STATS

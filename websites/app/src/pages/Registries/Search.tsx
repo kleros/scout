@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useDebounce } from 'react-use'
-import { useSearchParams } from 'react-router-dom'
 import SearchIcon from 'svgs/icons/search.svg'
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 
@@ -16,10 +15,12 @@ const Container = styled.div`
   padding-left: 16px;
   width: 100%;
   height: 40px;
+  flex: 1 1 100%;
+  min-width: 0;
 
   ${landscapeStyle(
     () => css`
-      width: 630px;
+      flex: 0 1 396px;
     `
   )}
 
@@ -28,7 +29,7 @@ const Container = styled.div`
   }
 
   :hover {
-    background-color: #FFFFFF1D;
+    background-color: ${({ theme }) => theme.hoverBackground};
   }
 `
 
@@ -47,28 +48,25 @@ const StyledInput = styled.input`
   }
 `
 
-const Search: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [searchTerm, setSearchTerm] = useState<string>('')
+interface SearchBarProps {
+  text: string
+  setText: (value: string) => void
+  className?: string
+  placeholder?: string
+}
+
+export const SearchBar: React.FC<SearchBarProps> = ({ text, setText, className, placeholder = "Search with keywords, address, etc." }) => {
+  const [searchTerm, setSearchTerm] = useState<string>(text)
   const [appliedSearch, setAppliedSearch] = useState<boolean>(true)
 
   useEffect(() => {
-    setSearchTerm(searchParams.get('text') || '')
+    setSearchTerm(text)
     setAppliedSearch(true)
-  }, [searchParams])
+  }, [text])
 
   const applySearch = () => {
     if (!appliedSearch) {
-      setSearchParams((prev) => {
-        const prevParams = prev.toString()
-        const newParams = new URLSearchParams(prevParams)
-        newParams.delete('text')
-        newParams.append('text', searchTerm)
-        // bounce to page 1
-        newParams.delete('page')
-        newParams.append('page', '1')
-        return newParams
-      })
+      setText(searchTerm)
       setAppliedSearch(true)
     }
   }
@@ -81,22 +79,22 @@ const Search: React.FC = () => {
     [searchTerm]
   )
 
-  const changeSearchTerm = (text: string) => {
+  const changeSearchTerm = (value: string) => {
     setAppliedSearch(false)
-    setSearchTerm(text)
+    setSearchTerm(value)
   }
 
   return (
-    <Container>
+    <Container className={className}>
       <SearchIcon />
       <StyledInput
         type="text"
         value={searchTerm}
         onChange={(e) => changeSearchTerm(e.target.value)}
-        placeholder="Search with keywords, address, etc."
+        placeholder={placeholder}
       />
     </Container>
   )
 }
 
-export default Search
+export default SearchBar

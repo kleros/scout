@@ -190,7 +190,14 @@ export const getAddressValidationIssue = async (
     )
     let message = 'Invalid address for the specified chain'
 
-    if (network?.namespace === 'eip155' && !address.startsWith('0x')) {
+    if (network?.namespace === 'solana') {
+      const base58Regex = /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
+      if (address.length >= 32 && address.length <= 44 && base58Regex.test(address)) {
+        message = 'Solana addresses are case-sensitive. Please verify the exact casing of the address.'
+      } else {
+        message = 'Invalid Solana address format'
+      }
+    } else if (network?.namespace === 'eip155' && !address.startsWith('0x')) {
       message = 'Address must start with "0x" prefix for Ethereum-like chains'
     } else if (
       network?.namespace === 'eip155' &&
@@ -217,14 +224,14 @@ export const getAddressValidationIssue = async (
     }
   }
 
-  if (registry === 'Tokens' && projectName && projectName.length > 40) {
+  if (registry === 'tokens' && projectName && projectName.length > 40) {
     result.projectName = {
       message: 'Public Name too long (max 40 characters)',
       severity: 'warn',
     }
   }
 
-  if (registry === 'Tokens' && symbol && symbol.length > 20) {
+  if (registry === 'tokens' && symbol && symbol.length > 20) {
     result.symbol = {
       message: 'Symbol too long (max 20 characters)',
       severity: 'warn',
@@ -258,7 +265,7 @@ export const getAddressValidationIssue = async (
   if (Object.keys(result).length > 0) return result
 
   // Check for duplicates based on registry type
-  if (registry === 'Single_Tags' || registry === 'CDN') {
+  if (registry === 'single-tags' || registry === 'cdn') {
     const ndupes = await getDupesInRegistry(
       chainId + ':' + address,
       registryMap[registry],
@@ -268,7 +275,7 @@ export const getAddressValidationIssue = async (
     if (ndupes > 0) {
       result.duplicate = { message: 'Duplicate submission', severity: 'error' }
     }
-  } else if (registry === 'Tokens') {
+  } else if (registry === 'tokens') {
     // For tokens, only consider it a duplicate if any of the existing items have a website
     const ndupes = await getTokenDupesWithWebsiteCheck(
       chainId + ':' + address,

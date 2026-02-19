@@ -7,7 +7,7 @@ export const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.75);
+  background: ${({ theme }) => theme.modalOverlay};
   display: flex;
   justify-content: center;
   align-items: center;
@@ -36,7 +36,7 @@ export const ModalContainer = styled.div`
   flex-direction: column;
   gap: 24px;
   position: relative;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: ${({ theme }) => theme.shadowModal};
 `;
 
 export const ModalHeader = styled.div`
@@ -225,4 +225,32 @@ export const FooterButtons = styled.div`
   gap: 12px;
   padding-top: 20px;
   border-top: 1px solid ${({ theme }) => theme.stroke};
+`;
+
+// Date range preset components
+export const DateRangeOptions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+export const DateRangeChip = styled.button<{ $isSelected: boolean }>`
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid ${({ $isSelected, theme }) => ($isSelected ? theme.secondaryBlue : theme.stroke)};
+  background: ${({ $isSelected, theme }) => ($isSelected ? theme.secondaryBlue + '18' : 'transparent')};
+  color: ${({ $isSelected, theme }) => ($isSelected ? theme.secondaryBlue : theme.secondaryText)};
+  font-size: 13px;
+  font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 400)};
+  font-family: "Open Sans", sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.secondaryBlue};
+    color: ${({ theme }) => theme.secondaryBlue};
+  }
 `;

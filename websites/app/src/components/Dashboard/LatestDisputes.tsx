@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
+import { pulse } from 'styles/commonStyles';
 import { useKlerosDisputes, getDisputePeriodName, formatDisputeDeadline } from 'hooks/useKlerosDisputes';
 
 import DisputeResolverIcon from 'assets/svgs/icons/dispute-resolver.svg';
@@ -10,8 +11,8 @@ const Container = styled.div`
   padding: 16px;
   border-radius: 16px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  background: ${({ theme }) => theme.gradientCardSubtle};
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   width: 100%;
@@ -25,7 +26,7 @@ const Container = styled.div`
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 32px rgba(231, 123, 53, 0.1);
+    box-shadow: ${({ theme }) => theme.glowOrange};
   }
 `;
 
@@ -42,7 +43,7 @@ const Title = styled.h3`
   color: ${({ theme }) => theme.primaryText};
   margin: 0;
   letter-spacing: -0.3px;
-  background: linear-gradient(135deg, #E87B35 0%, #D45A42 100%);
+  background: ${({ theme }) => theme.gradientDispute};
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -60,17 +61,20 @@ const DisputesList = styled.div`
   gap: 12px;
 `;
 
-const DisputeCard = styled.div`
+const DisputeCard = styled.a`
   padding: 16px 12px;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
+  background: ${({ theme }) => theme.gradientCard};
   cursor: pointer;
   transition: all 0.2s ease;
-  
+  text-decoration: none;
+  color: inherit;
+  display: block;
+
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: ${({ theme }) => theme.shadowTooltip};
     border-color: ${({ theme }) => theme.primary};
   }
 `;
@@ -174,13 +178,8 @@ const LoadingCard = styled.div`
   margin-bottom: 12px;
   border-radius: 8px;
   border: 1px solid ${({ theme }) => theme.lightGrey};
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(153, 153, 153, 0.08) 100%);
-  animation: pulse 2s infinite;
-  
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
+  background: ${({ theme }) => theme.gradientCard};
+  animation: ${pulse} 2s infinite;
 `;
 
 const StyledDisputeResolverIcon = styled(DisputeResolverIcon)`
@@ -214,7 +213,7 @@ const MAX_ITEMS = 9;
 const EmptyState = styled.div`
   padding: 20px;
   text-align: center;
-  color: #666;
+  color: ${({ theme }) => theme.tertiaryText};
 `;
 
 export const LatestDisputes: React.FC = () => {
@@ -255,12 +254,6 @@ export const LatestDisputes: React.FC = () => {
       }
     };
   }, [startCarousel]);
-
-  const handleCardClick = useCallback((dispute: KlerosDispute) => {
-    // Open Klerosboard interface for this dispute
-    const klerosboardUrl = `https://klerosboard.com/100/cases/${dispute.disputeIDNumber}`;
-    window.open(klerosboardUrl, '_blank');
-  }, []);
 
   const handleDotClick = useCallback((index: number) => {
     setCurrentGroup(index);
@@ -327,7 +320,12 @@ export const LatestDisputes: React.FC = () => {
             const timeAgo = formatDisputeDeadline(dispute.lastPeriodChangeTs);
             
             return (
-              <DisputeCard key={dispute.id} onClick={() => handleCardClick(dispute)}>
+              <DisputeCard
+                key={dispute.id}
+                href={`https://klerosboard.com/100/cases/${dispute.disputeIDNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <CardContent>
                   <LeftSection>
                     <CaseInfo>

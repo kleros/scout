@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
-import { useSearchParams, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
-import { GraphItem, registryMap } from 'utils/items'
+import { GraphItem, registryMap, buildItemPath, statusDescriptionMap, bountyDescriptionMap, getPropValue as getItemProp, getItemDisplayStatus } from 'utils/items'
+import Tooltip from 'components/Tooltip'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { StyledWebsiteAnchor } from 'utils/renderValue'
 import AddressDisplay from 'components/AddressDisplay'
@@ -24,7 +25,7 @@ import { itemToStatusCode, STATUS_CODE } from 'utils/itemStatus'
 import { useMemo } from 'react'
 
 const Card = styled.div<{ seamlessBottom?: boolean }>`
-  color: white;
+  color: ${({ theme }) => theme.primaryText};
   font-family: "Open Sans", sans-serif;
   box-sizing: border-box;
   word-break: break-word;
@@ -55,14 +56,16 @@ const CardStatus = styled.div<{ status: string }>`
     width: 8px;
     height: 8px;
     margin-bottom: 0px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
       ({
-        Included: '#90EE90',
-        'Registration Requested': '#FFEA00',
-        'Challenged Submission': '#E87B35',
-        'Challenged Removal': '#E87B35',
-        Removed: 'red',
-      })[status] || 'gray'};
+        Included: theme.statusIncluded,
+        'Registration Requested': theme.statusRegistrationRequested,
+        'Removal Requested': theme.statusClearingRequested,
+        'Challenged Submission': theme.statusChallenged,
+        'Challenged Removal': theme.statusChallenged,
+        Removed: theme.statusAbsent,
+        Rejected: theme.statusRejected,
+      })[status] || theme.statusGray};
     border-radius: 50%;
     margin-right: 10px;
   }
@@ -136,7 +139,8 @@ const VisualProofWrapper = styled.img`
   ${hoverShortTransitionTiming}
   object-fit: cover;
   align-self: stretch;
-  width: 90%;
+  max-width: 240px;
+  max-height: 160px;
   margin-top: 8px;
   cursor: pointer;
 
@@ -162,7 +166,7 @@ const DetailsButton = styled(Link)`
   color: ${({ theme }) => theme.primaryText};
 
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 `
@@ -237,17 +241,6 @@ const WrappedWebsiteContainer = styled.div`
   margin-top: -8px;
 `
 
-const readableStatusMap = {
-  Registered: 'Included',
-  Absent: 'Removed',
-  RegistrationRequested: 'Registration Requested',
-  ClearingRequested: 'Removal Requested',
-}
-
-const challengedStatusMap = {
-  RegistrationRequested: 'Challenged Submission',
-  ClearingRequested: 'Challenged Removal',
-}
 
 interface StatusProps {
   status:
@@ -257,12 +250,11 @@ interface StatusProps {
     | 'ClearingRequested'
   disputed: boolean
   bounty: string
+  requests?: Array<{ requestType?: string }>
 }
 
-const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
-  const label = disputed
-    ? challengedStatusMap[status]
-    : readableStatusMap[status]
+const Status = React.memo(({ status, disputed, bounty, requests }: StatusProps) => {
+  const label = getItemDisplayStatus({ status, disputed, requests })
 
   const readableBounty =
     (status === 'ClearingRequested' || status === 'RegistrationRequested') &&
@@ -272,8 +264,12 @@ const Status = React.memo(({ status, disputed, bounty }: StatusProps) => {
 
   return (
     <CardStatus status={label}>
-      {label}
-      {readableBounty && <BountyText> ${readableBounty}</BountyText>}
+      <Tooltip data-tooltip={statusDescriptionMap[label] || ''}>{label}</Tooltip>
+      {readableBounty && (
+        <Tooltip data-tooltip={bountyDescriptionMap[status] || ''}>
+          <BountyText> ${readableBounty}</BountyText>
+        </Tooltip>
+      )}
     </CardStatus>
   )
 })
@@ -301,9 +297,8 @@ const Item = React.memo(
     seamlessBottom = false,
   }: ItemProps) => {
     const [imgLoaded, setImgLoaded] = useState(false)
-    const [searchParams] = useSearchParams()
     const openAttachment = useAttachment()
-    const itemUrl = `/item/${item.id}?${searchParams.toString()}`
+    const itemUrl = buildItemPath(item.id || item.itemID, item.registryAddress)
 
     const challengeRemainingTime = useChallengeRemainingTime(
       item.requests?.[0]?.submissionTime,
@@ -325,9 +320,7 @@ const Item = React.memo(
 
     const isPendingExecution = statusCode === STATUS_CODE.PENDING_SUBMISSION || statusCode === STATUS_CODE.PENDING_REMOVAL
 
-    const getPropValue = (label: string) => {
-      return item?.props?.find((prop) => prop.label === label)?.value || ''
-    }
+    const getPropValue = (label: string) => getItemProp(item, label)
 
     return (
       <Card seamlessBottom={seamlessBottom}>
@@ -335,10 +328,11 @@ const Item = React.memo(
           status={item.status}
           disputed={item.disputed}
           bounty={item.requests?.[0]?.deposit || '0'}
+          requests={item.requests}
         />
         <CardContent>
           <UpperCardContent>
-            {item.registryAddress === registryMap.Tags_Queries && (
+            {item.registryAddress === registryMap['tags-queries'] && (
               <>
                 <LabelAndValue>
                   <ChainIdLabel>
@@ -362,7 +356,7 @@ const Item = React.memo(
                 </b>
               </>
             )}
-            {item.registryAddress === registryMap.Single_Tags && (
+            {item.registryAddress === registryMap['single-tags'] && (
               <>
                 <strong>
                   <AddressDisplay address={getPropValue('Contract Address')} />
@@ -378,7 +372,7 @@ const Item = React.memo(
                 </StyledWebsiteAnchor>
               </>
             )}
-            {item.registryAddress === registryMap.Tokens && (
+            {item.registryAddress === registryMap['tokens'] && (
               <>
                 <AddressDisplay address={getPropValue('Address')} />
                 {getPropValue('Logo') && (
@@ -412,7 +406,7 @@ const Item = React.memo(
                 ) : null}
               </>
             )}
-            {item.registryAddress === registryMap.CDN && (
+            {item.registryAddress === registryMap['cdn'] && (
               <>
                 <AddressDisplay address={getPropValue('Contract address')} />
                 <WrappedWebsiteContainer>
@@ -431,7 +425,7 @@ const Item = React.memo(
                       openAttachment(visualProofURI)
                     }}
                   >
-                    {!imgLoaded && <Skeleton height={100} width={150} />}
+                    {!imgLoaded && <Skeleton height={140} width={240} />}
                     <VisualProofWrapper
                       src={`https://cdn.kleros.link${getPropValue('Visual proof')}`}
                       alt="Visual proof"
@@ -465,7 +459,7 @@ const Item = React.memo(
                 {actionButtonCost ? ` — ${actionButtonCost}` : ''}
               </ActionButton>
             ) : !showActionButtons ? (
-              <DetailsButton to={itemUrl}>
+              <DetailsButton to={itemUrl} state={{ fromApp: true }}>
                 Details
               </DetailsButton>
             ) : null}

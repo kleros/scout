@@ -1,43 +1,38 @@
 import React, { useMemo } from 'react';
-import styled, { css, keyframes } from 'styled-components';
+import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
-
-const shimmer = keyframes`
-  0% {
-    background-position: -468px 0;
-  }
-  100% {
-    background-position: 468px 0;
-  }
-`;
+import { shimmer } from 'styles/commonStyles';
 
 const Card = styled.div`
   display: flex;
   flex-direction: column;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.stroke};
-  padding: 12px;
+  padding: 10px 12px;
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   position: relative;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 
   ${landscapeStyle(
     () => css`
-      padding: 24px;
-      border-radius: 16px;
-      margin-bottom: 16px;
-      min-width: clamp(250px, 30vw, 300px);
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 8px;
     `
   )}
 
+  &:last-child {
+    margin-bottom: 0;
+  }
+
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.15);
-    border-color: rgba(125, 75, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: ${({ theme }) => theme.glowPurple};
+    border-color: ${({ theme }) => theme.primaryPurple}4D;
   }
 
   &::before {
@@ -50,7 +45,7 @@ const Card = styled.div`
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(125, 75, 255, 0.1),
+      ${({ theme }) => theme.primaryPurple}1A,
       transparent
     );
     animation: ${shimmer} 2s infinite;
@@ -67,28 +62,28 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 
   ${landscapeStyle(
     () => css`
-      gap: 16px;
-      margin-bottom: 16px;
+      gap: 10px;
+      margin-bottom: 8px;
     `
   )}
 
   svg {
-    min-width: 32px;
-    min-height: 32px;
-    width: 32px;
-    height: 32px;
+    min-width: 24px;
+    min-height: 24px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
 
     ${landscapeStyle(
       () => css`
-        min-width: 48px;
-        min-height: 48px;
-        width: 48px;
-        height: 48px;
+        min-width: 32px;
+        min-height: 32px;
+        width: 32px;
+        height: 32px;
       `
     )}
 
@@ -99,7 +94,7 @@ const Header = styled.div`
 `;
 
 const Title = styled.h3`
-  color: var(--Secondary-text, #BEBEC5);
+  color: ${({ theme }) => theme.secondaryText};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: normal;
@@ -109,17 +104,17 @@ const Title = styled.h3`
 `;
 
 const MainValue = styled.div`
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: ${({ theme }) => theme.primaryText};
-  margin-bottom: 4px;
-  letter-spacing: -1px;
+  margin-bottom: 2px;
+  letter-spacing: -0.5px;
   transition: all 0.3s ease;
 
   ${landscapeStyle(
     () => css`
-      font-size: 32px;
-      margin-bottom: 8px;
+      font-size: 24px;
+      margin-bottom: 4px;
     `
   )}
 `;
@@ -128,8 +123,8 @@ const ChangeIndicator = styled.div<{ positive?: boolean }>`
   display: flex;
   align-items: center;
   font-size: 12px;
-  color: ${({ theme, positive }) => 
-    positive ? theme.successText || SUCCESS_COLOR : theme.secondaryText};
+  color: ${({ theme, positive }) =>
+    positive ? theme.success : theme.secondaryText};
   font-weight: 500;
   transition: all 0.3s ease;
   
@@ -158,14 +153,14 @@ const ChangeIndicator = styled.div<{ positive?: boolean }>`
 const SecondaryValue = styled.div`
   font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
-  margin-top: 6px;
+  margin-top: 4px;
   opacity: 0.8;
   transition: opacity 0.3s ease;
 
   ${landscapeStyle(
     () => css`
-      font-size: 14px;
-      margin-top: 8px;
+      font-size: 13px;
+      margin-top: 4px;
     `
   )}
 `;
@@ -182,7 +177,6 @@ interface StatCardProps {
 }
 
 const DEFAULT_CHANGE_LABEL = '(all time)';
-const SUCCESS_COLOR = '#22c55e';
 
 export const StatCard: React.FC<StatCardProps> = ({
   icon,

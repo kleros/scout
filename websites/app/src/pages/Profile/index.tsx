@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import styled, { css, createGlobalStyle } from "styled-components";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import styled, { css, createGlobalStyle, useTheme } from "styled-components";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
@@ -16,12 +16,13 @@ import PendingSubmissions from "./PendingSubmissions";
 import ResolvedSubmissions from "./ResolvedSubmissions";
 import Disputes from "./Disputes";
 import FilterButton from "components/FilterButton";
-import FilterModal from "./FilterModal";
-import ProfileSearchBar from "./SearchBar";
+import FilterModal from "components/FilterModal";
+import { SearchBar as ProfileSearchBar } from "pages/Registries/Search";
 import Copyable from "components/Copyable";
 import { ExternalLink } from "components/ExternalLink";
 import { DEFAULT_CHAIN, getChain } from "consts/chains";
 import { chains } from "utils/chains";
+import { useProfileFilters } from "context/FilterContext";
 import ScrollTop from "components/ScrollTop";
 
 const Container = styled.div`
@@ -75,10 +76,10 @@ const StyledExternalLink = styled(ExternalLink)`
 
 const TooltipGlobalStyle = createGlobalStyle`
   .dark-tooltip {
-    background-color: ${({ theme }) => theme.darkBackground || '#000000'} !important;
-    color: ${({ theme }) => theme.primaryText || 'white'} !important;
-    border: 1px solid ${({ theme }) => theme.lightGrey || '#0A0A0A'} !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    background-color: ${({ theme }) => theme.darkBackground} !important;
+    color: ${({ theme }) => theme.primaryText} !important;
+    border: 1px solid ${({ theme }) => theme.lightGrey} !important;
+    box-shadow: ${({ theme }) => theme.shadowTooltip} !important;
     font-size: 12px !important;
     padding: 6px 8px !important;
     border-radius: 4px !important;
@@ -205,8 +206,9 @@ const FilterControlsContainer = styled.div`
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 16px;
+  flex-wrap: wrap;
 `;
 
 const SubTabsWrapper = styled.div`
@@ -269,13 +271,12 @@ const StatDivider = styled.div`
 
 const PATHS = ["pending", "resolved", "disputes"];
 
-const REGISTRATION_STATUSES = ['Registered', 'RegistrationRequested', 'ClearingRequested'];
-const CHALLENGE_STATUSES = ['true', 'false'];
-
 const Profile: React.FC = () => {
+  const theme = useTheme();
   const { isConnected, address: connectedAddress } = useAccount();
   const [searchParams, setSearchParams] = useSearchParams();
-  const userAddress = searchParams.get("userAddress");
+  const filters = useProfileFilters();
+  const userAddress = searchParams.get("address");
   const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
   const { data: disputeData, isLoading: isLoadingDisputes } = useDisputeStats(address);
@@ -284,7 +285,7 @@ const Profile: React.FC = () => {
 
   // Dispute sub-tab state (active vs resolved)
   const [showResolvedDisputes, setShowResolvedDisputes] = useState(false);
-  
+
   // Filter modal state
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isFilterChanging, setIsFilterChanging] = useState(false);
@@ -294,46 +295,46 @@ const Profile: React.FC = () => {
     return [...availableChains, 'unknown']; // Include all chains + unknown by default
   });
 
+  // Filtered counts reported by each tab component
+  const [filteredPendingCount, setFilteredPendingCount] = useState<number | null>(null);
+  const [filteredResolvedCount, setFilteredResolvedCount] = useState<number | null>(null);
+  const [filteredDisputeCounts, setFilteredDisputeCounts] = useState<{ active: number; resolved: number } | null>(null);
+
+  // Reset filtered counts when date filter changes so stale values don't linger
+  useEffect(() => {
+    setFilteredPendingCount(null);
+    setFilteredResolvedCount(null);
+    setFilteredDisputeCounts(null);
+  }, [filters.dateRange, filters.customDateFrom, filters.customDateTo]);
+
+  const showFilteredCounts = filters.dateRange !== 'all';
+
   // Auto-add connected address to URL when user connects wallet
   useEffect(() => {
     if (isConnected && connectedAddress && !userAddress) {
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set('userAddress', connectedAddress.toLowerCase());
+      const newParams = new URLSearchParams();
+      newParams.set('address', connectedAddress.toLowerCase());
       setSearchParams(newParams, { replace: true });
     }
-  }, [isConnected, connectedAddress, userAddress, searchParams, setSearchParams]);
-
-  // Initialize URL params with all statuses/disputed values for Profile page
-  useEffect(() => {
-    if (address && searchParams.getAll('status').length === 0 && searchParams.getAll('disputed').length === 0) {
-      const newParams = new URLSearchParams(searchParams);
-
-      // Add all registration statuses
-      REGISTRATION_STATUSES.forEach(status => newParams.append('status', status));
-      // Add all challenge statuses
-      CHALLENGE_STATUSES.forEach(challengeValue => newParams.append('disputed', challengeValue));
-
-      // Preserve existing params like userAddress, page, etc.
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [address, searchParams, setSearchParams]);
+  }, [isConnected, connectedAddress, userAddress, setSearchParams]);
 
   // Reset page to 1 when filters change
   const filterKey = useMemo(() => {
     return [
-      searchParams.getAll('status').sort().join(','),
-      searchParams.getAll('disputed').sort().join(','),
-      searchParams.get('search') || '',
+      filters.status.slice().sort().join(','),
+      filters.disputed.slice().sort().join(','),
+      filters.text,
       chainFilters.sort().join(','),
-      searchParams.get('orderDirection') || ''
+      filters.orderDirection,
+      filters.dateRange,
+      filters.customDateFrom,
+      filters.customDateTo,
     ].join('|');
-  }, [searchParams, chainFilters]);
+  }, [filters.status, filters.disputed, filters.text, filters.orderDirection, chainFilters, filters.dateRange, filters.customDateFrom, filters.customDateTo]);
 
   const prevFilterKeyRef = useRef(filterKey);
 
   useEffect(() => {
-    const currentPage = searchParams.get('page');
-
     // Only reset page if the FILTERS actually changed (not just the page number)
     if (prevFilterKeyRef.current !== filterKey) {
       prevFilterKeyRef.current = filterKey;
@@ -342,16 +343,12 @@ const Profile: React.FC = () => {
       setIsFilterChanging(true);
 
       // If we're not on page 1, reset to page 1 when filters change
-      if (currentPage && currentPage !== '1') {
-        setSearchParams(prev => {
-          const newParams = new URLSearchParams(prev.toString());
-          newParams.set('page', '1');
-          return newParams;
-        });
+      if (filters.page !== 1) {
+        filters.setPage(1);
       }
     }
-  }, [filterKey, searchParams, setSearchParams]);
-  
+  }, [filterKey, filters]);
+
   const addressExplorerLink = useMemo(() => {
     if (!userAddress) return null;
     return `${getChain(DEFAULT_CHAIN)?.blockExplorers?.default.url}/address/${userAddress}`;
@@ -373,14 +370,30 @@ const Profile: React.FC = () => {
   const activeDisputes = disputeStats?.activeDisputes ?? 0;
   const resolvedDisputes = disputeStats?.resolvedDisputes ?? 0;
   const totalDisputes = activeDisputes + resolvedDisputes;
+  const formatCount = useCallback((total: number, filtered: number | null): string => {
+    if (showFilteredCounts && filtered !== null) {
+      return `${commify(filtered)}/${commify(total)}`;
+    }
+    return commify(total);
+  }, [showFilteredCounts]);
+
+  const renderTabCount = useCallback((total: number, filtered: number | null, isTabLoading: boolean, skeletonWidth: number) => {
+    if (isTabLoading) return <Skeleton inline width={skeletonWidth} height={16} />;
+    return formatCount(total, filtered);
+  }, [formatCount]);
+
+  const filteredTotalDisputes = filteredDisputeCounts
+    ? filteredDisputeCounts.active + filteredDisputeCounts.resolved
+    : null;
+
   const tabs = useMemo(
     () => [
       {
         key: "pending",
         label: (
           <>
-            <span className="tab-short">Pending ({isLoading ? <Skeleton inline width={20} height={16} /> : commify(pendingSubmissions)})</span>
-            <span className="tab-full">Pending Submissions ({isLoading ? <Skeleton inline width={30} height={20} /> : commify(pendingSubmissions)})</span>
+            <span className="tab-short">Pending ({renderTabCount(pendingSubmissions, filteredPendingCount, isLoading, 20)})</span>
+            <span className="tab-full">Pending Submissions ({renderTabCount(pendingSubmissions, filteredPendingCount, isLoading, 30)})</span>
           </>
         ),
         path: "pending",
@@ -389,8 +402,8 @@ const Profile: React.FC = () => {
         key: "resolved",
         label: (
           <>
-            <span className="tab-short">Resolved ({isLoading ? <Skeleton inline width={20} height={16} /> : commify(resolvedSubmissions)})</span>
-            <span className="tab-full">Resolved Submissions ({isLoading ? <Skeleton inline width={30} height={20} /> : commify(resolvedSubmissions)})</span>
+            <span className="tab-short">Resolved ({renderTabCount(resolvedSubmissions, filteredResolvedCount, isLoading, 20)})</span>
+            <span className="tab-full">Resolved Submissions ({renderTabCount(resolvedSubmissions, filteredResolvedCount, isLoading, 30)})</span>
           </>
         ),
         path: "resolved",
@@ -399,21 +412,22 @@ const Profile: React.FC = () => {
         key: "disputes",
         label: (
           <>
-            <span className="tab-short">Disputes ({isLoadingDisputes ? <Skeleton inline width={20} height={16} /> : commify(totalDisputes)})</span>
-            <span className="tab-full">Disputes ({isLoadingDisputes ? <Skeleton inline width={30} height={20} /> : commify(totalDisputes)})</span>
+            <span className="tab-short">Disputes ({renderTabCount(totalDisputes, filteredTotalDisputes, isLoadingDisputes, 20)})</span>
+            <span className="tab-full">Disputes ({renderTabCount(totalDisputes, filteredTotalDisputes, isLoadingDisputes, 30)})</span>
           </>
         ),
         path: "disputes",
       },
     ],
-    [isLoading, isLoadingDisputes, pendingSubmissions, resolvedSubmissions, totalDisputes]
+    [isLoading, isLoadingDisputes, pendingSubmissions, resolvedSubmissions, totalDisputes, filteredPendingCount, filteredResolvedCount, filteredTotalDisputes, renderTabCount]
   );
   const basePath = useMemo(() => location.pathname.split(/\/(pending|resolved|disputes)\b/)[0], [location.pathname]);
   const switchTab = (n: number) => {
     setCurrentTab(n);
-    const params = new URLSearchParams(location.search);
-    params.set("page", "1");
-    navigate(`${basePath}/${tabs[n].path}?${params.toString()}`);
+    filters.setPage(1);
+    const params = new URLSearchParams();
+    if (userAddress) params.set('address', userAddress);
+    navigate(`${basePath}/${tabs[n].path}${params.toString() ? `?${params.toString()}` : ''}`);
   };
 
   const shouldShowConnectWallet = !isConnected && !userAddress;
@@ -456,6 +470,10 @@ const Profile: React.FC = () => {
               </Subtitle>
             </div>
           </Header>
+          <FilterControlsContainer>
+            <ProfileSearchBar text={filters.text} setText={filters.setText} />
+            <FilterButton onClick={() => setIsFilterModalOpen(true)} />
+          </FilterControlsContainer>
           <TabsWrapper>
             {tabs.map((tab, i) => (
               <TabButton key={tab.key} selected={i === currentTab} onClick={() => switchTab(i)}>
@@ -463,15 +481,11 @@ const Profile: React.FC = () => {
               </TabButton>
             ))}
           </TabsWrapper>
-          <FilterControlsContainer>
-            <ProfileSearchBar />
-            <FilterButton onClick={() => setIsFilterModalOpen(true)} />
-          </FilterControlsContainer>
           {currentTab === 0 && (
-            <PendingSubmissions totalItems={pendingSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
+            <PendingSubmissions totalItems={pendingSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} onFilteredCountChange={setFilteredPendingCount} />
           )}
           {currentTab === 1 && (
-            <ResolvedSubmissions totalItems={resolvedSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} />
+            <ResolvedSubmissions totalItems={resolvedSubmissions} address={address} chainFilters={chainFilters} isFilterChanging={isFilterChanging} setIsFilterChanging={setIsFilterChanging} onFilteredCountChange={setFilteredResolvedCount} />
           )}
           {currentTab === 2 && (
             <>
@@ -492,13 +506,13 @@ const Profile: React.FC = () => {
                 <StatDivider />
                 <StatBox>
                   <StatLabel>Wins</StatLabel>
-                  <StatValue color="#65DC7F">
+                  <StatValue color={theme.success}>
                     {isLoadingDisputes ? <Skeleton width={30} height={24} /> : disputeStats?.totalWins ?? 0}
                   </StatValue>
                 </StatBox>
                 <StatBox>
                   <StatLabel>Losses</StatLabel>
-                  <StatValue color="#FF5A78">
+                  <StatValue color={theme.error}>
                     {isLoadingDisputes ? <Skeleton width={30} height={24} /> : disputeStats?.totalLosses ?? 0}
                   </StatValue>
                 </StatBox>
@@ -510,9 +524,9 @@ const Profile: React.FC = () => {
                       <Skeleton width={60} height={24} />
                     ) : (
                       <span>
-                        <span style={{ color: '#65DC7F' }}>{disputeStats?.winsAsRequester ?? 0}W</span>
+                        <span style={{ color: theme.success }}>{disputeStats?.winsAsRequester ?? 0}W</span>
                         {' / '}
-                        <span style={{ color: '#FF5A78' }}>{disputeStats?.lossesAsRequester ?? 0}L</span>
+                        <span style={{ color: theme.error }}>{disputeStats?.lossesAsRequester ?? 0}L</span>
                       </span>
                     )}
                   </StatValue>
@@ -524,9 +538,9 @@ const Profile: React.FC = () => {
                       <Skeleton width={60} height={24} />
                     ) : (
                       <span>
-                        <span style={{ color: '#65DC7F' }}>{disputeStats?.winsAsChallenger ?? 0}W</span>
+                        <span style={{ color: theme.success }}>{disputeStats?.winsAsChallenger ?? 0}W</span>
                         {' / '}
-                        <span style={{ color: '#FF5A78' }}>{disputeStats?.lossesAsChallenger ?? 0}L</span>
+                        <span style={{ color: theme.error }}>{disputeStats?.lossesAsChallenger ?? 0}L</span>
                       </span>
                     )}
                   </StatValue>
@@ -537,13 +551,13 @@ const Profile: React.FC = () => {
                   selected={!showResolvedDisputes}
                   onClick={() => setShowResolvedDisputes(false)}
                 >
-                  Active ({activeDisputes})
+                  Active ({formatCount(activeDisputes, filteredDisputeCounts?.active ?? null)})
                 </SubTabButton>
                 <SubTabButton
                   selected={showResolvedDisputes}
                   onClick={() => setShowResolvedDisputes(true)}
                 >
-                  Resolved ({resolvedDisputes})
+                  Resolved ({formatCount(resolvedDisputes, filteredDisputeCounts?.resolved ?? null)})
                 </SubTabButton>
               </SubTabsWrapper>
               <Disputes
@@ -553,6 +567,7 @@ const Profile: React.FC = () => {
                 isFilterChanging={isFilterChanging}
                 setIsFilterChanging={setIsFilterChanging}
                 showResolved={showResolvedDisputes}
+                onFilteredCountsChange={setFilteredDisputeCounts}
               />
             </>
           )}
@@ -564,13 +579,13 @@ const Profile: React.FC = () => {
           <ConnectWallet />
         </ConnectWalletContainer>
       )}
-      
+
       <FilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
         chainFilters={chainFilters}
         onChainFiltersChange={setChainFilters}
-        userAddress={address}
+        scope="profile"
       />
     </Container>
   );

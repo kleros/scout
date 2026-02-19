@@ -115,7 +115,7 @@ export const chains = [
     namespace: 'eip155',
     name: 'zkSync',
     label: 'zkSync',
-    explorer: 'era.zksync.network',
+    explorer: 'explorer.zksync.io',
   },
   {
     id: '369',
@@ -129,7 +129,7 @@ export const chains = [
     namespace: 'eip155',
     name: 'MegaETH',
     label: 'MEGA',
-    explorer: 'megaeth.blockscout.com',
+    explorer: 'mega.etherscan.io',
   },
   {
     id: '000000000019d6689c085ae165831e93',

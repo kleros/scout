@@ -1,32 +1,17 @@
 import React, { useMemo } from 'react'
-import styled from 'styled-components'
+import styled, { useTheme } from 'styled-components'
 import { formatEther } from 'ethers'
-import { useLocation, Link } from 'react-router-dom'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
-import { revRegistryMap } from 'utils/items'
-import { shortenAddress } from 'utils/shortenAddress'
+import SubmittedByLink from 'components/SubmittedByLink'
+import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress } from 'utils/items'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
-
-const Card = styled.div`
-  width: 100%;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  background: transparent;
-`
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  flex-wrap: wrap;
-`
+import useRegistryParameters from 'hooks/useRegistryParameters'
+import {
+  Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
+  MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer, ViewLink,
+} from './profileCardStyles'
 
 const HeaderLeft = styled.div`
   display: inline-flex;
@@ -42,30 +27,6 @@ const HeaderRight = styled.div`
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-`
-
-const Bullet = styled.span<{ color: string }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ color }) => color};
-  flex: 0 0 8px;
-`
-
-const Title = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: ${({ theme }) => theme.primaryText};
-`
-
-const Registry = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-`
-
-const StatusLabel = styled.span`
-  font-size: 14px;
-  color: ${({ theme }) => theme.primaryText};
 `
 
 const RoleBadge = styled.span<{ role: 'requester' | 'challenger' | 'both' }>`
@@ -94,84 +55,25 @@ const OutcomeBadge = styled.span<{ outcome: 'won' | 'lost' | 'pending' | 'refuse
   border-radius: 4px;
   background: ${({ outcome, theme }) =>
     outcome === 'won'
-      ? '#65DC7F30'
+      ? `${theme.success}30`
       : outcome === 'lost'
-      ? '#FF5A7830'
+      ? `${theme.error}30`
       : outcome === 'refused'
       ? theme.secondaryText + '30'
       : theme.warning + '30'};
   color: ${({ outcome, theme }) =>
     outcome === 'won'
-      ? '#65DC7F'
+      ? theme.success
       : outcome === 'lost'
-      ? '#FF5A78'
+      ? theme.error
       : outcome === 'refused'
       ? theme.secondaryText
       : theme.warning};
 `
 
-const Divider = styled.hr`
-  border: none;
-  border-top: 1px solid ${({ theme }) => theme.stroke};
-  margin: 0;
-`
-
-const Body = styled.div`
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`
-
-const MetaLine = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-`
-
-const InfoRow = styled.div`
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  font-size: 14px;
-  color: ${({ theme }) => theme.secondaryText};
-  flex: 1;
-  min-width: 0;
-`
-
-const LabelValue = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-`
-
 const ButtonsContainer = styled.div`
   display: flex;
   gap: 8px;
-`
-
-const ViewItemLink = styled(Link)`
-  ${hoverLongTransitionTiming}
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border-radius: 9999px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  background: transparent;
-  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
-  color: ${({ theme }) => theme.primaryText};
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: ${({ theme }) => theme.primaryText};
-    color: ${({ theme }) => theme.primaryText};
-  }
 `
 
 const ViewCaseLink = styled.a`
@@ -196,41 +98,32 @@ const ViewCaseLink = styled.a`
   }
 `
 
-const StyledChainLabel = styled.span`
-  margin-bottom: 8px;
-`
-
-const StyledChainContainer = styled(LabelValue)`
-  margin-bottom: -8px;
-`
-
-const statusColors: Record<string, string> = {
-  'Active Dispute': '#E87B35',
-  Won: '#65DC7F',
-  Lost: '#FF5A78',
-  Refused: '#9CA3AF',
-}
-
-const getProp = (item: any, label: string) =>
-  item?.props?.find((p: any) => p.label === label)?.value ?? ''
-
 interface DisputeCardProps {
   item: any
   userAddress: string
 }
 
 const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
-  const location = useLocation()
+  const theme = useTheme()
 
-  const registryName = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const statusColors: Record<string, string> = {
+    'Active Dispute': theme.statusChallenged,
+    Won: theme.success,
+    Lost: theme.error,
+    Refused: theme.statusGray,
+  }
+
+  const registryKey = revRegistryMap[item.registryAddress] ?? 'Unknown'
+  const registryName = registryDisplayNames[registryKey] ?? registryKey
   const request = item.requests?.[0]
   const userRole = item.userRole as 'requester' | 'challenger' | 'both'
+  const { data: registryParams } = useRegistryParameters(item.registryAddress)
 
   const displayName =
-    getProp(item, 'Name') ||
-    getProp(item, 'Domain name') ||
-    getProp(item, 'Public Name Tag') ||
-    getProp(item, 'Description') ||
+    getPropValue(item, 'Name') ||
+    getPropValue(item, 'Domain name') ||
+    getPropValue(item, 'Public Name Tag') ||
+    getPropValue(item, 'Description') ||
     item.itemID
 
   // Determine outcome for the user
@@ -259,54 +152,31 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
       : 'Refused'
     : 'Active Dispute'
 
-  const bulletColor = statusColors[statusText] ?? '#9CA3AF'
+  const bulletColor = statusColors[statusText] ?? theme.statusGray
 
   const disputeDate =
     request?.submissionTime != null
       ? formatTimestamp(Number(request.submissionTime))
       : '-'
 
-  const deposit =
-    request?.deposit != null
-      ? Number(formatEther(request.deposit)).toLocaleString('en-US', {
-          maximumFractionDigits: 0,
-        })
-      : '-'
+  const deposit = useMemo(() => {
+    if (request?.deposit == null) return '-'
+    const baseDeposit = BigInt(request.deposit)
+    const arbitrationCost = registryParams?.arbitrationCost ?? 0n
+    const total = baseDeposit + arbitrationCost
+    return Number(formatEther(total)).toLocaleString('en-US', {
+      maximumFractionDigits: 2,
+    })
+  }, [request?.deposit, registryParams?.arbitrationCost])
 
   const requester = request?.requester ?? ''
   const challenger = request?.challenger ?? ''
   const disputeID = request?.disputeID
 
-  const chainId = getProp(item, 'EVM Chain ID')
-  const itemAddrMap: Record<string, string | undefined> = {
-    Single_Tags: getProp(item, 'Contract Address'),
-    Tags_Queries: undefined,
-    Tokens: getProp(item, 'Address'),
-    CDN: getProp(item, 'Contract address'),
-  }
-  const itemAddr = itemAddrMap[registryName]
+  const chainId = getPropValue(item, 'EVM Chain ID')
+  const itemAddr = getItemAddress(item, registryKey)
 
-  // Build the item URL for the link
-  const itemUrl = useMemo(() => {
-    const params = new URLSearchParams()
-    params.append('status', 'Registered')
-    params.append('status', 'RegistrationRequested')
-    params.append('status', 'ClearingRequested')
-    params.append('disputed', 'true')
-    params.append('disputed', 'false')
-    params.set('page', '1')
-    params.set('orderDirection', 'desc')
-
-    const currentSearch = new URLSearchParams(location.search)
-    const userAddressParam = currentSearch.get('userAddress')
-
-    if (userAddressParam) {
-      params.set('userAddress', userAddressParam)
-      params.set('fromProfile', 'disputes')
-    }
-
-    return `/item/${item.id}?${params.toString()}`
-  }, [item.id, location.search])
+  const itemUrl = buildItemPath(item.id)
 
   const roleLabel =
     userRole === 'requester'
@@ -368,14 +238,14 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
             {userRole === 'requester' && challenger && (
               <LabelValue>
                 <span>Challenger:</span>
-                <span>{shortenAddress(challenger)}</span>
+                <SubmittedByLink address={challenger} />
               </LabelValue>
             )}
 
             {userRole === 'challenger' && requester && (
               <LabelValue>
                 <span>Submitter:</span>
-                <span>{shortenAddress(requester)}</span>
+                <SubmittedByLink address={requester} />
               </LabelValue>
             )}
 
@@ -404,7 +274,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
                 View Case
               </ViewCaseLink>
             )}
-            <ViewItemLink to={itemUrl}>View Item</ViewItemLink>
+            <ViewLink to={itemUrl} state={{ fromApp: true, from: 'profile', profileTab: 'disputes' }}>View Item</ViewLink>
           </ButtonsContainer>
         </MetaLine>
       </Body>

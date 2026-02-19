@@ -1,30 +1,16 @@
 import React, { useMemo } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
-
-import EthereumIcon from 'svgs/chains/ethereum.svg';
-import PolygonIcon from 'svgs/chains/polygon.svg';
-import ArbitrumIcon from 'svgs/chains/arbitrum.svg';
-import OptimismIcon from 'svgs/chains/optimism.svg';
-import BaseIcon from 'svgs/chains/base.svg';
-
-const fadeInUp = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
+import { fadeIn as fadeInUp } from 'styles/commonStyles';
+import { getChainIcon } from 'utils/chainIcons';
+import { chains } from 'utils/chains';
 
 const Container = styled.div`
   padding: 12px;
   border-radius: 12px;
   border: 1px solid ${({ theme }) => theme.stroke};
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   backdrop-filter: blur(10px);
   transition: all 0.3s ease;
   animation: ${fadeInUp} 0.6s ease-out;
@@ -40,12 +26,12 @@ const Container = styled.div`
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 32px rgba(125, 75, 255, 0.1);
+    box-shadow: ${({ theme }) => theme.glowPurple};
   }
 `;
 
 const Title = styled.h3`
-  color: var(--Secondary-blue, #7186FF);
+  color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
@@ -83,7 +69,7 @@ const RankingItem = styled.div`
   )}
 
   &:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid ${({ theme }) => theme.hoverBackground};
   }
 `;
 
@@ -143,18 +129,11 @@ const ItemCount = styled.div`
   )}
 `;
 
-type ChainName = 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base';
-
-const CHAIN_ICONS = {
-  ethereum: <EthereumIcon />,
-  polygon: <PolygonIcon />,
-  arbitrum: <ArbitrumIcon />,
-  optimism: <OptimismIcon />,
-  base: <BaseIcon />,
-} as const;
-
-const getChainIcon = (chainName: string) => {
-  return CHAIN_ICONS[chainName as ChainName] || CHAIN_ICONS.ethereum;
+const getChainIconByName = (chainName: string) => {
+  const chain = chains.find((c) => c.name.toLowerCase().includes(chainName.toLowerCase()));
+  if (!chain) return null;
+  const Icon = getChainIcon(chain.id);
+  return Icon ? <Icon /> : null;
 };
 
 const getOrdinalSuffix = (rank: number): string => {
@@ -197,7 +176,7 @@ export const ChainRanking: React.FC<ChainRankingProps> = ({ data }) => {
             <LeftSide>
               <RankPosition>{item.ordinal}</RankPosition>
               <ChainIcon>
-                {getChainIcon(item.chain)}
+                {getChainIconByName(item.chain)}
               </ChainIcon>
             </LeftSide>
             <ItemCount>{item.formattedItems}</ItemCount>

@@ -1,13 +1,16 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import styled from 'styled-components';
-import { useSearchParams } from 'react-router-dom';
+import styled, { css } from 'styled-components';
+import { useFilters, DateRangeOption, DATE_RANGE_PRESETS } from 'context/FilterContext';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
 import { ModalButton } from './ModalButtons';
 import Checkbox from './Checkbox';
 import RadioButton from './RadioButton';
+import DateRangeCalendar from './DateRangeCalendar';
 import FiltersIcon from 'svgs/icons/filters.svg';
 import SortIcon from 'svgs/icons/sort.svg';
+import CalendarIcon from 'svgs/icons/calendar.svg';
 import { getChainIcon } from 'utils/chainIcons';
 import {
   ModalOverlay,
@@ -29,32 +32,24 @@ import {
   NetworkItem,
   NetworkLabel,
   FooterButtons,
+  DateRangeOptions,
+  DateRangeChip,
 } from './ModalComponents';
 
-const SectionTitle = styled.h3`
-  color: ${({ theme }) => theme.secondaryBlue};
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  svg {
-    width: 14px;
-    height: 14px;
-    fill: ${({ theme }) => theme.secondaryBlue};
-  }
-`;
-
-const SortBySectionTitle = styled(SectionTitle)`
+const SortBySectionTitle = styled(FilterGroupTitle)`
   margin-bottom: 4px;
 `
 
 const SectionGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
+
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: 1fr 1fr;
+    `
+  )}
 `;
 
 const FilterColumn = styled.div`
@@ -68,15 +63,16 @@ const StatusCircle = styled.div<{ status: string }>`
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
-  background: ${({ status }) => {
+  background: ${({ status, theme }) => {
     switch (status) {
-      case 'Registered': return '#22c55e'; // green for included
-      case 'RegistrationRequested': return '#eab308'; // yellow for registration requested
-      case 'ClearingRequested': return '#f97316'; // orange for removal requested
-      case 'Absent': return '#ef4444'; // red for removed
-      case 'true': return '#ef4444'; // red for challenged
-      case 'false': return '#22c55e'; // green for unchallenged
-      default: return '#6b7280'; // gray for default
+      case 'Registered': return theme.statusIncluded;
+      case 'RegistrationRequested': return theme.statusRegistrationRequested;
+      case 'ClearingRequested': return theme.statusClearingRequested;
+      case 'Absent': return theme.statusAbsent;
+      case 'true': return theme.statusChallenged;
+      case 'false': return theme.statusIncluded;
+      case 'previously-disputed': return theme.statusPreviouslyDisputed;
+      default: return theme.statusGray;
     }
   }};
 `;
@@ -95,11 +91,11 @@ const SortOption = styled.label`
   cursor: pointer;
 `;
 
-const STATUS_LABELS = {
+const STATUS_LABELS: Record<string, string> = {
   'Registered': 'Included',
   'RegistrationRequested': 'Registration Requested',
   'ClearingRequested': 'Removal Requested',
-  'Absent': 'Removed'
+  'Absent': 'Removed / Rejected',
 };
 
 const REGISTRATION_STATUSES = Object.keys(STATUS_LABELS);
@@ -114,74 +110,28 @@ interface FilterModalProps {
   onClose: () => void;
   chainFilters: string[];
   onChainFiltersChange: (chains: string[]) => void;
-  userAddress?: string;
+  scope: 'registry' | 'profile';
 }
 
-const FilterModal: React.FC<FilterModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  chainFilters, 
+const FilterModal: React.FC<FilterModalProps> = ({
+  isOpen,
+  onClose,
+  chainFilters,
   onChainFiltersChange,
-  userAddress
+  scope,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = useFilters(scope);
   const modalRef = useRef<HTMLDivElement>(null);
-  
+
   useFocusOutside(modalRef, () => onClose());
 
-  const registrationStatuses = useMemo(() => {
-    return searchParams.getAll('status');
-  }, [searchParams]);
-
-  const disputedValues = useMemo(() => {
-    return searchParams.getAll('disputed');
-  }, [searchParams]);
-
-  const orderDirection = useMemo(() => searchParams.get('orderDirection') || 'desc', [searchParams]);
-
   const handleStatusChange = useCallback((status: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      const currentStatuses = newParams.getAll('status');
-      
-      if (currentStatuses.includes(status)) {
-        // Remove this status - rebuild the list without it
-        newParams.delete('status');
-        currentStatuses.filter(s => s !== status).forEach(s => newParams.append('status', s));
-      } else {
-        // Add this status
-        newParams.append('status', status);
-      }
-      
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.toggleStatus(status);
+  }, [filters]);
 
   const handleDisputedChange = useCallback((disputed: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      const currentDisputed = newParams.getAll('disputed');
-      
-      if (currentDisputed.includes(disputed)) {
-        // Remove this disputed value - rebuild the list without it
-        newParams.delete('disputed');
-        currentDisputed.filter(d => d !== disputed).forEach(d => newParams.append('disputed', d));
-      } else {
-        // Add this disputed value
-        newParams.append('disputed', disputed);
-      }
-      
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.toggleDisputed(disputed);
+  }, [filters]);
 
   const handleNetworkChange = useCallback((networkId: string) => {
     const newChainFilters = chainFilters.includes(networkId)
@@ -191,73 +141,40 @@ const FilterModal: React.FC<FilterModalProps> = ({
   }, [chainFilters, onChainFiltersChange]);
 
   const handleOrderDirectionChange = useCallback((direction: string) => {
-    setSearchParams(prev => {
-      const newParams = new URLSearchParams(prev);
-      newParams.set('orderDirection', direction);
-      newParams.set('page', '1');
-      // Maintain userAddress filter if present
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    });
-  }, [setSearchParams, userAddress]);
+    filters.setOrderDirection(direction);
+  }, [filters]);
 
   const handleStatusOnly = useCallback((selectedStatus: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('status');
-      newParams.append('status', selectedStatus);
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setStatus([selectedStatus]);
+  }, [filters]);
 
   const handleStatusAll = useCallback(() => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('status');
-      REGISTRATION_STATUSES.forEach(status => newParams.append('status', status));
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setStatus(REGISTRATION_STATUSES);
+  }, [filters]);
 
   const handleDisputedOnly = useCallback((selectedDisputed: string) => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('disputed');
-      newParams.append('disputed', selectedDisputed);
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setChallengeFilters([selectedDisputed], false);
+  }, [filters]);
 
   const handleDisputedAll = useCallback(() => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('disputed');
-      CHALLENGE_STATUSES.forEach(challenge => newParams.append('disputed', challenge.value));
-      newParams.set('page', '1');
-      if (userAddress) {
-        newParams.set('userAddress', userAddress);
-      }
-      return newParams;
-    }, { replace: true });
-  }, [setSearchParams, userAddress]);
+    filters.setChallengeFilters(CHALLENGE_STATUSES.map(c => c.value), false);
+  }, [filters]);
+
+  const handlePreviouslyDisputedOnly = useCallback(() => {
+    filters.setChallengeFilters(['false'], true);
+  }, [filters]);
 
   const handleNetworkOnly = useCallback((selectedNetworkId: string) => {
     onChainFiltersChange([selectedNetworkId]);
   }, [onChainFiltersChange]);
+
+  const handleDateRangeChange = useCallback((range: DateRangeOption) => {
+    filters.setDateRange(range);
+  }, [filters]);
+
+  const handleCustomDateChange = useCallback((from: string | null, to: string | null) => {
+    filters.setCustomDateRange(from, to);
+  }, [filters]);
 
   const availableChains = useMemo(() => {
     return chains.filter(chain => !chain.deprecated);
@@ -297,7 +214,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <CheckboxItem key={status}>
                       <CheckboxLabel>
                         <Checkbox
-                          checked={registrationStatuses.includes(status)}
+                          checked={filters.status.includes(status)}
                           onChange={() => handleStatusChange(status)}
                         />
                         <StatusCircle status={status} />
@@ -328,25 +245,48 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   </ActionButton>
                 </GroupHeader>
                 <CheckboxGroup>
-                  {CHALLENGE_STATUSES.map((challenge) => (
-                    <CheckboxItem key={challenge.value}>
-                      <CheckboxLabel>
-                        <Checkbox
-                          checked={disputedValues.includes(challenge.value)}
-                          onChange={() => handleDisputedChange(challenge.value)}
-                        />
-                        <StatusCircle status={challenge.value} />
-                        {challenge.label}
-                      </CheckboxLabel>
-                      <OnlyButton
-                        className="only-button"
-                        onClick={() => handleDisputedOnly(challenge.value)}
-                        type="button"
-                      >
-                        Only
-                      </OnlyButton>
-                    </CheckboxItem>
-                  ))}
+                  {CHALLENGE_STATUSES.map((challenge) => {
+                    const isLockedOn = challenge.value === 'false' && filters.hasEverBeenDisputed;
+                    return (
+                      <CheckboxItem key={challenge.value}>
+                        <CheckboxLabel style={isLockedOn ? { opacity: 0.5 } : undefined}>
+                          <Checkbox
+                            checked={filters.disputed.includes(challenge.value)}
+                            onChange={() => handleDisputedChange(challenge.value)}
+                            disabled={isLockedOn}
+                          />
+                          <StatusCircle status={challenge.value} />
+                          {challenge.label}
+                        </CheckboxLabel>
+                        {!isLockedOn && (
+                          <OnlyButton
+                            className="only-button"
+                            onClick={() => handleDisputedOnly(challenge.value)}
+                            type="button"
+                          >
+                            Only
+                          </OnlyButton>
+                        )}
+                      </CheckboxItem>
+                    );
+                  })}
+                  <CheckboxItem>
+                    <CheckboxLabel>
+                      <Checkbox
+                        checked={filters.hasEverBeenDisputed}
+                        onChange={() => filters.toggleHasEverBeenDisputed()}
+                      />
+                      <StatusCircle status="previously-disputed" />
+                      Previously Challenged
+                    </CheckboxLabel>
+                    <OnlyButton
+                      className="only-button"
+                      onClick={() => handlePreviouslyDisputedOnly()}
+                      type="button"
+                    >
+                      Only
+                    </OnlyButton>
+                  </CheckboxItem>
                 </CheckboxGroup>
               </FilterGroup>
 
@@ -360,7 +300,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <RadioButton
                       name="sort"
                       value="desc"
-                      checked={orderDirection === 'desc'}
+                      checked={filters.orderDirection === 'desc'}
                       onChange={() => handleOrderDirectionChange('desc')}
                     />
                     Newest
@@ -369,7 +309,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     <RadioButton
                       name="sort"
                       value="asc"
-                      checked={orderDirection === 'asc'}
+                      checked={filters.orderDirection === 'asc'}
                       onChange={() => handleOrderDirectionChange('asc')}
                     />
                     Oldest
@@ -382,10 +322,42 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
         <FilterSection>
           <GroupHeader>
-            <SectionTitle>
+            <FilterGroupTitle>
+              <CalendarIcon />
+              Date Range
+            </FilterGroupTitle>
+            {filters.dateRange !== 'all' && (
+              <ActionButton onClick={() => filters.setDateRange('all')}>
+                Reset
+              </ActionButton>
+            )}
+          </GroupHeader>
+          <DateRangeOptions>
+            {DATE_RANGE_PRESETS.map((preset) => (
+              <DateRangeChip
+                key={preset.value}
+                $isSelected={filters.dateRange === preset.value}
+                onClick={() => handleDateRangeChange(preset.value)}
+              >
+                {preset.label}
+              </DateRangeChip>
+            ))}
+          </DateRangeOptions>
+          {filters.dateRange === 'custom' && (
+            <DateRangeCalendar
+              from={filters.customDateFrom}
+              to={filters.customDateTo}
+              onChange={handleCustomDateChange}
+            />
+          )}
+        </FilterSection>
+
+        <FilterSection>
+          <GroupHeader>
+            <FilterGroupTitle>
               <FiltersIcon />
               Networks
-            </SectionTitle>
+            </FilterGroupTitle>
             <ActionButton onClick={handleNetworkAll}>
               All
             </ActionButton>

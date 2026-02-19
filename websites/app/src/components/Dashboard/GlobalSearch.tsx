@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { css } from 'styled-components';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { useDebounce } from 'react-use';
 import { useNavigate } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
-import { revRegistryMap } from 'utils/items';
+import { revRegistryMap, buildItemPath, registryDisplayNames, getItemDisplayName, getChainId as getChainIdUtil, getItemDisplayStatus } from 'utils/items';
 import SearchIcon from 'svgs/icons/search.svg';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
@@ -57,7 +58,7 @@ const Container = styled.div`
   }
 
   :hover {
-    background-color: #FFFFFF1D;
+    background-color: ${({ theme }) => theme.hoverBackground};
   }
 `;
 
@@ -89,7 +90,7 @@ const ResultsDropdown = styled.div<{ $isVisible: boolean }>`
   opacity: ${({ $isVisible }) => ($isVisible ? 1 : 0)};
   pointer-events: ${({ $isVisible }) => ($isVisible ? 'auto' : 'none')};
   transition: opacity 0.2s ease;
-  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowDropdown};
   z-index: 1001;
 `;
 
@@ -97,14 +98,14 @@ const ResultItem = styled.div`
   ${hoverLongTransitionTiming}
   padding: 12px 16px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid ${({ theme }) => theme.divider};
 
   &:last-child {
     border-bottom: none;
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: ${({ theme }) => theme.subtleBackground};
   }
 `;
 
@@ -142,9 +143,11 @@ const ResultName = styled.span`
   text-overflow: ellipsis;
   max-width: 150px;
 
-  @media (min-width: 768px) {
-    max-width: none;
-  }
+  ${landscapeStyle(
+    () => css`
+      max-width: none;
+    `
+  )}
 `;
 
 const ResultRegistry = styled.span`
@@ -166,15 +169,16 @@ const StatusBadge = styled.div<{ status: string }>`
     display: inline-block;
     width: 6px;
     height: 6px;
-    background-color: ${({ status }) =>
+    background-color: ${({ status, theme }) =>
     ({
-      'Included': '#90EE90',
-      'Registration Requested': '#FFEA00',
-      'Challenged Submission': '#E87B35',
-      'Challenged Removal': '#E87B35',
-      'Removal Requested': '#E87B35',
-      'Removed': 'red',
-    })[status] || 'gray'};
+      'Included': theme.statusIncluded,
+      'Registration Requested': theme.statusRegistrationRequested,
+      'Challenged Submission': theme.statusChallenged,
+      'Challenged Removal': theme.statusChallenged,
+      'Removal Requested': theme.statusClearingRequested,
+      'Removed': theme.statusAbsent,
+      'Rejected': theme.statusRejected,
+    })[status] || theme.statusGray};
     border-radius: 50%;
     flex-shrink: 0;
   }
@@ -267,34 +271,18 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
     [searchTerm]
   );
 
-  const searchParams = useMemo(() => {
-    if (!debouncedSearchTerm) return null;
-
-    const params = new URLSearchParams();
-    // Search across all 4 registries
-    ['Tokens', 'CDN', 'Single_Tags', 'Tags_Queries'].forEach((registry) => {
-      params.append('registry', registry);
-    });
-    // Include all statuses
-    ['Registered', 'RegistrationRequested', 'ClearingRequested'].forEach((status) => {
-      params.append('status', status);
-    });
-    // Include both disputed and non-disputed
-    ['true', 'false'].forEach((disputed) => {
-      params.append('disputed', disputed);
-    });
-    params.set('text', debouncedSearchTerm);
-    params.set('orderDirection', 'desc');
-    params.set('page', '1');
-    return params;
-  }, [debouncedSearchTerm]);
-
-  const { data: items = [], isLoading } = useItemsQuery({
-    searchParams: searchParams || new URLSearchParams(),
+  const { data: searchResult, isLoading } = useItemsQuery({
+    registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
+    status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
+    disputed: ['true', 'false'],
+    text: debouncedSearchTerm,
+    orderDirection: 'desc',
+    page: 1,
     chainFilters: [],
-    enabled: !!searchParams,
+    enabled: !!debouncedSearchTerm,
   });
 
+  const items = searchResult?.items ?? [];
   const hasResults = items.length > 0;
   const showDropdown = isActive && debouncedSearchTerm.length > 0;
 
@@ -303,7 +291,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
   }, [searchTerm]);
 
   const handleResultClick = (itemId: string) => {
-    navigate(`/item/${itemId}?fromHome=true`);
+    navigate(buildItemPath(itemId), { state: { fromApp: true, from: 'home' } });
     setSearchTerm('');
     setIsActive(false);
   };
@@ -316,56 +304,17 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
     setIsSubmissionModalOpen(true);
   };
 
-  const getPropValue = (item: any, label: string) => {
-    return item?.props?.find((prop: any) => prop.label === label)?.value || '';
-  };
-
   const getDisplayName = (item: any): string => {
     const registryName = revRegistryMap[item.registryAddress] || 'Unknown';
-
-    if (registryName === 'Tokens') {
-      return getPropValue(item, 'Symbol') || getPropValue(item, 'Name') || 'Unnamed';
-    } else if (registryName === 'CDN') {
-      return getPropValue(item, 'Domain name') || 'Unnamed';
-    } else if (registryName === 'Single_Tags') {
-      return getPropValue(item, 'Project Name') || getPropValue(item, 'Public Name Tag') || 'Unnamed';
-    } else if (registryName === 'Tags_Queries') {
-      return getPropValue(item, 'Description') || 'Unnamed';
-    }
-    return 'Unnamed';
+    return getItemDisplayName(item, registryName);
   };
 
-  const getChainId = (item: any): string | undefined => {
-    const key0 = item?.key0;
-    if (!key0) return undefined;
-    const parts = key0.split(':');
-    return parts[1];
-  };
+  const getChainId = (item: any): string | undefined => getChainIdUtil(item);
 
-  const formatRegistryName = (registryName: string): string => {
-    if (registryName === 'Single_Tags') return 'Single Tags';
-    if (registryName === 'Tags_Queries') return 'Query Tags';
-    return registryName;
-  };
+  const formatRegistryName = (registryName: string): string =>
+    registryDisplayNames[registryName] || registryName;
 
-  const readableStatusMap: Record<string, string> = {
-    Registered: 'Included',
-    Absent: 'Removed',
-    RegistrationRequested: 'Registration Requested',
-    ClearingRequested: 'Removal Requested',
-  };
-
-  const challengedStatusMap: Record<string, string> = {
-    RegistrationRequested: 'Challenged Submission',
-    ClearingRequested: 'Challenged Removal',
-  };
-
-  const getActivityStatus = (item: any): string => {
-    if (item.disputed) {
-      return challengedStatusMap[item.status] || 'Unknown';
-    }
-    return readableStatusMap[item.status] || 'Unknown';
-  };
+  const getActivityStatus = (item: any): string => getItemDisplayStatus(item);
 
   const SearchResultItem: React.FC<{ item: any }> = ({ item }) => {
     const registryName = revRegistryMap[item.registryAddress] || 'Unknown';

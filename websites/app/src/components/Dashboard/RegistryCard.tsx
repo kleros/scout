@@ -10,15 +10,15 @@ const Card = styled.div`
   border: 1px solid ${({ theme }) => theme.stroke};
   padding: 16px;
   background: transparent;
-  box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowCard};
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
   position: relative;
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0px 8px 24px rgba(113, 134, 255, 0.12);
-    border-color: rgba(113, 134, 255, 0.3);
+    box-shadow: ${({ theme }) => theme.glowBlue};
+    border-color: ${({ theme }) => theme.secondaryBlue}4D;
   }
 `;
 
@@ -80,12 +80,12 @@ const OpenButton = styled(Link)`
   }
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:active {
-    background: rgba(255, 255, 255, 0.15);
+    background: ${({ theme }) => theme.activeBackground};
   }
 `;
 
@@ -98,9 +98,6 @@ interface RegistryCardProps {
   className?: string;
   style?: React.CSSProperties;
 }
-
-const getRegistryUrl = (registryKey: string) =>
-  `/registry/${registryKey}?status=Registered&status=ClearingRequested&status=RegistrationRequested&disputed=false&disputed=true&page=1`;
 
 export const RegistryCard: React.FC<RegistryCardProps> = ({
   title,
@@ -120,7 +117,7 @@ export const RegistryCard: React.FC<RegistryCardProps> = ({
       </Header>
       <MainValue>{formattedMainValue}</MainValue>
       <SecondaryValue>{secondaryValue}</SecondaryValue>
-      <OpenButton to={getRegistryUrl(registryKey)}>
+      <OpenButton to={`/${registryKey}`}>
         Open
         <ArrowRightIcon />
       </OpenButton>

@@ -4,30 +4,50 @@ import { useGraphqlBatcher } from './useGraphqlBatcher'
 import { GraphItem, registryMap } from 'utils/items'
 import { ITEMS_PER_PAGE } from '../../pages/Registries/index'
 import { chains, getNamespaceForChainId } from '../../utils/chains'
+import { DateRangeOption, getDateRangeTimestamp, getCustomDateTimestamps } from 'context/FilterContext'
 
 interface UseItemsQueryParams {
-  searchParams: URLSearchParams
   registryName?: string
+  registryNames?: string[]
+  status: string[]
+  disputed: string[]
+  hasEverBeenDisputed?: boolean
+  text: string
+  orderDirection: string
+  page: number
   chainFilters?: string[]
+  dateRange?: DateRangeOption
+  customDateFrom?: string | null
+  customDateTo?: string | null
+  includeCount?: boolean
   enabled?: boolean
 }
 
+export interface ItemsQueryResult {
+  items: GraphItem[]
+  totalCount: number
+}
+
 export const useItemsQuery = ({
-  searchParams,
   registryName,
+  registryNames,
+  status,
+  disputed,
+  hasEverBeenDisputed = false,
+  text,
+  orderDirection,
+  page,
   chainFilters = [],
+  dateRange = 'all',
+  customDateFrom = null,
+  customDateTo = null,
+  includeCount = false,
   enabled = true,
 }: UseItemsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
 
-  // Support both single registry (from registryName prop) and multiple registries (from searchParams for dashboard)
-  const registry = registryName ? [registryName] : searchParams.getAll('registry')
-  const status = searchParams.getAll('status')
-  const disputed = searchParams.getAll('disputed')
+  const registry = registryNames ?? (registryName ? [registryName] : [])
   const network = chainFilters
-  const text = searchParams.get('text') || ''
-  const orderDirection = searchParams.get('orderDirection') || 'desc'
-  const page = Number(searchParams.get('page')) || 1
 
   const shouldFetch =
     enabled &&
@@ -39,21 +59,26 @@ export const useItemsQuery = ({
   // Build stable queryKey from individual filter parameters
   const queryKey = [
     'items',
-    registryName,
+    registry.slice().sort().join(','),
     status.slice().sort().join(','),
     disputed.slice().sort().join(','),
+    hasEverBeenDisputed,
     chainFilters.slice().sort().join(','),
     text,
     orderDirection,
-    page
+    page,
+    dateRange,
+    customDateFrom,
+    customDateTo,
+    includeCount,
   ];
 
-  return useQuery({
+  return useQuery<ItemsQueryResult>({
     queryKey,
-    queryFn: async () => {
-      if (!shouldFetch) return []
+    queryFn: async (): Promise<ItemsQueryResult> => {
+      if (!shouldFetch) return { items: [], totalCount: 0 }
 
-      const isTagsQueriesRegistry = registry.includes('Tags_Queries')
+      const isTagsQueriesRegistry = registry.includes('tags-queries')
       const selectedChainIds = network.filter((id) => id !== 'unknown')
       const includeUnknown = network.includes('unknown')
       const definedChainIds = chains.map((c) => c.id)
@@ -84,6 +109,19 @@ export const useItemsQuery = ({
           conditions.length > 0 ? `{_or: [${conditions.join(',')}]}` : '{}'
       }
 
+      // Build date filter
+      let dateFilterObject = ''
+      if (dateRange === 'custom') {
+        const { fromTs, toTs } = getCustomDateTimestamps(customDateFrom, customDateTo)
+        const conditions: string[] = []
+        if (fromTs > 0) conditions.push(`{latestRequestSubmissionTime: {_gte: "${fromTs}"}}`)
+        if (toTs > 0) conditions.push(`{latestRequestSubmissionTime: {_lte: "${toTs}"}}`)
+        if (conditions.length > 0) dateFilterObject = conditions.join(',')
+      } else if (dateRange !== 'all') {
+        const ts = getDateRangeTimestamp(dateRange)
+        if (ts > 0) dateFilterObject = `{latestRequestSubmissionTime: {_gte: "${ts}"}}`
+      }
+
       const textFilterObject = text
         ? `{_or: [
         {key0: {_ilike: $text}},
@@ -94,7 +132,20 @@ export const useItemsQuery = ({
       ]}`
         : ''
 
-      // Build the complete query with filters
+      // Shared where clause for both items query and aggregate count
+      const whereClause = `{
+        _and: [
+          {registry_id: {_in :$registry}},
+          {status: {_in: $status}},
+          {disputed: {_in: $disputed}},
+          ${hasEverBeenDisputed ? '{requests: {disputed: {_eq: true}}},' : ''}
+          ${networkQueryObject}
+          ${textFilterObject ? `,${textFilterObject}` : ''}
+          ${dateFilterObject ? `,${dateFilterObject}` : ''}
+        ]
+      }`
+
+      // Build the complete query with filters and aggregate count
       const queryWithFilters = gql`
         query FetchItems(
           $registry: [String]
@@ -111,18 +162,10 @@ export const useItemsQuery = ({
           }
         ) {
           litems: LItem(
-            where: {
-          _and: [
-            {registry_id: {_in :$registry}},
-            {status: {_in: $status}},
-            {disputed: {_in: $disputed}},
-            ${networkQueryObject},
-            ${text === '' ? '' : textFilterObject}
-          ]
-            }
-        offset: $skip
-        limit: $first
-        order_by: {latestRequestSubmissionTime : $orderDirection }
+            where: ${whereClause}
+            offset: $skip
+            limit: $first
+            order_by: {latestRequestSubmissionTime : $orderDirection }
           ) {
             id
             latestRequestSubmissionTime
@@ -165,6 +208,12 @@ export const useItemsQuery = ({
               }
             }
           }
+          ${includeCount ? `countItems: LItem(
+            where: ${whereClause}
+            limit: 1000
+          ) {
+            id
+          }` : ''}
         }
       `
 
@@ -193,8 +242,9 @@ export const useItemsQuery = ({
       )
 
       let items: GraphItem[] = result.litems
+      const totalCount: number = includeCount ? (result.countItems?.length ?? 0) : 0
 
-      // Client-side filtering for non-Tags_Queries registries
+      // Client-side filtering for non-tags-queries registries
       if (!isTagsQueriesRegistry && network.length > 0) {
         const knownPrefixes = [
           ...new Set(
@@ -235,7 +285,7 @@ export const useItemsQuery = ({
         })
       }
 
-      return items
+      return { items, totalCount }
     },
     enabled: shouldFetch,
     refetchInterval: false,

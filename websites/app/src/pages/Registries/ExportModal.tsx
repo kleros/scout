@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useExportItems, ExportFilters } from 'hooks/queries/useExportItems'
@@ -7,10 +7,12 @@ import { revRegistryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 import { ModalButton } from 'components/ModalButtons'
 import Checkbox from 'components/Checkbox'
+import DateRangeCalendar from 'components/DateRangeCalendar'
 import ExportIcon from 'svgs/icons/export.svg'
 import FiltersIcon from 'svgs/icons/filters.svg'
 import CalendarIcon from 'svgs/icons/calendar.svg'
 import { getChainIcon } from 'utils/chainIcons'
+import { DateRangeOption, DATE_RANGE_PRESETS, getPresetDates } from 'context/FilterContext'
 import {
   ModalOverlay,
   ModalContainer,
@@ -18,6 +20,7 @@ import {
   ModalTitle,
   CloseButton,
   FilterSection,
+  FilterGroup,
   GroupHeader,
   FilterGroupTitle,
   ActionButton,
@@ -25,9 +28,12 @@ import {
   CheckboxItem,
   CheckboxLabel,
   OnlyButton,
+  NetworkGrid,
   NetworkItem,
   NetworkLabel,
   FooterButtons,
+  DateRangeOptions,
+  DateRangeChip,
 } from 'components/ModalComponents'
 
 const ModalWrapper = styled.div`
@@ -56,85 +62,17 @@ const HeaderContent = styled.div`
   min-width: 0;
 `
 
-const StatusAndDatesRow = styled.div`
+const StatusAndDateRow = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 32px;
-  flex-wrap: wrap;
 
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`
-
-const DateFiltersColumn = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex: 1;
-`
-
-const FilterGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-`
-
-const NetworkGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0;
-  margin-top: -8px;
-`
-
-const DateInput = styled.input`
-  background: ${({ theme }) => theme.modalInputBackground};
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 8px;
-  color: ${({ theme }) => theme.secondaryText};
-  padding: 12px;
-  font-family: "Open Sans", sans-serif;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  cursor: text;
-
-  &:hover {
-    background: ${({ theme }) => theme.backgroundFour};
-  }
-
-  &:focus {
-    outline: none;
-    background: ${({ theme }) => theme.backgroundFour};
-    color: ${({ theme }) => theme.primaryText};
-  }
-
-  &::placeholder {
-    color: ${({ theme }) => theme.tertiaryText};
-    opacity: 0.6;
-  }
-
-  &::-webkit-datetime-edit-text,
-  &::-webkit-datetime-edit-month-field,
-  &::-webkit-datetime-edit-day-field,
-  &::-webkit-datetime-edit-year-field {
-    color: ${({ theme }) => theme.secondaryText};
-  }
-
-  &::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-
-    &:hover {
-      opacity: 1;
-    }
-  }
-
-  /* Show placeholder-like text when empty */
-  &:invalid {
-    color: ${({ theme }) => theme.tertiaryText};
-  }
+  ${landscapeStyle(
+    () => css`
+      flex-direction: row;
+      flex-wrap: wrap;
+    `
+  )}
 `
 
 const ExportButton = styled(ModalButton)<{ disabled: boolean }>`
@@ -189,8 +127,23 @@ const ExportModal: React.FC<ExportModalProps> = ({
     'Registered',
   ])
   const [selectedNetworks, setSelectedNetworks] = useState<string[]>([])
-  const [fromDate, setFromDate] = useState<string>('')
-  const [toDate, setToDate] = useState<string>('')
+  const [dateRange, setDateRange] = useState<DateRangeOption>('all')
+  const [fromDate, setFromDate] = useState<string | null>(null)
+  const [toDate, setToDate] = useState<string | null>(null)
+
+  const handlePresetChange = useCallback((preset: DateRangeOption) => {
+    setDateRange(preset)
+    if (preset !== 'custom') {
+      const { from, to } = getPresetDates(preset)
+      setFromDate(from)
+      setToDate(to)
+    }
+  }, [])
+
+  const handleCustomDateChange = useCallback((from: string | null, to: string | null) => {
+    setFromDate(from)
+    setToDate(to)
+  }, [])
 
   const exportFilters: ExportFilters = {
     registryId: registryAddress,
@@ -384,13 +337,13 @@ const ExportModal: React.FC<ExportModalProps> = ({
         const url = URL.createObjectURL(blob)
         link.setAttribute('href', url)
         const registryName = revRegistryMap[registryAddress] || 'Items'
-        const dateRange =
-          fromDate || toDate ? `_${fromDate || 'start'}-${toDate || 'end'}` : ''
+        const dateRangeSuffix =
+          fromDate || toDate ? `_${fromDate || 'start'}-${toDate || 'today'}` : ''
         const statusSuffix =
           selectedStatuses.length === 1 ? `_${selectedStatuses[0]}` : ''
         link.setAttribute(
           'download',
-          `Kleros-Curate-${registryName}${statusSuffix}${dateRange}.csv`,
+          `Kleros-Curate-${registryName}${statusSuffix}${dateRangeSuffix}.csv`,
         )
         link.click()
         URL.revokeObjectURL(url)
@@ -431,8 +384,8 @@ const ExportModal: React.FC<ExportModalProps> = ({
           </ModalHeader>
 
           <FilterSection>
-            <StatusAndDatesRow>
-              <FilterGroup>
+            <StatusAndDateRow>
+              <FilterGroup style={{ flex: 1 }}>
                 <GroupHeader>
                   <FilterGroupTitle>
                     <FiltersIcon />
@@ -464,40 +417,38 @@ const ExportModal: React.FC<ExportModalProps> = ({
                 </CheckboxGroup>
               </FilterGroup>
 
-              <DateFiltersColumn>
-                <FilterGroup>
-                  <GroupHeader>
-                    <FilterGroupTitle>
-                      <CalendarIcon />
-                      From Date (leave empty for all history)
-                    </FilterGroupTitle>
-                  </GroupHeader>
-                  <DateInput
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                    placeholder="mm/dd/yyyy"
-                    aria-label="From date (mm/dd/yyyy)"
+              <FilterGroup style={{ flex: 1 }}>
+                <GroupHeader>
+                  <FilterGroupTitle>
+                    <CalendarIcon />
+                    Date Range
+                  </FilterGroupTitle>
+                  {dateRange !== 'all' && (
+                    <ActionButton onClick={() => handlePresetChange('all')}>
+                      Reset
+                    </ActionButton>
+                  )}
+                </GroupHeader>
+                <DateRangeOptions>
+                  {DATE_RANGE_PRESETS.map((preset) => (
+                    <DateRangeChip
+                      key={preset.value}
+                      $isSelected={dateRange === preset.value}
+                      onClick={() => handlePresetChange(preset.value)}
+                    >
+                      {preset.label}
+                    </DateRangeChip>
+                  ))}
+                </DateRangeOptions>
+                {dateRange === 'custom' && (
+                  <DateRangeCalendar
+                    from={fromDate}
+                    to={toDate}
+                    onChange={handleCustomDateChange}
                   />
-                </FilterGroup>
-
-                <FilterGroup>
-                  <GroupHeader>
-                    <FilterGroupTitle>
-                      <CalendarIcon />
-                      To Date (leave empty for current date)
-                    </FilterGroupTitle>
-                  </GroupHeader>
-                  <DateInput
-                    type="date"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                    placeholder="mm/dd/yyyy"
-                    aria-label="To date (mm/dd/yyyy)"
-                  />
-                </FilterGroup>
-              </DateFiltersColumn>
-            </StatusAndDatesRow>
+                )}
+              </FilterGroup>
+            </StatusAndDateRow>
           </FilterSection>
 
           <FilterSection>

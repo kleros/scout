@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { SUBGRAPH_GNOSIS_ENDPOINT } from "consts";
 import { registryMap } from "utils/items";
+import { fetchSubgraph } from "utils/fetchSubgraph";
 
 // Only query disputes from our 4 registries
 const REGISTRY_ADDRESSES = Object.values(registryMap);
@@ -126,15 +126,7 @@ export const useDisputeStats = (address?: string) => {
     queryKey: ["refetchOnBlock", "useDisputeStats", userAddress],
     enabled: !!userAddress,
     queryFn: async (): Promise<{ disputeStats: DisputeStats }> => {
-      const response = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: DISPUTE_STATS_QUERY,
-          variables: { userAddress, registryAddresses: REGISTRY_ADDRESSES },
-        }),
-      });
-      const json = await response.json();
+      const json = await fetchSubgraph(DISPUTE_STATS_QUERY, { userAddress, registryAddresses: REGISTRY_ADDRESSES });
 
       const activeAsRequester = json.data?.activeAsRequester || [];
       const activeAsChallenger = json.data?.activeAsChallenger || [];

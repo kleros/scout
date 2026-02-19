@@ -11,7 +11,7 @@ import {
 
 const FETCH_ITEM_COUNTS_QUERY = gql`
   query FetchItemCounts {
-    Single_Tags: LRegistry_by_pk(id: "${registryMap.Single_Tags}") {
+    single_tags: LRegistry_by_pk(id: "${registryMap['single-tags']}") {
       id
       numberOfAbsent
       numberOfRegistered
@@ -23,7 +23,7 @@ const FETCH_ITEM_COUNTS_QUERY = gql`
         URI: uri
       }
     }
-    Tags_Queries: LRegistry_by_pk(id: "${registryMap.Tags_Queries}") {
+    tags_queries: LRegistry_by_pk(id: "${registryMap['tags-queries']}") {
       id
       numberOfAbsent
       numberOfRegistered
@@ -35,7 +35,7 @@ const FETCH_ITEM_COUNTS_QUERY = gql`
         URI: uri
       }
     }
-    CDN: LRegistry_by_pk(id: "${registryMap.CDN}") {
+    cdn: LRegistry_by_pk(id: "${registryMap['cdn']}") {
       id
       numberOfAbsent
       numberOfRegistered
@@ -47,7 +47,7 @@ const FETCH_ITEM_COUNTS_QUERY = gql`
         URI: uri
       }
     }
-    Tokens: LRegistry_by_pk(id: "${registryMap.Tokens}") {
+    tokens: LRegistry_by_pk(id: "${registryMap['tokens']}") {
       id
       numberOfAbsent
       numberOfRegistered
@@ -90,55 +90,63 @@ export const useItemCountsQuery = (enabled: boolean = true) => {
         FETCH_ITEM_COUNTS_QUERY,
       )
 
-      const itemCounts: ItemCounts = convertStringFieldsToNumber(result)
+      // GraphQL aliases use underscores (single_tags, tags_queries);
+      // map them to the hyphenated keys expected by ItemCounts.
+      const converted = convertStringFieldsToNumber(result)
+      const itemCounts: ItemCounts = {
+        'single-tags': converted.single_tags,
+        'tags-queries': converted.tags_queries,
+        'cdn': converted.cdn,
+        'tokens': converted.tokens,
+      }
 
       // Fetch metadata for all registries
       const regMEs = await Promise.all([
         fetch(
           'https://cdn.kleros.link' +
-            result?.Single_Tags?.registrationMetaEvidence?.URI,
+            result?.single_tags?.registrationMetaEvidence?.URI,
         ).then((r) => r.json()),
         fetch(
           'https://cdn.kleros.link' +
-            result?.Tags_Queries?.registrationMetaEvidence?.URI,
+            result?.tags_queries?.registrationMetaEvidence?.URI,
         ).then((r) => r.json()),
         fetch(
           'https://cdn.kleros.link' +
-            result?.CDN?.registrationMetaEvidence?.URI,
+            result?.cdn?.registrationMetaEvidence?.URI,
         ).then((r) => r.json()),
         fetch(
           'https://cdn.kleros.link' +
-            result?.Tokens?.registrationMetaEvidence?.URI,
+            result?.tokens?.registrationMetaEvidence?.URI,
         ).then((r) => r.json()),
       ])
 
       // Inject metadata
-      itemCounts.Single_Tags.metadata = {
-        address: result?.Single_Tags?.id,
+      itemCounts['single-tags'].metadata = {
+        address: result?.single_tags?.id,
         policyURI: regMEs[0].fileURI,
         logoURI: regMEs[0].metadata.logoURI,
         tcrTitle: regMEs[0].metadata.tcrTitle,
         tcrDescription: regMEs[0].metadata.tcrDescription,
       }
 
-      itemCounts.Tags_Queries.metadata = {
-        address: result?.Tags_Queries?.id,
+      itemCounts['tags-queries'].metadata = {
+        address: result?.tags_queries?.id,
         policyURI: regMEs[1].fileURI,
         logoURI: regMEs[1].metadata.logoURI,
         tcrTitle: regMEs[1].metadata.tcrTitle,
         tcrDescription: regMEs[1].metadata.tcrDescription,
       }
 
-      itemCounts.CDN.metadata = {
-        address: result?.CDN?.id,
+      itemCounts['cdn'].metadata = {
+        address: result?.cdn?.id,
         policyURI: regMEs[2].fileURI,
         logoURI: regMEs[2].metadata.logoURI,
         tcrTitle: regMEs[2].metadata.tcrTitle,
         tcrDescription: regMEs[2].metadata.tcrDescription,
       }
 
-      itemCounts.Tokens.metadata = {
-        address: result?.Tokens?.id,
+      itemCounts['tokens'].metadata = {
+        address: result?.tokens?.id,
         policyURI: regMEs[3].fileURI,
         logoURI: regMEs[3].metadata.logoURI,
         tcrTitle: regMEs[3].metadata.tcrTitle,
@@ -147,16 +155,16 @@ export const useItemCountsQuery = (enabled: boolean = true) => {
 
       // Fetch registry deposits
       const regDs = await Promise.all([
-        fetchRegistryDeposits(registryMap.Single_Tags),
-        fetchRegistryDeposits(registryMap.Tags_Queries),
-        fetchRegistryDeposits(registryMap.CDN),
-        fetchRegistryDeposits(registryMap.Tokens),
+        fetchRegistryDeposits(registryMap['single-tags']),
+        fetchRegistryDeposits(registryMap['tags-queries']),
+        fetchRegistryDeposits(registryMap['cdn']),
+        fetchRegistryDeposits(registryMap['tokens']),
       ])
 
-      itemCounts.Single_Tags.deposits = regDs[0] as DepositParams
-      itemCounts.Tags_Queries.deposits = regDs[1] as DepositParams
-      itemCounts.CDN.deposits = regDs[2] as DepositParams
-      itemCounts.Tokens.deposits = regDs[3] as DepositParams
+      itemCounts['single-tags'].deposits = regDs[0] as DepositParams
+      itemCounts['tags-queries'].deposits = regDs[1] as DepositParams
+      itemCounts['cdn'].deposits = regDs[2] as DepositParams
+      itemCounts['tokens'].deposits = regDs[3] as DepositParams
 
       return itemCounts
     },

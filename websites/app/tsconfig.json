@@ -17,7 +17,8 @@
       "pages*": ["./src/pages*"],
       "styles*": ["./src/styles*"],
       "svgs*": ["./src/assets/svgs*"],
-      "gifs*": ["./src/assets/gifs*"]
+      "gifs*": ["./src/assets/gifs*"],
+      "shared/*": ["../shared/*"]
     },
     "moduleResolution": "node",
     "strict": true,
@@ -38,7 +39,6 @@
     ],
     "module": "ESNext",
     "target": "es2020",
-    "rootDir": "src",
     "outDir": "build/dist",
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,

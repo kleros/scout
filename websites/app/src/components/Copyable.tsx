@@ -36,8 +36,8 @@ const CopyButton = styled.button`
 const Tooltip = styled.div<{ show: boolean }>`
   position: fixed;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
+  background: ${({ theme }) => theme.tooltipBackground};
+  color: ${({ theme }) => theme.primaryText};
   border-radius: 6px;
   font-size: 13px;
   font-weight: 400;
@@ -45,7 +45,7 @@ const Tooltip = styled.div<{ show: boolean }>`
   pointer-events: none;
   display: ${({ show }) => (show ? 'block' : 'none')};
   z-index: 999999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ theme }) => theme.shadowTooltip};
 
   &::after {
     content: '';
@@ -57,7 +57,7 @@ const Tooltip = styled.div<{ show: boolean }>`
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 6px solid rgba(0, 0, 0, 0.9);
+    border-top: 6px solid ${({ theme }) => theme.tooltipBackground};
   }
 `
 

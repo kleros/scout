@@ -12,7 +12,7 @@ const RadioButton = styled.input.attrs({ type: 'radio' })`
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: ${({ theme }) => theme.borderHover};
   }
 
   &:checked {

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { SUBGRAPH_GNOSIS_ENDPOINT } from "consts";
+import { fetchSubgraph } from "utils/fetchSubgraph";
 
 const SUBMITTER_STATS_QUERY = `
   query SubmitterStats($userAddress: String!) {
@@ -30,15 +30,7 @@ export const useSubmitterStats = (address?: string) => {
     queryKey: ["refetchOnBlock", "useSubmitterStats", userAddress],
     enabled: !!userAddress,
     queryFn: async () => {
-      const response = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: SUBMITTER_STATS_QUERY,
-          variables: { userAddress },
-        }),
-      });
-      const json = await response.json();
+      const json = await fetchSubgraph(SUBMITTER_STATS_QUERY, { userAddress });
 
       const pendingCount = json.data?.pending?.length || 0;
       const resolvedCount = json.data?.resolved?.length || 0;
