@@ -123,8 +123,13 @@ export const getItemDisplayName = (item: { props?: Array<{ label: string; value:
   return 'Unnamed'
 }
 
-/** Extracts the chain ID from an item's key0 field (format: "eip155:chainId:0x...") */
-export const getChainId = (item: { key0?: string }): string | undefined => {
+/** Extracts the chain ID from an item's key fields.
+ *  For most registries: key0 format is "eip155:chainId:0x..." or "solana:..."
+ *  For tags-queries: chain ID is stored directly in key2 */
+export const getChainId = (item: { key0?: string; key2?: string; registryAddress?: string }): string | undefined => {
+  if (item?.registryAddress === registryMap['tags-queries']) {
+    return item?.key2 || undefined
+  }
   const parts = item?.key0?.split(':')
   return parts?.[1]
 }
