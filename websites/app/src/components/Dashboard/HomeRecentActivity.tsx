@@ -199,7 +199,7 @@ const StatusBadge = styled.div<{ status: string }>`
       'Registration Requested': theme.statusRegistrationRequested,
       'Challenged Submission': theme.statusChallenged,
       'Challenged Removal': theme.statusChallenged,
-      'Removal Requested': theme.statusChallenged,
+      'Removal Requested': theme.statusClearingRequested,
       'Removed': theme.statusAbsent,
       'Rejected': theme.statusRejected,
     })[status] || theme.statusGray};

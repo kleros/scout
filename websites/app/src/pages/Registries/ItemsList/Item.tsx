@@ -60,6 +60,7 @@ const CardStatus = styled.div<{ status: string }>`
       ({
         Included: theme.statusIncluded,
         'Registration Requested': theme.statusRegistrationRequested,
+        'Removal Requested': theme.statusClearingRequested,
         'Challenged Submission': theme.statusChallenged,
         'Challenged Removal': theme.statusChallenged,
         Removed: theme.statusAbsent,
