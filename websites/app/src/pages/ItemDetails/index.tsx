@@ -365,22 +365,21 @@ const ItemDetails: React.FC = () => {
 
     const loserIsRequester = ruling === SUBGRAPH_RULING.REJECT || ruling === SUBGRAPH_RULING.REJECT_NUM || ruling === 'Reject'
 
+    const loserHasPaid = loserIsRequester ? hasPaidRequester : hasPaidChallenger
+
     if (now < halfwayPoint) {
       return {
         loserTimeLeft: halfwayPoint - now,
-        winnerTimeLeft: null,
-        isLoserPeriod: true,
+        winnerTimeLeft: loserHasPaid ? end - now : null,
+        isLoserPeriod: !loserHasPaid,
         loserIsRequester,
       }
-    } else {
-      const loserHasPaid = loserIsRequester ? hasPaidRequester : hasPaidChallenger
-      if (loserHasPaid) {
-        return {
-          loserTimeLeft: null,
-          winnerTimeLeft: end - now,
-          isLoserPeriod: false,
-          loserIsRequester,
-        }
+    } else if (loserHasPaid) {
+      return {
+        loserTimeLeft: null,
+        winnerTimeLeft: end - now,
+        isLoserPeriod: false,
+        loserIsRequester,
       }
     }
 
