@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import PaperClip from "svgs/icons/paperclip.svg";
 import Arrow from "svgs/icons/arrow-left.svg";
 
 import { responsiveSize } from "styles/responsiveSize";
 import { hoverShortTransitionTiming } from "styles/commonStyles";
+
+import PolicyHistoryModal from "./PolicyHistoryModal";
 
 const Container = styled.div`
   width: 100%;
@@ -41,6 +43,32 @@ const StyledArrow = styled(Arrow)`
   path {
     fill: ${({ theme }) => theme.secondaryBlue};
     ${hoverShortTransitionTiming}
+  }
+`;
+
+const RightActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const PolicyHistoryButton = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.secondaryBlue};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  ${hoverShortTransitionTiming}
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
   }
 `;
 
@@ -79,8 +107,8 @@ const ReturnButton = styled(Link)`
 `;
 
 const Header: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Check if user is trying to open in new tab (Ctrl+Click, Cmd+Click, or middle click)
@@ -99,16 +127,26 @@ const Header: React.FC = () => {
   };
 
   return (
-    <Container>
-      <TitleContainer>
-        <StyledPaperClip />
-        <Title>File</Title>
-      </TitleContainer>
-      <ReturnButton to="#" onClick={handleClick}>
-        <StyledArrow />
-        Return
-      </ReturnButton>
-    </Container>
+    <>
+      <Container>
+        <TitleContainer>
+          <StyledPaperClip />
+          <Title>File</Title>
+        </TitleContainer>
+        <RightActions>
+          <PolicyHistoryButton onClick={() => setIsHistoryOpen(true)}>
+            Previous Policies
+          </PolicyHistoryButton>
+          <ReturnButton to="#" onClick={handleClick}>
+            <StyledArrow />
+            Return
+          </ReturnButton>
+        </RightActions>
+      </Container>
+      {isHistoryOpen && (
+        <PolicyHistoryModal onClose={() => setIsHistoryOpen(false)} />
+      )}
+    </>
   );
 };
 
