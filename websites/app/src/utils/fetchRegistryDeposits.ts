@@ -1,5 +1,5 @@
 import { AbiCoder, Contract, JsonRpcProvider } from 'ethers'
-import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT } from 'consts'
+import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, GNOSIS_RPC_URL } from 'consts'
 
 export interface DepositParams {
   submissionBaseDeposit: bigint
@@ -134,7 +134,7 @@ export const fetchRegistryDeposits = async (
   if (!registry) return undefined
 
   try {
-    const provider = new JsonRpcProvider('https://rpc.gnosischain.com', 100)
+    const provider = new JsonRpcProvider(GNOSIS_RPC_URL, 100)
 
     const lgtcrViewContract = new Contract(
       LGTCRViewAddress,

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import humanizeDuration from 'humanize-duration'
 import { registryMap } from 'utils/items';
 import { JsonRpcProvider, Contract } from 'ethers';
+import { GNOSIS_RPC_URL } from 'consts/index';
 
 export const useChallengePeriodDuration = (registryAddress: string) => {
   const [duration, setDuration] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchDuration = async () => {
-      const provider = new JsonRpcProvider('https://rpc.gnosischain.com')
+      const provider = new JsonRpcProvider(GNOSIS_RPC_URL)
       const abi = ['function challengePeriodDuration() view returns (uint256)']
       let contractAddress
 

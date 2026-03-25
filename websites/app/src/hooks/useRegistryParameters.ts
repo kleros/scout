@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Contract, JsonRpcProvider } from 'ethers'
 import { useEffect, useState } from 'react'
+import { GNOSIS_RPC_URL } from 'consts/index'
 
 interface RegistryParameters {
   sharedStakeMultiplier: bigint
@@ -176,7 +177,7 @@ export function useRegistryParameters(registryAddress: string) {
   const query = useQuery({
     queryKey: ['registryParameters', registryAddress],
     queryFn: async (): Promise<RegistryParameters> => {
-      const provider = new JsonRpcProvider('https://rpc.gnosischain.com', 100)
+      const provider = new JsonRpcProvider(GNOSIS_RPC_URL, 100)
       const lgtcrViewContract = new Contract(LGTCRViewAddress, LGTCRViewABI, provider)
 
       try {

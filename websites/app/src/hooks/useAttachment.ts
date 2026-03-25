@@ -16,6 +16,7 @@ export const useAttachment = () => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', url);
+      newParams.delete('policyTx');
       return newParams;
     }, { replace: true });
     scrollTop();
