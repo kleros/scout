@@ -2,9 +2,11 @@ import React, { useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
+import Skeleton from 'react-loading-skeleton';
 import { registryAddresses, RegistryType } from 'consts/contracts';
-import { policyHistories, PolicyHistoryEntry } from 'consts/policyHistory';
 import { KLEROS_CDN_BASE } from 'consts/index';
+import { PolicyHistoryEntry } from 'utils/fetchPolicyHistory';
+import { usePolicyHistory } from 'hooks/usePolicyHistory';
 import { useFocusOutside } from 'hooks/useFocusOutside';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 import { ModalButton } from 'components/ModalButtons';
@@ -151,6 +153,13 @@ const Separator = styled.span`
   font-size: 12px;
 `;
 
+const EmptyState = styled.div`
+  text-align: center;
+  padding: 24px 16px;
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 14px;
+`;
+
 const REGISTRY_DISPLAY_NAMES: Record<string, string> = {
   tokens: 'Kleros Tokens',
   cdn: 'CDN',
@@ -186,12 +195,13 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
     ? registryAddresses[registryName as RegistryType]
     : undefined;
 
+  const { data: historyData, isLoading, isError } = usePolicyHistory(registryAddress);
+
   const history = useMemo(() => {
-    if (!registryAddress) return [];
-    const entries = policyHistories[registryAddress.toLowerCase()] ?? [];
+    if (!historyData) return [];
     // Show newest first
-    return [...entries].reverse();
-  }, [registryAddress]);
+    return [...historyData].reverse();
+  }, [historyData]);
 
   const handleViewPolicy = (entry: PolicyHistoryEntry) => {
     const url = `${KLEROS_CDN_BASE}${entry.policyURI}`;
@@ -219,6 +229,20 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
           </ModalHeader>
 
           <HistoryList>
+            {isLoading && history.length === 0
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <HistoryItem key={i} $isCurrent={false} $isViewing={false}>
+                    <Skeleton width={220} height={16} />
+                    <Skeleton width={300} height={14} />
+                  </HistoryItem>
+                ))
+              : null}
+            {isError && history.length === 0 ? (
+              <EmptyState>Failed to load policy history. Please try again later.</EmptyState>
+            ) : null}
+            {!isLoading && !isError && history.length === 0 ? (
+              <EmptyState>No policy history found for this registry.</EmptyState>
+            ) : null}
             {history.map((entry) => {
               const isCurrent = entry.endDate === null;
               // If policyTx is set, match by txHash (exact entry).
