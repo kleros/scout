@@ -29,14 +29,16 @@ const HistoryList = styled.div`
   gap: 0;
 `;
 
-const HistoryItem = styled.div<{ $isCurrent: boolean }>`
+const HistoryItem = styled.div<{ $isCurrent: boolean; $isViewing: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid ${({ $isCurrent, theme }) => ($isCurrent ? theme.secondaryBlue + '40' : 'transparent')};
-  background: ${({ $isCurrent, theme }) => ($isCurrent ? theme.secondaryBlue + '0A' : 'transparent')};
+  border: 1px solid ${({ $isViewing, $isCurrent, theme }) =>
+    $isViewing ? theme.secondaryBlue + '60' : $isCurrent ? theme.secondaryBlue + '40' : 'transparent'};
+  background: ${({ $isViewing, $isCurrent, theme }) =>
+    $isViewing ? theme.secondaryBlue + '14' : $isCurrent ? theme.secondaryBlue + '0A' : 'transparent'};
   ${hoverShortTransitionTiming}
 
   &:hover {
@@ -58,11 +60,26 @@ const DateRange = styled.span`
   font-weight: 600;
 `;
 
+const BadgesContainer = styled.div`
+  display: flex;
+  gap: 6px;
+  align-items: center;
+`;
+
 const CurrentBadge = styled.span`
   font-size: 11px;
   font-weight: 600;
   color: ${({ theme }) => theme.secondaryBlue};
   background: ${({ theme }) => theme.secondaryBlue}18;
+  padding: 2px 8px;
+  border-radius: 9999px;
+`;
+
+const ViewingBadge = styled.span`
+  font-size: 11px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.success};
+  background: ${({ theme }) => theme.success}18;
   padding: 2px 8px;
   border-radius: 9999px;
 `;
@@ -155,9 +172,15 @@ interface PolicyHistoryModalProps {
 const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const { registryName } = useParams<{ registryName: string }>();
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useFocusOutside(modalRef, onClose);
+
+  const currentPolicyTx = searchParams.get('policyTx');
+  const currentAttachmentUrl = searchParams.get('attachment');
+  const currentIpfsPath = currentAttachmentUrl
+    ? currentAttachmentUrl.replace(KLEROS_CDN_BASE, '')
+    : null;
 
   const registryAddress = registryName
     ? registryAddresses[registryName as RegistryType]
@@ -175,6 +198,7 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', url);
+      newParams.set('policyTx', entry.txHash);
       return newParams;
     }, { replace: true });
     onClose();
@@ -197,15 +221,23 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
           <HistoryList>
             {history.map((entry) => {
               const isCurrent = entry.endDate === null;
+              // If policyTx is set, match by txHash (exact entry).
+              // Otherwise, the user opened from the registry page — mark the current entry as viewing.
+              const isViewing = currentPolicyTx
+                ? entry.txHash === currentPolicyTx
+                : isCurrent && currentIpfsPath === entry.policyURI;
               return (
-                <HistoryItem key={entry.txHash} $isCurrent={isCurrent}>
+                <HistoryItem key={entry.txHash} $isCurrent={isCurrent} $isViewing={isViewing}>
                   <ItemHeader>
                     <DateRange>
                       {formatDate(entry.startDate)}
                       {' → '}
                       {isCurrent ? 'Present' : formatDate(entry.endDate!)}
                     </DateRange>
-                    {isCurrent && <CurrentBadge>Current</CurrentBadge>}
+                    <BadgesContainer>
+                      {isViewing && <ViewingBadge>Viewing</ViewingBadge>}
+                      {isCurrent && <CurrentBadge>Current</CurrentBadge>}
+                    </BadgesContainer>
                   </ItemHeader>
                   <ItemLinks>
                     <ViewButton onClick={() => handleViewPolicy(entry)}>

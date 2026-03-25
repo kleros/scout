@@ -107,7 +107,7 @@ const ReturnButton = styled(Link)`
 `;
 
 const Header: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [, setSearchParams] = useSearchParams();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -122,6 +122,7 @@ const Header: React.FC = () => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.delete('attachment');
+      newParams.delete('policyTx');
       return newParams;
     }, { replace: true });
   };

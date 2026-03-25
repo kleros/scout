@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useAttachment } from 'hooks/useAttachment';
-import { FocusedRegistry } from 'utils/itemCounts';
 import { useItemCountsQuery } from 'hooks/queries';
+import { KLEROS_CDN_BASE } from 'consts/index';
 import styled from 'styled-components';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
@@ -35,7 +35,7 @@ const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
     <StyledLabel
       onClick={() => {
         if (policyURI) {
-          openAttachment(`https://cdn.kleros.link${policyURI}`);
+          openAttachment(`${KLEROS_CDN_BASE}${policyURI}`);
         }
       }}
     >
