@@ -15,6 +15,8 @@ export const SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT =
 
 export const KLEROS_CDN_BASE = 'https://cdn.kleros.link'
 
+export const GNOSIS_RPC_URL = 'https://rpc.gnosischain.com'
+
 // xDAI Curation Court ID on Kleros
 export const XDAI_CURATION_COURT_ID = '1'
 

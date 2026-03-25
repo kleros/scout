@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Contract, JsonRpcProvider } from 'ethers'
 import { useState, useEffect } from 'react'
+import { GNOSIS_RPC_URL } from 'consts/index'
 
 const ArbitratorABI = [
   {
@@ -101,7 +102,7 @@ export function useAppealCost(
         throw new Error('Missing required parameters')
       }
 
-      const provider = new JsonRpcProvider('https://rpc.gnosischain.com', 100)
+      const provider = new JsonRpcProvider(GNOSIS_RPC_URL, 100)
       const arbitratorContract = new Contract(arbitrator, ArbitratorABI, provider)
 
       try {

@@ -1,5 +1,5 @@
 import { JsonRpcProvider, AbiCoder, Log, id as ethersId } from 'ethers'
-import { KLEROS_CDN_BASE } from 'consts/index'
+import { KLEROS_CDN_BASE, GNOSIS_RPC_URL } from 'consts/index'
 
 export interface PolicyHistoryEntry {
   startDate: string
@@ -47,7 +47,7 @@ const getLogsChunked = async (
 export const fetchPolicyHistory = async (
   registryAddress: string
 ): Promise<PolicyHistoryEntry[]> => {
-  const provider = new JsonRpcProvider('https://rpc.gnosischain.com', 100)
+  const provider = new JsonRpcProvider(GNOSIS_RPC_URL, 100)
 
   const latestBlock = await provider.getBlockNumber()
 
@@ -92,10 +92,14 @@ export const fetchPolicyHistory = async (
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const json = await response.json()
 
+        const fileURI = typeof json.fileURI === 'string' && json.fileURI.startsWith('/ipfs/')
+          ? json.fileURI
+          : undefined
+
         return {
           txHash: log.transactionHash,
           blockNumber: log.blockNumber,
-          fileURI: json.fileURI as string | undefined,
+          fileURI,
         }
       } catch (e) {
         console.error(`Failed to fetch MetaEvidence for tx ${log.transactionHash}:`, e)
