@@ -21,8 +21,8 @@ const DEFAULT_START_BLOCK = 25_800_000
 // Max block range per getLogs call (Gnosis public RPC limit)
 const CHUNK_SIZE = 100_000
 
-// Max concurrent RPC requests to avoid rate-limiting
-const MAX_CONCURRENT = 10
+// Max concurrent RPC requests (public Gnosis RPC allows ~10 TU/s, getLogs = 4 TU each)
+const MAX_CONCURRENT = 3
 
 /**
  * Fetches event logs in chunks to avoid RPC block range limits.
