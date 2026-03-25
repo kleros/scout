@@ -1,5 +1,6 @@
 import { JsonRpcProvider, AbiCoder, Log, id as ethersId } from 'ethers'
 import { KLEROS_CDN_BASE, GNOSIS_RPC_URL } from 'consts/index'
+import { registries } from 'consts/contracts'
 
 export interface PolicyHistoryEntry {
   startDate: string
@@ -10,14 +11,22 @@ export interface PolicyHistoryEntry {
 
 const META_EVIDENCE_TOPIC = ethersId('MetaEvidence(uint256,string)')
 
-// Earliest deployment block across all registries (CDN deployed ~Jan 2023)
-const EARLIEST_BLOCK = 25_800_000
+// Build address → deploymentBlock lookup from the single source of truth
+const REGISTRY_START_BLOCKS: Record<string, number> = Object.fromEntries(
+  Object.values(registries).map((r) => [r.address, r.deploymentBlock])
+)
+
+const DEFAULT_START_BLOCK = 25_800_000
 
 // Max block range per getLogs call (Gnosis public RPC limit)
 const CHUNK_SIZE = 100_000
 
+// Max concurrent RPC requests to avoid rate-limiting
+const MAX_CONCURRENT = 10
+
 /**
  * Fetches event logs in chunks to avoid RPC block range limits.
+ * Runs up to MAX_CONCURRENT requests in parallel for speed.
  */
 const getLogsChunked = async (
   provider: JsonRpcProvider,
@@ -26,12 +35,23 @@ const getLogsChunked = async (
   fromBlock: number,
   toBlock: number
 ): Promise<Log[]> => {
+  const ranges: [number, number][] = []
+  for (let start = fromBlock; start <= toBlock; start += CHUNK_SIZE) {
+    ranges.push([start, Math.min(start + CHUNK_SIZE - 1, toBlock)])
+  }
+
   const allLogs: Log[] = []
 
-  for (let start = fromBlock; start <= toBlock; start += CHUNK_SIZE) {
-    const end = Math.min(start + CHUNK_SIZE - 1, toBlock)
-    const logs = await provider.getLogs({ address, topics, fromBlock: start, toBlock: end })
-    allLogs.push(...logs)
+  for (let i = 0; i < ranges.length; i += MAX_CONCURRENT) {
+    const batch = ranges.slice(i, i + MAX_CONCURRENT)
+    const batchResults = await Promise.all(
+      batch.map(([start, end]) =>
+        provider.getLogs({ address, topics, fromBlock: start, toBlock: end })
+      )
+    )
+    for (const logs of batchResults) {
+      allLogs.push(...logs)
+    }
   }
 
   return allLogs
@@ -49,6 +69,8 @@ export const fetchPolicyHistory = async (
 ): Promise<PolicyHistoryEntry[]> => {
   const provider = new JsonRpcProvider(GNOSIS_RPC_URL, 100)
 
+  const startBlock = REGISTRY_START_BLOCKS[registryAddress] ?? DEFAULT_START_BLOCK
+
   const latestBlock = await provider.getBlockNumber()
 
   // Fetch all MetaEvidence event logs in chunks
@@ -56,7 +78,7 @@ export const fetchPolicyHistory = async (
     provider,
     registryAddress,
     [META_EVIDENCE_TOPIC],
-    EARLIEST_BLOCK,
+    startBlock,
     latestBlock
   )
 
@@ -101,8 +123,7 @@ export const fetchPolicyHistory = async (
           blockNumber: log.blockNumber,
           fileURI,
         }
-      } catch (e) {
-        console.error(`Failed to fetch MetaEvidence for tx ${log.transactionHash}:`, e)
+      } catch {
         return {
           txHash: log.transactionHash,
           blockNumber: log.blockNumber,
