@@ -19,8 +19,6 @@ import MetamaskLogo from 'assets/pngs/partners/metamask.png';
 import OtterscanLogo from 'assets/pngs/partners/otterscan.png';
 import BlockscoutLogo from 'assets/pngs/partners/blockscout.png';
 
-const ELEGANT_SERIF_STACK = '"Baskerville Old Face", "Palatino Linotype", "Book Antiqua", Georgia, serif';
-
 const Container = styled.div`
   width: 100%;
   background-color: ${({ theme }) => theme.lightBackground};
@@ -98,10 +96,10 @@ const CounterValue = styled.div`
 const CounterSubtitle = styled.p`
   margin: 0;
   color: rgba(255, 255, 255, 0.92);
-  font-family: ${ELEGANT_SERIF_STACK};
+  font-family: "Open Sans", sans-serif;
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 `
 
 const CounterMeta = styled.div`
@@ -132,7 +130,7 @@ const VerifiedMark = styled.span`
 const Description = styled.p`
   color: rgba(235, 240, 255, 0.82);
   text-align: center;
-  font-family: ${ELEGANT_SERIF_STACK};
+  font-family: "Open Sans", sans-serif;
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
