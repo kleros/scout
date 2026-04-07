@@ -133,7 +133,7 @@ const Description = styled.p`
   font-family: "Open Sans", sans-serif;
   font-size: 18px;
   font-style: normal;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.65;
   margin: 0;
   max-width: 720px;
