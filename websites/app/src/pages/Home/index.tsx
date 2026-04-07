@@ -180,7 +180,7 @@ const SearchSection = styled.div`
 `;
 
 const PartnersIntro = styled.p`
-  margin: 0;
+  margin: 24px 0 12px;
   color: ${({ theme }) => theme.secondaryText};
   text-align: center;
   font-family: "Open Sans";
@@ -188,13 +188,19 @@ const PartnersIntro = styled.p`
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
+
+  ${landscapeStyle(
+    () => css`
+      margin: 32px 0 16px;
+    `
+  )}
 `;
 
 const TrustedBySection = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 48px;
   padding-bottom: 24px;
   width: 100%;
@@ -202,13 +208,9 @@ const TrustedBySection = styled.div`
 
   ${landscapeStyle(
     () => css`
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      gap: 24px;
+      gap: 16px;
       margin-bottom: 64px;
       padding-bottom: 32px;
-      flex-wrap: wrap;
     `
   )}
 `;
@@ -237,13 +239,13 @@ const LogosContainer = styled.div`
   gap: 24px 48px;
   flex-wrap: wrap;
   justify-content: center;
-  flex-shrink: 1;
+  flex-shrink: 0;
+  width: 100%;
 
   ${landscapeStyle(
     () => css`
       gap: 72px;
       flex-wrap: nowrap;
-      flex-shrink: 0;
     `
   )}
 `;
