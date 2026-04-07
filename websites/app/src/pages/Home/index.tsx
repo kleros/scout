@@ -168,15 +168,26 @@ const SearchSection = styled.div`
   display: flex;
   justify-content: center;
   margin-top: 16px;
-  margin-bottom: 36px;
+  margin-bottom: 0;
   width: 100%;
 
   ${landscapeStyle(
     () => css`
       margin-top: 16px;
-      margin-bottom: 44px;
+      margin-bottom: 0;
     `
   )}
+`;
+
+const PartnersIntro = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.secondaryText};
+  text-align: center;
+  font-family: "Open Sans";
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
 `;
 
 const TrustedBySection = styled.div`
@@ -392,9 +403,9 @@ const Home: React.FC<IHome> = () => {
         </CounterStack>
         <HeroGlobe />
         <Description>
-          With one submission, smart contracts will be verified and assigned a trusted project name.
-          Partners will display this information on their dashboards and wallets making every interaction
-          safer for users and solving blind signing issues.
+  Cut blind signing risks and interact safely.
+  <br />
+  With one submission, smart contracts can be verified and linked to a trusted project.
         </Description>
         <SubmitButton onClick={handleSubmitNowClick}>
           Submit Now
@@ -405,8 +416,10 @@ const Home: React.FC<IHome> = () => {
         <GlobalSearch />
       </SearchSection>
 
+      <PartnersIntro>
+        Verified information are visible on major block explorers, wallets, and data providers.
+      </PartnersIntro>
       <TrustedBySection>
-        <TrustedByText>Trusted by</TrustedByText>
         <LogosContainer>
           <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
           <PartnerLogo src={BlockscoutLogo} alt="Blockscout" $smaller />
