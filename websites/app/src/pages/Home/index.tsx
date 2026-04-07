@@ -87,7 +87,7 @@ const CounterValue = styled.div`
   font-size: clamp(48px, 8.5vw, 96px);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums lining-nums;
   text-shadow: 0 8px 18px rgba(32, 41, 64, 0.2);
   margin: 0;
@@ -95,10 +95,10 @@ const CounterValue = styled.div`
 
 const CounterSubtitle = styled.p`
   margin: 0;
-  color: rgba(255, 255, 255, 0.78);
+  color: rgba(255, 255, 255, 0.92);
   font-family: "Open Sans", sans-serif;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 18px;
+  font-weight: 700;
   letter-spacing: 0;
 `
 
@@ -131,10 +131,10 @@ const Description = styled.p`
   color: rgba(235, 240, 255, 0.82);
   text-align: center;
   font-family: "Open Sans";
-  font-size: 16px;
+  font-size: 18px;
   font-style: normal;
-  font-weight: 400;
-  line-height: 1.7;
+  font-weight: 700;
+  line-height: 1.65;
   margin: 0;
   max-width: 720px;
 `;
@@ -215,12 +215,20 @@ const TrustedBySection = styled.div`
   )}
 `;
 
+const PartnerLabels = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+`;
+
 const TrustedByText = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
   font-family: "Open Sans";
   font-size: 14px;
-  font-style: italic;
-  font-weight: 400;
+  font-style: normal;
+  font-weight: 700;
   line-height: normal;
   margin: 0;
   white-space: nowrap;
@@ -422,6 +430,10 @@ const Home: React.FC<IHome> = () => {
         Verified information are visible on major block explorers, wallets, and data providers.
       </PartnersIntro>
       <TrustedBySection>
+        <PartnerLabels>
+          <TrustedByText>Many More</TrustedByText>
+          <TrustedByText>Trusted by</TrustedByText>
+        </PartnerLabels>
         <LogosContainer>
           <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
           <PartnerLogo src={BlockscoutLogo} alt="Blockscout" $smaller />
@@ -429,7 +441,6 @@ const Home: React.FC<IHome> = () => {
           <PartnerLogo src={MetamaskLogo} alt="MetaMask" $bigger />
           <PartnerLogo src={LedgerLogo} alt="Ledger" />
         </LogosContainer>
-        <TrustedByText>& Many More</TrustedByText>
       </TrustedBySection>
 
       <CarouselSection>
