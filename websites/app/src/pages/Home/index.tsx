@@ -19,6 +19,8 @@ import MetamaskLogo from 'assets/pngs/partners/metamask.png';
 import OtterscanLogo from 'assets/pngs/partners/otterscan.png';
 import BlockscoutLogo from 'assets/pngs/partners/blockscout.png';
 
+const ELEGANT_SERIF_STACK = '"Baskerville Old Face", "Palatino Linotype", "Book Antiqua", Georgia, serif';
+
 const Container = styled.div`
   width: 100%;
   background-color: ${({ theme }) => theme.lightBackground};
@@ -96,10 +98,10 @@ const CounterValue = styled.div`
 const CounterSubtitle = styled.p`
   margin: 0;
   color: rgba(255, 255, 255, 0.92);
-  font-family: "Open Sans", sans-serif;
+  font-family: ${ELEGANT_SERIF_STACK};
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0;
+  letter-spacing: 0.01em;
 `
 
 const CounterMeta = styled.div`
@@ -130,7 +132,7 @@ const VerifiedMark = styled.span`
 const Description = styled.p`
   color: rgba(235, 240, 255, 0.82);
   text-align: center;
-  font-family: "Open Sans";
+  font-family: ${ELEGANT_SERIF_STACK};
   font-size: 18px;
   font-style: normal;
   font-weight: 700;
@@ -208,6 +210,9 @@ const TrustedBySection = styled.div`
 
   ${landscapeStyle(
     () => css`
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
       gap: 16px;
       margin-bottom: 64px;
       padding-bottom: 32px;
@@ -215,12 +220,32 @@ const TrustedBySection = styled.div`
   )}
 `;
 
-const PartnerLabels = styled.div`
+const LeftPartnerLabel = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   width: 100%;
+  justify-content: center;
+
+  ${landscapeStyle(
+    () => css`
+      width: auto;
+      flex: 1 1 0;
+      justify-content: flex-start;
+    `
+  )}
+`;
+
+const RightPartnerLabel = styled.div`
+  display: flex;
+  width: 100%;
+  justify-content: center;
+
+  ${landscapeStyle(
+    () => css`
+      width: auto;
+      flex: 1 1 0;
+      justify-content: flex-end;
+    `
+  )}
 `;
 
 const TrustedByText = styled.h3`
@@ -252,6 +277,7 @@ const LogosContainer = styled.div`
 
   ${landscapeStyle(
     () => css`
+      width: auto;
       gap: 72px;
       flex-wrap: nowrap;
     `
@@ -430,10 +456,9 @@ const Home: React.FC<IHome> = () => {
         Verified information are visible on major block explorers, wallets, and data providers.
       </PartnersIntro>
       <TrustedBySection>
-        <PartnerLabels>
-          <TrustedByText>Many More</TrustedByText>
+        <LeftPartnerLabel>
           <TrustedByText>Trusted by</TrustedByText>
-        </PartnerLabels>
+        </LeftPartnerLabel>
         <LogosContainer>
           <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
           <PartnerLogo src={BlockscoutLogo} alt="Blockscout" $smaller />
@@ -441,6 +466,9 @@ const Home: React.FC<IHome> = () => {
           <PartnerLogo src={MetamaskLogo} alt="MetaMask" $bigger />
           <PartnerLogo src={LedgerLogo} alt="Ledger" />
         </LogosContainer>
+        <RightPartnerLabel>
+          <TrustedByText>& Many More</TrustedByText>
+        </RightPartnerLabel>
       </TrustedBySection>
 
       <CarouselSection>
