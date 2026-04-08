@@ -19,6 +19,8 @@ import MetamaskLogo from 'assets/pngs/partners/metamask.png';
 import OtterscanLogo from 'assets/pngs/partners/otterscan.png';
 import BlockscoutLogo from 'assets/pngs/partners/blockscout.png';
 
+const HOME_JOST_FONT = '"Jost", "Open Sans", sans-serif';
+
 const Container = styled.div`
   width: 100%;
   background-color: ${({ theme }) => theme.lightBackground};
@@ -60,7 +62,7 @@ const HeaderSection = styled.section`
 const Title = styled.h1`
   color: #f7f9ff;
   text-align: center;
-  font-family: "Open Sans";
+  font-family: ${HOME_JOST_FONT};
   font-size: clamp(15px, 4vw, 46px);
   font-style: normal;
   font-weight: 700;
@@ -83,7 +85,7 @@ const CounterValue = styled.div`
   align-items: flex-start;
   justify-content: center;
   color: #ffffff;
-  font-family: "Open Sans", sans-serif;
+  font-family: ${HOME_JOST_FONT};
   font-size: clamp(48px, 8.5vw, 96px);
   font-weight: 700;
   line-height: 1;
@@ -96,7 +98,7 @@ const CounterValue = styled.div`
 const CounterSubtitle = styled.p`
   margin: 0;
   color: rgba(255, 255, 255, 0.92);
-  font-family: "Open Sans", sans-serif;
+  font-family: ${HOME_JOST_FONT};
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0;
@@ -130,7 +132,7 @@ const VerifiedMark = styled.span`
 const Description = styled.p`
   color: rgba(235, 240, 255, 0.82);
   text-align: center;
-  font-family: "Open Sans", sans-serif;
+  font-family: ${HOME_JOST_FONT};
   font-size: 18px;
   font-style: normal;
   font-weight: 400;
@@ -183,7 +185,7 @@ const PartnersIntro = styled.p`
   margin: 24px 0 12px;
   color: ${({ theme }) => theme.secondaryText};
   text-align: center;
-  font-family: "Open Sans";
+  font-family: ${HOME_JOST_FONT};
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -437,9 +439,9 @@ const Home: React.FC<IHome> = () => {
         </CounterStack>
         <HeroGlobe />
         <Description>
-  Cut blind signing risks and interact safely.
-  <br />
-  With one submission, smart contracts can be verified and linked to a trusted project.
+          Cut blind signing risks and interact safely.
+          <br />
+          With one submission, smart contracts can be verified and linked to a trusted project.
         </Description>
         <SubmitButton onClick={handleSubmitNowClick}>
           Submit Now
