@@ -82,7 +82,7 @@ const CounterStack = styled.div`
 
 const CounterValue = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   color: #ffffff;
   font-family: ${HOME_JOST_FONT};
@@ -93,6 +93,20 @@ const CounterValue = styled.div`
   font-variant-numeric: tabular-nums lining-nums;
   text-shadow: 0 8px 18px rgba(32, 41, 64, 0.2);
   margin: 0;
+`
+
+const CounterNumber = styled.span`
+  display: block;
+`
+
+const CounterPlus = styled.span`
+  display: block;
+  margin-left: 0.08em;
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.8em;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
 `
 
 const CounterSubtitle = styled.p`
@@ -350,7 +364,7 @@ const Home: React.FC<IHome> = () => {
   useEffect(() => {
     const renderCounterValue = (value: number) => {
       if (!counterValueRef.current) return;
-      counterValueRef.current.textContent = `${COUNTER_FORMATTER.format(value)}+`;
+      counterValueRef.current.textContent = COUNTER_FORMATTER.format(value);
     };
 
     if (typeof window === 'undefined') {
@@ -420,7 +434,10 @@ const Home: React.FC<IHome> = () => {
         <Title>The Largest Decentralized Database</Title>
         <CounterStack>
           <CounterValue>
-            <span ref={counterValueRef}>{`${COUNTER_FORMATTER.format(animatedCountRef.current)}+`}</span>
+            <CounterNumber ref={counterValueRef}>
+              {COUNTER_FORMATTER.format(animatedCountRef.current)}
+            </CounterNumber>
+            <CounterPlus aria-hidden="true">+</CounterPlus>
           </CounterValue>
           <CounterMeta>
             <CounterSubtitle>verified contracts</CounterSubtitle>
