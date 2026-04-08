@@ -18,6 +18,8 @@ import LedgerLogo from 'assets/pngs/partners/ledger.png';
 import MetamaskLogo from 'assets/pngs/partners/metamask.png';
 import OtterscanLogo from 'assets/pngs/partners/otterscan.png';
 import BlockscoutLogo from 'assets/pngs/partners/blockscout.png';
+import OpenscanLogo from 'assets/pngs/partners/openscan.png';
+import RoutescanLogo from 'assets/pngs/partners/routescan.png';
 
 const HOME_JOST_FONT = '"Jost", "Open Sans", sans-serif';
 
@@ -44,11 +46,12 @@ const HeaderSection = styled.section`
   flex-direction: column;
   align-items: center;
   text-align: center;
+  font-family: ${HOME_JOST_FONT};
   gap: 16px;
   overflow: hidden;
   padding: 24px 20px;
   border-radius: 32px;
-  background: #000;
+  background: ${({ theme }) => theme.lightBackground};
 
   ${landscapeStyle(
     () => css`
@@ -60,9 +63,8 @@ const HeaderSection = styled.section`
 `;
 
 const Title = styled.h1`
-  color: #f7f9ff;
+  color: ${({ theme }) => theme.textHighOpacity};
   text-align: center;
-  font-family: ${HOME_JOST_FONT};
   font-size: clamp(15px, 4vw, 46px);
   font-style: normal;
   font-weight: 700;
@@ -84,8 +86,7 @@ const CounterValue = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-family: ${HOME_JOST_FONT};
+  color: ${({ theme }) => theme.primaryText};
   font-size: clamp(48px, 8.5vw, 96px);
   font-weight: 700;
   line-height: 1;
@@ -102,17 +103,15 @@ const CounterNumber = styled.span`
 const CounterPlus = styled.span`
   display: block;
   margin-left: 0.08em;
-  font-family: "Open Sans", sans-serif;
   font-size: 0.8em;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
 `
 
 const CounterSubtitle = styled.p`
   margin: 0;
-  color: rgba(255, 255, 255, 0.92);
-  font-family: ${HOME_JOST_FONT};
+  color: ${({ theme }) => theme.textHighOpacity};
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0;
@@ -132,9 +131,9 @@ const VerifiedMark = styled.span`
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  border: 1px solid rgba(43, 214, 117, 0.7);
-  color: #2fd671;
-  box-shadow: 0 0 0 1px rgba(47, 214, 113, 0.12) inset;
+  border: 1px solid ${({ theme }) => `${theme.success}B3`};
+  color: ${({ theme }) => theme.success};
+  box-shadow: 0 0 0 1px ${({ theme }) => `${theme.success}1F`} inset;
 
   svg {
     width: 10px;
@@ -144,9 +143,8 @@ const VerifiedMark = styled.span`
 `
 
 const Description = styled.p`
-  color: rgba(235, 240, 255, 0.82);
+  color: ${({ theme }) => theme.secondaryText};
   text-align: center;
-  font-family: ${HOME_JOST_FONT};
   font-size: 18px;
   font-style: normal;
   font-weight: 400;
@@ -162,7 +160,6 @@ const SubmitButton = styled.button`
   border-radius: 9999px;
   padding: 10px 20px;
   font-size: 14px;
-  font-family: "Open Sans", sans-serif;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -196,7 +193,7 @@ const SearchSection = styled.div`
 `;
 
 const PartnersIntro = styled.p`
-  margin: 24px 0 12px;
+  margin: 24px 0 24px;
   color: ${({ theme }) => theme.secondaryText};
   text-align: center;
   font-family: ${HOME_JOST_FONT};
@@ -207,7 +204,7 @@ const PartnersIntro = styled.p`
 
   ${landscapeStyle(
     () => css`
-      margin: 32px 0 16px;
+      margin: 32px 0 28px;
     `
   )}
 `;
@@ -234,51 +231,7 @@ const TrustedBySection = styled.div`
   )}
 `;
 
-const LeftPartnerLabel = styled.div`
-  display: flex;
-  width: 100%;
-  justify-content: center;
 
-  ${landscapeStyle(
-    () => css`
-      width: auto;
-      flex: 1 1 0;
-      justify-content: flex-start;
-    `
-  )}
-`;
-
-const RightPartnerLabel = styled.div`
-  display: flex;
-  width: 100%;
-  justify-content: center;
-
-  ${landscapeStyle(
-    () => css`
-      width: auto;
-      flex: 1 1 0;
-      justify-content: flex-end;
-    `
-  )}
-`;
-
-const TrustedByText = styled.h3`
-  color: ${({ theme }) => theme.secondaryBlue};
-  font-family: "Open Sans";
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: normal;
-  margin: 0;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  ${landscapeStyle(
-    () => css`
-      font-size: 16px;
-    `
-  )}
-`;
 
 const LogosContainer = styled.div`
   display: flex;
@@ -473,19 +426,15 @@ const Home: React.FC<IHome> = () => {
         Verified information are visible on major block explorers, wallets, and data providers.
       </PartnersIntro>
       <TrustedBySection>
-        <LeftPartnerLabel>
-          <TrustedByText>Trusted by</TrustedByText>
-        </LeftPartnerLabel>
         <LogosContainer>
           <PartnerLogo src={EtherscanLogo} alt="Etherscan" />
           <PartnerLogo src={BlockscoutLogo} alt="Blockscout" $smaller />
           <PartnerLogo src={OtterscanLogo} alt="Otterscan" />
           <PartnerLogo src={MetamaskLogo} alt="MetaMask" $bigger />
           <PartnerLogo src={LedgerLogo} alt="Ledger" />
+          <PartnerLogo src={RoutescanLogo} alt="Routescan" />
+          <PartnerLogo src={OpenscanLogo} alt="Openscan" />
         </LogosContainer>
-        <RightPartnerLabel>
-          <TrustedByText>& Many More</TrustedByText>
-        </RightPartnerLabel>
       </TrustedBySection>
 
       <CarouselSection>
