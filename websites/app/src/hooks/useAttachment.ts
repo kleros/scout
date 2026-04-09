@@ -12,11 +12,16 @@ export const useAttachment = () => {
   const [, setSearchParams] = useSearchParams();
   const scrollTop = useScrollTop();
 
-  const openAttachment = (url: string) => {
+  const openAttachment = (url: string, isPolicy?: boolean) => {
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', url);
       newParams.delete('policyTx');
+      if (isPolicy) {
+        newParams.set('isPolicy', 'true');
+      } else {
+        newParams.delete('isPolicy');
+      }
       return newParams;
     }, { replace: true });
     scrollTop();

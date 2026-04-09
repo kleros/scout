@@ -209,6 +209,7 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', url);
       newParams.set('policyTx', entry.txHash);
+      newParams.set('isPolicy', 'true');
       return newParams;
     }, { replace: true });
     onClose();
