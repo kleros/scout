@@ -1,7 +1,7 @@
 import { gql, request } from 'graphql-request'
-import { GraphItem } from 'utils/items'
+import { GraphItem, fetchItemPropsFromIpfs } from 'utils/items'
 import { useQuery } from '@tanstack/react-query'
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index'
+import { SUBGRAPH_GNOSIS_ENDPOINT, KLEROS_CDN_BASE } from 'consts/index'
 import { chains, getNamespaceForChainId } from 'utils/chains'
 
 export interface ExportFilters {
@@ -79,6 +79,9 @@ export const useExportItems = (filters: ExportFilters) => {
           }
           return `{key0: {_ilike: "${namespace}:${chainId}:%"}}`
         })
+        if (includeUnknown) {
+          conditions.push(`{key0: {_is_null: true}}`)
+        }
         networkQueryObject =
           conditions.length > 0 ? `{_or: [${conditions.join(',')}]}` : '{}'
       }
@@ -208,7 +211,7 @@ export const useExportItems = (filters: ExportFilters) => {
             variables,
           })) as any
 
-          let items = result.litems
+          let items = await fetchItemPropsFromIpfs<GraphItem>(result.litems, KLEROS_CDN_BASE)
 
           // Client-side filtering for non-tags-queries registries
           if (!isTagsQueriesRegistry && network.length > 0) {

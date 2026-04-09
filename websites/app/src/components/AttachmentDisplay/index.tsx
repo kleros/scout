@@ -144,6 +144,7 @@ const EvidenceAttachmentDisplay: React.FC = () => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', pastPolicyInfo.currentPolicyURI!);
       newParams.delete('policyTx');
+      newParams.set('isPolicy', 'true');
       return newParams;
     }, { replace: true });
   };

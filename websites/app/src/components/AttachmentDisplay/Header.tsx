@@ -107,8 +107,9 @@ const ReturnButton = styled(Link)`
 `;
 
 const Header: React.FC = () => {
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const isPolicy = searchParams.has('isPolicy') || searchParams.has('policyTx');
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     // Check if user is trying to open in new tab (Ctrl+Click, Cmd+Click, or middle click)
@@ -123,6 +124,7 @@ const Header: React.FC = () => {
       const newParams = new URLSearchParams(prev);
       newParams.delete('attachment');
       newParams.delete('policyTx');
+      newParams.delete('isPolicy');
       return newParams;
     }, { replace: true });
   };
@@ -135,9 +137,11 @@ const Header: React.FC = () => {
           <Title>File</Title>
         </TitleContainer>
         <RightActions>
-          <PolicyHistoryButton onClick={() => setIsHistoryOpen(true)}>
-            Previous Policies
-          </PolicyHistoryButton>
+          {isPolicy ? (
+            <PolicyHistoryButton onClick={() => setIsHistoryOpen(true)}>
+              Previous Policies
+            </PolicyHistoryButton>
+          ) : null}
           <ReturnButton to="#" onClick={handleClick}>
             <StyledArrow />
             Return

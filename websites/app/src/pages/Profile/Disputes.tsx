@@ -5,7 +5,8 @@ import DisputeCard from './DisputeCard'
 import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
-import { registryMap } from 'utils/items'
+import { registryMap, fetchItemPropsFromIpfs } from 'utils/items'
+import { KLEROS_CDN_BASE } from 'consts/index'
 import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
 import { fetchSubgraph } from 'utils/fetchSubgraph'
 import { EmptyState } from 'styles/commonStyles'
@@ -160,8 +161,8 @@ const Disputes: React.FC<Props> = ({
       })
       if (json.errors) return { items: [], totalFiltered: 0, activeCount: 0, resolvedCount: 0 }
 
-      const asRequester = json.data.asRequester as any[]
-      const asChallenger = json.data.asChallenger as any[]
+      const asRequester = await fetchItemPropsFromIpfs(json.data.asRequester as any[], KLEROS_CDN_BASE)
+      const asChallenger = await fetchItemPropsFromIpfs(json.data.asChallenger as any[], KLEROS_CDN_BASE)
 
       // Merge and deduplicate
       const itemMap = new Map<string, any>()

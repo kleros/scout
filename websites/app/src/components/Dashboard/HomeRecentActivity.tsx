@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
+import { ITEMS_PER_PAGE } from 'pages/Registries/index';
 import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getItemDisplayStatus } from 'utils/items';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
@@ -43,7 +44,6 @@ const ActivityList = styled.div`
 `;
 
 const ActivityRow = styled.div`
-  ${hoverLongTransitionTiming}
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -51,7 +51,7 @@ const ActivityRow = styled.div`
   row-gap: 8px;
   padding: 10px 0;
   border-bottom: 1px solid ${({ theme }) => theme.divider};
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, padding 0.2s ease, margin 0.2s ease, border-radius 0.2s ease;
   flex-wrap: wrap;
 
   &:last-child {
@@ -300,6 +300,35 @@ const EmptyState = styled.div`
   font-size: 14px;
 `;
 
+const ShowMoreButton = styled.button`
+  ${hoverLongTransitionTiming}
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
+  border-radius: 9999px;
+  background: transparent;
+  color: ${({ theme }) => theme.primaryText};
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "Open Sans", sans-serif;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+    border-color: ${({ theme }) => theme.primaryText};
+  }
+
+  &:active {
+    background: ${({ theme }) => theme.activeBackground};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+`;
+
 const getDisplayName = (item: GraphItem): string => {
   const registryKey = revRegistryMap[item.registryAddress] || 'Unknown';
   return getItemDisplayName(item, registryKey);
@@ -376,26 +405,59 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
   );
 };
 
+const INITIAL_DISPLAY = 12;
+
 export const HomeRecentActivity: React.FC = () => {
-  const { data: searchResult, isLoading } = useItemsQuery({
+  const [page, setPage] = useState(1);
+  const [allItems, setAllItems] = useState<GraphItem[]>([]);
+  const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY);
+
+  const { data: searchResult, isLoading, isFetching } = useItemsQuery({
     registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
-    status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
+    status: ['RegistrationRequested', 'ClearingRequested'],
     disputed: ['true', 'false'],
     text: '',
     orderDirection: 'desc',
-    page: 1,
+    page,
     chainFilters: [],
     enabled: true,
   });
 
-  const items = searchResult?.items ?? [];
+  const prevPageRef = useRef(page);
+  const hasMoreRef = useRef(false);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!searchResult?.items) return;
+    const pageItems = searchResult.items.slice(0, ITEMS_PER_PAGE);
+    hasMoreRef.current = searchResult.items.length > ITEMS_PER_PAGE;
+    if (prevPageRef.current !== page) {
+      setAllItems((prev) => [...prev, ...pageItems]);
+      prevPageRef.current = page;
+    } else {
+      if (page === 1) setAllItems(pageItems);
+    }
+  }, [searchResult, page]);
+
+  // There's more to show if we have hidden items locally, or more pages on the server
+  const hasMore = displayCount < allItems.length || hasMoreRef.current;
+
+  const handleShowMore = () => {
+    if (displayCount < allItems.length) {
+      // Reveal all already-fetched items
+      setDisplayCount(allItems.length);
+    } else if (hasMoreRef.current) {
+      // Need to fetch the next page
+      setPage((p) => p + 1);
+      setDisplayCount((c) => c + ITEMS_PER_PAGE);
+    }
+  };
+
+  if (isLoading && page === 1) {
     return (
       <Container>
         <Title>Recent Activity</Title>
         <ActivityList>
-          {Array.from({ length: 20 }).map((_, i) => (
+          {Array.from({ length: INITIAL_DISPLAY }).map((_, i) => (
             <LoadingRow key={i}>
               <Skeleton height={14} style={{ marginBottom: 4 }} />
               <Skeleton height={12} width="80%" />
@@ -406,7 +468,7 @@ export const HomeRecentActivity: React.FC = () => {
     );
   }
 
-  if (!items.length) {
+  if (!allItems.length) {
     return (
       <Container>
         <Title>Recent Activity</Title>
@@ -415,14 +477,11 @@ export const HomeRecentActivity: React.FC = () => {
     );
   }
 
-  // Show latest 20 entries
-  const displayItems = items.slice(0, 20);
-
   return (
     <Container>
       <Title>Recent Activity</Title>
       <ActivityList>
-        {displayItems.map((item) => (
+        {allItems.slice(0, displayCount).map((item) => (
           <ActivityItem
             key={item.id}
             item={item}
@@ -430,6 +489,14 @@ export const HomeRecentActivity: React.FC = () => {
           />
         ))}
       </ActivityList>
+      {hasMore && (
+        <ShowMoreButton
+          onClick={handleShowMore}
+          disabled={isFetching}
+        >
+          {isFetching ? 'Loading...' : 'Show more'}
+        </ShowMoreButton>
+      )}
     </Container>
   );
 };

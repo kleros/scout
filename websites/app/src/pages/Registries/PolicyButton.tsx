@@ -35,7 +35,7 @@ const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
     <StyledLabel
       onClick={() => {
         if (policyURI) {
-          openAttachment(`${KLEROS_CDN_BASE}${policyURI}`);
+          openAttachment(`${KLEROS_CDN_BASE}${policyURI}`, true);
         }
       }}
     >
