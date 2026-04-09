@@ -44,7 +44,6 @@ const ActivityList = styled.div`
 `;
 
 const ActivityRow = styled.div`
-  ${hoverLongTransitionTiming}
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -52,7 +51,7 @@ const ActivityRow = styled.div`
   row-gap: 8px;
   padding: 10px 0;
   border-bottom: 1px solid ${({ theme }) => theme.divider};
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, padding 0.2s ease, margin 0.2s ease, border-radius 0.2s ease;
   flex-wrap: wrap;
 
   &:last-child {
@@ -444,9 +443,9 @@ export const HomeRecentActivity: React.FC = () => {
 
   const handleShowMore = () => {
     if (displayCount < allItems.length) {
-      // Reveal more already-fetched items
-      setDisplayCount((c) => c + ITEMS_PER_PAGE);
-    } else {
+      // Reveal all already-fetched items
+      setDisplayCount(allItems.length);
+    } else if (hasMoreRef.current) {
       // Need to fetch the next page
       setPage((p) => p + 1);
       setDisplayCount((c) => c + ITEMS_PER_PAGE);
