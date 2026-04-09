@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
-import { GraphItem, registryMap } from 'utils/items'
+import { GraphItem, registryMap, fetchItemPropsFromIpfs } from 'utils/items'
+import { KLEROS_CDN_BASE } from 'consts/index'
 import { ITEMS_PER_PAGE } from '../../pages/Registries/index'
 import { chains, getNamespaceForChainId } from '../../utils/chains'
 import { DateRangeOption, getDateRangeTimestamp, getCustomDateTimestamps } from 'context/FilterContext'
@@ -105,6 +106,9 @@ export const useItemsQuery = ({
           }
           return `{key0: {_ilike: "${namespace}:${chainId}:%"}}`
         })
+        if (includeUnknown) {
+          conditions.push(`{key0: {_is_null: true}}`)
+        }
         networkQueryObject =
           conditions.length > 0 ? `{_or: [${conditions.join(',')}]}` : '{}'
       }
@@ -241,7 +245,7 @@ export const useItemsQuery = ({
         variables,
       )
 
-      let items: GraphItem[] = result.litems
+      let items: GraphItem[] = await fetchItemPropsFromIpfs(result.litems, KLEROS_CDN_BASE)
       const totalCount: number = includeCount ? (result.countItems?.length ?? 0) : 0
 
       // Client-side filtering for non-tags-queries registries

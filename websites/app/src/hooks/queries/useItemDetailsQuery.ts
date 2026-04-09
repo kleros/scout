@@ -2,12 +2,15 @@ import { useQuery } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
+import { fetchItemPropsFromIpfs } from 'utils/items'
+import { KLEROS_CDN_BASE } from 'consts/index'
 import { GraphItemDetails } from '../../utils/itemDetails'
 
 const FETCH_ITEM_DETAILS_QUERY = gql`
   query FetchItemDetails($id: String!) {
     litem: LItem_by_pk(id: $id) {
       id
+      data
       key0
       key1
       key2
@@ -93,7 +96,8 @@ export const useItemDetailsQuery = ({
         },
       )
 
-      return result.litem
+      const [item] = await fetchItemPropsFromIpfs([result.litem], KLEROS_CDN_BASE)
+      return item
     },
     enabled: enabled && itemId != null && itemId !== '',
     refetchInterval: REFETCH_INTERVAL,

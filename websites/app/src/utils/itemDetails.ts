@@ -30,6 +30,7 @@ export interface RequestDetails extends Request {
 
 export interface GraphItemDetails {
   id: string
+  data: string
   latestRequestSubmissionTime: string
   registryAddress: string
   itemID: string

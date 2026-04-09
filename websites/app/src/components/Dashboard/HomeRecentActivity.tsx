@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
+import { ITEMS_PER_PAGE } from 'pages/Registries/index';
 import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getItemDisplayStatus } from 'utils/items';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
@@ -300,6 +301,35 @@ const EmptyState = styled.div`
   font-size: 14px;
 `;
 
+const ShowMoreButton = styled.button`
+  ${hoverLongTransitionTiming}
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
+  border-radius: 9999px;
+  background: transparent;
+  color: ${({ theme }) => theme.primaryText};
+  font-size: 13px;
+  font-weight: 600;
+  font-family: "Open Sans", sans-serif;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+    border-color: ${({ theme }) => theme.primaryText};
+  }
+
+  &:active {
+    background: ${({ theme }) => theme.activeBackground};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+`;
+
 const getDisplayName = (item: GraphItem): string => {
   const registryKey = revRegistryMap[item.registryAddress] || 'Unknown';
   return getItemDisplayName(item, registryKey);
@@ -377,20 +407,38 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
 };
 
 export const HomeRecentActivity: React.FC = () => {
-  const { data: searchResult, isLoading } = useItemsQuery({
+  const [page, setPage] = useState(1);
+  const [allItems, setAllItems] = useState<GraphItem[]>([]);
+
+  const { data: searchResult, isLoading, isFetching } = useItemsQuery({
     registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
-    status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
+    status: ['RegistrationRequested', 'ClearingRequested'],
     disputed: ['true', 'false'],
     text: '',
     orderDirection: 'desc',
-    page: 1,
+    page,
     chainFilters: [],
     enabled: true,
   });
 
-  const items = searchResult?.items ?? [];
+  const prevPageRef = useRef(page);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!searchResult?.items) return;
+    const pageItems = searchResult.items.slice(0, ITEMS_PER_PAGE);
+    if (prevPageRef.current !== page) {
+      // New page loaded — append
+      setAllItems((prev) => [...prev, ...pageItems]);
+      prevPageRef.current = page;
+    } else {
+      // Initial load or refetch of page 1
+      if (page === 1) setAllItems(pageItems);
+    }
+  }, [searchResult, page]);
+
+  const hasMore = (searchResult?.items?.length ?? 0) > ITEMS_PER_PAGE;
+
+  if (isLoading && page === 1) {
     return (
       <Container>
         <Title>Recent Activity</Title>
@@ -406,7 +454,7 @@ export const HomeRecentActivity: React.FC = () => {
     );
   }
 
-  if (!items.length) {
+  if (!allItems.length) {
     return (
       <Container>
         <Title>Recent Activity</Title>
@@ -415,14 +463,11 @@ export const HomeRecentActivity: React.FC = () => {
     );
   }
 
-  // Show latest 20 entries
-  const displayItems = items.slice(0, 20);
-
   return (
     <Container>
       <Title>Recent Activity</Title>
       <ActivityList>
-        {displayItems.map((item) => (
+        {allItems.map((item) => (
           <ActivityItem
             key={item.id}
             item={item}
@@ -430,6 +475,14 @@ export const HomeRecentActivity: React.FC = () => {
           />
         ))}
       </ActivityList>
+      {hasMore && (
+        <ShowMoreButton
+          onClick={() => setPage((p) => p + 1)}
+          disabled={isFetching}
+        >
+          {isFetching ? 'Loading...' : 'Show more'}
+        </ShowMoreButton>
+      )}
     </Container>
   );
 };

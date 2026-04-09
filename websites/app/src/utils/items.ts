@@ -163,6 +163,55 @@ export interface Prop {
   isIdentifier: boolean
 }
 
+/**
+ * Fallback for when the subgraph failed to index IPFS metadata.
+ * Fetches the item's IPFS JSON directly and reconstructs props.
+ * Mirrors the "item assurance" pattern from kleros/gtcr.
+ */
+export const fetchItemPropsFromIpfs = async <T extends { data?: string; props?: Prop[]; key0?: string; key1?: string; key2?: string; key3?: string; key4?: string }>(
+  items: T[],
+  cdnBase: string,
+): Promise<T[]> => {
+  const promises = items.map(async (item) => {
+    if (item.props && item.props.length > 0) return item
+    if (!item.data) return item
+
+    try {
+      let ipfsPath = item.data
+      if (ipfsPath.startsWith('/ipfs/')) { /* already normalized */ }
+      else if (ipfsPath.startsWith('ipfs/')) ipfsPath = `/${ipfsPath}`
+      else if (ipfsPath.startsWith('ipfs://')) ipfsPath = ipfsPath.replace('ipfs://', '/ipfs/')
+      else ipfsPath = `/ipfs/${ipfsPath}`
+      const response = await fetch(`${cdnBase}${ipfsPath}`)
+      if (!response.ok) return item
+      const json = await response.json()
+      const props: Prop[] = json.columns.map((column: any) => ({
+        label: column.label,
+        description: column.description,
+        type: column.type,
+        isIdentifier: column.isIdentifier,
+        value: json.values[column.label],
+      }))
+
+      // Reconstruct key0-key4 from identifier props (mirrors subgraph indexing logic)
+      const keys: Record<string, string> = {}
+      let keyIndex = 0
+      for (const prop of props) {
+        if (prop.isIdentifier && keyIndex <= 4) {
+          keys[`key${keyIndex}`] = prop.value
+          keyIndex++
+        }
+      }
+
+      return { ...item, props, ...keys }
+    } catch {
+      return item
+    }
+  })
+
+  return Promise.all(promises)
+}
+
 export interface Request {
   requestType?: string
   disputed: boolean

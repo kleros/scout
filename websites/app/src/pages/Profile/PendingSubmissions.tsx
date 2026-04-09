@@ -7,6 +7,8 @@ import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
 import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
 import { fetchSubgraph } from 'utils/fetchSubgraph'
+import { fetchItemPropsFromIpfs } from 'utils/items'
+import { KLEROS_CDN_BASE } from 'consts/index'
 import { EmptyState } from 'styles/commonStyles'
 
 const QUERY = `
@@ -115,7 +117,7 @@ const PendingSubmissions: React.FC<Props> = ({
         orderDirection,
       })
       if (json.errors) return { items: [], totalFiltered: 0 }
-      let items = json.data.litems as any[]
+      let items = await fetchItemPropsFromIpfs(json.data.litems as any[], KLEROS_CDN_BASE)
 
       items = filterItemsByChain(items, chainFilters)
       items = filterItemsByDateRange(items, dateRange, customDateFrom, customDateTo)
