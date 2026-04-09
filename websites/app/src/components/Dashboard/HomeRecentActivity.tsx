@@ -406,9 +406,12 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
   );
 };
 
+const INITIAL_DISPLAY = 12;
+
 export const HomeRecentActivity: React.FC = () => {
   const [page, setPage] = useState(1);
   const [allItems, setAllItems] = useState<GraphItem[]>([]);
+  const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY);
 
   const { data: searchResult, isLoading, isFetching } = useItemsQuery({
     registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
@@ -422,28 +425,40 @@ export const HomeRecentActivity: React.FC = () => {
   });
 
   const prevPageRef = useRef(page);
+  const hasMoreRef = useRef(false);
 
   useEffect(() => {
     if (!searchResult?.items) return;
     const pageItems = searchResult.items.slice(0, ITEMS_PER_PAGE);
+    hasMoreRef.current = searchResult.items.length > ITEMS_PER_PAGE;
     if (prevPageRef.current !== page) {
-      // New page loaded — append
       setAllItems((prev) => [...prev, ...pageItems]);
       prevPageRef.current = page;
     } else {
-      // Initial load or refetch of page 1
       if (page === 1) setAllItems(pageItems);
     }
   }, [searchResult, page]);
 
-  const hasMore = (searchResult?.items?.length ?? 0) > ITEMS_PER_PAGE;
+  // There's more to show if we have hidden items locally, or more pages on the server
+  const hasMore = displayCount < allItems.length || hasMoreRef.current;
+
+  const handleShowMore = () => {
+    if (displayCount < allItems.length) {
+      // Reveal more already-fetched items
+      setDisplayCount((c) => c + ITEMS_PER_PAGE);
+    } else {
+      // Need to fetch the next page
+      setPage((p) => p + 1);
+      setDisplayCount((c) => c + ITEMS_PER_PAGE);
+    }
+  };
 
   if (isLoading && page === 1) {
     return (
       <Container>
         <Title>Recent Activity</Title>
         <ActivityList>
-          {Array.from({ length: 20 }).map((_, i) => (
+          {Array.from({ length: INITIAL_DISPLAY }).map((_, i) => (
             <LoadingRow key={i}>
               <Skeleton height={14} style={{ marginBottom: 4 }} />
               <Skeleton height={12} width="80%" />
@@ -467,7 +482,7 @@ export const HomeRecentActivity: React.FC = () => {
     <Container>
       <Title>Recent Activity</Title>
       <ActivityList>
-        {allItems.map((item) => (
+        {allItems.slice(0, displayCount).map((item) => (
           <ActivityItem
             key={item.id}
             item={item}
@@ -477,7 +492,7 @@ export const HomeRecentActivity: React.FC = () => {
       </ActivityList>
       {hasMore && (
         <ShowMoreButton
-          onClick={() => setPage((p) => p + 1)}
+          onClick={handleShowMore}
           disabled={isFetching}
         >
           {isFetching ? 'Loading...' : 'Show more'}
