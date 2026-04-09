@@ -287,6 +287,7 @@ const BottomGrid = styled.div`
   ${landscapeStyle(
     () => css`
       grid-template-columns: 65fr 35fr;
+      align-items: start;
       gap: 32px;
     `
   )}
