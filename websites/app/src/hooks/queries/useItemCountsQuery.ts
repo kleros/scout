@@ -10,12 +10,22 @@ import {
 } from '../../utils/fetchRegistryDeposits'
 import { KLEROS_CDN_BASE } from 'consts/index'
 
-const fetchMetadataJson = async (uri: string): Promise<any | null> => {
+interface MetaEvidenceJson {
+  fileURI?: string
+  metadata?: {
+    logoURI?: string
+    tcrTitle?: string
+    tcrDescription?: string
+  }
+}
+
+const fetchMetadataJson = async (uri: string): Promise<MetaEvidenceJson | null> => {
   try {
     const response = await fetch(`${KLEROS_CDN_BASE}${uri}`)
     if (!response.ok) return null
     return await response.json()
-  } catch {
+  } catch (err) {
+    console.warn(`Failed to fetch registry metadata from ${uri}:`, err)
     return null
   }
 }
