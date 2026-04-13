@@ -251,6 +251,13 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           challengeTitle = requestIndex === 0 ? 'Registration Challenged' : 'Removal Challenged'
         }
 
+        // Use the challenger's earliest evidence timestamp as the challenge date,
+        // since the subgraph doesn't store a separate challenge timestamp.
+        const challengeEvidence = request.evidenceGroup?.evidences
+          ?.filter((e: any) => e.party?.toLowerCase() === request.challenger?.toLowerCase())
+          ?.sort((a: any, b: any) => Number(a.timestamp) - Number(b.timestamp))?.[0]
+        const challengeTime = challengeEvidence?.timestamp || request.submissionTime
+
         items.push({
           title: challengeTitle,
           party: (
@@ -263,7 +270,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
               </AddressLink>
             </PartyWrapper>
           ),
-          subtitle: request?.submissionTime ? formatTimestamp(Number(request.submissionTime), true) : '',
+          subtitle: challengeTime ? formatTimestamp(Number(challengeTime), true) : '',
           rightSided: true,
           variant: theme.orange,
         })
