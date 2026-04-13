@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
@@ -83,6 +83,7 @@ export const useItemDetailsQuery = ({
   enabled = true,
 }: UseItemDetailsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
+  const queryClient = useQueryClient()
 
   return useQuery({
     queryKey: queryKeys.itemDetails(itemId),
@@ -96,7 +97,15 @@ export const useItemDetailsQuery = ({
         },
       )
 
-      const [item] = await fetchItemPropsFromIpfs([result.litem], KLEROS_CDN_BASE)
+      const item: GraphItemDetails = result.litem
+
+      // Background IPFS fallback — don't block the detail page render.
+      if ((!item.props || item.props.length === 0) && item.data) {
+        fetchItemPropsFromIpfs([item], KLEROS_CDN_BASE).then(([patched]) => {
+          queryClient.setQueryData(queryKeys.itemDetails(itemId), patched)
+        })
+      }
+
       return item
     },
     enabled: enabled && itemId != null && itemId !== '',
