@@ -8,6 +8,17 @@ import {
   fetchRegistryDeposits,
   DepositParams,
 } from '../../utils/fetchRegistryDeposits'
+import { KLEROS_CDN_BASE } from 'consts/index'
+
+const fetchMetadataJson = async (uri: string): Promise<any | null> => {
+  try {
+    const response = await fetch(`${KLEROS_CDN_BASE}${uri}`)
+    if (!response.ok) return null
+    return await response.json()
+  } catch {
+    return null
+  }
+}
 
 const FETCH_ITEM_COUNTS_QUERY = gql`
   query FetchItemCounts {
@@ -100,58 +111,30 @@ export const useItemCountsQuery = (enabled: boolean = true) => {
         'tokens': converted.tokens,
       }
 
-      // Fetch metadata for all registries
-      const regMEs = await Promise.all([
-        fetch(
-          'https://cdn.kleros.link' +
-            result?.single_tags?.registrationMetaEvidence?.URI,
-        ).then((r) => r.json()),
-        fetch(
-          'https://cdn.kleros.link' +
-            result?.tags_queries?.registrationMetaEvidence?.URI,
-        ).then((r) => r.json()),
-        fetch(
-          'https://cdn.kleros.link' +
-            result?.cdn?.registrationMetaEvidence?.URI,
-        ).then((r) => r.json()),
-        fetch(
-          'https://cdn.kleros.link' +
-            result?.tokens?.registrationMetaEvidence?.URI,
-        ).then((r) => r.json()),
-      ])
+      // Fetch metadata for all registries independently — one failure must not block the others
+      const registryKeys = ['single-tags', 'tags-queries', 'cdn', 'tokens'] as const
+      const graphqlAliases = { 'single-tags': 'single_tags', 'tags-queries': 'tags_queries', 'cdn': 'cdn', 'tokens': 'tokens' } as const
 
-      // Inject metadata
-      itemCounts['single-tags'].metadata = {
-        address: result?.single_tags?.id,
-        policyURI: regMEs[0].fileURI,
-        logoURI: regMEs[0].metadata.logoURI,
-        tcrTitle: regMEs[0].metadata.tcrTitle,
-        tcrDescription: regMEs[0].metadata.tcrDescription,
-      }
+      const metadataResults = await Promise.allSettled(
+        registryKeys.map((key) => {
+          const uri = result?.[graphqlAliases[key]]?.registrationMetaEvidence?.URI
+          if (!uri) return Promise.resolve(null)
+          return fetchMetadataJson(uri)
+        }),
+      )
 
-      itemCounts['tags-queries'].metadata = {
-        address: result?.tags_queries?.id,
-        policyURI: regMEs[1].fileURI,
-        logoURI: regMEs[1].metadata.logoURI,
-        tcrTitle: regMEs[1].metadata.tcrTitle,
-        tcrDescription: regMEs[1].metadata.tcrDescription,
-      }
-
-      itemCounts['cdn'].metadata = {
-        address: result?.cdn?.id,
-        policyURI: regMEs[2].fileURI,
-        logoURI: regMEs[2].metadata.logoURI,
-        tcrTitle: regMEs[2].metadata.tcrTitle,
-        tcrDescription: regMEs[2].metadata.tcrDescription,
-      }
-
-      itemCounts['tokens'].metadata = {
-        address: result?.tokens?.id,
-        policyURI: regMEs[3].fileURI,
-        logoURI: regMEs[3].metadata.logoURI,
-        tcrTitle: regMEs[3].metadata.tcrTitle,
-        tcrDescription: regMEs[3].metadata.tcrDescription,
-      }
+      // Inject metadata — gracefully handle unavailable registries
+      registryKeys.forEach((key, i) => {
+        const settled = metadataResults[i]
+        const me = settled.status === 'fulfilled' ? settled.value : null
+        itemCounts[key].metadata = {
+          address: result?.[graphqlAliases[key]]?.id,
+          policyURI: me?.fileURI ?? '',
+          logoURI: me?.metadata?.logoURI ?? '',
+          tcrTitle: me?.metadata?.tcrTitle ?? '',
+          tcrDescription: me?.metadata?.tcrDescription ?? '',
+        }
+      })
 
       // Fetch registry deposits
       const regDs = await Promise.all([
