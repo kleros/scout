@@ -141,6 +141,16 @@ const ItemCardWrapper = styled.div`
   }
 `
 
+const IpfsWarning = styled.div`
+  background: ${({ theme }) => theme.lightBackground};
+  border: 1px solid ${({ theme }) => theme.warning};
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: ${({ theme }) => theme.warning};
+  word-break: break-all;
+`
+
 const SubmissionDetailsSection = styled.div`
   background: transparent;
   border: 1px solid ${({ theme }) => theme.stroke};
@@ -513,6 +523,12 @@ const ItemDetails: React.FC = () => {
                   seamlessBottom={true}
                 />
               </ItemCardWrapper>
+
+              {(!detailsData.props || detailsData.props.length === 0) && detailsData.data && (
+                <IpfsWarning>
+                  IPFS data unavailable for this item ({detailsData.data}).
+                </IpfsWarning>
+              )}
 
               <SubmissionDetailsSection>
                 <DetailRow>
