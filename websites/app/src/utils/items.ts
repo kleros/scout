@@ -1,3 +1,5 @@
+import type { QueryClient, QueryKey } from '@tanstack/react-query'
+
 export const registryMap: Record<string, string> = {
   'single-tags': '0x66260c69d03837016d88c9877e61e08ef74c59f2',
   'tags-queries': '0xae6aaed5434244be3699c56e7ebc828194f26dc3',
@@ -210,6 +212,44 @@ export const fetchItemPropsFromIpfs = async <T extends { data?: string; props?: 
   })
 
   return Promise.all(promises)
+}
+
+/**
+ * Shared fire-and-forget IPFS fallback for react-query queryFns.
+ *
+ * If any raw item is missing `props`, runs `buildPatched()` in the background and
+ * writes the result into the cache. The functional `setQueryData` updater returns
+ * `undefined` when there is no prior data, which react-query treats as a no-op
+ * state update — avoiding repopulating a query entry that has no observer.
+ *
+ * Caveats:
+ * - Does NOT guard against stale-closure races when filters change mid-flight.
+ *   A new queryFn runs under a new key; the old key's cache entry (alive until
+ *   gcTime) can still receive a stale-filter patch. Inherent to capturing
+ *   `queryKey` / closures in the queryFn.
+ * - Errors from `buildPatched` (IPFS fetch failure, a throw inside downstream
+ *   processing) are logged via `console.warn` and swallowed so the background
+ *   task can't escape as an unhandled promise rejection.
+ */
+export const patchQueryWithIpfs = <TResult>(
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  rawItems: ReadonlyArray<{ props?: unknown[] | null; data?: string | null }>,
+  buildPatched: () => Promise<TResult>,
+): void => {
+  const needsIpfs = rawItems.some(
+    (i) => (!i.props || i.props.length === 0) && i.data,
+  )
+  if (!needsIpfs) return
+  buildPatched()
+    .then((patched) => {
+      queryClient.setQueryData<TResult>(queryKey, (old) =>
+        old === undefined ? old : patched,
+      )
+    })
+    .catch((e) => {
+      console.warn('IPFS fallback patch failed', e)
+    })
 }
 
 export interface Request {

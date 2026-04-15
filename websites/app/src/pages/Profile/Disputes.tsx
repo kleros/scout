@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
 import DisputeCard from './DisputeCard'
 import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
-import { registryMap, fetchItemPropsFromIpfs } from 'utils/items'
+import { registryMap, fetchItemPropsFromIpfs, patchQueryWithIpfs } from 'utils/items'
 import { KLEROS_CDN_BASE } from 'consts/index'
 import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
 import { fetchSubgraph } from 'utils/fetchSubgraph'
@@ -124,6 +124,7 @@ const Disputes: React.FC<Props> = ({
   onFilteredCountsChange,
 }) => {
   const filters = useProfileFilters()
+  const queryClient = useQueryClient()
   const currentPage = filters.page
   const itemsPerPage = 10
   const scrollTop = useScrollTop()
@@ -135,19 +136,73 @@ const Disputes: React.FC<Props> = ({
   const customDateFrom = filters.customDateFrom
   const customDateTo = filters.customDateTo
 
+  const queryKey = [
+    'disputes',
+    queryAddress,
+    currentPage,
+    orderDirection,
+    chainFilters.slice().sort().join(','),
+    searchTerm,
+    dateRange,
+    customDateFrom,
+    customDateTo,
+    showResolved,
+  ]
+
+  const processItems = (asRequester: any[], asChallenger: any[]) => {
+    // Merge and deduplicate
+    const itemMap = new Map<string, any>()
+
+    for (const item of asRequester) {
+      itemMap.set(item.id, { ...item, userRole: 'requester' })
+    }
+
+    for (const item of asChallenger) {
+      const existing = itemMap.get(item.id)
+      if (existing) {
+        // User is both requester and challenger (rare) - mark as both
+        itemMap.set(item.id, { ...item, userRole: 'both' })
+      } else {
+        itemMap.set(item.id, { ...item, userRole: 'challenger' })
+      }
+    }
+
+    let allItems = Array.from(itemMap.values())
+
+    // Apply filters to all items first (before splitting by active/resolved)
+    allItems = filterItemsByChain(allItems, chainFilters)
+    allItems = filterItemsByDateRange(allItems, dateRange, customDateFrom, customDateTo)
+    allItems = filterItemsBySearchTerm(allItems, searchTerm)
+
+    // Split into active and resolved
+    const activeItems = allItems.filter((item) => {
+      const request = item.requests?.[0]
+      return request?.resolved !== true
+    })
+    const resolvedItems = allItems.filter((item) => {
+      const request = item.requests?.[0]
+      return request?.resolved === true
+    })
+
+    // Pick the set for the current sub-tab
+    const visibleItems = showResolved ? resolvedItems : activeItems
+
+    // Sort by submission time
+    visibleItems.sort((a, b) => {
+      const timeA = Number(a.latestRequestSubmissionTime || 0)
+      const timeB = Number(b.latestRequestSubmissionTime || 0)
+      return orderDirection === 'desc' ? timeB - timeA : timeA - timeB
+    })
+
+    return {
+      ...paginateItems(visibleItems, currentPage, itemsPerPage),
+      activeCount: activeItems.length,
+      resolvedCount: resolvedItems.length,
+    }
+  }
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: [
-      'disputes',
-      queryAddress,
-      currentPage,
-      orderDirection,
-      chainFilters.slice().sort().join(','),
-      searchTerm,
-      dateRange,
-      customDateFrom,
-      customDateTo,
-      showResolved,
-    ],
+    queryKey,
     enabled: !!queryAddress,
     queryFn: async () => {
       // Fetch more items to properly calculate filtered totals
@@ -161,60 +216,19 @@ const Disputes: React.FC<Props> = ({
       })
       if (json.errors) return { items: [], totalFiltered: 0, activeCount: 0, resolvedCount: 0 }
 
-      const asRequester = await fetchItemPropsFromIpfs(json.data.asRequester as any[], KLEROS_CDN_BASE)
-      const asChallenger = await fetchItemPropsFromIpfs(json.data.asChallenger as any[], KLEROS_CDN_BASE)
+      const rawRequester = (json.data.asRequester as any[]) || []
+      const rawChallenger = (json.data.asChallenger as any[]) || []
+      const result = processItems(rawRequester, rawChallenger)
 
-      // Merge and deduplicate
-      const itemMap = new Map<string, any>()
-
-      // Add requester items with role
-      for (const item of asRequester) {
-        itemMap.set(item.id, { ...item, userRole: 'requester' })
-      }
-
-      // Add challenger items (may override or add)
-      for (const item of asChallenger) {
-        const existing = itemMap.get(item.id)
-        if (existing) {
-          // User is both requester and challenger (rare) - mark as both
-          itemMap.set(item.id, { ...item, userRole: 'both' })
-        } else {
-          itemMap.set(item.id, { ...item, userRole: 'challenger' })
-        }
-      }
-
-      let allItems = Array.from(itemMap.values())
-
-      // Apply filters to all items first (before splitting by active/resolved)
-      allItems = filterItemsByChain(allItems, chainFilters)
-      allItems = filterItemsByDateRange(allItems, dateRange, customDateFrom, customDateTo)
-      allItems = filterItemsBySearchTerm(allItems, searchTerm)
-
-      // Split into active and resolved
-      const activeItems = allItems.filter((item) => {
-        const request = item.requests?.[0]
-        return request?.resolved !== true
-      })
-      const resolvedItems = allItems.filter((item) => {
-        const request = item.requests?.[0]
-        return request?.resolved === true
+      patchQueryWithIpfs(queryClient, queryKey, [...rawRequester, ...rawChallenger], async () => {
+        const [patchedRequester, patchedChallenger] = await Promise.all([
+          fetchItemPropsFromIpfs(rawRequester, KLEROS_CDN_BASE),
+          fetchItemPropsFromIpfs(rawChallenger, KLEROS_CDN_BASE),
+        ])
+        return processItems(patchedRequester, patchedChallenger)
       })
 
-      // Pick the set for the current sub-tab
-      const visibleItems = showResolved ? resolvedItems : activeItems
-
-      // Sort by submission time
-      visibleItems.sort((a, b) => {
-        const timeA = Number(a.latestRequestSubmissionTime || 0)
-        const timeB = Number(b.latestRequestSubmissionTime || 0)
-        return orderDirection === 'desc' ? timeB - timeA : timeA - timeB
-      })
-
-      return {
-        ...paginateItems(visibleItems, currentPage, itemsPerPage),
-        activeCount: activeItems.length,
-        resolvedCount: resolvedItems.length,
-      }
+      return result
     },
   })
 
