@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Skeleton from 'react-loading-skeleton'
 import ItemCard from './ItemCard'
 import { useProfileFilters } from 'context/FilterContext'
@@ -63,6 +63,7 @@ const PendingSubmissions: React.FC<Props> = ({
   onFilteredCountChange,
 }) => {
   const filters = useProfileFilters()
+  const queryClient = useQueryClient()
   const currentPage = filters.page
   const itemsPerPage = 10
   const scrollTop = useScrollTop()
@@ -89,20 +90,29 @@ const PendingSubmissions: React.FC<Props> = ({
   const customDateFrom = filters.customDateFrom
   const customDateTo = filters.customDateTo
 
+  const queryKey = [
+    'pendingItems',
+    queryAddress,
+    currentPage,
+    status.slice().sort().join(','),
+    disputed.slice().sort().join(','),
+    orderDirection,
+    chainFilters.slice().sort().join(','),
+    searchTerm,
+    dateRange,
+    customDateFrom,
+    customDateTo,
+  ]
+
+  const processItems = (rawItems: any[]) => {
+    let items = filterItemsByChain(rawItems, chainFilters)
+    items = filterItemsByDateRange(items, dateRange, customDateFrom, customDateTo)
+    items = filterItemsBySearchTerm(items, searchTerm)
+    return paginateItems(items, currentPage, itemsPerPage)
+  }
+
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: [
-      'pendingItems',
-      queryAddress,
-      currentPage,
-      status.slice().sort().join(','),
-      disputed.slice().sort().join(','),
-      orderDirection,
-      chainFilters.slice().sort().join(','),
-      searchTerm,
-      dateRange,
-      customDateFrom,
-      customDateTo,
-    ],
+    queryKey,
     enabled: !!queryAddress,
     queryFn: async () => {
       // Fetch more items to properly calculate filtered totals
@@ -117,13 +127,20 @@ const PendingSubmissions: React.FC<Props> = ({
         orderDirection,
       })
       if (json.errors) return { items: [], totalFiltered: 0 }
-      let items = await fetchItemPropsFromIpfs(json.data.litems as any[], KLEROS_CDN_BASE)
 
-      items = filterItemsByChain(items, chainFilters)
-      items = filterItemsByDateRange(items, dateRange, customDateFrom, customDateTo)
-      items = filterItemsBySearchTerm(items, searchTerm)
+      const rawItems = json.data.litems as any[]
+      const result = processItems(rawItems)
 
-      return paginateItems(items, currentPage, itemsPerPage)
+      // Fire-and-forget IPFS fallback for items the subgraph failed to index.
+      // Renders immediately with whatever data is available, then patches when ready.
+      const needsIpfs = rawItems.some((i) => (!i.props || i.props.length === 0) && i.data)
+      if (needsIpfs) {
+        fetchItemPropsFromIpfs(rawItems, KLEROS_CDN_BASE).then((patched) => {
+          queryClient.setQueryData(queryKey, processItems(patched))
+        })
+      }
+
+      return result
     },
   })
   useEffect(() => {
