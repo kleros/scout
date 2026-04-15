@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
-import { GraphItem, registryMap, fetchItemPropsFromIpfs } from 'utils/items'
+import { GraphItem, registryMap, fetchItemPropsFromIpfs, patchQueryWithIpfs } from 'utils/items'
 import { KLEROS_CDN_BASE } from 'consts/index'
 import { ITEMS_PER_PAGE } from '../../pages/Registries/index'
 import { chains, getNamespaceForChainId } from '../../utils/chains'
@@ -294,16 +294,11 @@ export const useItemsQuery = ({
 
       const items = applyChainFilter(rawItems)
 
-      // Fire-and-forget IPFS fallback for items with missing props.
       // Runs on unfiltered items so key0 can be populated, then re-filters.
-      const needsIpfs = rawItems.some((item) => (!item.props || item.props.length === 0) && item.data)
-      if (needsIpfs) {
-        fetchItemPropsFromIpfs(rawItems, KLEROS_CDN_BASE).then((patched) => {
-          queryClient.setQueryData<ItemsQueryResult>(queryKey, (old) =>
-            old ? { ...old, items: applyChainFilter(patched) } : { items: applyChainFilter(patched), totalCount },
-          )
-        })
-      }
+      patchQueryWithIpfs<ItemsQueryResult>(queryClient, queryKey, rawItems, async () => {
+        const patched = await fetchItemPropsFromIpfs(rawItems, KLEROS_CDN_BASE)
+        return { items: applyChainFilter(patched), totalCount }
+      })
 
       return { items, totalCount }
     },

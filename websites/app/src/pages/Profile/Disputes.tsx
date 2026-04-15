@@ -5,7 +5,7 @@ import DisputeCard from './DisputeCard'
 import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
-import { registryMap, fetchItemPropsFromIpfs } from 'utils/items'
+import { registryMap, fetchItemPropsFromIpfs, patchQueryWithIpfs } from 'utils/items'
 import { KLEROS_CDN_BASE } from 'consts/index'
 import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
 import { fetchSubgraph } from 'utils/fetchSubgraph'
@@ -220,22 +220,13 @@ const Disputes: React.FC<Props> = ({
       const rawChallenger = (json.data.asChallenger as any[]) || []
       const result = processItems(rawRequester, rawChallenger)
 
-      // Fire-and-forget IPFS fallback for items the subgraph failed to index.
-      // Renders immediately with whatever data is available, then patches when ready.
-      const needsIpfs = [...rawRequester, ...rawChallenger].some(
-        (i) => (!i.props || i.props.length === 0) && i.data,
-      )
-      if (needsIpfs) {
-        Promise.all([
+      patchQueryWithIpfs(queryClient, queryKey, [...rawRequester, ...rawChallenger], async () => {
+        const [patchedRequester, patchedChallenger] = await Promise.all([
           fetchItemPropsFromIpfs(rawRequester, KLEROS_CDN_BASE),
           fetchItemPropsFromIpfs(rawChallenger, KLEROS_CDN_BASE),
-        ]).then(([patchedRequester, patchedChallenger]) => {
-          queryClient.setQueryData(
-            queryKey,
-            processItems(patchedRequester, patchedChallenger),
-          )
-        })
-      }
+        ])
+        return processItems(patchedRequester, patchedChallenger)
+      })
 
       return result
     },

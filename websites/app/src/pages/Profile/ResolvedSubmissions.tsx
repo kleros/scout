@@ -7,7 +7,7 @@ import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
 import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
 import { fetchSubgraph } from 'utils/fetchSubgraph'
-import { fetchItemPropsFromIpfs } from 'utils/items'
+import { fetchItemPropsFromIpfs, patchQueryWithIpfs } from 'utils/items'
 import { KLEROS_CDN_BASE } from 'consts/index'
 import { EmptyState } from 'styles/commonStyles'
 
@@ -128,14 +128,9 @@ const ResolvedSubmissions: React.FC<Props> = ({
       const rawItems = json.data.litems as any[]
       const result = processItems(rawItems)
 
-      // Fire-and-forget IPFS fallback for items the subgraph failed to index.
-      // Renders immediately with whatever data is available, then patches when ready.
-      const needsIpfs = rawItems.some((i) => (!i.props || i.props.length === 0) && i.data)
-      if (needsIpfs) {
-        fetchItemPropsFromIpfs(rawItems, KLEROS_CDN_BASE).then((patched) => {
-          queryClient.setQueryData(queryKey, processItems(patched))
-        })
-      }
+      patchQueryWithIpfs(queryClient, queryKey, rawItems, async () =>
+        processItems(await fetchItemPropsFromIpfs(rawItems, KLEROS_CDN_BASE)),
+      )
 
       return result
     },
