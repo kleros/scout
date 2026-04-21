@@ -3,6 +3,7 @@ import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useSearchParams } from 'react-router-dom'
+import { useCloseAddItemModal } from 'hooks/useCloseAddItemModal'
 import AddAddressTag from './AddSingleTags'
 import AddTagsQueries from './AddTagsQueries'
 import AddToken from './AddToken'
@@ -25,7 +26,6 @@ const ModalOverlay = styled.div`
 
 const ModalContainer = styled.div`
   background: ${({ theme }) => theme.modalBackground};
-  backdrop-filter: blur(50px);
   border-radius: 20px;
   border: 1px solid ${({ theme }) => theme.stroke};
   width: 90vw;
@@ -148,7 +148,6 @@ export const StyledTextInput = styled.input`
   border-radius: 8px;
   font-size: 16px;
   font-weight: 400;
-  backdrop-filter: blur(10px);
   position: relative;
   z-index: 1;
   transition: all 0.2s ease;
@@ -220,36 +219,18 @@ export const ErrorMessage = styled.div`
 `
 
 export const CloseButton = () => {
-  const [, setSearchParams] = useSearchParams()
-
-  const closeModal = () => {
-    setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      newParams.delete('additem')
-      return newParams
-    })
-  }
-
-  return <StyledCloseButton onClick={() => closeModal()} />
+  const closeModal = useCloseAddItemModal()
+  return <StyledCloseButton onClick={closeModal} />
 }
 
 const AddItemModal: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
   const addingItemToRegistry = useMemo(
     () => searchParams.get('additem'),
     [searchParams]
   )
-
-  const closeModal = () => {
-    setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      newParams.delete('additem')
-      return newParams
-    })
-  }
+  const closeModal = useCloseAddItemModal()
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Check if click is on a react-select menu (which is portaled to body)

@@ -38,7 +38,6 @@ const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(50px);
   box-shadow: ${({ theme }) => theme.shadowModal};
   max-height: 90vh;
   overflow-y: auto;

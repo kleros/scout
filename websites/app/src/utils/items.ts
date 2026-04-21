@@ -1,5 +1,14 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
 
+export type RegistryKey = 'single-tags' | 'tags-queries' | 'cdn' | 'tokens'
+
+export interface Column {
+  label: string
+  description: string
+  type: string
+  isIdentifier?: boolean
+}
+
 export const registryMap: Record<string, string> = {
   'single-tags': '0x66260c69d03837016d88c9877e61e08ef74c59f2',
   'tags-queries': '0xae6aaed5434244be3699c56e7ebc828194f26dc3',

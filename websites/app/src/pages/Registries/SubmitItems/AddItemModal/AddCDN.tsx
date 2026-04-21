@@ -1,38 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useLocalStorage, clearLocalStorage } from 'hooks/useLocalStorage'
-import { useQuery } from '@tanstack/react-query'
-import { formatEther } from 'viem'
-import getAddressValidationIssue from 'utils/validateAddress'
-import ipfsPublish from 'utils/ipfsPublish'
-import { getIPFSPath } from 'utils/getIPFSPath'
-import { FocusedRegistry } from 'utils/itemCounts'
-import { useItemCountsQuery } from '../../../../hooks/queries'
-import { useCurateInteractions } from '../../../../hooks/contracts/useCurateInteractions'
-import { EnsureChain } from '../../../../components/EnsureChain'
+import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useLocalStorage } from 'hooks/useLocalStorage'
+import { useValidationIssues } from 'hooks/useValidationIssues'
+import { useCurateSubmit } from 'hooks/useCurateSubmit'
+import { parseCaip10 } from 'utils/parseCaip10'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
-import { ClosedButtonContainer } from 'pages/Registries'
+import ModalHeader from './ModalHeader'
+import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
-  AddHeader,
-  HeaderActions,
-  AddSubtitle,
-  AddTitle,
-  CloseButton,
   ErrorMessage,
-  StyledGoogleFormAnchor,
   StyledTextInput,
-  SubmitButton,
-  ExpectedPayouts,
-  PayoutsContainer,
-  Divider,
-  SubmissionButton,
-  FieldLabel
+  FieldLabel,
 } from './index'
-import { useDebounce } from 'react-use'
-import { useSearchParams } from 'react-router-dom'
-import { chains } from 'utils/chains'
-import { infoToast, errorToast } from 'utils/wrapWithToast'
 import Tooltip from 'components/Tooltip'
 
 const columns = [
@@ -59,193 +40,79 @@ const columns = [
   },
 ]
 
+const DEFAULT_FORM = {
+  network: { value: 'eip155:1', label: 'Mainnet' } as NetworkOption,
+  address: '',
+  domain: '',
+  path: '',
+}
+
 const AddCDN: React.FC = () => {
-  const [formData, setFormData] = useLocalStorage('addCDNForm', {
-    network: { value: 'eip155:1', label: 'Mainnet' },
-    address: '',
-    domain: '',
-    path: '',
-  });
+  const [formData, setFormData] = useLocalStorage('addCDNForm', DEFAULT_FORM)
 
-  const [network, setNetwork] = useState<NetworkOption>(formData.network);
-  const [address, setAddress] = useState<string>(formData.address);
-  const [domain, setDomain] = useState<string>(formData.domain);
-  const [path, setPath] = useState<string>(formData.path);
-
-  const [debouncedAddress, setDebouncedAddress] = useState<string>('')
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [imageError, setImageError] = useState<string | null>(null);
-
+  const [network, setNetwork] = useState<NetworkOption>(formData.network)
+  const [address, setAddress] = useState<string>(formData.address)
+  const [domain, setDomain] = useState<string>(formData.domain)
+  const [path, setPath] = useState<string>(formData.path)
+  const [imageError, setImageError] = useState<string | null>(null)
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
-    const caip10AddressParam = searchParams.get('caip10Address');
-    const domainParam = searchParams.get('domain');
-  
-    if (caip10AddressParam) {
-      const separatorIndex = caip10AddressParam.lastIndexOf(':');
-      const networkIdentifier = caip10AddressParam.substring(0, separatorIndex);
-      const walletAddress = caip10AddressParam.substring(separatorIndex + 1);
-  
-      const networkLabel = chains.find(
-        (reference) => `${reference.namespace}:${reference.id}` === networkIdentifier
-      )?.label;
-  
-      const networkOption = {
-        value: networkIdentifier,
-        label: networkLabel,
-      };
-  
-      setNetwork({ ...networkOption, label: networkLabel || '' });
-      setAddress(walletAddress);
+    const caip10 = searchParams.get('caip10Address')
+    if (caip10) {
+      const parsed = parseCaip10(caip10)
+      setNetwork(parsed.network)
+      setAddress(parsed.address)
     }
-  
-    if (domainParam) {
-      setDomain(domainParam);
-    }
-  }, [searchParams]);
-
-  useDebounce(
-    () => {
-      setDebouncedAddress(address)
-    },
-    500,
-    [address]
-  )
-
-  const { data: countsData } = useItemCountsQuery()
-
-  const registry: FocusedRegistry | undefined = useMemo(() => {
-    const registryLabel = searchParams.get('additem')
-    if (registryLabel === null || !countsData) return undefined
-    return countsData[registryLabel]
-  }, [searchParams, countsData])
-
-  const networkAddressKey = network.value + ':' + debouncedAddress
-
-  const cacheKey = `addressIssues:${networkAddressKey}:${domain}`
-  
-  const cachedIssues = useMemo(() => {
-    const cached = localStorage.getItem(cacheKey)
-    if (!cached) return null
-  
-    try {
-      return JSON.parse(cached)
-    } catch {
-      localStorage.removeItem(cacheKey)
-      return null
-    }
-  }, [cacheKey])
-  
-  const { isLoading: addressIssuesLoading, data: addressIssuesData } = useQuery({
-    queryKey: ['addressissues', networkAddressKey, 'cdn', domain],
-    queryFn: async () => {
-      const res = await getAddressValidationIssue(network.value, 'cdn', debouncedAddress, domain)
-      localStorage.setItem(cacheKey, JSON.stringify(res))
-      return res
-    },
-    enabled: Boolean(debouncedAddress) || Boolean(domain),
-    placeholderData: cachedIssues,
-  });
+    const domainParam = searchParams.get('domain')
+    if (domainParam) setDomain(domainParam)
+  }, [searchParams])
 
   useEffect(() => {
-    setFormData({ network, address, domain, path });
-  }, [network, address, domain, path, setFormData]);
+    setFormData({ network, address, domain, path })
+  }, [network, address, domain, path, setFormData])
 
-  const [isLocalLoading, setIsLocalLoading] = useState(false);
-  const { addItem, isLoading: isContractLoading } = useCurateInteractions();
+  const { data: issues, isLoading: issuesLoading } = useValidationIssues({
+    chainId: network.value,
+    registry: 'cdn',
+    address,
+    domain,
+  })
 
-  // Combined loading state for both IPFS upload and contract interaction
-  const isSubmitting = isLocalLoading || isContractLoading;
+  const { submit, isSubmitting, deposits } = useCurateSubmit({
+    registryKey: 'cdn',
+    localStorageKey: 'addCDNForm',
+    columns,
+    onResetForm: () => {
+      setNetwork(DEFAULT_FORM.network)
+      setAddress('')
+      setDomain('')
+      setPath('')
+    },
+  })
 
-  const submitCDN = async () => {
-    if (!countsData?.['cdn']?.deposits) return;
+  const submittingDisabled =
+    !address ||
+    !domain ||
+    !!issues ||
+    issuesLoading ||
+    !path ||
+    !!imageError ||
+    isSubmitting
 
-    setIsLocalLoading(true);
-    try {
-      const values = {
-        'Contract address': `${network.value}:${address}`,
-        'Domain name': domain,
-        'Visual proof': path,
-      }
-      const item = {
-        columns,
-        values,
-      }
-
-      infoToast('Uploading item to IPFS...');
-      const enc = new TextEncoder()
-      const fileData = enc.encode(JSON.stringify(item))
-      const ipfsObject = await ipfsPublish('item.json', fileData)
-      const ipfsPath = getIPFSPath(ipfsObject)
-
-      const result = await addItem(
-        '0x957a53a994860be4750810131d9c876b2f52d6e1' as `0x${string}`,
-        ipfsPath,
-        countsData['cdn'].deposits
-      );
-
-      if (result?.status) {
-        // Reset form state before clearing localStorage to prevent the useEffect from saving it again
-        setNetwork({ value: 'eip155:1', label: 'Mainnet' });
-        setAddress('');
-        setDomain('');
-        setPath('');
-        clearLocalStorage('addCDNForm');
-        // Close the modal by removing the additem query parameter
-        setSearchParams((prev) => {
-          const prevParams = prev.toString()
-          const newParams = new URLSearchParams(prevParams)
-          newParams.delete('additem')
-          return newParams
-        })
-      }
-    } catch (error) {
-      console.error('Error submitting CDN:', error);
-      errorToast(error instanceof Error ? error.message : 'Failed to submit CDN');
-    } finally {
-      setIsLocalLoading(false);
-    }
-  }
-
-  const handleClose = () => {
-    // Just close - preserve the draft in localStorage for later
-  }
-
-  const submittingDisabled = useMemo(() => {
-    return Boolean(!address || !domain || !!addressIssuesData || !!addressIssuesLoading || !path || imageError || isSubmitting);
-  }, [address, domain, addressIssuesData, addressIssuesLoading, path, imageError, isSubmitting]);
+  const handleSubmit = () =>
+    submit({
+      'Contract address': `${network.value}:${address}`,
+      'Domain name': domain,
+      'Visual proof': path,
+    })
 
   return (
     <AddContainer>
-      <AddHeader>
-        <div>
-          <AddTitle>Submit CDN</AddTitle>
-          <AddSubtitle>
-            Want to suggest an item without any deposit?{' '}
-            <StyledGoogleFormAnchor
-              target="_blank"
-              href="https://docs.google.com/forms/d/e/1FAIpQLSeO32UBCpIYu3XIKGM-hLqWu51XcsSG1QRxtuycZPyS9mMtVg/viewform"
-            >
-              Click here
-            </StyledGoogleFormAnchor>
-          </AddSubtitle>
-        </div>
-        <HeaderActions>
-          {registry && (
-            <SubmissionButton
-              href={`https://cdn.kleros.link${registry.metadata.policyURI}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Submission Guidelines
-            </SubmissionButton>
-          )}
-          <ClosedButtonContainer onClick={handleClose}>
-            <CloseButton />
-          </ClosedButtonContainer>
-        </HeaderActions>
-      </AddHeader>
-      <Divider />
+      <ModalHeader
+        title="Submit CDN"
+        googleFormUrl="https://docs.google.com/forms/d/e/1FAIpQLSeO32UBCpIYu3XIKGM-hLqWu51XcsSG1QRxtuycZPyS9mMtVg/viewform"
+      />
       <RichAddressForm
         networkOption={network}
         setNetwork={setNetwork}
@@ -254,45 +121,33 @@ const AddCDN: React.FC = () => {
         registry="cdn"
         tooltip={columns[0].description}
       />
-      {addressIssuesData?.address && (
-        <ErrorMessage>{addressIssuesData.address.message}</ErrorMessage>
-      )}
-      <FieldLabel><Tooltip data-tooltip={columns[1].description}>Domain</Tooltip></FieldLabel>
+      {issues?.address && <ErrorMessage>{issues.address.message}</ErrorMessage>}
+      <FieldLabel>
+        <Tooltip data-tooltip={columns[1].description}>Domain</Tooltip>
+      </FieldLabel>
       <StyledTextInput
         placeholder="e.g. kleros.io"
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
       />
-      {addressIssuesData?.domain && (
-        <ErrorMessage>{addressIssuesData.domain.message}</ErrorMessage>
-      )}
-      {addressIssuesData?.duplicate && (
-        <ErrorMessage>{addressIssuesData.duplicate.message}</ErrorMessage>
+      {issues?.domain && <ErrorMessage>{issues.domain.message}</ErrorMessage>}
+      {issues?.duplicate && (
+        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
       )}
       <ImageUpload
         path={path}
         setPath={setPath}
         registry="cdn"
         tooltip={columns[2].description}
-        {...{setImageError}}
+        setImageError={setImageError}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
-      <PayoutsContainer>
-        <EnsureChain>
-          <SubmitButton disabled={submittingDisabled} onClick={submitCDN}>
-            {isSubmitting ? 'Submitting...' : 'Submit'}
-          </SubmitButton>
-        </EnsureChain>
-        <ExpectedPayouts>
-          Deposit:{' '}
-          {countsData?.['cdn']?.deposits
-            ? formatEther(
-              countsData['cdn'].deposits.arbitrationCost +
-              countsData['cdn'].deposits.submissionBaseDeposit
-            ) + ' xDAI'
-            : null}
-        </ExpectedPayouts>
-      </PayoutsContainer>
+      <SubmitFooter
+        deposits={deposits}
+        disabled={submittingDisabled}
+        isSubmitting={isSubmitting}
+        onSubmit={handleSubmit}
+      />
     </AddContainer>
   )
 }

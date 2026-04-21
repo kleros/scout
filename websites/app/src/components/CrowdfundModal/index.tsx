@@ -26,7 +26,6 @@ const Modal = styled.div`
   position: relative;
   background: ${({ theme }) => theme.modalBackground};
   border: 1px solid ${({ theme }) => theme.stroke};
-  backdrop-filter: blur(50px);
   color: ${({ theme }) => theme.primaryText};
   border-radius: 20px;
   padding: 32px;
