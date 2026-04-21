@@ -1,52 +1,67 @@
 import React from 'react'
 import styled from 'styled-components'
 import { useSearchParams } from 'react-router-dom'
-import Button from 'components/Button'
-import { hoverShortTransitionTiming } from 'styles/commonStyles';
+import { useIsMobile } from 'hooks/useIsMobile'
+import {
+  getEffectivePreference,
+  useSubmissionPreference,
+} from 'hooks/useSubmissionPreference'
+import { baseButtonStyles, primaryButtonStyles } from 'components/Button'
+import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
-const StyledButton = styled(Button)`
+const StyledAnchor = styled.a`
+  ${baseButtonStyles}
+  ${primaryButtonStyles}
   ${hoverShortTransitionTiming}
-  display: flex;
-  background: ${({ theme }) => theme.buttonWhite};
-  color: ${({ theme }) => theme.black};
   font-size: 14px;
-  font-family: "Open Sans", sans-serif;
-  font-weight: 600;
   padding: 10px 20px;
-  border-radius: 9999px;
-
-  &:hover {
-    background: ${({ theme }) => theme.buttonWhiteHover};
-  }
-
-  &:active {
-    background: ${({ theme }) => theme.buttonWhiteActive};
-  }
+  text-decoration: none;
 `
 
 interface SubmitButtonProps {
-  registryName?: string;
+  registryName?: string
 }
 
 const SubmitButton: React.FC<SubmitButtonProps> = ({ registryName }) => {
   const [, setSearchParams] = useSearchParams()
+  const isMobile = useIsMobile()
+  // Subscribe so this component re-renders if the preference changes elsewhere.
+  useSubmissionPreference()
+
+  if (!registryName) return null
+
+  // HASH_ROUTER_HREF: the app uses HashRouter (see src/index.tsx). Absolute
+  // `/#/...` keeps the URL clean regardless of current query params. If the
+  // app migrates to BrowserRouter, grep this marker to update every call site.
+  const submitHref = `/#/${registryName}/submit`
 
   const openModal = () => {
-    if (!registryName) return;
     setSearchParams((prev) => {
-      const prevParams = prev.toString()
-      const newParams = new URLSearchParams(prevParams)
-      newParams.append('additem', registryName)
-      return newParams
+      const next = new URLSearchParams(prev.toString())
+      next.append('additem', registryName)
+      return next
     })
   }
 
-  if (!registryName) return null;
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    // Modifier / non-primary clicks: let the browser open a new tab.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+    // Live-read the preference so changes in another tab take effect immediately.
+    if (getEffectivePreference(isMobile)) return
+    e.preventDefault()
+    openModal()
+  }
 
   return (
-    <>
-      <StyledButton onClick={() => openModal()}>Submit item</StyledButton>
-    </>
+    <StyledAnchor
+      href={submitHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={handleClick}
+    >
+      Submit item
+    </StyledAnchor>
   )
 }
+
 export default SubmitButton

@@ -1,6 +1,8 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from 'hooks/useIsMobile';
+import { getEffectivePreference } from 'hooks/useSubmissionPreference';
 import {
   ModalOverlay,
   ModalWrapper,
@@ -185,11 +187,17 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
   onClose,
 }) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   if (!isOpen) return null;
 
   const handleOptionClick = (registryKey: string) => {
-    navigate(`/${registryKey}?additem=${registryKey}`);
+    if (getEffectivePreference(isMobile)) {
+      // HASH_ROUTER_HREF: see note in SubmitButton.tsx
+      window.open(`/#/${registryKey}/submit`, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(`/${registryKey}?additem=${registryKey}`);
+    }
     onClose();
   };
 

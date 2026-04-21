@@ -1,6 +1,10 @@
 import React from 'react'
-import { useSearchParams } from 'react-router-dom'
+import styled from 'styled-components'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useItemCountsQuery } from 'hooks/queries'
+import { useSubmissionPreference } from 'hooks/useSubmissionPreference'
+import Checkbox from 'components/Checkbox'
+import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { ClosedButtonContainer } from 'pages/Registries'
 import PolicyUpdatedBadge from 'pages/Registries/PolicyUpdatedBadge'
 import {
@@ -14,6 +18,24 @@ import {
   Divider,
 } from './index'
 
+const PreferenceRow = styled.label`
+  ${hoverShortTransitionTiming}
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  color: ${({ theme }) => theme.secondaryText};
+  cursor: pointer;
+  user-select: none;
+  width: fit-content;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryText};
+  }
+`
+
 interface Props {
   title: string
   googleFormUrl?: string
@@ -21,11 +43,28 @@ interface Props {
 
 const ModalHeader: React.FC<Props> = ({ title, googleFormUrl }) => {
   const [searchParams] = useSearchParams()
+  const { registryName: pathRegistry } = useParams<{ registryName: string }>()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { data: countsData } = useItemCountsQuery()
+  const { preferNewTab, setPreferNewTab } = useSubmissionPreference()
 
-  const registryLabel = searchParams.get('additem')
+  const isPageMode = location.pathname.endsWith('/submit')
+  const registryLabel = searchParams.get('additem') ?? (isPageMode ? pathRegistry : null)
   const registry =
     registryLabel && countsData ? countsData[registryLabel] : undefined
+
+  const handleToggle = (checked: boolean) => {
+    setPreferNewTab(checked)
+    if (!registryLabel) return
+    // Same-tab redirect so the user lands on the mode they just selected.
+    // Form state is preserved via localStorage on each form component.
+    if (checked && !isPageMode) {
+      navigate(`/${registryLabel}/submit`)
+    } else if (!checked && isPageMode) {
+      navigate(`/${registryLabel}?additem=${registryLabel}`)
+    }
+  }
 
   return (
     <>
@@ -40,6 +79,13 @@ const ModalHeader: React.FC<Props> = ({ title, googleFormUrl }) => {
               </StyledGoogleFormAnchor>
             </AddSubtitle>
           )}
+          <PreferenceRow>
+            <Checkbox
+              checked={preferNewTab}
+              onChange={(e) => handleToggle(e.target.checked)}
+            />
+            Prefer opening submission in a dedicated page
+          </PreferenceRow>
         </div>
         <HeaderActions>
           {registry && (
@@ -52,9 +98,11 @@ const ModalHeader: React.FC<Props> = ({ title, googleFormUrl }) => {
               <PolicyUpdatedBadge registryName={registryLabel} />
             </SubmissionButton>
           )}
-          <ClosedButtonContainer>
-            <CloseButton />
-          </ClosedButtonContainer>
+          {!isPageMode && (
+            <ClosedButtonContainer>
+              <CloseButton />
+            </ClosedButtonContainer>
+          )}
         </HeaderActions>
       </AddHeader>
       <Divider />
