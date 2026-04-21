@@ -16,6 +16,7 @@ import FilterModal from 'components/FilterModal';
 import FilterButton from 'components/FilterButton';
 import ViewSwitcher from 'components/ViewSwitcher';
 import { useViewMode } from 'hooks/useViewMode';
+import { usePolicyHistory } from 'hooks/usePolicyHistory';
 import CloseIcon from 'svgs/icons/close.svg';
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
@@ -382,6 +383,10 @@ const Home: React.FC = () => {
   }, [currentItemCount, totalCount]);
 
   const currentRegistryAddress = registryName ? registryMap[registryName] : undefined;
+
+  // Prefetch the latest policy-update timestamp so the "(updated X ago)" badge
+  // is warm in cache by the time the user clicks "Submit item".
+  usePolicyHistory(currentRegistryAddress, 'latest');
 
 
   return (

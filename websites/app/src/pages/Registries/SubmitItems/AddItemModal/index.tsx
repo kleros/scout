@@ -1,9 +1,10 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCloseAddItemModal } from 'hooks/useCloseAddItemModal'
+import { useIsMobile } from 'hooks/useIsMobile'
 import AddAddressTag from './AddSingleTags'
 import AddTagsQueries from './AddTagsQueries'
 import AddToken from './AddToken'
@@ -56,9 +57,8 @@ export const AddContainer = styled.div`
 
 export const AddHeader = styled.div`
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
 `
 
 export const HeaderActions = styled.div`
@@ -231,6 +231,18 @@ const AddItemModal: React.FC = () => {
     [searchParams]
   )
   const closeModal = useCloseAddItemModal()
+  const isMobile = useIsMobile()
+  const navigate = useNavigate()
+
+  // On mobile the modal is never shown — redirect to the dedicated page.
+  // Handles deep links (?additem=...) and desktop→mobile resizes.
+  useEffect(() => {
+    if (isMobile && addingItemToRegistry) {
+      navigate(`/${addingItemToRegistry}/submit`, { replace: true })
+    }
+  }, [isMobile, addingItemToRegistry, navigate])
+
+  if (isMobile) return null
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Check if click is on a react-select menu (which is portaled to body)

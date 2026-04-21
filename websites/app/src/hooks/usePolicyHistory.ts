@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { fetchPolicyHistory, PolicyHistoryEntry } from 'utils/fetchPolicyHistory'
+import {
+  fetchPolicyHistory,
+  PolicyFetchMode,
+  PolicyHistoryEntry,
+} from 'utils/fetchPolicyHistory'
 
 const CACHE_KEY_PREFIX = 'policyHistory'
 const CACHE_EXPIRY = 24 * 60 * 60 * 1000 // 24 hours
@@ -10,13 +14,27 @@ interface CachedEntry {
   timestamp: number
 }
 
-const getCachedEntry = (registryAddress: string): CachedEntry | null => {
+/**
+ * Kept in sync with the historical key so existing localStorage entries from
+ * earlier app versions still hit on first load after deploy. New modes get
+ * their own suffix.
+ */
+const cacheKey = (address: string, mode: PolicyFetchMode): string =>
+  mode === 'full'
+    ? `${CACHE_KEY_PREFIX}-${address}`
+    : `${CACHE_KEY_PREFIX}-${mode}-${address}`
+
+const getCachedEntry = (
+  address: string,
+  mode: PolicyFetchMode,
+): CachedEntry | null => {
   try {
-    const cached = localStorage.getItem(`${CACHE_KEY_PREFIX}-${registryAddress}`)
-    if (!cached) return null
-    const parsed: CachedEntry = JSON.parse(cached)
+    const key = cacheKey(address, mode)
+    const raw = localStorage.getItem(key)
+    if (!raw) return null
+    const parsed: CachedEntry = JSON.parse(raw)
     if (Date.now() - parsed.timestamp > CACHE_EXPIRY) {
-      localStorage.removeItem(`${CACHE_KEY_PREFIX}-${registryAddress}`)
+      localStorage.removeItem(key)
       return null
     }
     return parsed
@@ -25,37 +43,74 @@ const getCachedEntry = (registryAddress: string): CachedEntry | null => {
   }
 }
 
-const setCachedEntry = (registryAddress: string, data: PolicyHistoryEntry[]) => {
+const setCachedEntry = (
+  address: string,
+  mode: PolicyFetchMode,
+  data: PolicyHistoryEntry[],
+) => {
   try {
     const entry: CachedEntry = { data, timestamp: Date.now() }
-    localStorage.setItem(`${CACHE_KEY_PREFIX}-${registryAddress}`, JSON.stringify(entry))
+    localStorage.setItem(cacheKey(address, mode), JSON.stringify(entry))
   } catch (e) {
     console.error('Error caching policy history:', e)
   }
 }
 
-export function usePolicyHistory(registryAddress: string | undefined) {
-  const normalizedAddress = registryAddress?.toLowerCase()
+/**
+ * Returns the registration-policy history for a registry.
+ *
+ * @param mode
+ *   - `'full'` (default): every policy ever. Used by the Previous Policies
+ *     modal and attachment display.
+ *   - `'latest'`: a single-entry array with the current active policy. Used
+ *     by the "updated X ago" badge — backward-scans the chain and stops on
+ *     the first hit (~1-2s vs ~8-24s for a full scan).
+ *
+ * When `'latest'` is requested and a fresh `'full'` cache exists, the current
+ * entry is derived from it without any network call — so a user who has
+ * already opened Previous Policies gets an instant badge afterwards.
+ */
+export function usePolicyHistory(
+  registryAddress: string | undefined,
+  mode: PolicyFetchMode = 'full',
+) {
+  const normalized = registryAddress?.toLowerCase()
 
-  // Recomputed every time the address changes, so each registry
-  // only ever sees its own cached entry. Prevents leaking a previous
-  // registry's data into a new one during navigation.
   const cachedEntry = useMemo(
-    () => (normalizedAddress ? getCachedEntry(normalizedAddress) : null),
-    [normalizedAddress]
+    () => (normalized ? getCachedEntry(normalized, mode) : null),
+    [normalized, mode],
   )
 
   return useQuery({
-    queryKey: ['policyHistory', normalizedAddress],
+    queryKey: ['policyHistory', normalized, mode],
     queryFn: async (): Promise<PolicyHistoryEntry[]> => {
-      if (!normalizedAddress) return []
+      if (!normalized) return []
 
-      const entries = await fetchPolicyHistory(normalizedAddress)
+      // Cross-mode reuse: if the 'full' cache is fresh, derive 'latest' from
+      // it for free instead of doing another RPC scan.
+      if (mode === 'latest') {
+        const fullCached = getCachedEntry(normalized, 'full')
+        if (fullCached) {
+          const current = fullCached.data.find((e) => e.endDate === null)
+          const derived = current ? [current] : []
+          setCachedEntry(normalized, 'latest', derived)
+          return derived
+        }
+      }
 
-      setCachedEntry(normalizedAddress, entries)
+      const entries = await fetchPolicyHistory(normalized, mode)
+      setCachedEntry(normalized, mode, entries)
+
+      // Write-through: a fresh 'full' fetch also warms the 'latest' cache,
+      // so subsequent badge renders are instant.
+      if (mode === 'full' && entries.length > 0) {
+        const current = entries.find((e) => e.endDate === null)
+        if (current) setCachedEntry(normalized, 'latest', [current])
+      }
+
       return entries
     },
-    enabled: !!normalizedAddress,
+    enabled: !!normalized,
     initialData: cachedEntry?.data,
     initialDataUpdatedAt: cachedEntry?.timestamp,
     staleTime: CACHE_EXPIRY,
