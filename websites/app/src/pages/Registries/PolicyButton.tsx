@@ -4,6 +4,7 @@ import { useItemCountsQuery } from 'hooks/queries';
 import { KLEROS_CDN_BASE } from 'consts/index';
 import styled from 'styled-components';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
+import PolicyUpdatedBadge from './PolicyUpdatedBadge';
 
 const StyledLabel = styled.label`
   ${hoverShortTransitionTiming}
@@ -40,6 +41,7 @@ const PolicyButton: React.FC<PolicyButtonProps> = ({ registryName }) => {
       }}
     >
       Policy
+      <PolicyUpdatedBadge registryName={registryName} />
     </StyledLabel>
   );
 };

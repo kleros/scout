@@ -2,6 +2,7 @@ import React from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useItemCountsQuery } from 'hooks/queries'
 import { ClosedButtonContainer } from 'pages/Registries'
+import PolicyUpdatedBadge from 'pages/Registries/PolicyUpdatedBadge'
 import {
   AddHeader,
   HeaderActions,
@@ -48,6 +49,7 @@ const ModalHeader: React.FC<Props> = ({ title, googleFormUrl }) => {
               rel="noopener noreferrer"
             >
               Submission Guidelines
+              <PolicyUpdatedBadge registryName={registryLabel} />
             </SubmissionButton>
           )}
           <ClosedButtonContainer>
