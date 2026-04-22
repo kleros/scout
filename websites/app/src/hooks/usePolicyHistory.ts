@@ -113,11 +113,11 @@ export function usePolicyHistory(
     enabled: !!normalized,
     initialData: cachedEntry?.data,
     initialDataUpdatedAt: cachedEntry?.timestamp,
-    staleTime: CACHE_EXPIRY,
+    staleTime: mode === 'latest' ? 60 * 60 * 1000 : CACHE_EXPIRY,
     gcTime: CACHE_EXPIRY,
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
   })
 }
