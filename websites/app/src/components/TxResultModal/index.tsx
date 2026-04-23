@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import humanizeDuration from 'humanize-duration'
 import { useTxResultModal } from 'context/TxResultContext'
@@ -213,6 +214,20 @@ const ExternalLink = styled.a`
   }
 `
 
+const ActivityLink = styled(Link)`
+  align-self: flex-end;
+  color: ${({ theme }) => theme.secondaryBlue};
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 4px 0;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
+  }
+`
+
 const CheckIcon = () => (
   <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
     <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm3.7 6.3-4.2 4.2a.8.8 0 0 1-1.2 0L4.3 8.5a.8.8 0 1 1 1.2-1.2l1.4 1.4 3.6-3.6a.8.8 0 1 1 1.2 1.2Z" />
@@ -388,6 +403,12 @@ const TxResultModal: React.FC = () => {
               <DetailValue>{formatAmount(txFeeWei)} xDAI</DetailValue>
             </DetailRow>
           </DetailsList>
+          <ActivityLink
+            to={`/profile/pending?address=${from.toLowerCase()}`}
+            onClick={hide}
+          >
+            View my activity →
+          </ActivityLink>
         </Body>
       </Container>
     </Overlay>

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import type { Address } from 'viem'
 import { useCurateInteractions } from './contracts/useCurateInteractions'
 import { useItemCountsQuery } from './queries'
@@ -30,7 +29,6 @@ export const useCurateSubmit = ({
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const { addItem, isLoading: isContractLoading } = useCurateInteractions()
   const { data: countsData } = useItemCountsQuery()
-  const navigate = useNavigate()
   const { show: showTxResult } = useTxResultModal()
 
   const deposits = countsData?.[registryKey]?.deposits
@@ -54,7 +52,6 @@ export const useCurateSubmit = ({
       if (result?.status && result.result) {
         onResetForm()
         clearLocalStorage(localStorageKey)
-        navigate(`/${registryKey}`)
         const receipt = result.result
         showTxResult({
           hash: receipt.transactionHash,
