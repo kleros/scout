@@ -10,7 +10,6 @@ import Search from './Search';
 import LoadingItems from './LoadingItems';
 import ItemsList from './ItemsList';
 import { StyledPagination } from 'components/StyledPagination';
-import AddItemModal from './SubmitItems/AddItemModal';
 import ParametersModal from './ParametersModal';
 import FilterModal from 'components/FilterModal';
 import FilterButton from 'components/FilterButton';
@@ -274,10 +273,6 @@ const Home: React.FC = () => {
   const [viewMode, setViewMode] = useViewMode();
   const [isFilterChanging, setIsFilterChanging] = useState(false);
 
-  const isAddItemOpen = useMemo(
-    () => !!searchParams.get('additem'),
-    [searchParams]
-  );
   const isAttachmentOpen = useMemo(
     () => !!searchParams.get('attachment'),
     [searchParams]
@@ -438,7 +433,6 @@ const Home: React.FC = () => {
                 )}
               </FullWidthSection>
             </PageInner>
-          {isAddItemOpen && <AddItemModal />}
           <FilterModal
             isOpen={isFilterModalOpen}
             onClose={() => setIsFilterModalOpen(false)}

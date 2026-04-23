@@ -5,7 +5,7 @@ import { useValidationIssues } from 'hooks/useValidationIssues'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
-import ModalHeader from './ModalHeader'
+import FormHeader from './FormHeader'
 import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
@@ -137,7 +137,7 @@ const AddAddressTag: React.FC = () => {
 
   return (
     <AddContainer>
-      <ModalHeader
+      <FormHeader
         title="Submit Address Tag"
         googleFormUrl="https://docs.google.com/forms/d/e/1FAIpQLSdTwlrcbbPOkSCMKuUj42d_koSAEkWjMLz5hhTc5lB6aGCO9w/viewform"
       />

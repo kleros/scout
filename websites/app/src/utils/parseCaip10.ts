@@ -1,5 +1,5 @@
 import { chains } from 'utils/chains'
-import type { NetworkOption } from 'pages/Registries/SubmitItems/AddItemModal/RichAddressForm'
+import type { NetworkOption } from 'pages/Registries/SubmitItems/RichAddressForm'
 
 export const parseCaip10 = (
   caip10: string,

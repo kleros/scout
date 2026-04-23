@@ -4,10 +4,10 @@ import { Link, useParams } from 'react-router-dom'
 import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
-import AddAddressTag from 'pages/Registries/SubmitItems/AddItemModal/AddSingleTags'
-import AddTagsQueries from 'pages/Registries/SubmitItems/AddItemModal/AddTagsQueries'
-import AddToken from 'pages/Registries/SubmitItems/AddItemModal/AddToken'
-import AddCDN from 'pages/Registries/SubmitItems/AddItemModal/AddCDN'
+import AddAddressTag from 'pages/Registries/SubmitItems/AddSingleTags'
+import AddTagsQueries from 'pages/Registries/SubmitItems/AddTagsQueries'
+import AddToken from 'pages/Registries/SubmitItems/AddToken'
+import AddCDN from 'pages/Registries/SubmitItems/AddCDN'
 import ScrollTop from 'components/ScrollTop'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
 
@@ -27,6 +27,14 @@ const Container = styled.div`
       padding: 48px ${responsiveSize(0, 48)} 60px;
     `,
   )}
+`
+
+const Inner = styled.div`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 `
 
 const TopBar = styled.div`
@@ -49,9 +57,10 @@ const ReturnButton = styled(Link)`
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 8px 0;
   border-radius: 8px;
   text-decoration: none;
+  align-self: flex-start;
   ${hoverShortTransitionTiming}
 
   &:hover {
@@ -79,8 +88,6 @@ const Card = styled.div`
   border-radius: 12px;
   padding: ${responsiveSize(16, 32)};
   width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
 `
 
 const NotFound = styled.div`
@@ -111,13 +118,15 @@ const SubmitPage: React.FC = () => {
   return (
     <Container>
       <ScrollTop />
-      <TopBar>
-        <ReturnButton to={returnTo}>
-          <ArrowLeftIcon />
-          Return
-        </ReturnButton>
-      </TopBar>
-      <Card>{form}</Card>
+      <Inner>
+        <TopBar>
+          <ReturnButton to={returnTo}>
+            <ArrowLeftIcon />
+            Return
+          </ReturnButton>
+        </TopBar>
+        <Card>{form}</Card>
+      </Inner>
     </Container>
   )
 }

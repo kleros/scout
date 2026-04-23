@@ -3,13 +3,14 @@ import ipfsPublish from 'utils/ipfsPublish'
 import { getIPFSPath } from 'utils/getIPFSPath'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
 import type { Column } from 'utils/items'
+import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 interface Params {
   addItem: (
     registryAddress: Address,
     itemData: string,
     deposits: DepositParams,
-  ) => Promise<{ status?: boolean } | undefined>
+  ) => Promise<WrapWithToastReturnType>
   registryAddress: Address
   columns: Column[]
   values: Record<string, string>

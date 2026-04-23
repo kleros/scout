@@ -9,6 +9,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layout';
 import Web3Provider from "context/Web3Provider";
 import { FilterProvider } from "context/FilterContext";
+import { TxResultProvider } from "context/TxResultContext";
 import ErrorFallback from "./components/ErrorFallback";
 import Registries from './pages/Registries/';
 import ItemDetails from './pages/ItemDetails/';
@@ -39,6 +40,7 @@ const App: React.FC = () => {
         <Web3Provider>
           <QueryClientProvider client={queryClient}>
             <FilterProvider>
+            <TxResultProvider>
             <Routes>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Navigate to="home" replace />} />
@@ -53,6 +55,7 @@ const App: React.FC = () => {
                 <Route path="*" element={<h1>Page not found</h1>} />
               </Route>
             </Routes>
+            </TxResultProvider>
             </FilterProvider>
           </QueryClientProvider>
         </Web3Provider>

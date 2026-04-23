@@ -22,8 +22,10 @@ import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
-import { errorToast, successToast } from 'utils/wrapWithToast'
+import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
+import { useTxResultModal } from 'context/TxResultContext'
+import type { Address } from 'viem'
 
 const Container = styled.div`
   display: flex;
@@ -248,6 +250,7 @@ const ItemDetails: React.FC = () => {
   })
 
   const { executeRequest, isLoading: isExecuting } = useCurateInteractions()
+  const { show: showTxResult } = useTxResultModal()
 
   const registryName = registryDisplayNames[registryNameParam] || registryNameParam || 'Unknown'
 
@@ -431,11 +434,22 @@ const ItemDetails: React.FC = () => {
     if (!detailsData || isExecuting) return
 
     try {
-      await executeRequest(
+      const result = await executeRequest(
         registryAddress as `0x${string}`,
         detailsData.itemID
       )
-      successToast('Request executed successfully!')
+      if (result?.status && result.result) {
+        const receipt = result.result
+        showTxResult({
+          hash: receipt.transactionHash,
+          from: receipt.from,
+          to: (receipt.to ?? registryAddress) as Address,
+          gasUsed: receipt.gasUsed,
+          effectiveGasPrice: receipt.effectiveGasPrice,
+          operationType: 'Request Execution',
+          registryName,
+        })
+      }
     } catch (error) {
       console.error('Error executing request:', error)
       errorToast('Failed to execute request. Please try again.')

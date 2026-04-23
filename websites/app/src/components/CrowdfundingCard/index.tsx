@@ -8,6 +8,9 @@ import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
 import { GraphItemDetails } from '../../utils/itemDetails'
 import { errorToast } from '../../utils/wrapWithToast'
+import { useTxResultModal } from '../../context/TxResultContext'
+import type { Address } from 'viem'
+import { revRegistryMap, registryDisplayNames } from '../../utils/items'
 
 const Card = styled.div`
   background: ${({ theme }) => theme.backgroundThree};
@@ -299,6 +302,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const [contributionShare, setContributionShare] = useState(1)
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
+  const { show: showTxResult } = useTxResultModal()
 
   const requesterFees = useRequiredFees({
     side: PARTY.REQUESTER,
@@ -365,9 +369,30 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
     if (!item || selectedSide === PARTY.NONE || contributionAmount === 0n) return
 
     try {
-      await fundAppeal(registryAddress as `0x${string}`, item.itemID, selectedSide, contributionAmount)
-      setSelectedSide(PARTY.NONE)
-      setContributionShare(1)
+      const result = await fundAppeal(
+        registryAddress as `0x${string}`,
+        item.itemID,
+        selectedSide,
+        contributionAmount,
+      )
+      if (result?.status) {
+        setSelectedSide(PARTY.NONE)
+        setContributionShare(1)
+        if (result.result) {
+          const receipt = result.result
+          const registryKey = revRegistryMap[(registryAddress ?? '').toLowerCase()]
+          showTxResult({
+            hash: receipt.transactionHash,
+            from: receipt.from,
+            to: (receipt.to ?? (registryAddress as Address)) as Address,
+            gasUsed: receipt.gasUsed,
+            effectiveGasPrice: receipt.effectiveGasPrice,
+            operationType: 'Appeal Contribution',
+            deposit: contributionAmount,
+            registryName: registryKey ? registryDisplayNames[registryKey] : undefined,
+          })
+        }
+      }
     } catch (error) {
       console.error('Error funding appeal:', error)
       errorToast(error instanceof Error ? error.message : 'Failed to fund appeal')

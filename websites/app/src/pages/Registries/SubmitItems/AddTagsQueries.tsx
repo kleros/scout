@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useValidationIssues } from 'hooks/useValidationIssues'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
-import ModalHeader from './ModalHeader'
+import FormHeader from './FormHeader'
 import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
@@ -98,7 +98,7 @@ const AddTagsQueries: React.FC = () => {
 
   return (
     <AddContainer>
-      <ModalHeader title="Submit Address Tags Query" />
+      <FormHeader title="Submit Address Tags Query" />
       <FieldLabel>
         <Tooltip data-tooltip={columns[0].description}>Github Repository</Tooltip>
       </FieldLabel>

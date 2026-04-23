@@ -6,7 +6,7 @@ import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
-import ModalHeader from './ModalHeader'
+import FormHeader from './FormHeader'
 import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
@@ -148,7 +148,7 @@ const AddToken: React.FC = () => {
 
   return (
     <AddContainer>
-      <ModalHeader
+      <FormHeader
         title="Submit Token"
         googleFormUrl="https://docs.google.com/forms/d/e/1FAIpQLSchZ5RBd1Y8RNpGCUGY9tZyQZSBgnN_4B9oLfKeKuer9oxGnA/viewform"
       />
