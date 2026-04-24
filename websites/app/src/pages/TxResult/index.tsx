@@ -160,10 +160,6 @@ const StatusChip = styled.span<{ $tone: 'success' | 'error' }>`
   }
 `
 
-const MetaDot = styled.span`
-  color: ${({ theme }) => theme.tertiaryText};
-`
-
 const PrimaryButton = styled(Link)`
   display: inline-flex;
   align-items: center;
@@ -509,7 +505,6 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
               {reverted ? <CrossIcon /> : <CheckIcon />}
               {reverted ? 'Reverted' : 'Confirmed'}
             </StatusChip>
-            <MetaDot>·</MetaDot>
             <span>{formatUtcDate(new Date(confirmedAt))}</span>
           </HeroMeta>
         </HeroText>
