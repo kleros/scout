@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import styled, { css } from 'styled-components'
+import { useNavigate } from 'react-router-dom'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
 import { STATUS_CODE, PARTY, SUBGRAPH_RULING } from '../../utils/itemStatus'
@@ -8,9 +9,6 @@ import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
 import { GraphItemDetails } from '../../utils/itemDetails'
 import { errorToast } from '../../utils/wrapWithToast'
-import { useTxResultModal } from '../../context/TxResultContext'
-import type { Address } from 'viem'
-import { revRegistryMap, registryDisplayNames } from '../../utils/items'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -278,7 +276,7 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
   const [userSelectedSide, setUserSelectedSide] = useState<PARTY>(PARTY.NONE)
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
-  const { show: showTxResult } = useTxResultModal()
+  const navigate = useNavigate()
 
   const round = item?.requests?.[0]?.rounds?.[0]
   const { hasPaidRequester, hasPaidChallenger, ruling } = round || {}
@@ -441,18 +439,7 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
         setContributionShare(1)
         onClose()
         if (result.result) {
-          const receipt = result.result
-          const registryKey = revRegistryMap[(registryAddress ?? '').toLowerCase()]
-          showTxResult({
-            hash: receipt.transactionHash,
-            from: receipt.from,
-            to: (receipt.to ?? (registryAddress as Address)) as Address,
-            gasUsed: receipt.gasUsed,
-            effectiveGasPrice: receipt.effectiveGasPrice,
-            operationType: 'Appeal Contribution',
-            deposit: contributionAmount,
-            registryName: registryKey ? registryDisplayNames[registryKey] : undefined,
-          })
+          navigate(`/tx/${result.result.transactionHash}`)
         }
       }
     } catch (error) {

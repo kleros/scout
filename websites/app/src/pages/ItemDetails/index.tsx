@@ -14,7 +14,7 @@ import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 import useAppealCost from 'hooks/useAppealCost'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus'
-import { registryMap, revRegistryMap, registryDisplayNames } from 'utils/items'
+import { registryMap, registryDisplayNames } from 'utils/items'
 import Item from '../Registries/ItemsList/Item'
 import Breadcrumb from './components/Breadcrumb'
 import ItemDetailsContent from './components/ItemDetailsContent'
@@ -24,8 +24,6 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
-import { useTxResultModal } from 'context/TxResultContext'
-import type { Address } from 'viem'
 
 const Container = styled.div`
   display: flex;
@@ -250,7 +248,6 @@ const ItemDetails: React.FC = () => {
   })
 
   const { executeRequest, isLoading: isExecuting } = useCurateInteractions()
-  const { show: showTxResult } = useTxResultModal()
 
   const registryName = registryDisplayNames[registryNameParam] || registryNameParam || 'Unknown'
 
@@ -439,16 +436,7 @@ const ItemDetails: React.FC = () => {
         detailsData.itemID
       )
       if (result?.status && result.result) {
-        const receipt = result.result
-        showTxResult({
-          hash: receipt.transactionHash,
-          from: receipt.from,
-          to: (receipt.to ?? registryAddress) as Address,
-          gasUsed: receipt.gasUsed,
-          effectiveGasPrice: receipt.effectiveGasPrice,
-          operationType: 'Request Execution',
-          registryName,
-        })
+        navigate(`/tx/${result.result.transactionHash}`)
       }
     } catch (error) {
       console.error('Error executing request:', error)

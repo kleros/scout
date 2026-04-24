@@ -67,7 +67,11 @@ const FormHeader: React.FC<Props> = ({ title, googleFormUrl }) => {
             {googleFormUrl && (
               <AddSubtitle>
                 Want to suggest an item without any deposit?{' '}
-                <StyledGoogleFormAnchor href={googleFormUrl}>
+                <StyledGoogleFormAnchor
+                  href={googleFormUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Click here
                 </StyledGoogleFormAnchor>
               </AddSubtitle>
@@ -79,7 +83,7 @@ const FormHeader: React.FC<Props> = ({ title, googleFormUrl }) => {
             </PolicyWarning>
             {registry && (
               <SubmissionButton
-                href={`/#/${registryName}?attachment=${encodeURIComponent(
+                href={`/${registryName}?attachment=${encodeURIComponent(
                   `${KLEROS_CDN_BASE}${registry.metadata.policyURI}`,
                 )}&isPolicy=true`}
                 target="_blank"

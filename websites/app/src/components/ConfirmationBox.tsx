@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import styled, { css } from 'styled-components'
+import { useNavigate } from 'react-router-dom'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
@@ -14,8 +15,6 @@ import { errorToast, infoToast } from 'utils/wrapWithToast'
 import TransactionButton from 'components/TransactionButton'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
-import { useTxResultModal } from 'context/TxResultContext'
-import { revRegistryMap, registryDisplayNames } from 'utils/items'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
@@ -221,7 +220,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   const [attachedFileName, setAttachedFileName] = useState<string | null>(formData.attachedFileName)
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const { submitEvidence, challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
-  const { show: showTxResult } = useTxResultModal()
+  const navigate = useNavigate()
 
   // Combined loading state for both IPFS upload and contract interaction
   const isLoading = isLocalLoading || isContractLoading
@@ -419,14 +418,9 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     const arbitrationCost = arbitrationCostData as bigint
 
                     let result: WrapWithToastReturnType | undefined
-                    let operationType = ''
-                    let depositAmount: bigint | undefined
-                    let periodSeconds: number | undefined
-                    let periodLabel: string | undefined
                     switch (evidenceConfirmationType) {
                       case 'Evidence':
                         result = await submitEvidence(registryAddress, itemId, ipfsPath)
-                        operationType = 'Evidence Submission'
                         break
                       case 'RegistrationRequested':
                         if (!deposits || deposits.submissionChallengeBaseDeposit === undefined) {
@@ -440,8 +434,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                           BigInt(deposits.submissionChallengeBaseDeposit),
                           arbitrationCost
                         )
-                        operationType = 'Submission Challenge'
-                        depositAmount = arbitrationCost + BigInt(deposits.submissionChallengeBaseDeposit)
                         break
                       case 'Registered':
                         if (!deposits || deposits.removalBaseDeposit === undefined) {
@@ -455,10 +447,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                           deposits,
                           arbitrationCost
                         )
-                        operationType = 'Removal Request'
-                        depositAmount = arbitrationCost + BigInt(deposits.removalBaseDeposit)
-                        periodSeconds = Number(deposits.challengePeriodDuration)
-                        periodLabel = 'Challenge period'
                         break
                       case 'ClearingRequested':
                         if (!deposits || deposits.removalChallengeBaseDeposit === undefined) {
@@ -472,8 +460,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                           BigInt(deposits.removalChallengeBaseDeposit),
                           arbitrationCost
                         )
-                        operationType = 'Removal Challenge'
-                        depositAmount = arbitrationCost + BigInt(deposits.removalChallengeBaseDeposit)
                         break
                       default:
                         throw new Error('Invalid evidence confirmation type')
@@ -490,20 +476,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                       setIsConfirmationOpen(false)
 
                       if (result.result) {
-                        const receipt = result.result
-                        const registryKey = revRegistryMap[registryAddress.toLowerCase()]
-                        showTxResult({
-                          hash: receipt.transactionHash,
-                          from: receipt.from,
-                          to: (receipt.to ?? registryAddress) as Address,
-                          gasUsed: receipt.gasUsed,
-                          effectiveGasPrice: receipt.effectiveGasPrice,
-                          operationType,
-                          deposit: depositAmount,
-                          periodSeconds,
-                          periodLabel,
-                          registryName: registryKey ? registryDisplayNames[registryKey] : undefined,
-                        })
+                        navigate(`/tx/${result.result.transactionHash}`)
                       }
                     }
                   } catch (error) {

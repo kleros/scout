@@ -9,27 +9,67 @@ export interface Column {
   isIdentifier?: boolean
 }
 
-export const registryMap: Record<string, string> = {
-  'single-tags': '0x66260c69d03837016d88c9877e61e08ef74c59f2',
-  'tags-queries': '0xae6aaed5434244be3699c56e7ebc828194f26dc3',
-  'cdn': '0x957a53a994860be4750810131d9c876b2f52d6e1',
-  'tokens': '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
+/**
+ * Single source of truth for registry configuration. To add a new registry,
+ * append a single entry here — `registryMap`, `revRegistryMap`,
+ * `registryDisplayNames`, and `registryNavOptions` all derive from this array,
+ * so downstream consumers (the tx page, decoder, nav, item routes, etc.) pick
+ * it up automatically. Order determines the order of the nav dropdown.
+ *
+ * Prerequisites for a new registry to "just work":
+ *   - Must be a LightGTCR contract (same ABI as existing ones).
+ *   - Must be deployed on Gnosis Chain.
+ */
+interface RegistryConfig {
+  /** URL slug, e.g. 'tokens'. Matches the `:registryName` route param. */
+  key: string
+  /** Contract address on Gnosis. Normalized to lowercase for map lookups. */
+  address: string
+  /** Short display name used in chips, sublabels, back-button text. */
+  displayName: string
+  /** Long-form label used in the top-nav dropdown. */
+  navLabel: string
 }
 
-export const revRegistryMap: Record<string, string> = {
-  '0x66260c69d03837016d88c9877e61e08ef74c59f2': 'single-tags',
-  '0xae6aaed5434244be3699c56e7ebc828194f26dc3': 'tags-queries',
-  '0x957a53a994860be4750810131d9c876b2f52d6e1': 'cdn',
-  '0xee1502e29795ef6c2d60f8d7120596abe3bad990': 'tokens',
-}
+const registries: readonly RegistryConfig[] = [
+  {
+    key: 'tokens',
+    address: '0xee1502e29795ef6c2d60f8d7120596abe3bad990',
+    displayName: 'Tokens',
+    navLabel: 'Tokens',
+  },
+  {
+    key: 'cdn',
+    address: '0x957a53a994860be4750810131d9c876b2f52d6e1',
+    displayName: 'CDN',
+    navLabel: 'Contract Domain Name',
+  },
+  {
+    key: 'single-tags',
+    address: '0x66260c69d03837016d88c9877e61e08ef74c59f2',
+    displayName: 'Single Tags',
+    navLabel: 'Address Tags - Single Tags',
+  },
+  {
+    key: 'tags-queries',
+    address: '0xae6aaed5434244be3699c56e7ebc828194f26dc3',
+    displayName: 'Tag Queries',
+    navLabel: 'Address Tags - Query Tags',
+  },
+]
+
+export const registryMap: Record<string, string> = Object.fromEntries(
+  registries.map((r) => [r.key, r.address.toLowerCase()]),
+)
+
+export const revRegistryMap: Record<string, string> = Object.fromEntries(
+  registries.map((r) => [r.address.toLowerCase(), r.key]),
+)
 
 /** Human-readable display names for registry keys */
-export const registryDisplayNames: Record<string, string> = {
-  'single-tags': 'Single Tags',
-  'tags-queries': 'Tag Queries',
-  'cdn': 'CDN',
-  'tokens': 'Tokens',
-}
+export const registryDisplayNames: Record<string, string> = Object.fromEntries(
+  registries.map((r) => [r.key, r.displayName]),
+)
 
 /** Converts a composite subgraph ID (itemID@registryAddress) into a clean URL path.
  *  Also accepts a bare itemID + separate registryAddress for cases where `id` isn't available. */
@@ -44,12 +84,10 @@ export const buildItemPath = (compositeId: string, registryAddr?: string) => {
 }
 
 /** Navigation menu options for registry selection */
-export const registryNavOptions = [
-  { label: 'Tokens', value: 'tokens' },
-  { label: 'Contract Domain Name', value: 'cdn' },
-  { label: 'Address Tags - Single Tags', value: 'single-tags' },
-  { label: 'Address Tags - Query Tags', value: 'tags-queries' },
-]
+export const registryNavOptions = registries.map((r) => ({
+  label: r.navLabel,
+  value: r.key,
+}))
 
 /** Maps subgraph status values to human-readable display strings */
 export const readableStatusMap: Record<string, string> = {

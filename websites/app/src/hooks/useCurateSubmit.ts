@@ -1,11 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Address } from 'viem'
 import { useCurateInteractions } from './contracts/useCurateInteractions'
 import { useItemCountsQuery } from './queries'
 import { clearLocalStorage } from './useLocalStorage'
 import { publishAndAddItem } from 'utils/publishAndAddItem'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
-import { useTxResultModal } from 'context/TxResultContext'
 import {
   registryMap,
   registryDisplayNames,
@@ -29,7 +29,7 @@ export const useCurateSubmit = ({
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const { addItem, isLoading: isContractLoading } = useCurateInteractions()
   const { data: countsData } = useItemCountsQuery()
-  const { show: showTxResult } = useTxResultModal()
+  const navigate = useNavigate()
 
   const deposits = countsData?.[registryKey]?.deposits
   const isSubmitting = isLocalLoading || isContractLoading
@@ -52,19 +52,7 @@ export const useCurateSubmit = ({
       if (result?.status && result.result) {
         onResetForm()
         clearLocalStorage(localStorageKey)
-        const receipt = result.result
-        showTxResult({
-          hash: receipt.transactionHash,
-          from: receipt.from,
-          to: (receipt.to ?? registryAddress) as Address,
-          gasUsed: receipt.gasUsed,
-          effectiveGasPrice: receipt.effectiveGasPrice,
-          operationType: 'Item Submission',
-          deposit: BigInt(deposits.arbitrationCost) + BigInt(deposits.submissionBaseDeposit),
-          periodSeconds: Number(deposits.challengePeriodDuration),
-          periodLabel: 'Challenge period',
-          registryName: registryDisplayNames[registryKey],
-        })
+        navigate(`/tx/${result.result.transactionHash}`)
       }
     } catch (error) {
       console.error(`Error submitting ${registryKey}:`, error)
