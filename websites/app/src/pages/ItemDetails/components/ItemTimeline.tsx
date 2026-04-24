@@ -159,6 +159,9 @@ const TxLink = styled.a`
 
 const DateLink = styled.a`
   color: ${({ theme }) => theme.secondaryText};
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
   text-decoration: none;
   ${hoverShortTransitionTiming}
 
