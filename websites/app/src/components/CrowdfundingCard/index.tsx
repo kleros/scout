@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import styled, { css, useTheme } from 'styled-components'
+import { useNavigate } from 'react-router-dom'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
 import { PARTY, SUBGRAPH_RULING, itemToStatusCode, STATUS_CODE } from '../../utils/itemStatus'
@@ -299,6 +300,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const [contributionShare, setContributionShare] = useState(1)
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
+  const navigate = useNavigate()
 
   const requesterFees = useRequiredFees({
     side: PARTY.REQUESTER,
@@ -365,9 +367,19 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
     if (!item || selectedSide === PARTY.NONE || contributionAmount === 0n) return
 
     try {
-      await fundAppeal(registryAddress as `0x${string}`, item.itemID, selectedSide, contributionAmount)
-      setSelectedSide(PARTY.NONE)
-      setContributionShare(1)
+      const result = await fundAppeal(
+        registryAddress as `0x${string}`,
+        item.itemID,
+        selectedSide,
+        contributionAmount,
+      )
+      if (result?.status) {
+        setSelectedSide(PARTY.NONE)
+        setContributionShare(1)
+        if (result.result) {
+          navigate(`/tx/${result.result.transactionHash}`)
+        }
+      }
     } catch (error) {
       console.error('Error funding appeal:', error)
       errorToast(error instanceof Error ? error.message : 'Failed to fund appeal')

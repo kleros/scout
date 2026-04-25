@@ -14,7 +14,7 @@ import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 import useAppealCost from 'hooks/useAppealCost'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus'
-import { registryMap, revRegistryMap, registryDisplayNames } from 'utils/items'
+import { registryMap, registryDisplayNames } from 'utils/items'
 import Item from '../Registries/ItemsList/Item'
 import Breadcrumb from './components/Breadcrumb'
 import ItemDetailsContent from './components/ItemDetailsContent'
@@ -22,7 +22,7 @@ import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
-import { errorToast, successToast } from 'utils/wrapWithToast'
+import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 
 const Container = styled.div`
@@ -431,11 +431,13 @@ const ItemDetails: React.FC = () => {
     if (!detailsData || isExecuting) return
 
     try {
-      await executeRequest(
+      const result = await executeRequest(
         registryAddress as `0x${string}`,
         detailsData.itemID
       )
-      successToast('Request executed successfully!')
+      if (result?.status && result.result) {
+        navigate(`/tx/${result.result.transactionHash}`)
+      }
     } catch (error) {
       console.error('Error executing request:', error)
       errorToast('Failed to execute request. Please try again.')

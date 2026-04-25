@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import styled, { css } from 'styled-components'
+import { useNavigate } from 'react-router-dom'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
@@ -14,6 +15,7 @@ import { errorToast, infoToast } from 'utils/wrapWithToast'
 import TransactionButton from 'components/TransactionButton'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
+import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
@@ -38,7 +40,6 @@ const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(50px);
   box-shadow: ${({ theme }) => theme.shadowModal};
   max-height: 90vh;
   overflow-y: auto;
@@ -219,6 +220,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   const [attachedFileName, setAttachedFileName] = useState<string | null>(formData.attachedFileName)
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const { submitEvidence, challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
+  const navigate = useNavigate()
 
   // Combined loading state for both IPFS upload and contract interaction
   const isLoading = isLocalLoading || isContractLoading
@@ -415,7 +417,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     const itemId = detailsData.itemID
                     const arbitrationCost = arbitrationCostData as bigint
 
-                    let result: { status: boolean } | undefined
+                    let result: WrapWithToastReturnType | undefined
                     switch (evidenceConfirmationType) {
                       case 'Evidence':
                         result = await submitEvidence(registryAddress, itemId, ipfsPath)
@@ -472,6 +474,10 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                       // Clear localStorage after state is reset
                       localStorage.removeItem(cacheKey)
                       setIsConfirmationOpen(false)
+
+                      if (result.result) {
+                        navigate(`/tx/${result.result.transactionHash}`)
+                      }
                     }
                   } catch (error) {
                     console.error('Error performing action:', error)
