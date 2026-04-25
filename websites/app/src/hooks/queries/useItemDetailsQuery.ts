@@ -64,6 +64,8 @@ const FETCH_ITEM_DETAILS_QUERY = gql`
           hasPaidChallenger
           amountPaidRequester
           amountPaidChallenger
+          lastFundedRequester
+          lastFundedChallenger
           txHashAppealPossible
           appealedAt
           txHashAppealDecision

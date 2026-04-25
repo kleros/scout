@@ -20,22 +20,6 @@ export function getOneYearAgoTimestamp(): number {
   return currentTime - 31536000; // One year in seconds
 }
 
-export function formatDate(unixTimestamp: number, withTime = false): string {
-  const date = new Date(unixTimestamp * 1000);
-  const options: Intl.DateTimeFormatOptions = withTime
-    ? {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        timeZone: "UTC",
-        timeZoneName: "short",
-      }
-    : { month: "long", day: "2-digit", year: "numeric", timeZone: "UTC" };
-  return date.toLocaleDateString("en-US", options);
-}
-
 /**
  * Calculates the time left until a specified date and formats it.
  *

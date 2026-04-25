@@ -353,6 +353,10 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 fundingTitle = 'Losing Side Funded Appeal'
               }
 
+              const requesterFundedAt =
+                round.lastFundedRequester && Number(round.lastFundedRequester) > 0
+                  ? round.lastFundedRequester
+                  : round.appealedAt ?? round.appealPeriodStart
               items.push({
                 title: fundingTitle,
                 party: (
@@ -364,9 +368,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                     </AddressLink>
                   </PartyWrapper>
                 ),
-                subtitle: round.appealedAt
-                  ? formatTimestamp(Number(round.appealedAt), true)
-                  : formatTimestamp(Number(round.appealPeriodStart), true),
+                subtitle: formatTimestamp(Number(requesterFundedAt), true),
                 rightSided: true,
                 variant: theme.primaryBlue,
               })
@@ -382,6 +384,10 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 fundingTitle = 'Winning Side Funded Appeal'
               }
 
+              const challengerFundedAt =
+                round.lastFundedChallenger && Number(round.lastFundedChallenger) > 0
+                  ? round.lastFundedChallenger
+                  : round.appealedAt ?? round.appealPeriodStart
               items.push({
                 title: fundingTitle,
                 party: (
@@ -393,9 +399,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                     </AddressLink>
                   </PartyWrapper>
                 ),
-                subtitle: round.appealedAt
-                  ? formatTimestamp(Number(round.appealedAt), true)
-                  : formatTimestamp(Number(round.appealPeriodStart), true),
+                subtitle: formatTimestamp(Number(challengerFundedAt), true),
                 rightSided: true,
                 variant: theme.primaryBlue,
               })
