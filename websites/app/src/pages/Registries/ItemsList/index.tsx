@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import styled, { css } from 'styled-components';
-import { landscapeStyle, BREAKPOINT_LANDSCAPE } from 'styles/landscapeStyle';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { GraphItem, registryMap } from 'utils/items';
 import Item from './Item';
 import ItemListView from './ItemListView';
@@ -9,6 +9,7 @@ import ListHeader from './ListHeader';
 import { ITEMS_PER_PAGE } from 'pages/Registries';
 import { ViewMode } from 'components/ViewSwitcher';
 import { useRegistryParameters } from 'hooks/useRegistryParameters';
+import { useIsMobile } from 'hooks/useIsMobile';
 
 const useRegistryDurations = () => {
   const singleTagsParams = useRegistryParameters(registryMap['single-tags']);
@@ -62,15 +63,7 @@ interface IItemsList {
 
 const ItemsList: React.FC<IItemsList> = ({ searchData, viewMode }) => {
   const registryDurations = useRegistryDurations();
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < BREAKPOINT_LANDSCAPE);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < BREAKPOINT_LANDSCAPE);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  const isMobile = useIsMobile();
 
   const registryAddress = searchData[0]?.registryAddress;
 

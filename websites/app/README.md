@@ -2,7 +2,8 @@
 
 ## Getting Started
 
-Install dependencies and run the development server:
+1. Duplicate `.env.example` and rename it to `.env`. Fill in the environment variables.
+2. Install dependencies and run the development server:
 
 ```bash
 

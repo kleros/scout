@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import styled, { css } from 'styled-components'
+import { useNavigate } from 'react-router-dom'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
 import { STATUS_CODE, PARTY, SUBGRAPH_RULING } from '../../utils/itemStatus'
@@ -26,7 +27,6 @@ const Modal = styled.div`
   position: relative;
   background: ${({ theme }) => theme.modalBackground};
   border: 1px solid ${({ theme }) => theme.stroke};
-  backdrop-filter: blur(50px);
   color: ${({ theme }) => theme.primaryText};
   border-radius: 20px;
   padding: 32px;
@@ -276,6 +276,7 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
   const [userSelectedSide, setUserSelectedSide] = useState<PARTY>(PARTY.NONE)
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
+  const navigate = useNavigate()
 
   const round = item?.requests?.[0]?.rounds?.[0]
   const { hasPaidRequester, hasPaidChallenger, ruling } = round || {}
@@ -427,10 +428,20 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
     if (!item || side === PARTY.NONE || contributionAmount === 0n) return
 
     try {
-      await fundAppeal(registryAddress as `0x${string}`, item.itemID, side, contributionAmount)
-      setUserSelectedSide(PARTY.NONE)
-      setContributionShare(1)
-      onClose()
+      const result = await fundAppeal(
+        registryAddress as `0x${string}`,
+        item.itemID,
+        side,
+        contributionAmount,
+      )
+      if (result?.status) {
+        setUserSelectedSide(PARTY.NONE)
+        setContributionShare(1)
+        onClose()
+        if (result.result) {
+          navigate(`/tx/${result.result.transactionHash}`)
+        }
+      }
     } catch (error) {
       console.error('Error funding appeal:', error)
       errorToast(error instanceof Error ? error.message : 'Failed to fund appeal')

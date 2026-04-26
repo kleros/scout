@@ -24,7 +24,6 @@ export const ModalWrapper = styled.div`
 
 export const ModalContainer = styled.div`
   background: ${({ theme }) => theme.modalBackground};
-  backdrop-filter: blur(50px);
   border-radius: 20px;
   border: 1px solid ${({ theme }) => theme.stroke};
   width: 100%;

@@ -50,7 +50,8 @@ const Settings: React.FC<ISettings> = ({ toggleIsSettingsOpen, initialTab }) => 
   const navigate = useNavigate();
   useClickAway(containerRef, () => {
     toggleIsSettingsOpen();
-    if (location.hash.includes("#notifications")) navigate("#", { replace: true });
+    if (location.hash.includes("#notifications"))
+      navigate(`${location.pathname}${location.search}`, { replace: true });
   });
 
   return (

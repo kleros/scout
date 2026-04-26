@@ -189,7 +189,7 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
   if (!isOpen) return null;
 
   const handleOptionClick = (registryKey: string) => {
-    navigate(`/${registryKey}?additem=${registryKey}`);
+    navigate(`/${registryKey}/submit`);
     onClose();
   };
 

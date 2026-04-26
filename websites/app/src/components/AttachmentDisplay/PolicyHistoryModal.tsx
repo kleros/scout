@@ -1,6 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import styled from 'styled-components';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import Skeleton from 'react-loading-skeleton';
 import { registryAddresses, RegistryType } from 'consts/contracts';
@@ -136,7 +136,7 @@ const ViewButton = styled.button`
   }
 `;
 
-const TxLink = styled.a`
+const TxLink = styled(Link)`
   font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
   text-decoration: none;
@@ -278,11 +278,7 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
                       <NewTabIcon />
                     </PolicyLink>
                     <Separator>|</Separator>
-                    <TxLink
-                      href={`https://gnosisscan.io/tx/${entry.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <TxLink to={`/tx/${entry.txHash}`}>
                       tx: {truncateHash(entry.txHash)}
                     </TxLink>
                   </ItemLinks>

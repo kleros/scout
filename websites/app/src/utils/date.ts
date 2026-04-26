@@ -20,22 +20,6 @@ export function getOneYearAgoTimestamp(): number {
   return currentTime - 31536000; // One year in seconds
 }
 
-export function formatDate(unixTimestamp: number, withTime = false): string {
-  const date = new Date(unixTimestamp * 1000);
-  const options: Intl.DateTimeFormatOptions = withTime
-    ? {
-        month: "short",
-        day: "2-digit",
-        year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
-        timeZone: "UTC",
-        timeZoneName: "short",
-      }
-    : { month: "long", day: "2-digit", year: "numeric", timeZone: "UTC" };
-  return date.toLocaleDateString("en-US", options);
-}
-
 /**
  * Calculates the time left until a specified date and formats it.
  *
@@ -72,3 +56,32 @@ export function timeLeftUntil(isoString: string): string {
     return `after ${targetDate.toLocaleDateString("en-US", options)}`;
   }
 }
+
+export interface UpdatedAgo {
+  text: string
+  days: number
+}
+
+export function formatUpdatedAgo(startDate: string): UpdatedAgo | null {
+  const startMs = new Date(startDate).getTime()
+  if (!Number.isFinite(startMs)) return null
+
+  const diffMs = Date.now() - startMs
+  if (diffMs < 0) return { text: 'updated just now', days: 0 }
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (days < 1) return { text: 'updated today', days }
+  if (days === 1) return { text: 'updated 1 day ago', days }
+  if (days < 30) return { text: `updated ${days} days ago`, days }
+
+  const months = Math.floor(days / 30)
+  if (months === 1) return { text: 'updated 1 month ago', days }
+  if (months < 12) return { text: `updated ${months} months ago`, days }
+
+  const years = Math.floor(days / 365)
+  if (years === 1) return { text: 'updated 1 year ago', days }
+  return { text: `updated ${years} years ago`, days }
+}
+
+export const POLICY_RECENT_THRESHOLD_DAYS = 7

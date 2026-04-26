@@ -235,22 +235,22 @@ const DateCell = styled(Cell)`
 //   }
 // `;
 
-// const SubmissionDate = styled.a`
-//   color: ${({ theme }) => theme.secondaryText};
-//   font-size: 12px;
-//   font-style: italic;
-//   overflow: hidden;
-//   text-overflow: ellipsis;
-//   white-space: nowrap;
-//   text-decoration: none;
-//   cursor: pointer;
-//   transition: color 0.2s ease;
+const SubmissionDate = styled(Link)`
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 12px;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
 
-//   &:hover {
-//     color: ${({ theme }) => theme.primaryText};
-//     text-decoration: underline;
-//   }
-// `;
+  &:hover {
+    color: ${({ theme }) => theme.primaryText};
+    text-decoration: underline;
+  }
+`;
 
 // const DecimalsCell = styled(Cell)`
 //   text-align: center;
@@ -413,9 +413,7 @@ const ItemListView = React.memo(
                     <ArrowIcon />
                   </SubmitterLink>
                   <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${item.requests[0]?.creationTx}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/tx/${item.requests[0]?.creationTx}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {submittedDate}
@@ -478,9 +476,7 @@ const ItemListView = React.memo(
                     <ArrowIcon />
                   </SubmitterLink>
                   <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${item.requests[0]?.creationTx}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/tx/${item.requests[0]?.creationTx}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {submittedDate}
@@ -569,9 +565,7 @@ const ItemListView = React.memo(
                     <ArrowIcon />
                   </SubmitterLink>
                   <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${item.requests[0]?.creationTx}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/tx/${item.requests[0]?.creationTx}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {submittedDate}
@@ -638,9 +632,7 @@ const ItemListView = React.memo(
                     <ArrowIcon />
                   </SubmitterLink>
                   <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${item.requests[0]?.creationTx}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/tx/${item.requests[0]?.creationTx}`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {submittedDate}

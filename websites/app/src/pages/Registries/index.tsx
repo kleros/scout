@@ -10,12 +10,12 @@ import Search from './Search';
 import LoadingItems from './LoadingItems';
 import ItemsList from './ItemsList';
 import { StyledPagination } from 'components/StyledPagination';
-import AddItemModal from './SubmitItems/AddItemModal';
 import ParametersModal from './ParametersModal';
 import FilterModal from 'components/FilterModal';
 import FilterButton from 'components/FilterButton';
 import ViewSwitcher from 'components/ViewSwitcher';
 import { useViewMode } from 'hooks/useViewMode';
+import { usePolicyHistory } from 'hooks/usePolicyHistory';
 import CloseIcon from 'svgs/icons/close.svg';
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay';
 import PolicyButton from './PolicyButton';
@@ -273,10 +273,6 @@ const Home: React.FC = () => {
   const [viewMode, setViewMode] = useViewMode();
   const [isFilterChanging, setIsFilterChanging] = useState(false);
 
-  const isAddItemOpen = useMemo(
-    () => !!searchParams.get('additem'),
-    [searchParams]
-  );
   const isAttachmentOpen = useMemo(
     () => !!searchParams.get('attachment'),
     [searchParams]
@@ -383,6 +379,10 @@ const Home: React.FC = () => {
 
   const currentRegistryAddress = registryName ? registryMap[registryName] : undefined;
 
+  // Prefetch the latest policy-update timestamp so the "(updated X ago)" badge
+  // is warm in cache by the time the user clicks "Submit item".
+  usePolicyHistory(currentRegistryAddress, 'latest');
+
 
   return (
     <Container>
@@ -433,7 +433,6 @@ const Home: React.FC = () => {
                 )}
               </FullWidthSection>
             </PageInner>
-          {isAddItemOpen && <AddItemModal />}
           <FilterModal
             isOpen={isFilterModalOpen}
             onClose={() => setIsFilterModalOpen(false)}
