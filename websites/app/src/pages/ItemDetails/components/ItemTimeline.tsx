@@ -137,7 +137,7 @@ const AddressLink = styled(Link)`
   }
 `
 
-const TxLink = styled.a`
+const TxLink = styled(Link)`
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -157,7 +157,7 @@ const TxLink = styled.a`
   }
 `
 
-const DateLink = styled.a`
+const DateLink = styled(Link)`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 12px;
   font-weight: 400;
@@ -216,20 +216,12 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
             </AddressLink>
           </PartyWrapper>
         ) : (
-          <TxLink
-            href={`https://gnosisscan.io/tx/${creationTx}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <TxLink to={`/tx/${creationTx}`}>
             <StyledNewTabIcon />
           </TxLink>
         ),
         subtitle: creationTx ? (
-          <DateLink
-            href={`https://gnosisscan.io/tx/${creationTx}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <DateLink to={`/tx/${creationTx}`}>
             {formatTimestamp(Number(request?.submissionTime), true)}
           </DateLink>
         ) : (
@@ -254,12 +246,15 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           challengeTitle = requestIndex === 0 ? 'Registration Challenged' : 'Removal Challenged'
         }
 
-        // Use the challenger's earliest evidence timestamp as the challenge date,
-        // since the subgraph doesn't store a separate challenge timestamp.
+        // Prefer the indexer-provided challengeTime (the actual challengeRequest tx block timestamp).
+        // Fall back to the challenger's earliest evidence timestamp for items indexed before the
+        // schema field existed, then to the request's submission time as a last resort.
         const challengeEvidence = request.evidenceGroup?.evidences
           ?.filter((e: any) => e.party?.toLowerCase() === request.challenger?.toLowerCase())
           ?.sort((a: any, b: any) => Number(a.timestamp) - Number(b.timestamp))?.[0]
-        const challengeTime = challengeEvidence?.timestamp || request.submissionTime
+        const challengeTime =
+          request.challengeTime || challengeEvidence?.timestamp || request.submissionTime
+        const challengeTxHash = request.txHashChallenge
 
         items.push({
           title: challengeTitle,
@@ -273,7 +268,15 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
               </AddressLink>
             </PartyWrapper>
           ),
-          subtitle: challengeTime ? formatTimestamp(Number(challengeTime), true) : '',
+          subtitle: challengeTime
+            ? challengeTxHash
+              ? (
+                <DateLink to={`/tx/${challengeTxHash}`}>
+                  {formatTimestamp(Number(challengeTime), true)}
+                </DateLink>
+              )
+              : formatTimestamp(Number(challengeTime), true)
+            : '',
           rightSided: true,
           variant: theme.orange,
         })
@@ -326,11 +329,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
               title: `Jury Decision - Round ${displayedRoundNumber}`,
               party: rulingText,
               subtitle: txHashAppealPossible ? (
-                <DateLink
-                  href={`https://gnosisscan.io/tx/${txHashAppealPossible}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <DateLink to={`/tx/${txHashAppealPossible}`}>
                   {formatTimestamp(Number(round.appealPeriodStart), true)}
                 </DateLink>
               ) : (
@@ -357,6 +356,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 round.lastFundedRequester && Number(round.lastFundedRequester) > 0
                   ? round.lastFundedRequester
                   : round.appealedAt ?? round.appealPeriodStart
+              const requesterFundedTx = round.txHashAppealFundedRequester
               items.push({
                 title: fundingTitle,
                 party: (
@@ -368,7 +368,13 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                     </AddressLink>
                   </PartyWrapper>
                 ),
-                subtitle: formatTimestamp(Number(requesterFundedAt), true),
+                subtitle: requesterFundedTx ? (
+                  <DateLink to={`/tx/${requesterFundedTx}`}>
+                    {formatTimestamp(Number(requesterFundedAt), true)}
+                  </DateLink>
+                ) : (
+                  formatTimestamp(Number(requesterFundedAt), true)
+                ),
                 rightSided: true,
                 variant: theme.primaryBlue,
               })
@@ -388,6 +394,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 round.lastFundedChallenger && Number(round.lastFundedChallenger) > 0
                   ? round.lastFundedChallenger
                   : round.appealedAt ?? round.appealPeriodStart
+              const challengerFundedTx = round.txHashAppealFundedChallenger
               items.push({
                 title: fundingTitle,
                 party: (
@@ -399,7 +406,13 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                     </AddressLink>
                   </PartyWrapper>
                 ),
-                subtitle: formatTimestamp(Number(challengerFundedAt), true),
+                subtitle: challengerFundedTx ? (
+                  <DateLink to={`/tx/${challengerFundedTx}`}>
+                    {formatTimestamp(Number(challengerFundedAt), true)}
+                  </DateLink>
+                ) : (
+                  formatTimestamp(Number(challengerFundedAt), true)
+                ),
                 rightSided: true,
                 variant: theme.primaryBlue,
               })
@@ -417,11 +430,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 title: 'Appeal Proceeds to Next Round',
                 party: '',
                 subtitle: txHashAppealDecision ? (
-                  <DateLink
-                    href={`https://gnosisscan.io/tx/${txHashAppealDecision}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <DateLink to={`/tx/${txHashAppealDecision}`}>
                     {formatTimestamp(Number(round.appealPeriodEnd), true)}
                   </DateLink>
                 ) : (
@@ -502,11 +511,7 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
           title: resolutionTitle,
           party: '',
           subtitle: resolutionTx ? (
-            <DateLink
-              href={`https://gnosisscan.io/tx/${resolutionTx}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <DateLink to={`/tx/${resolutionTx}`}>
               {formatTimestamp(Number(request.resolutionTime), true)}
             </DateLink>
           ) : (

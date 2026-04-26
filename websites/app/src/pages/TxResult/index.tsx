@@ -1,6 +1,6 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import humanizeDuration from 'humanize-duration'
 import { gnosis } from '@reown/appkit/networks'
@@ -405,6 +405,12 @@ const titleFor = (
       return `Appeal contribution to ${target}`
     case 'Request Execution':
       return `Request executed on ${target}`
+    case 'Item Resolution':
+      return `Item resolved on ${target}`
+    case 'Jury Decision':
+      return `Jury ruling on ${target}`
+    case 'Appeal Decision':
+      return `Appeal proceeded on ${target}`
     default:
       // Known registry but unmapped function (e.g. governance). Still informative.
       return `${operationType} · ${target}`
@@ -413,19 +419,37 @@ const titleFor = (
 
 const TxResult: React.FC = () => {
   const { txHash } = useParams<{ txHash: string }>()
+  const navigate = useNavigate()
+  const location = useLocation()
   const valid = isTxHashValid(txHash)
   const { data, isLoading, isError } = useTxResultQuery(valid ? txHash : undefined)
 
   const registryKey = data?.operation.registryKey
   const registryDisplayName = data?.operation.registryDisplayName
-  const returnTo = registryKey ? `/${registryKey}` : '/home'
-  const returnLabel = registryDisplayName ?? 'Home'
+
+  // location.key === 'default' on the very first navigation entry of a tab (cold load,
+  // deep link, or page refresh). Any in-app navigation after that gets a fresh key, which
+  // means there's something to navigate(-1) back to.
+  const cameFromApp = location.key !== 'default'
+  const fallbackTo = registryKey ? `/${registryKey}` : '/home'
+  const fallbackLabel = registryDisplayName ?? 'Home'
+  const returnLabel = cameFromApp ? 'Return' : fallbackLabel
+
+  // Default click → back-in-history if possible, else fallback. Modifier-clicks (cmd/ctrl/
+  // middle) keep the default Link behaviour so users can still open the fallback in a new tab.
+  const handleBack = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return
+    if (cameFromApp) {
+      e.preventDefault()
+      navigate(-1)
+    }
+  }
 
   return (
     <Container>
       <Inner>
         <TopBar>
-          <ReturnButton to={returnTo}>
+          <ReturnButton to={fallbackTo} onClick={handleBack}>
             <ArrowLeftIcon />
             {returnLabel}
           </ReturnButton>
@@ -485,9 +509,13 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
   const reverted = status === 'reverted'
   const txFeeWei = gasUsed * effectiveGasPrice
   const toAddr = to ?? ('0x0000000000000000000000000000000000000000' as const)
-  const registryFullLabel = operation.registryDisplayName
-    ? `${operation.registryDisplayName} Registry`
-    : undefined
+  // Only label tx.to as "{X} Registry" when tx.to actually IS the registry. For the
+  // resolution-via-arbitrator case the address is the arbitrator's, so labeling it as the
+  // registry would be wrong. The headline + Go-to-Item already convey the registry context.
+  const registryFullLabel =
+    operation.isDirectRegistryCall && operation.registryDisplayName
+      ? `${operation.registryDisplayName} Registry`
+      : undefined
   const hasDeposit = !reverted && value > 0n
   const title = reverted
     ? 'Transaction reverted'

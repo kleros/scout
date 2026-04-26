@@ -184,7 +184,7 @@ const AttachmentButton = styled.button`
   )}
 `
 
-const SubmissionDate = styled.a`
+const SubmissionDate = styled(Link)`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 13px;
   font-style: italic;
@@ -293,11 +293,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
               <EvidenceMetadata>
                 <EvidenceMetadataItem>
                   <strong>Submitted on:</strong>
-                  <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${evidence.txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <SubmissionDate to={`/tx/${evidence.txHash}`}>
                     {formatTimestamp(Number(evidence.timestamp), true)}
                   </SubmissionDate>
                   by

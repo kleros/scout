@@ -211,7 +211,7 @@ const SubmitterLink = styled(Link)`
   }
 `
 
-const SubmissionDate = styled.a`
+const SubmissionDate = styled(Link)`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 12px;
   font-style: italic;
@@ -536,9 +536,7 @@ const ItemDetails: React.FC = () => {
                 <DetailRow>
                   Submitted on:
                   <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${detailsData.requests[detailsData.requests.length - 1].creationTx}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/tx/${detailsData.requests[detailsData.requests.length - 1].creationTx}`}
                   >
                     {formatTimestamp(Number(detailsData.requests[detailsData.requests.length - 1].submissionTime), true)}
                   </SubmissionDate>

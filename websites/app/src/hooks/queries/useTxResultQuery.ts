@@ -84,7 +84,7 @@ const fetchTxResult = async (
   ])
   const block = await publicClient.getBlock({ blockNumber: receipt.blockNumber })
 
-  const operation = decodeTxOperation(tx.input, receipt.to)
+  const operation = decodeTxOperation(tx.input, receipt.to, receipt.logs)
   const itemID = operation.isKnownRegistry ? extractItemID(receipt, tx.input) : undefined
 
   let challengePeriodSeconds: number | undefined
