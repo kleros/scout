@@ -28,9 +28,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@cyntler/react-doc-viewer": "^1.16.3",
     "@kleros/kleros-app": "^2.0.2",
-    "@kleros/ui-components-library": "^3.4.5",
+    "@kleros/ui-components-library": "^3.8.0",
     "@reown/appkit": "^1.7.1",
     "@reown/appkit-adapter-wagmi": "^1.7.1",
     "@scure/base": "^1.2.5",

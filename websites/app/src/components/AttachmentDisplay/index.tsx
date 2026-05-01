@@ -17,7 +17,9 @@ import { usePolicyHistory } from "hooks/usePolicyHistory";
 
 import Header from "./Header";
 
-const FileViewer = lazy(() => import("components/FileViewer"));
+const FileViewer = lazy(() =>
+  import("@kleros/ui-components-library").then((m) => ({ default: m.FileViewer }))
+);
 
 const Container = styled.div`
   width: 100%;
