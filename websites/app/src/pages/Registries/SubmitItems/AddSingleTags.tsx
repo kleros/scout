@@ -197,6 +197,8 @@ const AddAddressTag: React.FC = () => {
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        registryName="single-tags"
+        submitLabel="Submit Tag"
       />
     </AddContainer>
   )

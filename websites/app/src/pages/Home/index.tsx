@@ -295,7 +295,7 @@ const BottomGrid = styled.div`
 
 interface IHome {}
 
-const BASE_VERIFIED_CONTRACTS = 732_972;
+const BASE_VERIFIED_CONTRACTS = 2_587_341;
 const COUNTER_FORMATTER = new Intl.NumberFormat('en-US');
 
 const Home: React.FC<IHome> = () => {

@@ -468,6 +468,7 @@ const ItemDetails: React.FC = () => {
                 detailsData,
                 deposits,
                 arbitrationCostData,
+                registryName: registryNameParam,
               }}
             />
           )}

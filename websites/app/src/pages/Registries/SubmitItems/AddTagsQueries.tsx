@@ -137,6 +137,8 @@ const AddTagsQueries: React.FC = () => {
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        registryName="tags-queries"
+        submitLabel="Submit Query"
       />
     </AddContainer>
   )

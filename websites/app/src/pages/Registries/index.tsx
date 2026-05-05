@@ -408,7 +408,7 @@ const Home: React.FC = () => {
                   <PolicyAndSubmitItemContainer>
                     <ExportButton onClick={() => setIsExportModalOpen(true)} registryName={registryName} />
                     <ParametersLabel onClick={() => setIsParamsModalOpen(true)}>Parameters</ParametersLabel>
-                    <PolicyButton registryName={registryName} />
+                    <PolicyButton registryName={registryName} openInNewTab={false} />
                     <SubmitButton registryName={registryName} />
                   </PolicyAndSubmitItemContainer>
                 </ActionablesContainer>

@@ -217,6 +217,8 @@ const AddToken: React.FC = () => {
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        registryName="tokens"
+        submitLabel="Submit Token"
       />
     </AddContainer>
   )

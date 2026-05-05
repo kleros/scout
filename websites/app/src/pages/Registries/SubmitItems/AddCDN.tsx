@@ -147,6 +147,8 @@ const AddCDN: React.FC = () => {
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        registryName="cdn"
+        submitLabel="Submit CDN"
       />
     </AddContainer>
   )

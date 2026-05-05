@@ -14,6 +14,7 @@ import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/Accou
 import LoadingItems from 'pages/Registries/LoadingItems'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
+import GnosisIcon from 'assets/svgs/chains/gnosis.svg'
 
 // The tx page queries Gnosis exclusively (the registries live only there), so all
 // chain-identifying strings are resolved from the chain config once, not spread around.
@@ -249,6 +250,17 @@ const MonoText = styled.span`
 const SubLabel = styled.span`
   font-size: 12px;
   color: ${({ theme }) => theme.tertiaryText};
+`
+
+const ChainIconWrapper = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 `
 
 const ExternalLink = styled.a`
@@ -633,7 +645,12 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
 
         <DetailRow>
           <DetailLabel>Network</DetailLabel>
-          <DetailValue>{CHAIN_NAME}</DetailValue>
+          <DetailValue>
+            <ChainIconWrapper>
+              <GnosisIcon />
+            </ChainIconWrapper>
+            {CHAIN_NAME}
+          </DetailValue>
         </DetailRow>
 
         <DetailRow>
