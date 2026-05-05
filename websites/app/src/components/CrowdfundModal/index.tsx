@@ -178,7 +178,7 @@ const Button = styled.button<{ primary?: boolean }>`
   border-radius: 9999px;
   font-size: 16px;
   font-weight: 600;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   cursor: pointer;
   transition: all 0.2s;
 

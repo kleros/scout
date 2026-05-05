@@ -20,7 +20,7 @@ export const AddHeader = styled.div`
 export const AddTitle = styled.div`
   margin: 0 0 4px 0;
   font-size: 24px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 600;
   line-height: 1.15;
   letter-spacing: 0.5px;
@@ -69,7 +69,7 @@ export const SubmissionButton = styled.a`
   border-radius: 9999px;
   border: 1px solid ${({ theme }) => theme.borderSubtle};
   color: ${({ theme }) => theme.textHighOpacity};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   align-self: center;
   padding: 8px 16px;
   font-size: 14px;
@@ -143,7 +143,7 @@ export const PayoutsContainer = styled.div`
 `
 
 export const ExpectedPayouts = styled.p`
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 500;
   align-self: center;

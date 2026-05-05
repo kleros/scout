@@ -32,7 +32,6 @@ const Container = styled.div`
 
 const Title = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
-  font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
   font-weight: 400;

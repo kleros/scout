@@ -33,7 +33,6 @@ const ChartContainer = styled.div`
 
 const ChartTitle = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
-  font-family: "Open Sans";
   font-size: 14px;
   font-style: italic;
   font-weight: 400;

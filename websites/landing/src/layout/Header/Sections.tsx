@@ -39,7 +39,7 @@ const StyledItem = styled.div<{
     isSelected ? '#7186FF' : 'inherit'};
   color: ${({ isSelected }) => (isSelected ? '#7186FF' : 'inherit')};
   font-weight: ${({ isSelected }) => (isSelected ? 600 : 400)};
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
   cursor: pointer;
   position: relative;
   transition: color 0.2s ease, opacity 0.2s ease;

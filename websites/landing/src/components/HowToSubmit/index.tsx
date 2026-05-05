@@ -24,14 +24,12 @@ const Container = styled.div`
 const Title = styled.h1`
   margin: 0;
   margin-bottom: ${responsiveSize(12, 24)};
-  font-family: 'Avenir', sans-serif;
   text-align: center;
 `
 
 const Description = styled.p`
   margin: 0;
   text-align: center;
-  font-family: 'Oxanium', sans-serif;
 `
 
 const Box = styled.div`
@@ -68,7 +66,6 @@ width: 148px;
 const StatsTitle = styled.h1`
   margin: 0;
   margin-bottom: ${responsiveSize(12, 24)};
-  font-family: 'Avenir', sans-serif;
   text-align: center;
   font-style: normal;
   font-weight: 800;
@@ -78,7 +75,6 @@ const StatsTitle = styled.h1`
 const StatsDescription = styled.p`
   margin: 0;
   text-align: center;
-  font-family: 'Oxanium', sans-serif;
   font-style: normal;
   font-weight: 400;
   font-size: 16px;

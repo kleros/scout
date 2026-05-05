@@ -33,7 +33,7 @@ const Container = styled.div`
   max-width: ${MAX_WIDTH_LANDSCAPE};
   margin: 0 auto;
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   display: flex;
   flex-direction: column;
 
@@ -112,7 +112,7 @@ const ParametersLabel = styled.label`
   ${hoverShortTransitionTiming}
   cursor: pointer;
   color: ${({ theme }) => theme.secondaryText};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 14px;
   font-weight: 400;
 

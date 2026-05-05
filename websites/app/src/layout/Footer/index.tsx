@@ -76,7 +76,7 @@ const StyledToSLink = styled(Link)`
   color: ${({ theme }) => theme.white}BF;
   text-decoration: none;
   font-size: 14px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
 
   &:hover {
     color: ${({ theme }) => theme.white};

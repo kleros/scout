@@ -40,7 +40,7 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
   border-radius: 0;
   background: transparent;
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
   width: 100%;

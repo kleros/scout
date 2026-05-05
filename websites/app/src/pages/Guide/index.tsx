@@ -15,7 +15,7 @@ import ScrollTop from "components/ScrollTop";
 const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   padding: 32px 16px 64px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
   width: 100%;
   max-width: ${MAX_WIDTH_LANDSCAPE};

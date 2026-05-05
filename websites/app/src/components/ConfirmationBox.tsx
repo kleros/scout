@@ -83,7 +83,7 @@ const TextArea = styled.textarea`
   border-radius: 8px;
   background: ${({ theme }) => theme.modalInputBackground};
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 16px;
   resize: vertical;
   transition: all 0.2s ease;

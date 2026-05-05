@@ -233,7 +233,7 @@ const ContributeButton = styled.button<{ disabled?: boolean }>`
   transition: all 0.2s;
   background: ${({ theme }) => theme.buttonWhite};
   color: ${({ theme }) => theme.black};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
 
   &:hover:not(:disabled) {
     background: ${({ theme }) => theme.buttonWhiteHover};

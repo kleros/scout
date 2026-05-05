@@ -54,7 +54,7 @@ const Evidence = styled.div`
   position: relative;
   padding: 24px;
   border-radius: 12px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   margin-bottom: 20px;
   background: ${({ theme }) => theme.backgroundThree};
   transition: all 0.2s ease;

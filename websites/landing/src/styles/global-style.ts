@@ -3,7 +3,7 @@ import { responsiveSize } from './responsiveSize'
 
 export const GlobalStyle = createGlobalStyle`
   body {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Manrope', sans-serif;
     margin: 0;
     line-height: 1.5;
 
@@ -11,6 +11,10 @@ export const GlobalStyle = createGlobalStyle`
       font-weight: 300;
       font-size: ${responsiveSize(20, 24)};
     }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
   }
 
   .os-theme-dark {

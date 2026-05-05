@@ -21,7 +21,7 @@ import BlockscoutLogo from 'assets/pngs/partners/blockscout.png';
 import OpenscanLogo from 'assets/pngs/partners/openscan.png';
 import RoutescanLogo from 'assets/pngs/partners/routescan.png';
 
-const HOME_JOST_FONT = '"Jost", "Open Sans", sans-serif';
+const HOME_HEADLINE_FONT = '"Space Grotesk", "Manrope", sans-serif';
 
 const Container = styled.div`
   width: 100%;
@@ -30,7 +30,7 @@ const Container = styled.div`
   max-width: ${MAX_WIDTH_LANDSCAPE};
   margin: 0 auto;
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   display: flex;
   flex-direction: column;
 
@@ -46,7 +46,7 @@ const HeaderSection = styled.section`
   flex-direction: column;
   align-items: center;
   text-align: center;
-  font-family: ${HOME_JOST_FONT};
+  font-family: ${HOME_HEADLINE_FONT};
   gap: 16px;
   overflow: hidden;
   padding: 24px 20px;
@@ -196,7 +196,7 @@ const PartnersIntro = styled.p`
   margin: 24px 0 24px;
   color: ${({ theme }) => theme.secondaryText};
   text-align: center;
-  font-family: ${HOME_JOST_FONT};
+  font-family: ${HOME_HEADLINE_FONT};
   font-size: 16px;
   font-style: normal;
   font-weight: 400;

@@ -8,7 +8,7 @@ export const Button = styled.button`
   background: #FFFFFF;
   align-items: center;
   justify-content: center;
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: 19px;
@@ -36,7 +36,7 @@ export const Button = styled.button`
 `
 
 export const ButtonAnchor = styled.a`
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
   text-decoration: none;
   color: #000;
 

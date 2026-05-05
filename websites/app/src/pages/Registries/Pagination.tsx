@@ -23,7 +23,7 @@ const StyledButton = styled(Button)`
   background: ${({ theme }) => theme.buttonWhite};
   color: ${({ theme }) => theme.black};
   font-size: 14px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 600;
   border-radius: 9999px;
   &:hover {

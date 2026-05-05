@@ -49,7 +49,7 @@ const LeftContent = styled.div`
   display: flex;
   flex-direction: column;
   width: 84vw;
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
   flex-wrap: wrap;
   align-items: flex-start;
 

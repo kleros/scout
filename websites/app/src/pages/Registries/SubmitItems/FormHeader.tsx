@@ -41,7 +41,7 @@ const PolicyBlock = styled.div`
 `
 
 const PolicyWarning = styled.div`
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 13px;
   line-height: 1.4;
   color: ${({ theme }) => theme.warning};

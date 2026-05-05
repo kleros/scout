@@ -42,7 +42,7 @@ export const RewardCardNewBadge = styled.div`
   right: 8px;
   background: ${({ theme }) => theme.gradientBadge};
   color: ${({ theme }) => theme.secondaryBlue};
-  font-family: "Open Sans";
+  font-family: "Manrope";
   font-size: 14px;
   font-style: normal;
   font-weight: 600;

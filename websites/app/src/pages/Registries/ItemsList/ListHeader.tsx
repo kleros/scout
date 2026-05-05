@@ -26,7 +26,7 @@ const HeaderRow = styled.div<{ registryType?: string }>`
   background: transparent;
   border: none;
   border-bottom: 1px solid ${({ theme }) => theme.divider};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   margin-bottom: 0;
   width: 100%;
 `;
