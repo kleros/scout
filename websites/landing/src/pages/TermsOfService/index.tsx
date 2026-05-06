@@ -11,12 +11,10 @@ const Container = styled.div`
   margin: 0 auto;
   padding: ${responsiveSize(32, 64)} ${responsiveSize(16, 48)};
   color: #e0e0e0;
-  font-family: 'Open Sans', sans-serif;
   line-height: 1.7;
 `
 
 const Title = styled.h1`
-  font-family: 'Oxanium', sans-serif;
   font-size: ${responsiveSize(24, 36)};
   font-weight: 700;
   color: #ffffff;
@@ -24,7 +22,6 @@ const Title = styled.h1`
 `
 
 const SectionTitle = styled.h2`
-  font-family: 'Oxanium', sans-serif;
   font-size: ${responsiveSize(18, 22)};
   font-weight: 600;
   color: #ffffff;

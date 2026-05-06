@@ -15,9 +15,13 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   body {
-    font-family: "Open Sans", sans-serif;
+    font-family: "Manrope", sans-serif;
     margin: 0px;
     background-color: ${({ theme }) => theme.klerosUIComponentsLightBackground};
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Space Grotesk", sans-serif;
   }
 
   html {
@@ -68,7 +72,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   textarea {
-    font-family: "Open Sans", sans-serif;
+    font-family: "Manrope", sans-serif;
     font-size: 14px;
   }
 

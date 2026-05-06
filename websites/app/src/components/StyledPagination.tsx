@@ -20,7 +20,7 @@ const PaginationWrapper = styled.nav`
 
 const pageButtonStyles = css<{ selected?: boolean }>`
   ${secondaryButtonStyles}
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   min-width: 40px;
   min-height: 40px;
   border-radius: 8px;

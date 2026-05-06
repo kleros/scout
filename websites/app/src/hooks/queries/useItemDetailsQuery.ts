@@ -38,6 +38,8 @@ const FETCH_ITEM_DETAILS_QUERY = gql`
         challenger
         creationTx
         resolutionTx
+        txHashChallenge
+        challengeTime
         deposit
         disputeOutcome
         resolutionTime
@@ -64,6 +66,10 @@ const FETCH_ITEM_DETAILS_QUERY = gql`
           hasPaidChallenger
           amountPaidRequester
           amountPaidChallenger
+          lastFundedRequester
+          lastFundedChallenger
+          txHashAppealFundedRequester
+          txHashAppealFundedChallenger
           txHashAppealPossible
           appealedAt
           txHashAppealDecision

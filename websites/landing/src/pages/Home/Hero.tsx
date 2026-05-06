@@ -11,7 +11,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: row;
   color: #fff;
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
@@ -59,7 +59,7 @@ const Title = styled.p`
   margin: 0 auto;
   font-size: ${responsiveSize(48, 64)};
   font-weight: 600;
-  font-family: 'Avenir', sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
 
   ${landscapeStyle(
     () => css`

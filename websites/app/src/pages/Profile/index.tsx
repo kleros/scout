@@ -30,7 +30,7 @@ const Container = styled.div`
   flex-direction: column;
   color: ${({ theme }) => theme.primaryText};
   padding: 32px 16px 64px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
   width: 100%;
   max-width: ${MAX_WIDTH_LANDSCAPE};

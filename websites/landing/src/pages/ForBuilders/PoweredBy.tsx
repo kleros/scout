@@ -36,7 +36,6 @@ const LeftContent = styled.div`
 
 const StyledTitle = styled.h1`
   margin: 0;
-  font-family: 'Avenir', sans-serif;
   text-align: center;
   height: auto;
 
@@ -54,7 +53,6 @@ const DescriptionsContainer = styled.div`
 `
 
 const StyledDescription = styled.p`
-  font-family: 'Oxanium', sans-serif;
   text-align: center;
   margin: 0;
 

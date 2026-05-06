@@ -15,7 +15,7 @@ const Container = styled.a`
   align-items: center;
   text-decoration: none;
   justify-content: center;
-  font-family: 'Avenir', sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
   gap: 8px 0;
   flex-wrap: wrap;
   padding: 8px 0;

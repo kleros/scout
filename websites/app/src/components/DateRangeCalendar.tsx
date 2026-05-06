@@ -54,7 +54,7 @@ const StyledDayPickerWrapper = styled.div`
       border: 1px solid ${({ theme }) => theme.stroke};
       border-radius: 8px;
       color: ${({ theme }) => theme.primaryText};
-      font-family: "Open Sans", sans-serif;
+      font-family: "Manrope", sans-serif;
       font-size: 14px;
       font-weight: 600;
       padding: 6px 28px 6px 12px;
@@ -189,7 +189,7 @@ const DateRangeCalendar: React.FC<DateRangeCalendarProps> = ({ from, to, onChang
             '--rdp-day_button-width': '36px',
             color: theme.primaryText,
             fontSize: '14px',
-            fontFamily: '"Open Sans", sans-serif',
+            fontFamily: '"Manrope", sans-serif',
           } as React.CSSProperties}
         />
       </StyledDayPickerWrapper>

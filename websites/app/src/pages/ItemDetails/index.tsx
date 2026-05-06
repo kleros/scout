@@ -14,7 +14,7 @@ import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 import useAppealCost from 'hooks/useAppealCost'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus'
-import { registryMap, revRegistryMap, registryDisplayNames } from 'utils/items'
+import { registryMap, registryDisplayNames } from 'utils/items'
 import Item from '../Registries/ItemsList/Item'
 import Breadcrumb from './components/Breadcrumb'
 import ItemDetailsContent from './components/ItemDetailsContent'
@@ -22,7 +22,7 @@ import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
-import { errorToast, successToast } from 'utils/wrapWithToast'
+import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 
 const Container = styled.div`
@@ -30,7 +30,7 @@ const Container = styled.div`
   flex-direction: column;
   color: ${({ theme }) => theme.primaryText};
   padding: 32px 16px 64px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   background: ${({ theme }) => theme.lightBackground};
   width: 100%;
   max-width: ${MAX_WIDTH_LANDSCAPE};
@@ -211,7 +211,7 @@ const SubmitterLink = styled(Link)`
   }
 `
 
-const SubmissionDate = styled.a`
+const SubmissionDate = styled(Link)`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 12px;
   font-style: italic;
@@ -431,11 +431,13 @@ const ItemDetails: React.FC = () => {
     if (!detailsData || isExecuting) return
 
     try {
-      await executeRequest(
+      const result = await executeRequest(
         registryAddress as `0x${string}`,
         detailsData.itemID
       )
-      successToast('Request executed successfully!')
+      if (result?.status && result.result) {
+        navigate(`/tx/${result.result.transactionHash}`)
+      }
     } catch (error) {
       console.error('Error executing request:', error)
       errorToast('Failed to execute request. Please try again.')
@@ -466,6 +468,7 @@ const ItemDetails: React.FC = () => {
                 detailsData,
                 deposits,
                 arbitrationCostData,
+                registryName: registryNameParam,
               }}
             />
           )}
@@ -497,8 +500,8 @@ const ItemDetails: React.FC = () => {
                 registryParameters={registryParameters}
                 registryAddress={registryAddress}
                 evidences={evidences}
-                setIsConfirmationOpen={setIsConfirmationOpen}
-                setEvidenceConfirmationType={setEvidenceConfirmationType}
+                itemID={itemID}
+                compositeItemId={itemId}
               />
             </RightSection>
 
@@ -534,9 +537,7 @@ const ItemDetails: React.FC = () => {
                 <DetailRow>
                   Submitted on:
                   <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${detailsData.requests[detailsData.requests.length - 1].creationTx}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/tx/${detailsData.requests[detailsData.requests.length - 1].creationTx}`}
                   >
                     {formatTimestamp(Number(detailsData.requests[detailsData.requests.length - 1].submissionTime), true)}
                   </SubmissionDate>

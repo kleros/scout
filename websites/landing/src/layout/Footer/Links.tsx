@@ -9,7 +9,7 @@ const Container = styled.nav`
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
   width: 100%;
 
   ${landscapeStyle(

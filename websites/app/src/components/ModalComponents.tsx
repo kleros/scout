@@ -24,7 +24,6 @@ export const ModalWrapper = styled.div`
 
 export const ModalContainer = styled.div`
   background: ${({ theme }) => theme.modalBackground};
-  backdrop-filter: blur(50px);
   border-radius: 20px;
   border: 1px solid ${({ theme }) => theme.stroke};
   width: 100%;
@@ -244,7 +243,7 @@ export const DateRangeChip = styled.button<{ $isSelected: boolean }>`
   color: ${({ $isSelected, theme }) => ($isSelected ? theme.secondaryBlue : theme.secondaryText)};
   font-size: 13px;
   font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 400)};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;

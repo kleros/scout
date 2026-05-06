@@ -4,14 +4,23 @@ export const TELEGRAM_REGEX = /^@\w{5,32}$/
 export const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/
 export const ETH_SIGNATURE_REGEX = /^0x[a-fA-F0-9]{130}$/
 
-export const DAPPLOOKER_API_KEY =
-  import.meta.env.REACT_APP_DAPPLOOKER_API_KEY || ''
-export const SUBGRAPH_GNOSIS_ENDPOINT =
-  import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT ||
-  'https://indexer.hyperindex.xyz/[api-key]/v1/graphql'
-export const SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT =
-  import.meta.env.REACT_APP_SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT ||
-  'https://api.studio.thegraph.com/query/61738/kleros-display-gnosis/version/latest'
+const dapplookerApiKey = import.meta.env.REACT_APP_DAPPLOOKER_API_KEY
+if (!dapplookerApiKey) {
+  throw new Error('REACT_APP_DAPPLOOKER_API_KEY environment variable is not set.')
+}
+export const DAPPLOOKER_API_KEY = dapplookerApiKey
+
+const subgraphGnosisEndpoint = import.meta.env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT
+if (!subgraphGnosisEndpoint) {
+  throw new Error('REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT environment variable is not set.')
+}
+export const SUBGRAPH_GNOSIS_ENDPOINT = subgraphGnosisEndpoint
+
+const subgraphKlerosDisplayGnosisEndpoint = import.meta.env.REACT_APP_SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT
+if (!subgraphKlerosDisplayGnosisEndpoint) {
+  throw new Error('REACT_APP_SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT environment variable is not set.')
+}
+export const SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT = subgraphKlerosDisplayGnosisEndpoint
 
 export const KLEROS_CDN_BASE = 'https://cdn.kleros.link'
 

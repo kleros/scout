@@ -5,8 +5,9 @@ export function formatTimestamp(unixTimestamp: number, withTime = false): string
         month: "short",
         day: "2-digit",
         year: "numeric",
-        hour: "numeric",
-        minute: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
         timeZone: "UTC",
         timeZoneName: "short",
       }

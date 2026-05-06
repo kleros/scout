@@ -29,7 +29,7 @@ const SectionsContainer = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   text-align: center;
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
 `
 
 const StyledButtonAnchor = styled(ButtonAnchor)`

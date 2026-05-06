@@ -95,7 +95,6 @@ const Header = styled.div`
 
 const Title = styled.h3`
   color: ${({ theme }) => theme.secondaryText};
-  font-family: "Open Sans";
   font-size: 14px;
   font-style: normal;
   font-weight: 400;

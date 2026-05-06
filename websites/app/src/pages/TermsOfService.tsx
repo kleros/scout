@@ -12,7 +12,7 @@ const Container = styled.div`
   margin: 0 auto;
   padding: ${responsiveSize(32, 64)} ${responsiveSize(16, 48)};
   color: ${({ theme }) => theme.primaryText};
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Manrope', sans-serif;
   line-height: 1.7;
 `
 

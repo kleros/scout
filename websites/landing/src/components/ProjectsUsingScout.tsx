@@ -43,7 +43,7 @@ const Logo = styled.img<{ $smaller?: boolean; $bigger?: boolean }>`
 `
 
 const StyledText = styled.p`
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
   color: #fff;
   margin: 0;
   font-size: 16px;
