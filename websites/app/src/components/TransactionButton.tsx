@@ -18,7 +18,7 @@ const StyledTransactionButton = styled.button<{
       default: return '12px 24px'
     }
   }};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: ${({ $size }) => {
     switch ($size) {
       case 'small': return '14px'

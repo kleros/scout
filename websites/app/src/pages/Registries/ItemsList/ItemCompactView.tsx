@@ -176,7 +176,7 @@ const ViewButton = styled(Link)`
   border: 1px solid;
   margin-left: auto;
   transition: all 0.2s;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   background: transparent;
   color: ${({ theme }) => theme.primaryText};
   border-color: ${({ theme }) => theme.buttonSecondaryBorder};

@@ -45,7 +45,6 @@ const TitleAndDescription = styled.div`
 
 const StyledTitle = styled.h1`
   margin: 0;
-  font-family: 'Avenir', sans-serif;
   text-align: center;
 
   ${landscapeStyle(
@@ -56,7 +55,6 @@ const StyledTitle = styled.h1`
 `
 
 const StyledDescription = styled.p`
-  font-family: 'Oxanium', sans-serif;
   text-align: center;
 
   ${landscapeStyle(
@@ -83,7 +81,6 @@ const StyledAnchor = styled.a`
   display: flex;
   align-items: center;
   margin-top: 4px;
-  font-family: 'Avenir', sans-serif;
   color: #fff;
   text-decoration: underline;
   flex-wrap: wrap;

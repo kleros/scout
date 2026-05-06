@@ -3,7 +3,7 @@ import { responsiveSize } from 'styles/responsiveSize'
 
 // Base button styles - shared across all button variants
 export const baseButtonStyles = css`
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 600;
   border-radius: 9999px;
   cursor: pointer;

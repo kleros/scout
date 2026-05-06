@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import styled, { css } from 'styled-components'
+import { Address } from 'viem'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import ReactMarkdown from 'react-markdown'
@@ -12,6 +13,7 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { useScrollTop } from 'hooks/useScrollTop'
+import InlineEvidenceForm from './InlineEvidenceForm'
 
 const EvidenceSection = styled.div<{ hasEvidence?: boolean }>`
   display: flex;
@@ -54,7 +56,7 @@ const Evidence = styled.div`
   position: relative;
   padding: 24px;
   border-radius: 12px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   margin-bottom: 20px;
   background: ${({ theme }) => theme.backgroundThree};
   transition: all 0.2s ease;
@@ -184,7 +186,7 @@ const AttachmentButton = styled.button`
   )}
 `
 
-const SubmissionDate = styled.a`
+const SubmissionDate = styled(Link)`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 13px;
   font-style: italic;
@@ -234,27 +236,29 @@ const PartyLink = styled(Link)`
 
 interface EvidenceTabProps {
   evidences: any[]
-  setIsConfirmationOpen: (open: boolean) => void
-  setEvidenceConfirmationType: (type: string) => void
+  registryAddress: Address
+  itemID: string
+  compositeItemId: string
 }
 
 const EvidenceTab: React.FC<EvidenceTabProps> = ({
   evidences,
-  setIsConfirmationOpen,
-  setEvidenceConfirmationType,
+  registryAddress,
+  itemID,
+  compositeItemId,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const scrollTop = useScrollTop()
+  const formRef = useRef<HTMLDivElement>(null)
+
+  const handleScrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
+  }
 
   return (
     <>
       <EvidenceSectionHeader>
-        <SubmitEvidenceButton
-          onClick={() => {
-            setIsConfirmationOpen(true)
-            setEvidenceConfirmationType('Evidence')
-          }}
-        >
+        <SubmitEvidenceButton onClick={handleScrollToForm}>
           Submit Evidence
         </SubmitEvidenceButton>
       </EvidenceSectionHeader>
@@ -293,11 +297,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
               <EvidenceMetadata>
                 <EvidenceMetadataItem>
                   <strong>Submitted on:</strong>
-                  <SubmissionDate
-                    href={`https://gnosisscan.io/tx/${evidence.txHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <SubmissionDate to={`/tx/${evidence.txHash}`}>
                     {formatTimestamp(Number(evidence.timestamp), true)}
                   </SubmissionDate>
                   by
@@ -317,6 +317,12 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
           <NoEvidenceText>No evidence submitted yet...</NoEvidenceText>
         )}
       </EvidenceSection>
+      <InlineEvidenceForm
+        ref={formRef}
+        registryAddress={registryAddress}
+        itemID={itemID}
+        compositeItemId={compositeItemId}
+      />
     </>
   )
 }

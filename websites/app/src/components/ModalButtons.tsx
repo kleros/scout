@@ -8,7 +8,7 @@ export const ModalButton = styled.button<{ variant?: 'primary' | 'secondary' }>`
   cursor: pointer;
   border: 1px solid;
   transition: all 0.2s;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
 
   ${({ variant = 'secondary', theme }) =>
     variant === 'primary'

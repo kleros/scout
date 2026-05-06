@@ -7,7 +7,7 @@ const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   appearance: none;
   border: 1.5px solid ${({ theme }) => theme.stroke};
   border-radius: 3px;
-  background: transparent;
+  background: ${({ theme }) => theme.subtleBackground};
   position: relative;
   transition: all 0.2s ease;
 

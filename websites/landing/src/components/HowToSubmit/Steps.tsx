@@ -11,7 +11,7 @@ const Container = styled.div`
   flex-direction: row;
   padding: 20px;
   flex-wrap: wrap;
-  font-family: 'Oxanium', sans-serif;
+  font-family: 'Manrope', sans-serif;
   gap: ${responsiveSize(0, 40)};
   justify-content: center;
   width: 84vw;

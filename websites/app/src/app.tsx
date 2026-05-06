@@ -18,6 +18,8 @@ const Profile = lazy(() => import('pages/Profile'));
 const Rewards = lazy(() => import('pages/Rewards'));
 const Guide = lazy(() => import('pages/Guide'));
 const TermsOfService = lazy(() => import('pages/TermsOfService'));
+const SubmitPage = lazy(() => import('pages/SubmitPage'));
+const TxResult = lazy(() => import('pages/TxResult'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,7 +48,9 @@ const App: React.FC = () => {
                 <Route path="rewards" element={<Rewards />} />
                 <Route path="guide" element={<Guide />} />
                 <Route path="terms-of-service" element={<TermsOfService />} />
+                <Route path="tx/:txHash" element={<TxResult />} />
                 <Route path=":registryName" element={<Registries />} />
+                <Route path=":registryName/submit" element={<SubmitPage />} />
                 <Route path=":registryName/:itemID" element={<ItemDetails />} />
                 <Route path="*" element={<h1>Page not found</h1>} />
               </Route>

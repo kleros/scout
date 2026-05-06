@@ -233,7 +233,7 @@ const SubmitButton = styled.button`
   border-radius: 9999px;
   padding: 10px 20px;
   font-size: 14px;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;

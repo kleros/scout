@@ -29,9 +29,7 @@ const Container = styled.div`
 
 const Title = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
-  font-family: "Open Sans";
   font-size: 16px;
-  font-style: italic;
   font-weight: 400;
   line-height: normal;
   margin: 0 0 20px 0;
@@ -243,7 +241,7 @@ const ViewButton = styled(Link)`
   cursor: pointer;
   border: 1px solid;
   transition: all 0.2s;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   background: transparent;
   color: ${({ theme }) => theme.primaryText};
   border-color: ${({ theme }) => theme.buttonSecondaryBorder};
@@ -311,7 +309,7 @@ const ShowMoreButton = styled.button`
   color: ${({ theme }) => theme.primaryText};
   font-size: 13px;
   font-weight: 600;
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   cursor: pointer;
 
   &:hover {

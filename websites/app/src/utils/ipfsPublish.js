@@ -5,7 +5,7 @@ const mirroredExtensions = ['.json']
 /**
  * Send file to IPFS network.
  * @param {string} fileName - The name that will be used to store the file. This is useful to preserve extension type.
- * @param {ArrayBuffer} data - The raw data from the file to upload.
+ * @param {BufferSource | Blob} data - The raw data from the file to upload. Accepts any BufferSource (ArrayBuffer, Uint8Array, etc.) or Blob.
  * @returns {object} ipfs response. Should include the hash and path of the stored item.
  */
 export default async function ipfsPublish(fileName, data) {

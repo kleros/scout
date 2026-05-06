@@ -26,7 +26,7 @@ import { useMemo } from 'react'
 
 const Card = styled.div<{ seamlessBottom?: boolean }>`
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   box-sizing: border-box;
   word-break: break-word;
   border: 1px solid ${({ theme }) => theme.stroke};

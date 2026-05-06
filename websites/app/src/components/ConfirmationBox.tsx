@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import styled, { css } from 'styled-components'
+import { useNavigate } from 'react-router-dom'
+import { formatEther } from 'viem'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
@@ -12,8 +14,23 @@ import { getIPFSPath } from 'utils/getIPFSPath'
 import { Address } from 'viem'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
 import TransactionButton from 'components/TransactionButton'
+import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
+import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
+
+const REGISTRY_SINGULAR: Record<string, string> = {
+  tokens: 'Token',
+  cdn: 'CDN',
+  'single-tags': 'Tag',
+  'tags-queries': 'Query',
+}
+
+const buildChallengeWarning = (bounty: string, opposingParty: string) =>
+  `If the challenge is successful, you will receive 100% of your refund and also a bounty of ${bounty} for spotting the mistake. In case the arbitrator rules in favor of the ${opposingParty}, you are going to lose your deposit. Please ensure you read and understand the rules contained in the Policy below before challenging it.`
+
+const REMOVAL_WARNING =
+  'If your removal request is approved, you will receive 100% of your refund. If a challenger contests your removal and the arbitrator rules against you, you will lose your deposit. Please ensure you read and understand the rules contained in the Policy below before requesting removal.'
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
@@ -38,7 +55,6 @@ const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(50px);
   box-shadow: ${({ theme }) => theme.shadowModal};
   max-height: 90vh;
   overflow-y: auto;
@@ -82,7 +98,7 @@ const TextArea = styled.textarea`
   border-radius: 8px;
   background: ${({ theme }) => theme.modalInputBackground};
   color: ${({ theme }) => theme.primaryText};
-  font-family: "Open Sans", sans-serif;
+  font-family: "Manrope", sans-serif;
   font-size: 16px;
   resize: vertical;
   transition: all 0.2s ease;
@@ -108,13 +124,22 @@ const TextArea = styled.textarea`
 
 const ButtonWrapper = styled.div`
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 24px;
   width: 100%;
+  flex-wrap: wrap;
 
   button {
     width: auto;
     max-width: 200px;
   }
+`
+
+const DepositText = styled.span`
+  font-size: 14px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.primaryText};
+  opacity: 0.9;
 `
 
 const FileUploadContainer = styled.div`
@@ -194,6 +219,7 @@ interface IConfirmationBox {
   detailsData: GraphItemDetails;
   deposits: DepositParams | undefined;
   arbitrationCostData: bigint | undefined;
+  registryName?: string;
 }
 
 const ConfirmationBox: React.FC<IConfirmationBox> = ({
@@ -203,30 +229,65 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   detailsData,
   deposits,
   arbitrationCostData,
+  registryName,
 }) => {
   const cacheKey = `confirmationBox:${detailsData.registryAddress}:${detailsData.itemID}:${evidenceConfirmationType}`
 
   const [formData, setFormData] = useLocalStorage(cacheKey, {
-    evidenceTitle: '',
     evidenceText: '',
     attachedFileBase64: null as string | null,
     attachedFileName: null as string | null,
   })
 
-  const [evidenceTitle, setEvidenceTitle] = useState<string>(formData.evidenceTitle)
   const [evidenceText, setEvidenceText] = useState<string>(formData.evidenceText)
   const [attachedFileBase64, setAttachedFileBase64] = useState<string | null>(formData.attachedFileBase64)
   const [attachedFileName, setAttachedFileName] = useState<string | null>(formData.attachedFileName)
   const [isLocalLoading, setIsLocalLoading] = useState(false)
-  const { submitEvidence, challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
+  const [acknowledged, setAcknowledged] = useState(false)
+
+  const registrySingular =
+    (registryName && REGISTRY_SINGULAR[registryName]) || 'Item'
+
+  const bountyDisplay = useMemo(() => {
+    const raw = detailsData?.requests?.[0]?.deposit
+    if (!raw) return null
+    try {
+      return `${Number(formatEther(BigInt(raw)))} xDAI`
+    } catch {
+      return null
+    }
+  }, [detailsData])
+
+  const warningText = (() => {
+    if (evidenceConfirmationType === 'Registered') return REMOVAL_WARNING
+    const opposingParty =
+      evidenceConfirmationType === 'ClearingRequested' ? 'remover' : 'submitter'
+    const bountyFallback = `the ${opposingParty}'s deposit`
+    return buildChallengeWarning(bountyDisplay ?? bountyFallback, opposingParty)
+  })()
+
+  const submitLabel = (() => {
+    switch (evidenceConfirmationType) {
+      case 'RegistrationRequested':
+        return `Challenge ${registrySingular}`
+      case 'Registered':
+        return `Remove ${registrySingular}`
+      case 'ClearingRequested':
+        return `Challenge Removal`
+      default:
+        return 'Submit'
+    }
+  })()
+  const { challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
+  const navigate = useNavigate()
 
   // Combined loading state for both IPFS upload and contract interaction
   const isLoading = isLocalLoading || isContractLoading
 
   // Sync to localStorage - EXACT same pattern as AddToken
   useEffect(() => {
-    setFormData({ evidenceTitle, evidenceText, attachedFileBase64, attachedFileName })
-  }, [evidenceTitle, evidenceText, attachedFileBase64, attachedFileName, setFormData])
+    setFormData({ evidenceText, attachedFileBase64, attachedFileName })
+  }, [evidenceText, attachedFileBase64, attachedFileName, setFormData])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -279,6 +340,20 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   }
 
+  const depositValue = useMemo(() => {
+    if (!deposits || arbitrationCostData === undefined) return undefined
+    switch (evidenceConfirmationType) {
+      case 'RegistrationRequested':
+        return deposits.submissionChallengeBaseDeposit + arbitrationCostData
+      case 'Registered':
+        return deposits.removalBaseDeposit + arbitrationCostData
+      case 'ClearingRequested':
+        return deposits.removalChallengeBaseDeposit + arbitrationCostData
+      default:
+        return undefined
+    }
+  }, [deposits, arbitrationCostData, evidenceConfirmationType])
+
   return (
     <ModalOverlay $isOpen={isConfirmationOpen} onClick={handleOverlayClick}>
       <Container>
@@ -287,8 +362,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             <div>
               {(() => {
                 switch (evidenceConfirmationType) {
-                  case 'Evidence':
-                    return 'Submit Evidence'
                   case 'RegistrationRequested':
                     return 'Challenge Item'
                   case 'Registered':
@@ -307,16 +380,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               <StyledCloseButton />
             </ClosedButtonContainer>
           </ConfirmationTitle>
-          {evidenceConfirmationType === 'Evidence' && (
-            <>
-              <FieldLabel>Title</FieldLabel>
-              <TextArea
-                rows={1}
-                value={evidenceTitle}
-                onChange={(e) => setEvidenceTitle(e.target.value)}
-              ></TextArea>
-            </>
-          )}
           <FieldLabel>Description</FieldLabel>
           <TextArea
             rows={3}
@@ -344,36 +407,35 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               </FilePreview>
             )}
           </FileUploadContainer>
+          <PolicyAcknowledgement
+            registryName={registryName}
+            warningText={warningText}
+            checked={acknowledged}
+            onCheckedChange={setAcknowledged}
+          />
           <ButtonWrapper>
             <EnsureChain>
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."
-                disabled={
-                  evidenceConfirmationType === 'Evidence'
-                    ? !evidenceTitle.trim() || !evidenceText.trim()
-                    : !evidenceText.trim()
-                }
+                disabled={!acknowledged || !evidenceText.trim()}
                 onClick={async () => {
                   // Set loading state immediately
                   setIsLocalLoading(true)
 
                   try {
-                    // Auto-generate title for challenge/removal requests
-                    const finalTitle = evidenceConfirmationType === 'Evidence'
-                      ? evidenceTitle
-                      : (() => {
-                          switch (evidenceConfirmationType) {
-                            case 'RegistrationRequested':
-                              return 'Challenge Justification'
-                            case 'Registered':
-                              return 'Removal Justification'
-                            case 'ClearingRequested':
-                              return 'Challenge Removal Justification'
-                            default:
-                              return evidenceTitle
-                          }
-                        })()
+                    const finalTitle = (() => {
+                      switch (evidenceConfirmationType) {
+                        case 'RegistrationRequested':
+                          return 'Challenge Justification'
+                        case 'Registered':
+                          return 'Removal Justification'
+                        case 'ClearingRequested':
+                          return 'Challenge Removal Justification'
+                        default:
+                          return ''
+                      }
+                    })()
                     // Upload attached file to IPFS if present
                     let fileURI: string | null = null
                     let fileTypeExtension: string | null = null
@@ -415,11 +477,8 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     const itemId = detailsData.itemID
                     const arbitrationCost = arbitrationCostData as bigint
 
-                    let result: { status: boolean } | undefined
+                    let result: WrapWithToastReturnType | undefined
                     switch (evidenceConfirmationType) {
-                      case 'Evidence':
-                        result = await submitEvidence(registryAddress, itemId, ipfsPath)
-                        break
                       case 'RegistrationRequested':
                         if (!deposits || deposits.submissionChallengeBaseDeposit === undefined) {
                           errorToast('Missing deposit parameters for challenging submission. Please try again.')
@@ -465,13 +524,16 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
                     if (result?.status) {
                       // Reset form state before closing to prevent the useEffect from saving it again
-                      setEvidenceTitle('')
                       setEvidenceText('')
                       setAttachedFileBase64(null)
                       setAttachedFileName(null)
                       // Clear localStorage after state is reset
                       localStorage.removeItem(cacheKey)
                       setIsConfirmationOpen(false)
+
+                      if (result.result) {
+                        navigate(`/tx/${result.result.transactionHash}`)
+                      }
                     }
                   } catch (error) {
                     console.error('Error performing action:', error)
@@ -481,9 +543,14 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                   }
                 }}
               >
-                Submit
+                {submitLabel}
               </TransactionButton>
             </EnsureChain>
+            {depositValue !== undefined && (
+              <DepositText>
+                Deposit: {formatEther(depositValue)} xDAI
+              </DepositText>
+            )}
           </ButtonWrapper>
         </InnerContainer>
       </Container>
