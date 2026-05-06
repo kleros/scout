@@ -69,7 +69,6 @@ const Position1Left = styled.div`
 const StatisticsTitle = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
   font-size: 14px;
-  font-style: italic;
   font-weight: 400;
   line-height: normal;
   margin: 0 0 8px 0;
@@ -118,7 +117,6 @@ const Position3Container = styled.div`
 const Position3Title = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
   font-size: 14px;
-  font-style: italic;
   font-weight: 400;
   line-height: normal;
   margin: 0 0 12px 0;

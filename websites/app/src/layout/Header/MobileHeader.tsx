@@ -5,14 +5,14 @@ import { useClickAway, useToggle } from "react-use";
 
 import HamburgerIcon from "svgs/header/hamburger.svg";
 
-import { landscapeStyle } from "styles/landscapeStyle";
+import { BREAKPOINT_LANDSCAPE, landscapeStyle } from "styles/landscapeStyle";
 
 import LightButton from "components/LightButton";
 
 import Logo from "./Logo";
 import NavBar from "./navbar";
 
-const Container = styled.div`
+const Container = styled.div<{ $forceVisible: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -24,6 +24,14 @@ const Container = styled.div`
       display: none;
     `
   )}
+
+  ${({ $forceVisible }) =>
+    $forceVisible &&
+    css`
+      @media (min-width: ${BREAKPOINT_LANDSCAPE}px) {
+        display: flex;
+      }
+    `}
 `;
 
 const StyledLightButton = styled(LightButton)`
@@ -45,13 +53,17 @@ export function useOpenContext() {
   return useContext(OpenContext);
 }
 
-const MobileHeader = () => {
+interface MobileHeaderProps {
+  forceCompact: boolean;
+}
+
+const MobileHeader: React.FC<MobileHeaderProps> = ({ forceCompact }) => {
   const [isOpen, toggleIsOpen] = useToggle(false);
   const containerRef = useRef(null);
   useClickAway(containerRef, () => toggleIsOpen(false));
   const memoizedContext = useMemo(() => ({ isOpen, toggleIsOpen }), [isOpen, toggleIsOpen]);
   return (
-    <Container ref={containerRef}>
+    <Container ref={containerRef} $forceVisible={forceCompact}>
       <OpenContext.Provider value={memoizedContext}>
         <Logo />
         <NavBar />

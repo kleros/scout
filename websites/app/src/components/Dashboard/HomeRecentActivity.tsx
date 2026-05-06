@@ -30,7 +30,6 @@ const Container = styled.div`
 const Title = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
   font-size: 16px;
-  font-style: italic;
   font-weight: 400;
   line-height: normal;
   margin: 0 0 20px 0;

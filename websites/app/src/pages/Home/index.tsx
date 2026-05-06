@@ -295,7 +295,7 @@ const BottomGrid = styled.div`
 
 interface IHome {}
 
-const BASE_VERIFIED_CONTRACTS = 2_587_341;
+const BASE_VERIFIED_CONTRACTS = 2_655_057;
 const COUNTER_FORMATTER = new Intl.NumberFormat('en-US');
 
 const Home: React.FC<IHome> = () => {
@@ -410,7 +410,7 @@ const Home: React.FC<IHome> = () => {
         </CounterStack>
         <HeroGlobe />
         <Description>
-          Cut blind signing risks and interact safely.
+          Verified, human-readable names for safe interactions
           <br />
           With one submission, smart contracts can be verified and linked to a trusted project.
         </Description>
