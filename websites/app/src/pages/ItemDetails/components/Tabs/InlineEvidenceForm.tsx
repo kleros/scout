@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useRef, useState } from 'react'
+import React, { forwardRef, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { useQueryClient } from '@tanstack/react-query'
 import { Address } from 'viem'
@@ -31,37 +31,10 @@ const Container = styled.div`
   scroll-margin-top: 80px;
 `
 
-const HeadingRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`
-
 const Heading = styled.div`
   font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
-`
-
-const CancelLink = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.secondaryText};
-  font-size: 14px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: color 0.2s ease, background 0.2s ease;
-
-  &:hover {
-    color: ${({ theme }) => theme.primaryText};
-    background: ${({ theme }) => theme.backgroundFour};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
 `
 
 const FieldLabel = styled.label`
@@ -176,14 +149,12 @@ interface InlineEvidenceFormProps {
   registryAddress: Address
   itemID: string
   compositeItemId: string
-  onClose: () => void
 }
 
 const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>(({
   registryAddress,
   itemID,
   compositeItemId,
-  onClose,
 }, ref) => {
   const cacheKey = `inlineEvidenceForm:${registryAddress}:${itemID}`
 
@@ -202,15 +173,8 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
 
   const { submitEvidence, isLoading: isContractLoading } = useCurateInteractions()
   const queryClient = useQueryClient()
-  const titleRef = useRef<HTMLTextAreaElement>(null)
 
   const isLoading = isLocalLoading || isContractLoading
-
-  useEffect(() => {
-    // Autofocus the title field when the form is mounted (i.e. just opened).
-    // preventScroll because EvidenceTab already calls scrollIntoView on the container.
-    titleRef.current?.focus({ preventScroll: true })
-  }, [])
 
   useEffect(() => {
     setFormData({ title, description, attachedFileBase64, attachedFileName })
@@ -292,7 +256,6 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
         setAttachedFileName(null)
         localStorage.removeItem(cacheKey)
         queryClient.invalidateQueries({ queryKey: queryKeys.itemDetails(compositeItemId) })
-        onClose()
       }
     } catch (error) {
       console.error('Error submitting evidence:', error)
@@ -306,15 +269,9 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
 
   return (
     <Container ref={ref}>
-      <HeadingRow>
-        <Heading>Add Your Evidence</Heading>
-        <CancelLink type="button" onClick={onClose} disabled={isLoading}>
-          Cancel
-        </CancelLink>
-      </HeadingRow>
+      <Heading>Add Your Evidence</Heading>
       <FieldLabel>Title</FieldLabel>
       <TextArea
-        ref={titleRef}
         rows={1}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
