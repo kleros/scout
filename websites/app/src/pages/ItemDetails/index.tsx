@@ -500,8 +500,8 @@ const ItemDetails: React.FC = () => {
                 registryParameters={registryParameters}
                 registryAddress={registryAddress}
                 evidences={evidences}
-                setIsConfirmationOpen={setIsConfirmationOpen}
-                setEvidenceConfirmationType={setEvidenceConfirmationType}
+                itemID={itemID}
+                compositeItemId={itemId}
               />
             </RightSection>
 

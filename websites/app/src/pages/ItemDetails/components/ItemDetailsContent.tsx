@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
+import { Address } from 'viem'
 import ItemDetailsTab from './Tabs/ItemDetailsTab'
 import EvidenceTab from './Tabs/EvidenceTab'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
@@ -76,8 +77,8 @@ interface ItemDetailsContentProps {
   registryParameters: any
   registryAddress: string
   evidences: any[]
-  setIsConfirmationOpen: (open: boolean) => void
-  setEvidenceConfirmationType: (type: string) => void
+  itemID: string
+  compositeItemId: string
 }
 
 const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
@@ -97,8 +98,8 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
   registryParameters,
   registryAddress,
   evidences,
-  setIsConfirmationOpen,
-  setEvidenceConfirmationType,
+  itemID,
+  compositeItemId,
 }) => {
   const [currentTab, setCurrentTab] = useState(0)
 
@@ -142,8 +143,9 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
           <EvidenceWrapper>
             <EvidenceTab
               evidences={evidences}
-              setIsConfirmationOpen={setIsConfirmationOpen}
-              setEvidenceConfirmationType={setEvidenceConfirmationType}
+              registryAddress={registryAddress as Address}
+              itemID={itemID}
+              compositeItemId={compositeItemId}
             />
           </EvidenceWrapper>
         )}

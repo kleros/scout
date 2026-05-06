@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
+import { Address } from 'viem'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import ReactMarkdown from 'react-markdown'
@@ -12,6 +13,7 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { useScrollTop } from 'hooks/useScrollTop'
+import InlineEvidenceForm from './InlineEvidenceForm'
 
 const EvidenceSection = styled.div<{ hasEvidence?: boolean }>`
   display: flex;
@@ -234,27 +236,34 @@ const PartyLink = styled(Link)`
 
 interface EvidenceTabProps {
   evidences: any[]
-  setIsConfirmationOpen: (open: boolean) => void
-  setEvidenceConfirmationType: (type: string) => void
+  registryAddress: Address
+  itemID: string
+  compositeItemId: string
 }
 
 const EvidenceTab: React.FC<EvidenceTabProps> = ({
   evidences,
-  setIsConfirmationOpen,
-  setEvidenceConfirmationType,
+  registryAddress,
+  itemID,
+  compositeItemId,
 }) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const scrollTop = useScrollTop()
+  const formRef = useRef<HTMLDivElement>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+
+  const openAndScrollToForm = () => {
+    setIsFormOpen(true)
+    // Wait for the form to mount before scrolling/focusing.
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
+    })
+  }
 
   return (
     <>
       <EvidenceSectionHeader>
-        <SubmitEvidenceButton
-          onClick={() => {
-            setIsConfirmationOpen(true)
-            setEvidenceConfirmationType('Evidence')
-          }}
-        >
+        <SubmitEvidenceButton onClick={openAndScrollToForm}>
           Submit Evidence
         </SubmitEvidenceButton>
       </EvidenceSectionHeader>
@@ -313,6 +322,15 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
           <NoEvidenceText>No evidence submitted yet...</NoEvidenceText>
         )}
       </EvidenceSection>
+      {isFormOpen && (
+        <InlineEvidenceForm
+          ref={formRef}
+          registryAddress={registryAddress}
+          itemID={itemID}
+          compositeItemId={compositeItemId}
+          onClose={() => setIsFormOpen(false)}
+        />
+      )}
     </>
   )
 }

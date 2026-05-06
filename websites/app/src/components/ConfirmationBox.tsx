@@ -234,20 +234,17 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   const cacheKey = `confirmationBox:${detailsData.registryAddress}:${detailsData.itemID}:${evidenceConfirmationType}`
 
   const [formData, setFormData] = useLocalStorage(cacheKey, {
-    evidenceTitle: '',
     evidenceText: '',
     attachedFileBase64: null as string | null,
     attachedFileName: null as string | null,
   })
 
-  const [evidenceTitle, setEvidenceTitle] = useState<string>(formData.evidenceTitle)
   const [evidenceText, setEvidenceText] = useState<string>(formData.evidenceText)
   const [attachedFileBase64, setAttachedFileBase64] = useState<string | null>(formData.attachedFileBase64)
   const [attachedFileName, setAttachedFileName] = useState<string | null>(formData.attachedFileName)
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
 
-  const requiresAcknowledgement = evidenceConfirmationType !== 'Evidence'
   const registrySingular =
     (registryName && REGISTRY_SINGULAR[registryName]) || 'Item'
 
@@ -271,8 +268,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
   const submitLabel = (() => {
     switch (evidenceConfirmationType) {
-      case 'Evidence':
-        return 'Submit'
       case 'RegistrationRequested':
         return `Challenge ${registrySingular}`
       case 'Registered':
@@ -283,7 +278,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
         return 'Submit'
     }
   })()
-  const { submitEvidence, challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
+  const { challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
   const navigate = useNavigate()
 
   // Combined loading state for both IPFS upload and contract interaction
@@ -291,8 +286,8 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
   // Sync to localStorage - EXACT same pattern as AddToken
   useEffect(() => {
-    setFormData({ evidenceTitle, evidenceText, attachedFileBase64, attachedFileName })
-  }, [evidenceTitle, evidenceText, attachedFileBase64, attachedFileName, setFormData])
+    setFormData({ evidenceText, attachedFileBase64, attachedFileName })
+  }, [evidenceText, attachedFileBase64, attachedFileName, setFormData])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -367,8 +362,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             <div>
               {(() => {
                 switch (evidenceConfirmationType) {
-                  case 'Evidence':
-                    return 'Submit Evidence'
                   case 'RegistrationRequested':
                     return 'Challenge Item'
                   case 'Registered':
@@ -387,16 +380,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               <StyledCloseButton />
             </ClosedButtonContainer>
           </ConfirmationTitle>
-          {evidenceConfirmationType === 'Evidence' && (
-            <>
-              <FieldLabel>Title</FieldLabel>
-              <TextArea
-                rows={1}
-                value={evidenceTitle}
-                onChange={(e) => setEvidenceTitle(e.target.value)}
-              ></TextArea>
-            </>
-          )}
           <FieldLabel>Description</FieldLabel>
           <TextArea
             rows={3}
@@ -424,45 +407,35 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               </FilePreview>
             )}
           </FileUploadContainer>
-          {requiresAcknowledgement && (
-            <PolicyAcknowledgement
-              registryName={registryName}
-              warningText={warningText}
-              checked={acknowledged}
-              onCheckedChange={setAcknowledged}
-            />
-          )}
+          <PolicyAcknowledgement
+            registryName={registryName}
+            warningText={warningText}
+            checked={acknowledged}
+            onCheckedChange={setAcknowledged}
+          />
           <ButtonWrapper>
             <EnsureChain>
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."
-                disabled={
-                  (requiresAcknowledgement && !acknowledged) ||
-                  (evidenceConfirmationType === 'Evidence'
-                    ? !evidenceTitle.trim() || !evidenceText.trim()
-                    : !evidenceText.trim())
-                }
+                disabled={!acknowledged || !evidenceText.trim()}
                 onClick={async () => {
                   // Set loading state immediately
                   setIsLocalLoading(true)
 
                   try {
-                    // Auto-generate title for challenge/removal requests
-                    const finalTitle = evidenceConfirmationType === 'Evidence'
-                      ? evidenceTitle
-                      : (() => {
-                          switch (evidenceConfirmationType) {
-                            case 'RegistrationRequested':
-                              return 'Challenge Justification'
-                            case 'Registered':
-                              return 'Removal Justification'
-                            case 'ClearingRequested':
-                              return 'Challenge Removal Justification'
-                            default:
-                              return evidenceTitle
-                          }
-                        })()
+                    const finalTitle = (() => {
+                      switch (evidenceConfirmationType) {
+                        case 'RegistrationRequested':
+                          return 'Challenge Justification'
+                        case 'Registered':
+                          return 'Removal Justification'
+                        case 'ClearingRequested':
+                          return 'Challenge Removal Justification'
+                        default:
+                          return ''
+                      }
+                    })()
                     // Upload attached file to IPFS if present
                     let fileURI: string | null = null
                     let fileTypeExtension: string | null = null
@@ -506,9 +479,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
                     let result: WrapWithToastReturnType | undefined
                     switch (evidenceConfirmationType) {
-                      case 'Evidence':
-                        result = await submitEvidence(registryAddress, itemId, ipfsPath)
-                        break
                       case 'RegistrationRequested':
                         if (!deposits || deposits.submissionChallengeBaseDeposit === undefined) {
                           errorToast('Missing deposit parameters for challenging submission. Please try again.')
@@ -554,7 +524,6 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
                     if (result?.status) {
                       // Reset form state before closing to prevent the useEffect from saving it again
-                      setEvidenceTitle('')
                       setEvidenceText('')
                       setAttachedFileBase64(null)
                       setAttachedFileName(null)
@@ -577,7 +546,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                 {submitLabel}
               </TransactionButton>
             </EnsureChain>
-            {requiresAcknowledgement && depositValue !== undefined && (
+            {depositValue !== undefined && (
               <DepositText>
                 Deposit: {formatEther(depositValue)} xDAI
               </DepositText>
