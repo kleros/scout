@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import styled from "styled-components";
 
 import DesktopHeader from "./DesktopHeader";
@@ -20,16 +20,14 @@ const Container = styled.div`
 const HeaderContainer = styled.div`
   width: 100%;
   padding: 0px 24px;
-  position: relative;
 `;
 
 const Header: React.FC = () => {
-  const [forceCompact, setForceCompact] = useState(false);
   return (
     <Container>
       <HeaderContainer>
-        <DesktopHeader forceCompact={forceCompact} onOverflowChange={setForceCompact} />
-        <MobileHeader forceCompact={forceCompact} />
+        <DesktopHeader />
+        <MobileHeader />
       </HeaderContainer>
     </Container>
   );
