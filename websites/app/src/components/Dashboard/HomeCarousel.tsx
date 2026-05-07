@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import styled, { css } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { StatCard } from 'components/Dashboard/StatCard';
 import { ChainRanking } from 'components/Dashboard/ChainRanking';
@@ -134,6 +134,7 @@ const Position3Title = styled.h3`
 const DotsContainer = styled.div`
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 8px;
   margin-top: 16px;
   padding: 8px 0;
@@ -145,17 +146,36 @@ const DotsContainer = styled.div`
   )}
 `;
 
-const Dot = styled.div<{ $active: boolean }>`
-  width: 10px;
+const fillAnimation = keyframes`
+  from { width: 0%; }
+  to { width: 100%; }
+`;
+
+const Dot = styled.button<{ $active: boolean }>`
+  width: ${({ $active }) => ($active ? '36px' : '10px')};
   height: 10px;
-  border-radius: 50%;
-  background: ${({ $active, theme }) => $active ? theme.carouselDotActive : theme.carouselDotInactive};
+  border-radius: 9999px;
+  background: ${({ theme }) => theme.carouselDotInactive};
+  border: none;
+  padding: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
 
   &:hover {
-    background: ${({ theme }) => theme.carouselDotActive};
+    background: ${({ $active, theme }) =>
+      $active ? theme.carouselDotInactive : theme.carouselDotActive};
   }
+`;
+
+const DotFill = styled.div<{ $paused: boolean; $duration: number }>`
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: ${({ theme }) => theme.carouselDotActive};
+  animation: ${fillAnimation} ${({ $duration }) => $duration}ms linear forwards;
+  animation-play-state: ${({ $paused }) => ($paused ? 'paused' : 'running')};
 `;
 
 const LoadingContainer = styled.div`
@@ -222,11 +242,12 @@ interface HomeCarouselProps {
   chartData: Array<{ name: string; submissions: number }>;
 }
 
+const SLIDE_COUNT = 3;
+
 export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, chartData }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [trackHeight, setTrackHeight] = useState<number | undefined>(undefined);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Measure active slide height and animate the wrapper
@@ -245,39 +266,13 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
     return () => observer.disconnect();
   }, [activeIndex, isLoading, stats]);
 
-  const startCarousel = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    intervalRef.current = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % 3);
-    }, CAROUSEL_INTERVAL);
+  const handleFillEnd = useCallback(() => {
+    setActiveIndex((prev) => (prev + 1) % SLIDE_COUNT);
   }, []);
-
-  const stopCarousel = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isPaused) {
-      startCarousel();
-    } else {
-      stopCarousel();
-    }
-    return () => {
-      stopCarousel();
-    };
-  }, [isPaused, startCarousel, stopCarousel]);
 
   const handleDotClick = useCallback((index: number) => {
     setActiveIndex(index);
-    setIsPaused(false);
-    startCarousel(); // Reset timer when user manually changes
-  }, [startCarousel]);
+  }, []);
 
   const handleMouseEnter = useCallback(() => {
     setIsPaused(true);
@@ -355,29 +350,29 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
         {/* Position 3: Registry Stats */}
         <CarouselSlide ref={(el) => { slideRefs.current[2] = el; }}>
           <Position3Container>
-            <Position3Title>Items Verified per Registry</Position3Title>
+            <Position3Title>Verified Submissions per Registry</Position3Title>
             <RegistryCard
               title="Tokens"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.tokens?.assetsVerified || 0)}
-              secondaryValue="Verified items"
+              secondaryValue="Verified submissions"
               registryKey="tokens"
             />
             <RegistryCard
               title="Single Tags"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.singleTags?.assetsVerified || 0)}
-              secondaryValue="Verified items"
+              secondaryValue="Verified submissions"
               registryKey="single-tags"
             />
             <RegistryCard
               title="Query Tags"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.tagQueries?.assetsVerified || 0)}
-              secondaryValue="Verified items"
+              secondaryValue="Verified submissions"
               registryKey="tags-queries"
             />
             <RegistryCard
               title="Contract Domains"
               mainValue={isLoading ? <Skeleton width={60} height={32} /> : (stats?.cdn?.assetsVerified || 0)}
-              secondaryValue="Verified items"
+              secondaryValue="Verified submissions"
               registryKey="cdn"
             />
           </Position3Container>
@@ -386,9 +381,27 @@ export const HomeCarousel: React.FC<HomeCarouselProps> = ({ stats, isLoading, ch
       </TrackWrapper>
 
       <DotsContainer>
-        <Dot $active={activeIndex === 0} onClick={() => handleDotClick(0)} />
-        <Dot $active={activeIndex === 1} onClick={() => handleDotClick(1)} />
-        <Dot $active={activeIndex === 2} onClick={() => handleDotClick(2)} />
+        {Array.from({ length: SLIDE_COUNT }).map((_, index) => {
+          const isActive = activeIndex === index;
+          return (
+            <Dot
+              key={index}
+              $active={isActive}
+              aria-label={`Go to slide ${index + 1}`}
+              aria-current={isActive}
+              onClick={() => handleDotClick(index)}
+            >
+              {isActive ? (
+                <DotFill
+                  key={activeIndex}
+                  $paused={isPaused}
+                  $duration={CAROUSEL_INTERVAL}
+                  onAnimationEnd={handleFillEnd}
+                />
+              ) : null}
+            </Dot>
+          );
+        })}
       </DotsContainer>
     </Container>
   );
