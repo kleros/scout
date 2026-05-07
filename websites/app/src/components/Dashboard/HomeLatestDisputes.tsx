@@ -6,18 +6,7 @@ import LawBalanceIcon from 'assets/svgs/icons/law-balance.svg';
 import HourglassIcon from 'assets/svgs/icons/hourglass.svg';
 
 const Container = styled.div`
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  background: transparent;
-  box-shadow: ${({ theme }) => theme.shadowCard};
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.glowOrange};
-  }
+  padding: 24px 0;
 `;
 
 const Title = styled.h3`
