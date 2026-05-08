@@ -138,6 +138,9 @@ const HeroMeta = styled.div`
   gap: 8px;
   font-size: 13px;
   color: ${({ theme }) => theme.secondaryText};
+  // Equal-width digits so the date string's numerals don't visually shift
+  // between renders / different transactions. Manrope supports it natively.
+  font-variant-numeric: tabular-nums;
 `
 
 const StatusChip = styled.span<{ $tone: 'success' | 'error' }>`
@@ -155,9 +158,12 @@ const StatusChip = styled.span<{ $tone: 'success' | 'error' }>`
   text-transform: uppercase;
   white-space: nowrap;
 
+  // Icon at 14px optically matches the cap height of 12px uppercase text;
+  // 12px would size the icon to the font's x-height and look shy next to
+  // "CONFIRMED" / "REVERTED" all-caps.
   svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 `
 
@@ -240,11 +246,10 @@ const DetailValue = styled.div`
   color: ${({ theme }) => theme.primaryText};
   font-size: 13px;
   word-break: break-all;
-`
-
-const MonoText = styled.span`
-  font-family: 'JetBrains Mono', 'Menlo', monospace;
-  font-size: 13px;
+  // Tabular figures give addresses, amounts, durations, and fees a consistent
+  // digit rhythm without changing the font — the polish that fintech dashboards
+  // (Stripe, Linear, etc.) use to keep numeric columns visually steady.
+  font-variant-numeric: tabular-nums;
 `
 
 const SubLabel = styled.span`
@@ -291,6 +296,9 @@ const AddressLink = styled(Link)`
 
   label {
     color: ${({ theme }) => theme.secondaryText};
+    // Override the global StyledSmallLabel's 14px so the From address
+    // matches the 13px row hierarchy used by the hash and contract values.
+    font-size: 13px !important;
     cursor: pointer;
   }
 
@@ -577,7 +585,7 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
           <DetailLabel>Transaction hash</DetailLabel>
           <DetailValue>
             <Copyable copyableContent={hash} info="Copy hash">
-              <MonoText>{shortenHash(hash)}</MonoText>
+              {shortenHash(hash)}
             </Copyable>
             <ExternalLink
               href={explorerTxUrl(hash)}
@@ -618,7 +626,7 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
             <DetailLabel>Contract</DetailLabel>
             <DetailValue>
               <Copyable copyableContent={toAddr} info="Copy address">
-                <MonoText>{shortenAddress(toAddr)}</MonoText>
+                {shortenAddress(toAddr)}
               </Copyable>
               <ExternalLink
                 href={explorerAddrUrl(toAddr)}
