@@ -7,6 +7,7 @@ import Links from './Links'
 const FullWidthWrapper = styled.div`
   background-color: #08020e;
   width: 100%;
+  margin-top: auto;
 `;
 
 const Container = styled.div`

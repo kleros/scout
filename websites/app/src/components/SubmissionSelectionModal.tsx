@@ -10,6 +10,7 @@ import {
   CloseButton,
 } from './ModalComponents';
 import { landscapeStyle } from 'styles/landscapeStyle';
+import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll';
 
 import TokensIcon from 'assets/svgs/registries/tokens.svg';
 import CDNIcon from 'assets/svgs/registries/cdn.svg';
@@ -185,6 +186,7 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
   onClose,
 }) => {
   const navigate = useNavigate();
+  useLockOverlayScroll(isOpen);
 
   if (!isOpen) return null;
 

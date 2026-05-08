@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useExportItems, ExportFilters } from 'hooks/queries/useExportItems'
+import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 import { json2csv } from 'json-2-csv'
 import { revRegistryMap } from 'utils/items'
 import { chains } from 'utils/chains'
@@ -119,6 +120,7 @@ const ExportModal: React.FC<ExportModalProps> = ({
   registryAddress,
   onClose,
 }) => {
+  useLockOverlayScroll(true)
   const [hasClickedExport, setHasClickedExport] = useState(false)
   const [isButtonLoading, setIsButtonLoading] = useState(false)
   const ref = useRef<HTMLAnchorElement>(null)

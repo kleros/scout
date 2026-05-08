@@ -18,6 +18,7 @@ const Container = styled.div`
   width: 100%;
   background-color: ${({ theme }) => (theme.name === "dark" ? theme.lightGrey : theme.primaryPurple)};
   justify-content: center;
+  margin-top: auto;
   z-index: 1;
 `;
 

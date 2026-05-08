@@ -9,6 +9,7 @@ import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
 import { GraphItemDetails } from '../../utils/itemDetails'
 import { errorToast } from '../../utils/wrapWithToast'
+import { useLockOverlayScroll } from '../../hooks/useLockOverlayScroll'
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -272,6 +273,8 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
   MULTIPLIER_DIVISOR,
   registryAddress,
 }) => {
+  useLockOverlayScroll(isOpen)
+
   const [contributionShare, setContributionShare] = useState(1)
   const [userSelectedSide, setUserSelectedSide] = useState<PARTY>(PARTY.NONE)
   const nativeCurrency = useNativeCurrency()
