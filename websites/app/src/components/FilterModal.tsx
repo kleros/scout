@@ -4,6 +4,7 @@ import { useFilters, DateRangeOption, DATE_RANGE_PRESETS } from 'context/FilterC
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
+import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll';
 import { ModalButton } from './ModalButtons';
 import Checkbox from './Checkbox';
 import RadioButton from './RadioButton';
@@ -124,6 +125,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   const modalRef = useRef<HTMLDivElement>(null);
 
   useFocusOutside(modalRef, () => onClose());
+  useLockOverlayScroll(isOpen);
 
   const handleStatusChange = useCallback((status: string) => {
     filters.toggleStatus(status);
