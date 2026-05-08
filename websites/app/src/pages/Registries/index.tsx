@@ -24,6 +24,7 @@ import ExportModal from './ExportModal';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 import HeroShadowSVG from 'svgs/header/hero-shadow.svg';
 import { MAX_WIDTH_LANDSCAPE, landscapeStyle } from 'styles/landscapeStyle';
+import { responsiveSize } from 'styles/responsiveSize';
 import ScrollTop from 'components/ScrollTop';
 
 const Container = styled.div`
@@ -39,7 +40,7 @@ const Container = styled.div`
 
   ${landscapeStyle(
     () => css`
-      padding: 36px 32px 60px;
+      padding: 36px ${responsiveSize(0, 48)} 60px;
     `
   )}
 `;

@@ -13,18 +13,7 @@ import HourglassIcon from 'svgs/icons/hourglass.svg';
 import ArrowIcon from 'assets/svgs/icons/arrow.svg';
 
 const Container = styled.div`
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.lightGrey};
-  background: transparent;
-  box-shadow: ${({ theme }) => theme.shadowCard};
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.glowPurple};
-  }
+  padding: 24px 0;
 `;
 
 const Title = styled.h3`
@@ -58,10 +47,6 @@ const ActivityRow = styled.div`
 
   &:hover {
     background: ${({ theme }) => theme.subtleBackground};
-    padding-left: 8px;
-    padding-right: 8px;
-    margin-left: -8px;
-    margin-right: -8px;
     border-radius: 8px;
   }
 

@@ -9,6 +9,7 @@ import SearchIcon from 'svgs/icons/search.svg';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 import { getChainIcon } from 'utils/chainIcons';
 import useHumanizedCountdown, { useChallengeRemainingTime, useChallengePeriodDuration } from 'hooks/countdown';
+import { useIsMobile } from 'hooks/useIsMobile';
 import Skeleton from 'react-loading-skeleton';
 import HourglassIcon from 'svgs/icons/hourglass.svg';
 import { SubmissionSelectionModal } from 'components/SubmissionSelectionModal';
@@ -64,6 +65,7 @@ const Container = styled.div`
 
 const StyledInput = styled.input`
   flex-grow: 1;
+  min-width: 0;
   padding: 8px;
   background: transparent;
   font-size: 16px;
@@ -71,6 +73,7 @@ const StyledInput = styled.input`
   border: none;
   color: ${({ theme }) => theme.primaryText};
   border-radius: 12px;
+  text-overflow: ellipsis;
 
   ::placeholder {
     color: ${({ theme }) => theme.secondaryText};
@@ -262,6 +265,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
   const [isActive, setIsActive] = useState<boolean>(false);
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState<boolean>(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useDebounce(
     () => {
@@ -383,7 +387,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ className }) => {
             type="text"
             value={searchTerm}
             onChange={(e) => handleInputChange(e.target.value)}
-            placeholder="Search for any item with keywords, address, name, etc."
+            placeholder={
+              isMobile
+                ? 'Search items, addresses, names…'
+                : 'Search for any item with keywords, address, name, etc.'
+            }
           />
         </Container>
         <ResultsDropdown $isVisible={showDropdown && !isSubmissionModalOpen}>
