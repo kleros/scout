@@ -1,7 +1,9 @@
 import React, { forwardRef, useEffect, useState } from 'react'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { useQueryClient } from '@tanstack/react-query'
 import { Address } from 'viem'
+
+import { landscapeStyle } from 'styles/landscapeStyle'
 
 import { EnsureChain } from 'components/EnsureChain'
 import TransactionButton from 'components/TransactionButton'
@@ -27,8 +29,19 @@ const Container = styled.div`
   flex-direction: column;
   gap: 12px;
   z-index: 1;
+  // Section break from the evidence list above. Inter-evidence gap is ~36px,
+  // so the form needs a visibly larger gap to read as a separate write zone
+  // (Gestalt proximity). 32/48px on top of the last card's 20px tail margin
+  // lands at ~52/68px total — comfortably above the inter-card spacing.
+  margin-top: 32px;
   /* Offset for the sticky page header so scrollIntoView doesn't hide our top edge. */
   scroll-margin-top: 80px;
+
+  ${landscapeStyle(
+    () => css`
+      margin-top: 48px;
+    `
+  )}
 `
 
 const Heading = styled.div`
