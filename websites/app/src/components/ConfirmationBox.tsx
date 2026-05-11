@@ -478,7 +478,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                       'evidence.json',
                       { type: 'application/json' },
                     )
-                    const ipfsPath = await uploadFile(evidenceFile, Roles.Evidence)
+                    const ipfsPath = await uploadFile(evidenceFile, Roles.CurateItemFile)
                     if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
 
                     const registryAddress = detailsData.registryAddress as Address

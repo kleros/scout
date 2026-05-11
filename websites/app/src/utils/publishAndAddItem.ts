@@ -29,7 +29,7 @@ export const publishAndAddItem = async ({
   const file = new File([JSON.stringify(item)], 'item.json', {
     type: 'application/json',
   })
-  const ipfsPath = await uploadFile(file, Roles.Generic)
+  const ipfsPath = await uploadFile(file, Roles.CurateItemFile)
   if (!ipfsPath) throw new Error('Failed to upload item metadata to IPFS.')
   return addItem(registryAddress, ipfsPath, deposits)
 }

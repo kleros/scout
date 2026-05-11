@@ -261,7 +261,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
         'evidence.json',
         { type: 'application/json' },
       )
-      const ipfsPath = await uploadFile(evidenceFile, Roles.Evidence)
+      const ipfsPath = await uploadFile(evidenceFile, Roles.CurateItemFile)
       if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
 
       const result = await submitEvidence(registryAddress, itemID, ipfsPath)
