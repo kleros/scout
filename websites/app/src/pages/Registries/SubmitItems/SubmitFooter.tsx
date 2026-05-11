@@ -5,6 +5,7 @@ import { EnsureChain } from 'components/EnsureChain'
 import EnsureAuth from 'components/EnsureAuth'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
+import { formatValue } from 'utils/formatValue'
 import useNativeBalance from 'hooks/useNativeBalance'
 import {
   SubmitButton,
@@ -84,7 +85,7 @@ const SubmitFooter: React.FC<Props> = ({
       </PayoutsContainer>
       {insufficientBalance && (
         <InsufficientBalanceText>
-          Insufficient balance. You have {Number(formatEther(nativeBalance!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI but need {Number(formatEther(requiredValue!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI.
+          Insufficient balance. You have {formatValue(nativeBalance!)} xDAI but need {formatValue(requiredValue!)} xDAI.
         </InsufficientBalanceText>
       )}
     </Wrapper>

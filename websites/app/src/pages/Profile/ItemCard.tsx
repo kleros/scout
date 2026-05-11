@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import styled, { useTheme } from 'styled-components'
-import { formatEther } from 'ethers'
 import Skeleton from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
@@ -11,6 +10,7 @@ import useHumanizedCountdown, {
   useChallengePeriodDuration,
 } from 'hooks/countdown'
 import { formatTimestamp } from 'utils/formatTimestamp'
+import { formatValue } from 'utils/formatValue'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import {
@@ -72,9 +72,7 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
     const baseDeposit = BigInt(item.requests[0].deposit)
     const arbitrationCost = registryParams?.arbitrationCost ?? 0n
     const total = baseDeposit + arbitrationCost
-    return Number(formatEther(total)).toLocaleString('en-US', {
-      maximumFractionDigits: 2,
-    })
+    return formatValue(total, 2)
   }, [item.requests, registryParams?.arbitrationCost])
 
   const requester = item.requests?.[0]?.requester ?? ''

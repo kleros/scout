@@ -21,6 +21,7 @@ import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 import useNativeBalance from 'hooks/useNativeBalance'
 import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
+import { formatValue } from 'utils/formatValue'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 const REGISTRY_SINGULAR: Record<string, string> = {
@@ -578,7 +579,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             )}
             {insufficientBalance && (
               <InsufficientBalanceText>
-                Insufficient balance. You have {Number(formatEther(nativeBalance!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI but need {Number(formatEther(depositValue!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI.
+                Insufficient balance. You have {formatValue(nativeBalance!)} xDAI but need {formatValue(depositValue!)} xDAI.
               </InsufficientBalanceText>
             )}
           </ButtonWrapper>

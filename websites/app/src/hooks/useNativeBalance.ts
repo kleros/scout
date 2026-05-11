@@ -1,22 +1,16 @@
-import { useEffect } from 'react'
-import { useAccount, useBalance, useBlockNumber } from 'wagmi'
+import { useAccount, useBalance, useWatchBlockNumber } from 'wagmi'
 import { useQueryClient } from '@tanstack/react-query'
 
-/**
- * Returns the connected wallet's native balance, kept fresh by invalidating
- * the underlying query on every new block (wagmi v2 dropped the `watch` flag
- * on data hooks, so this is the documented replacement).
- */
+// useBalance has no `watch` option in wagmi v2; refresh on each new block.
 export default function useNativeBalance() {
   const { address } = useAccount()
   const queryClient = useQueryClient()
-  const { data: blockNumber } = useBlockNumber({ watch: true })
-  const { data, queryKey, refetch } = useBalance({ address })
+  const { data, queryKey } = useBalance({ address })
 
-  useEffect(() => {
-    if (!address) return
-    queryClient.invalidateQueries({ queryKey })
-  }, [blockNumber, queryKey, queryClient, address])
+  useWatchBlockNumber({
+    enabled: Boolean(address),
+    onBlockNumber: () => queryClient.invalidateQueries({ queryKey }),
+  })
 
-  return { balance: data?.value, refetch }
+  return { balance: data?.value }
 }
