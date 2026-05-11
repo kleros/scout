@@ -9,8 +9,8 @@ import { StyledCloseButton, ClosedButtonContainer } from 'pages/Registries'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 import { EnsureChain } from 'components/EnsureChain'
-import ipfsPublish from 'utils/ipfsPublish'
-import { getIPFSPath } from 'utils/getIPFSPath'
+import EnsureAuth from 'components/EnsureAuth'
+import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { Address } from 'viem'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
 import TransactionButton from 'components/TransactionButton'
@@ -282,6 +282,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   })()
   const { challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
+  const { uploadFile } = useAtlasProvider()
   const navigate = useNavigate()
 
   // Combined loading state for both IPFS upload and contract interaction
@@ -418,6 +419,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
           />
           <ButtonWrapper>
             <EnsureChain>
+              <EnsureAuth message="Sign in with your wallet to submit to IPFS.">
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."
@@ -445,9 +447,9 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
                     if (attachedFile) {
                       infoToast('Uploading file to IPFS...')
-                      const fileData = await attachedFile.arrayBuffer()
-                      const fileIpfsObject = await ipfsPublish(attachedFile.name, fileData)
-                      fileURI = getIPFSPath(fileIpfsObject)
+                      const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
+                      if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
+                      fileURI = uploadedPath
                       const extension = attachedFile.name.split('.').pop()
                       fileTypeExtension = extension ? `.${extension}` : null
                     }
@@ -471,10 +473,13 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     }
 
                     infoToast('Uploading evidence to IPFS...')
-                    const enc = new TextEncoder()
-                    const evidenceData = enc.encode(JSON.stringify(evidenceObject))
-                    const ipfsObject = await ipfsPublish('evidence.json', evidenceData.buffer)
-                    const ipfsPath = getIPFSPath(ipfsObject)
+                    const evidenceFile = new File(
+                      [JSON.stringify(evidenceObject)],
+                      'evidence.json',
+                      { type: 'application/json' },
+                    )
+                    const ipfsPath = await uploadFile(evidenceFile, Roles.Evidence)
+                    if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
 
                     const registryAddress = detailsData.registryAddress as Address
                     const itemId = detailsData.itemID
@@ -548,6 +553,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               >
                 {submitLabel}
               </TransactionButton>
+              </EnsureAuth>
             </EnsureChain>
             {depositValue !== undefined && (
               <DepositText>

@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layout';
 import Web3Provider from "context/Web3Provider";
+import AtlasProvider from "context/AtlasProvider";
 import { FilterProvider } from "context/FilterContext";
 import ErrorFallback from "./components/ErrorFallback";
 import Registries from './pages/Registries/';
@@ -38,6 +39,7 @@ const App: React.FC = () => {
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <Web3Provider>
           <QueryClientProvider client={queryClient}>
+            <AtlasProvider>
             <FilterProvider>
             <Routes>
               <Route path="/" element={<Layout />}>
@@ -55,6 +57,7 @@ const App: React.FC = () => {
               </Route>
             </Routes>
             </FilterProvider>
+            </AtlasProvider>
           </QueryClientProvider>
         </Web3Provider>
       </ErrorBoundary>

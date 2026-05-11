@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import { formatEther } from 'viem'
 import { EnsureChain } from 'components/EnsureChain'
+import EnsureAuth from 'components/EnsureAuth'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
 import {
@@ -49,12 +50,14 @@ const SubmitFooter: React.FC<Props> = ({
       />
       <PayoutsContainer>
         <EnsureChain>
-          <SubmitButton
-            disabled={disabled || !acknowledged}
-            onClick={onSubmit}
-          >
-            {isSubmitting ? 'Submitting...' : submitLabel}
-          </SubmitButton>
+          <EnsureAuth message="Sign in with your wallet to submit to IPFS.">
+            <SubmitButton
+              disabled={disabled || !acknowledged}
+              onClick={onSubmit}
+            >
+              {isSubmitting ? 'Submitting...' : submitLabel}
+            </SubmitButton>
+          </EnsureAuth>
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}

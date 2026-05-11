@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Address } from 'viem'
+import { useAtlasProvider } from '@kleros/kleros-app'
 import { useCurateInteractions } from './contracts/useCurateInteractions'
 import { useItemCountsQuery } from './queries'
 import { clearLocalStorage } from './useLocalStorage'
@@ -28,6 +29,7 @@ export const useCurateSubmit = ({
 }: Options) => {
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const { addItem, isLoading: isContractLoading } = useCurateInteractions()
+  const { uploadFile } = useAtlasProvider()
   const { data: countsData } = useItemCountsQuery()
   const navigate = useNavigate()
 
@@ -43,6 +45,7 @@ export const useCurateSubmit = ({
       const registryAddress = registryMap[registryKey] as Address
       const result = await publishAndAddItem({
         addItem,
+        uploadFile,
         registryAddress,
         columns,
         values,
