@@ -84,7 +84,7 @@ const SubmitFooter: React.FC<Props> = ({
       </PayoutsContainer>
       {insufficientBalance && (
         <InsufficientBalanceText>
-          Insufficient balance. You have {formatEther(nativeBalance!)} xDAI but need {formatEther(requiredValue!)} xDAI.
+          Insufficient balance. You have {Number(formatEther(nativeBalance!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI but need {Number(formatEther(requiredValue!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI.
         </InsufficientBalanceText>
       )}
     </Wrapper>

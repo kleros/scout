@@ -577,7 +577,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             )}
             {insufficientBalance && (
               <InsufficientBalanceText>
-                Insufficient balance. You have {formatEther(nativeBalance!)} xDAI but need {formatEther(depositValue!)} xDAI.
+                Insufficient balance. You have {Number(formatEther(nativeBalance!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI but need {Number(formatEther(depositValue!)).toLocaleString('en-US', { maximumFractionDigits: 4 })} xDAI.
               </InsufficientBalanceText>
             )}
           </ButtonWrapper>
