@@ -434,7 +434,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
           />
           <ButtonWrapper>
             <EnsureChain>
-              <EnsureAuth message="Sign in with your wallet to submit to IPFS.">
+              <EnsureAuth>
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."

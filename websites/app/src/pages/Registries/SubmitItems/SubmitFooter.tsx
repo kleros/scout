@@ -66,7 +66,7 @@ const SubmitFooter: React.FC<Props> = ({
       />
       <PayoutsContainer>
         <EnsureChain>
-          <EnsureAuth message="Sign in with your wallet to submit to IPFS.">
+          <EnsureAuth>
             <SubmitButton
               disabled={disabled || !acknowledged || insufficientBalance}
               onClick={onSubmit}

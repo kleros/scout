@@ -325,7 +325,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       </FileUploadContainer>
       <ButtonWrapper>
         <EnsureChain>
-          <EnsureAuth message="Sign in with your wallet to submit evidence to IPFS.">
+          <EnsureAuth>
             <TransactionButton
               isLoading={isLoading}
               loadingText="Processing..."

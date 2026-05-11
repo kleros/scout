@@ -119,7 +119,7 @@ const ImageUpload: React.FC<{
         {tooltip ? <Tooltip data-tooltip={tooltip}>Image</Tooltip> : 'Image'}
       </FieldLabel>
       <EnsureChain>
-        <EnsureAuth message="Sign in to upload an image to IPFS.">
+        <EnsureAuth>
           <StyledLabel>
             Upload Image <StyledUploadIcon />
             <StyledInput
