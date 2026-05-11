@@ -1,9 +1,13 @@
-import React, { useState } from 'react'
+import React from 'react'
 import styled from 'styled-components'
+import { useSearchParams } from 'react-router-dom'
 import { Address } from 'viem'
 import ItemDetailsTab from './Tabs/ItemDetailsTab'
 import EvidenceTab from './Tabs/EvidenceTab'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
+
+const TAB_KEYS = ['details', 'evidence'] as const
+type TabKey = (typeof TAB_KEYS)[number]
 
 const TabsWrapper = styled.div`
   display: flex;
@@ -101,9 +105,27 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
   itemID,
   compositeItemId,
 }) => {
-  const [currentTab, setCurrentTab] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const currentTabKey: TabKey = TAB_KEYS.includes(tabParam as TabKey)
+    ? (tabParam as TabKey)
+    : 'details'
+  const currentTab = TAB_KEYS.indexOf(currentTabKey)
 
-  const tabs = [
+  const setTab = (key: TabKey) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        // Omit ?tab= when on the default tab to keep canonical URLs clean.
+        if (key === 'details') next.delete('tab')
+        else next.set('tab', key)
+        return next
+      },
+      { replace: false },
+    )
+  }
+
+  const tabs: { key: TabKey; label: string }[] = [
     { key: 'details', label: 'Item Details' },
     { key: 'evidence', label: 'Evidence' },
   ]
@@ -115,7 +137,7 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
           <TabButton
             key={tab.key}
             selected={i === currentTab}
-            onClick={() => setCurrentTab(i)}
+            onClick={() => setTab(tab.key)}
           >
             {tab.label}
           </TabButton>
