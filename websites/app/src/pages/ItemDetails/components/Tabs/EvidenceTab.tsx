@@ -283,8 +283,10 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                 <AttachmentButton
                   onClick={() => {
                     if (evidence?.fileURI) {
-                      setSearchParams({
-                        attachment: `https://cdn.kleros.link${evidence.fileURI}`,
+                      setSearchParams((prev) => {
+                        const next = new URLSearchParams(prev)
+                        next.set('attachment', `https://cdn.kleros.link${evidence.fileURI}`)
+                        return next
                       }, { replace: true })
                       scrollTop()
                     }
