@@ -55,7 +55,7 @@ const EnsureAuth: React.FC<EnsureAuthProps> = ({
         onClick={handleClick}
         disabled={isSigningIn || !address}
       >
-        {isSigningIn ? 'Signing in...' : buttonText ?? 'Sign in to upload'}
+        {isSigningIn ? 'Signing in...' : buttonText ?? 'Sign in'}
       </Button>
     </Container>
   )
