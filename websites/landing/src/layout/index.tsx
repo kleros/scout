@@ -1,24 +1,16 @@
-import React, { useRef } from "react";
+import React from "react";
 import styled from "styled-components";
-import "overlayscrollbars/styles/overlayscrollbars.css";
 import { Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
-import { OverlayScrollContext } from "context/OverlayScrollContext";
 import Header from "./Header";
 import Footer from "./Footer";
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
-`;
-
-const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
-  height: 100vh;
-  width: 100vw;
 `;
 
 const StyledToastContainer = styled(ToastContainer)`
@@ -32,21 +24,15 @@ const OutletContainer = styled.div`
 `;
 
 const Layout: React.FC = () => {
-  const containerRef = useRef(null);
-
   return (
-    <OverlayScrollContext.Provider value={containerRef}>
-      <StyledOverlayScrollbarsComponent ref={containerRef} options={{ showNativeOverlaidScrollbars: true }}>
-        <Container>
-          <Header />
-          <StyledToastContainer />
-          <OutletContainer>
-            <Outlet />
-          </OutletContainer>
-          <Footer />
-        </Container>
-      </StyledOverlayScrollbarsComponent>
-    </OverlayScrollContext.Provider>
+    <Container>
+      <Header />
+      <StyledToastContainer />
+      <OutletContainer>
+        <Outlet />
+      </OutletContainer>
+      <Footer />
+    </Container>
   );
 };
 

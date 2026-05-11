@@ -17,6 +17,7 @@ import TransactionButton from 'components/TransactionButton'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
+import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 const REGISTRY_SINGULAR: Record<string, string> = {
@@ -244,6 +245,8 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   const [attachedFileName, setAttachedFileName] = useState<string | null>(formData.attachedFileName)
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
+
+  useLockOverlayScroll(isConfirmationOpen)
 
   const registrySingular =
     (registryName && REGISTRY_SINGULAR[registryName]) || 'Item'

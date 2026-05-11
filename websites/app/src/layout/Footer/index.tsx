@@ -2,7 +2,8 @@ import React from "react";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 
-import { landscapeStyle } from "styles/landscapeStyle";
+import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
+import { responsiveSize } from "styles/responsiveSize";
 import { hoverShortTransitionTiming } from "styles/commonStyles";
 
 import SecuredByKlerosLogo from "svgs/footer/secured-by-kleros.svg";
@@ -14,22 +15,30 @@ import { ExternalLink } from "components/ExternalLink";
 
 const Container = styled.div`
   display: flex;
-  min-height: 114px;
   width: 100%;
   background-color: ${({ theme }) => (theme.name === "dark" ? theme.lightGrey : theme.primaryPurple)};
+  justify-content: center;
+  margin-top: auto;
+  z-index: 1;
+`;
+
+const Inner = styled.div`
+  display: flex;
+  width: 100%;
+  max-width: ${MAX_WIDTH_LANDSCAPE};
+  min-height: 114px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 8px;
+  padding: 8px 16px;
   gap: 16px;
-  z-index: 1;
 
   ${landscapeStyle(
     () => css`
       min-height: 64px;
       flex-direction: row;
       justify-content: space-between;
-      padding: 0 32px;
+      padding: 0 ${responsiveSize(0, 48)};
     `
   )}
 `;
@@ -86,11 +95,13 @@ const StyledToSLink = styled(Link)`
 
 const Footer: React.FC = () => (
   <Container>
-    <SecuredByKleros />
-    <StyledToSLink to="/terms-of-service">
-      Terms of Service
-    </StyledToSLink>
-    <SocialMedia />
+    <Inner>
+      <SecuredByKleros />
+      <StyledToSLink to="/terms-of-service">
+        Terms of Service
+      </StyledToSLink>
+      <SocialMedia />
+    </Inner>
   </Container>
 );
 

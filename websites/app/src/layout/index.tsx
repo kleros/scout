@@ -1,26 +1,18 @@
-import React, { useRef, Suspense } from "react";
+import React, { Suspense } from "react";
 import styled from "styled-components";
-import "overlayscrollbars/styles/overlayscrollbars.css";
-import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import { Outlet } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import { OverlayScrollContext } from "context/OverlayScrollContext";
 import Footer from "./Footer";
 import Header from "./Header";
 import LoadingGif from "gifs/loading-icosahedron.gif";
-
-const StyledOverlayScrollbarsComponent = styled(OverlayScrollbarsComponent)`
-  height: 100vh;
-  width: 100vw;
-  background-color: ${({ theme }) => theme.lightGrey};
-
-`;
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   width: 100%;
+  background-color: ${({ theme }) => theme.lightGrey};
+  overflow-x: hidden;
 `;
 
 const ContentArea = styled.div`
@@ -86,24 +78,18 @@ const LoadingImage = styled.img`
 `;
 
 const Layout: React.FC = () => {
-  const containerRef = useRef(null);
-
   return (
     <>
       <Notifications />
-      <OverlayScrollContext.Provider value={containerRef}>
-        <StyledOverlayScrollbarsComponent ref={containerRef} options={{ showNativeOverlaidScrollbars: true }}>
-          <Container>
-            <Header />
-            <ContentArea>
-              <Suspense fallback={<LoadingContainer><LoadingImage src={LoadingGif} /></LoadingContainer>}>
-                <Outlet />
-              </Suspense>
-            </ContentArea>
-            <Footer />
-          </Container>
-        </StyledOverlayScrollbarsComponent>
-      </OverlayScrollContext.Provider>
+      <Container>
+        <Header />
+        <ContentArea>
+          <Suspense fallback={<LoadingContainer><LoadingImage src={LoadingGif} /></LoadingContainer>}>
+            <Outlet />
+          </Suspense>
+        </ContentArea>
+        <Footer />
+      </Container>
     </>
   );
 };

@@ -7,6 +7,7 @@ import Skeleton from 'react-loading-skeleton'
 import { FocusedRegistry } from 'utils/itemCounts'
 import { useItemCountsQuery } from 'hooks/queries'
 import { useFocusOutside } from 'hooks/useFocusOutside'
+import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 import BaseTooltip from 'components/Tooltip'
 import { ModalButton } from 'components/ModalButtons'
 import {
@@ -98,6 +99,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   const { data: countsData, isLoading } = useItemCountsQuery()
 
   useFocusOutside(modalRef, onClose)
+  useLockOverlayScroll(true)
 
   const registry: FocusedRegistry | undefined = useMemo(() => {
     if (!registryName || !countsData) return undefined

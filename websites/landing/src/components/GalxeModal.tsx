@@ -2,6 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import Modal from 'react-modal'
+import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 
 const StyledModal = styled(Modal)`
   background-color: #1d1d1d;
@@ -94,6 +95,7 @@ const GalxeModal: React.FC<{
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>
   address: string | null
 }> = ({ isModalOpen, setIsModalOpen, address }) => {
+  useLockOverlayScroll(isModalOpen)
   return (
     <StyledModal
       isOpen={isModalOpen}
