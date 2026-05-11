@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './layout';
 import Web3Provider from "context/Web3Provider";
+import AtlasProvider from "context/AtlasProvider";
 import { FilterProvider } from "context/FilterContext";
 import ErrorFallback from "./components/ErrorFallback";
 import Registries from './pages/Registries/';
@@ -38,23 +39,25 @@ const App: React.FC = () => {
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <Web3Provider>
           <QueryClientProvider client={queryClient}>
-            <FilterProvider>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Navigate to="home" replace />} />
-                <Route path="home" element={<Home />} />
-                <Route path="profile/*" element={<Profile />} />
-                <Route path="rewards" element={<Rewards />} />
-                <Route path="guide" element={<Guide />} />
-                <Route path="terms-of-service" element={<TermsOfService />} />
-                <Route path="tx/:txHash" element={<TxResult />} />
-                <Route path=":registryName" element={<Registries />} />
-                <Route path=":registryName/submit" element={<SubmitPage />} />
-                <Route path=":registryName/:itemID" element={<ItemDetails />} />
-                <Route path="*" element={<h1>Page not found</h1>} />
-              </Route>
-            </Routes>
-            </FilterProvider>
+            <AtlasProvider>
+              <FilterProvider>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Navigate to="home" replace />} />
+                    <Route path="home" element={<Home />} />
+                    <Route path="profile/*" element={<Profile />} />
+                    <Route path="rewards" element={<Rewards />} />
+                    <Route path="guide" element={<Guide />} />
+                    <Route path="terms-of-service" element={<TermsOfService />} />
+                    <Route path="tx/:txHash" element={<TxResult />} />
+                    <Route path=":registryName" element={<Registries />} />
+                    <Route path=":registryName/submit" element={<SubmitPage />} />
+                    <Route path=":registryName/:itemID" element={<ItemDetails />} />
+                    <Route path="*" element={<h1>Page not found</h1>} />
+                  </Route>
+                </Routes>
+              </FilterProvider>
+            </AtlasProvider>
           </QueryClientProvider>
         </Web3Provider>
       </ErrorBoundary>

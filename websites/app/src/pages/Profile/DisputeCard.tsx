@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react'
 import styled, { useTheme } from 'styled-components'
-import { formatEther } from 'ethers'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
 import SubmittedByLink from 'components/SubmittedByLink'
 import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress } from 'utils/items'
 import { formatTimestamp } from 'utils/formatTimestamp'
+import { formatValue } from 'utils/formatValue'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import {
@@ -164,9 +164,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
     const baseDeposit = BigInt(request.deposit)
     const arbitrationCost = registryParams?.arbitrationCost ?? 0n
     const total = baseDeposit + arbitrationCost
-    return Number(formatEther(total)).toLocaleString('en-US', {
-      maximumFractionDigits: 2,
-    })
+    return formatValue(total, 2)
   }, [request?.deposit, registryParams?.arbitrationCost])
 
   const requester = request?.requester ?? ''
