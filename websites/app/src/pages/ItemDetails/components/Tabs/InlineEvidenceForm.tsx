@@ -16,6 +16,7 @@ import { useLocalStorage } from 'hooks/useLocalStorage'
 import { queryKeys } from 'hooks/queries/consts'
 
 import { errorToast, infoToast } from 'utils/wrapWithToast'
+import { parseWagmiError } from 'utils/parseWagmiError'
 
 const Container = styled.div`
   position: relative;
@@ -276,7 +277,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       }
     } catch (error) {
       console.error('Error submitting evidence:', error)
-      errorToast(error instanceof Error ? error.message : 'Failed to submit evidence')
+      errorToast(parseWagmiError(error) || 'Failed to submit evidence')
     } finally {
       setIsLocalLoading(false)
     }

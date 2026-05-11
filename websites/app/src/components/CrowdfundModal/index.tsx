@@ -9,6 +9,8 @@ import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
 import { GraphItemDetails } from '../../utils/itemDetails'
 import { errorToast } from '../../utils/wrapWithToast'
+import { parseWagmiError } from '../../utils/parseWagmiError'
+import useNativeBalance from '../../hooks/useNativeBalance'
 import { useLockOverlayScroll } from '../../hooks/useLockOverlayScroll'
 
 const ModalOverlay = styled.div`
@@ -276,6 +278,7 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
   useLockOverlayScroll(isOpen)
 
   const [contributionShare, setContributionShare] = useState(1)
+  const { balance: nativeBalance } = useNativeBalance()
   const [userSelectedSide, setUserSelectedSide] = useState<PARTY>(PARTY.NONE)
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
@@ -447,7 +450,7 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
       }
     } catch (error) {
       console.error('Error funding appeal:', error)
-      errorToast(error instanceof Error ? error.message : 'Failed to fund appeal')
+      errorToast(parseWagmiError(error) || 'Failed to fund appeal')
     }
   }
 
@@ -522,10 +525,23 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
 
         <ButtonGroup>
           <Button onClick={() => setUserSelectedSide(PARTY.NONE)}>Change Side</Button>
-          <Button primary onClick={handleFundAppeal} disabled={isLoading || contributionAmount === 0n}>
+          <Button
+            primary
+            onClick={handleFundAppeal}
+            disabled={
+              isLoading ||
+              contributionAmount === 0n ||
+              (nativeBalance !== undefined && nativeBalance < contributionAmount)
+            }
+          >
             {isLoading ? 'Processing...' : `Fund ${Number(formatEther(contributionAmount)).toFixed(4)} ${nativeCurrency}`}
           </Button>
         </ButtonGroup>
+        {nativeBalance !== undefined && contributionAmount > 0n && nativeBalance < contributionAmount && (
+          <div style={{ color: '#ff5e5e', fontSize: 13, fontWeight: 500, marginTop: 12, textAlign: 'center' }}>
+            Insufficient balance. You have {Number(formatEther(nativeBalance)).toFixed(4)} {nativeCurrency} but want to contribute {Number(formatEther(contributionAmount)).toFixed(4)} {nativeCurrency}.
+          </div>
+        )}
       </Modal>
     </ModalOverlay>
   )

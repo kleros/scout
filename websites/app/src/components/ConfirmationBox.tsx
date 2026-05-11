@@ -13,11 +13,13 @@ import EnsureAuth from 'components/EnsureAuth'
 import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { Address } from 'viem'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
+import { parseWagmiError } from 'utils/parseWagmiError'
 import TransactionButton from 'components/TransactionButton'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
+import useNativeBalance from 'hooks/useNativeBalance'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 const REGISTRY_SINGULAR: Record<string, string> = {
@@ -141,6 +143,13 @@ const DepositText = styled.span`
   font-weight: 500;
   color: ${({ theme }) => theme.primaryText};
   opacity: 0.9;
+`
+
+const InsufficientBalanceText = styled.div`
+  color: ${({ theme }) => theme.error};
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
 `
 
 const FileUploadContainer = styled.div`
@@ -358,6 +367,12 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   }, [deposits, arbitrationCostData, evidenceConfirmationType])
 
+  const { balance: nativeBalance } = useNativeBalance()
+  const insufficientBalance =
+    nativeBalance !== undefined &&
+    depositValue !== undefined &&
+    nativeBalance < depositValue
+
   return (
     <ModalOverlay $isOpen={isConfirmationOpen} onClick={handleOverlayClick}>
       <Container>
@@ -423,7 +438,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."
-                disabled={!acknowledged || !evidenceText.trim()}
+                disabled={!acknowledged || !evidenceText.trim() || insufficientBalance}
                 onClick={async () => {
                   // Set loading state immediately
                   setIsLocalLoading(true)
@@ -545,7 +560,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     }
                   } catch (error) {
                     console.error('Error performing action:', error)
-                    errorToast(error instanceof Error ? error.message : 'Failed to perform action')
+                    errorToast(parseWagmiError(error) || 'Failed to perform action')
                   } finally {
                     setIsLocalLoading(false)
                   }
@@ -559,6 +574,11 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               <DepositText>
                 Deposit: {formatEther(depositValue)} xDAI
               </DepositText>
+            )}
+            {insufficientBalance && (
+              <InsufficientBalanceText>
+                Insufficient balance. You have {formatEther(nativeBalance!)} xDAI but need {formatEther(depositValue!)} xDAI.
+              </InsufficientBalanceText>
             )}
           </ButtonWrapper>
         </InnerContainer>

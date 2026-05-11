@@ -7,6 +7,7 @@ import { useItemCountsQuery } from './queries'
 import { clearLocalStorage } from './useLocalStorage'
 import { publishAndAddItem } from 'utils/publishAndAddItem'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
+import { parseWagmiError } from 'utils/parseWagmiError'
 import {
   registryMap,
   registryDisplayNames,
@@ -60,9 +61,8 @@ export const useCurateSubmit = ({
     } catch (error) {
       console.error(`Error submitting ${registryKey}:`, error)
       errorToast(
-        error instanceof Error
-          ? error.message
-          : `Failed to submit ${registryDisplayNames[registryKey]}`,
+        parseWagmiError(error) ||
+          `Failed to submit ${registryDisplayNames[registryKey]}`,
       )
     } finally {
       setIsLocalLoading(false)

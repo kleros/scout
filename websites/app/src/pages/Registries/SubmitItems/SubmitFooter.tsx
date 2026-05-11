@@ -5,11 +5,19 @@ import { EnsureChain } from 'components/EnsureChain'
 import EnsureAuth from 'components/EnsureAuth'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
+import useNativeBalance from 'hooks/useNativeBalance'
 import {
   SubmitButton,
   ExpectedPayouts,
   PayoutsContainer,
 } from './index'
+
+const InsufficientBalanceText = styled.div`
+  color: ${({ theme }) => theme.error};
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
+`
 
 const Wrapper = styled.div`
   display: flex;
@@ -39,6 +47,14 @@ const SubmitFooter: React.FC<Props> = ({
   submitLabel,
 }) => {
   const [acknowledged, setAcknowledged] = useState(false)
+  const { balance: nativeBalance } = useNativeBalance()
+  const requiredValue = deposits
+    ? deposits.arbitrationCost + deposits.submissionBaseDeposit
+    : undefined
+  const insufficientBalance =
+    nativeBalance !== undefined &&
+    requiredValue !== undefined &&
+    nativeBalance < requiredValue
 
   return (
     <Wrapper>
@@ -52,7 +68,7 @@ const SubmitFooter: React.FC<Props> = ({
         <EnsureChain>
           <EnsureAuth message="Sign in with your wallet to submit to IPFS.">
             <SubmitButton
-              disabled={disabled || !acknowledged}
+              disabled={disabled || !acknowledged || insufficientBalance}
               onClick={onSubmit}
             >
               {isSubmitting ? 'Submitting...' : submitLabel}
@@ -61,13 +77,16 @@ const SubmitFooter: React.FC<Props> = ({
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {deposits
-            ? formatEther(
-                deposits.arbitrationCost + deposits.submissionBaseDeposit,
-              ) + ' xDAI'
+          {requiredValue !== undefined
+            ? formatEther(requiredValue) + ' xDAI'
             : null}
         </ExpectedPayouts>
       </PayoutsContainer>
+      {insufficientBalance && (
+        <InsufficientBalanceText>
+          Insufficient balance. You have {formatEther(nativeBalance!)} xDAI but need {formatEther(requiredValue!)} xDAI.
+        </InsufficientBalanceText>
+      )}
     </Wrapper>
   )
 }
