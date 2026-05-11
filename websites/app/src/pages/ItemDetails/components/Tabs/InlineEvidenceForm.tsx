@@ -17,6 +17,7 @@ import { queryKeys } from 'hooks/queries/consts'
 
 import { errorToast, infoToast } from 'utils/wrapWithToast'
 import { parseWagmiError } from 'utils/parseWagmiError'
+import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
 
 const Container = styled.div`
   position: relative;
@@ -262,7 +263,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
         'evidence.json',
         { type: 'application/json' },
       )
-      const ipfsPath = await uploadFile(evidenceFile, Roles.CurateItemFile)
+      const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
       if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
 
       const result = await submitEvidence(registryAddress, itemID, ipfsPath)

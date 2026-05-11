@@ -58,6 +58,14 @@ const Description = styled.p`
   font-size: 14px;
 `
 
+const InsufficientBalanceText = styled.div`
+  color: ${({ theme }) => theme.error};
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 12px;
+  text-align: center;
+`
+
 const SliderContainer = styled.div`
   margin: 24px 0;
 `
@@ -538,9 +546,9 @@ const CrowdfundModal: React.FC<CrowdfundModalProps> = ({
           </Button>
         </ButtonGroup>
         {nativeBalance !== undefined && contributionAmount > 0n && nativeBalance < contributionAmount && (
-          <div style={{ color: '#ff5e5e', fontSize: 13, fontWeight: 500, marginTop: 12, textAlign: 'center' }}>
+          <InsufficientBalanceText>
             Insufficient balance. You have {Number(formatEther(nativeBalance)).toFixed(4)} {nativeCurrency} but want to contribute {Number(formatEther(contributionAmount)).toFixed(4)} {nativeCurrency}.
-          </div>
+          </InsufficientBalanceText>
         )}
       </Modal>
     </ModalOverlay>

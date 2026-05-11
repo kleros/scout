@@ -3,6 +3,7 @@ import { Roles } from '@kleros/kleros-app'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
 import type { Column } from 'utils/items'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
+import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
 
 interface Params {
   addItem: (
@@ -29,7 +30,7 @@ export const publishAndAddItem = async ({
   const file = new File([JSON.stringify(item)], 'item.json', {
     type: 'application/json',
   })
-  const ipfsPath = await uploadFile(file, Roles.CurateItemFile)
+  const ipfsPath = await uploadFile(file, JSON_UPLOAD_ROLE)
   if (!ipfsPath) throw new Error('Failed to upload item metadata to IPFS.')
   return addItem(registryAddress, ipfsPath, deposits)
 }

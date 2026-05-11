@@ -40,23 +40,23 @@ const App: React.FC = () => {
         <Web3Provider>
           <QueryClientProvider client={queryClient}>
             <AtlasProvider>
-            <FilterProvider>
-            <Routes>
-              <Route path="/" element={<Layout />}>
-                <Route index element={<Navigate to="home" replace />} />
-                <Route path="home" element={<Home />} />
-                <Route path="profile/*" element={<Profile />} />
-                <Route path="rewards" element={<Rewards />} />
-                <Route path="guide" element={<Guide />} />
-                <Route path="terms-of-service" element={<TermsOfService />} />
-                <Route path="tx/:txHash" element={<TxResult />} />
-                <Route path=":registryName" element={<Registries />} />
-                <Route path=":registryName/submit" element={<SubmitPage />} />
-                <Route path=":registryName/:itemID" element={<ItemDetails />} />
-                <Route path="*" element={<h1>Page not found</h1>} />
-              </Route>
-            </Routes>
-            </FilterProvider>
+              <FilterProvider>
+                <Routes>
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Navigate to="home" replace />} />
+                    <Route path="home" element={<Home />} />
+                    <Route path="profile/*" element={<Profile />} />
+                    <Route path="rewards" element={<Rewards />} />
+                    <Route path="guide" element={<Guide />} />
+                    <Route path="terms-of-service" element={<TermsOfService />} />
+                    <Route path="tx/:txHash" element={<TxResult />} />
+                    <Route path=":registryName" element={<Registries />} />
+                    <Route path=":registryName/submit" element={<SubmitPage />} />
+                    <Route path=":registryName/:itemID" element={<ItemDetails />} />
+                    <Route path="*" element={<h1>Page not found</h1>} />
+                  </Route>
+                </Routes>
+              </FilterProvider>
             </AtlasProvider>
           </QueryClientProvider>
         </Web3Provider>

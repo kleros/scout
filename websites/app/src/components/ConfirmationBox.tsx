@@ -20,6 +20,7 @@ import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 import useNativeBalance from 'hooks/useNativeBalance'
+import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 const REGISTRY_SINGULAR: Record<string, string> = {
@@ -493,7 +494,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                       'evidence.json',
                       { type: 'application/json' },
                     )
-                    const ipfsPath = await uploadFile(evidenceFile, Roles.CurateItemFile)
+                    const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
                     if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
 
                     const registryAddress = detailsData.registryAddress as Address
