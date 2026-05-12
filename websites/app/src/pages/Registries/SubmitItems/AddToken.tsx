@@ -46,7 +46,8 @@ const columns = [
   },
   {
     label: 'Logo',
-    description: 'The PNG logo of the token (at least 128px X 128px in size',
+    description:
+      'The PNG logo of the token (at least 128px x 128px in size, max 1MB).',
     type: 'image',
     isIdentifier: false,
   },

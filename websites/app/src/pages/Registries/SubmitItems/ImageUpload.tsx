@@ -51,6 +51,23 @@ const StyledUploadIcon = styled(UploadIcon)`
   }
 `
 
+const getImageDimensions = (
+  file: File,
+): Promise<{ width: number; height: number }> =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Failed to read image dimensions'))
+    }
+    img.src = url
+  })
+
 const ImageUpload: React.FC<{
   value: File | null
   onChange: (value: File | null) => void
@@ -74,34 +91,39 @@ const ImageUpload: React.FC<{
   }, [value])
 
   const validateImage = async (image: File): Promise<string | null> => {
-    const restrictionError = validateFileAgainstRestriction(image, restriction)
-    if (restrictionError) return restrictionError
     if (registry === 'tokens') {
+      if (image.size > 1024 * 1024) {
+        return 'Logo must not exceed 1MB for Tokens registry.'
+      }
       if (
         !image.type.startsWith('image/png') &&
         !image.name.toLowerCase().endsWith('.png')
       ) {
         return 'Only PNG images are allowed for Tokens registry.'
       }
-
       const isActuallyPng = await isPngFile(image)
       if (!isActuallyPng) {
         return 'Invalid PNG file. The file content does not match PNG format specifications.'
       }
+      try {
+        const { width, height } = await getImageDimensions(image)
+        if (width < 128 || height < 128) {
+          return 'Logo must be at least 128px x 128px for Tokens registry.'
+        }
+      } catch {
+        return 'Could not read image dimensions. Please try a different PNG.'
+      }
+      return null
     }
-    return null
+    return validateFileAgainstRestriction(image, restriction)
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = e.target.files?.[0]
     if (!picked) return
-    const error = await validateImage(picked)
-    if (error) {
-      setImageError(error)
-      return
-    }
-    setImageError(null)
     onChange(picked)
+    const error = await validateImage(picked)
+    setImageError(error)
   }
 
   return (
