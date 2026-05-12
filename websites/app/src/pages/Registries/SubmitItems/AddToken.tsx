@@ -75,6 +75,10 @@ const AddToken: React.FC = () => {
   const [image, setImage] = useLocalStorage<ImageValue | null>(
     IMAGE_STORAGE_KEY,
     null,
+    () =>
+      errorToast(
+        "Couldn't save image to browser storage. You can still submit now, but it won't survive a refresh.",
+      ),
   )
 
   const [network, setNetwork] = useState<NetworkOption>(formData.network)
