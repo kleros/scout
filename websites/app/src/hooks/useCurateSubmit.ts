@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Address } from 'viem'
-import { useAtlasProvider } from '@kleros/kleros-app'
+import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { useCurateInteractions } from './contracts/useCurateInteractions'
 import { useItemCountsQuery } from './queries'
 import { clearLocalStorage } from './useLocalStorage'
@@ -22,6 +22,11 @@ interface Options {
   onResetForm: () => void
 }
 
+export interface SubmitFileUpload {
+  file: File
+  role: Roles
+}
+
 export const useCurateSubmit = ({
   registryKey,
   localStorageKey,
@@ -37,11 +42,25 @@ export const useCurateSubmit = ({
   const deposits = countsData?.[registryKey]?.deposits
   const isSubmitting = isLocalLoading || isContractLoading
 
-  const submit = async (values: Record<string, string>) => {
+  const submit = async (
+    values: Record<string, string>,
+    files?: Record<string, SubmitFileUpload>,
+  ) => {
     if (!deposits) return
 
     setIsLocalLoading(true)
     try {
+      const resolvedValues = { ...values }
+
+      if (files) {
+        for (const [label, { file, role }] of Object.entries(files)) {
+          infoToast(`Uploading ${label.toLowerCase()} to IPFS...`)
+          const path = await uploadFile(file, role)
+          if (!path) throw new Error(`Failed to upload ${label} to IPFS.`)
+          resolvedValues[label] = path
+        }
+      }
+
       infoToast('Uploading item to IPFS...')
       const registryAddress = registryMap[registryKey] as Address
       const result = await publishAndAddItem({
@@ -49,7 +68,7 @@ export const useCurateSubmit = ({
         uploadFile,
         registryAddress,
         columns,
-        values,
+        values: resolvedValues,
         deposits,
       })
 

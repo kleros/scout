@@ -1,12 +1,10 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 import styled from 'styled-components'
-import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { isPngFile } from 'utils/pngValidation'
+import { fileToBase64 } from 'utils/imageBase64'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
 import Tooltip from 'components/Tooltip'
-import { EnsureChain } from 'components/EnsureChain'
-import EnsureAuth from 'components/EnsureAuth'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -49,67 +47,55 @@ const StyledUploadIcon = styled(UploadIcon)`
   }
 `
 
+export interface ImageValue {
+  base64: string
+  name: string
+}
+
 const ImageUpload: React.FC<{
-  path: string
-  setPath: Dispatch<SetStateAction<string>>
+  value: ImageValue | null
+  onChange: (value: ImageValue | null) => void
   setImageError: Dispatch<SetStateAction<string | null>>
   registry: string
   tooltip?: string
-}> = ({ path, setPath, setImageError, registry, tooltip }) => {
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const { uploadFile } = useAtlasProvider()
-
-  const validateImage = async (file: File): Promise<string | null> => {
+}> = ({ value, onChange, setImageError, registry, tooltip }) => {
+  const validateImage = async (image: File): Promise<string | null> => {
     if (registry === 'tokens') {
-      // Check file extension and MIME type first (basic validation)
-      if (!file.type.startsWith('image/png') && !file.name.toLowerCase().endsWith('.png')) {
+      if (
+        !image.type.startsWith('image/png') &&
+        !image.name.toLowerCase().endsWith('.png')
+      ) {
         return 'Only PNG images are allowed for Tokens registry.'
       }
 
-      // Check actual file content to ensure it's a real PNG file
-      const isActuallyPng = await isPngFile(file)
+      const isActuallyPng = await isPngFile(image)
       if (!isActuallyPng) {
         return 'Invalid PNG file. The file content does not match PNG format specifications.'
       }
 
-      if (file.size > 4 * 1024 * 1024) {
+      if (image.size > 4 * 1024 * 1024) {
         return 'Image size should not exceed 4MB.'
       }
     }
     return null
   }
 
-  useEffect(() => {
-    if (!imageFile) return
-    const uploadImageToIPFS = async () => {
-      const error = await validateImage(imageFile)
-      if (error) {
-        setImageError(error)
-        return
-      }
-
-      try {
-        const role = registry === 'tokens' ? Roles.Logo : Roles.CurateItemImage
-        const ipfsPath = await uploadFile(imageFile, role)
-        if (!ipfsPath) {
-          setImageError('Failed to upload image. Please try again.')
-          return
-        }
-        setPath(ipfsPath)
-        setImageError(null)
-      } catch (err) {
-        setImageError(
-          err instanceof Error ? err.message : 'Failed to upload image. Please try again.'
-        )
-      }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0]
+    if (!picked) return
+    const error = await validateImage(picked)
+    if (error) {
+      setImageError(error)
+      onChange(null)
+      return
     }
-    uploadImageToIPFS()
-  }, [imageFile, registry, setPath, setImageError, uploadFile])
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
+    try {
+      const base64 = await fileToBase64(picked)
+      setImageError(null)
+      onChange({ base64, name: picked.name })
+    } catch {
+      setImageError('Failed to read image file.')
+      onChange(null)
     }
   }
 
@@ -118,25 +104,16 @@ const ImageUpload: React.FC<{
       <FieldLabel>
         {tooltip ? <Tooltip data-tooltip={tooltip}>Image</Tooltip> : 'Image'}
       </FieldLabel>
-      <EnsureChain>
-        <EnsureAuth>
-          <StyledLabel>
-            Upload Image <StyledUploadIcon />
-            <StyledInput
-              type="file"
-              onChange={handleFileChange}
-              accept={registry === 'tokens' ? '.png' : 'image/*'}
-            />
-          </StyledLabel>
-        </EnsureAuth>
-      </EnsureChain>
-      {path && (
-        <img
-          width={200}
-          height={200}
-          src={`https://cdn.kleros.link${path}`}
-          alt="preview"
+      <StyledLabel>
+        Upload Image <StyledUploadIcon />
+        <StyledInput
+          type="file"
+          onChange={handleFileChange}
+          accept={registry === 'tokens' ? '.png' : 'image/*'}
         />
+      </StyledLabel>
+      {value && (
+        <img width={200} height={200} src={value.base64} alt="preview" />
       )}
     </>
   )
