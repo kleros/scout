@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
+import { useImageStorage } from 'hooks/useImageStorage'
 import { useValidationIssues } from 'hooks/useValidationIssues'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
-import { base64ToFile } from 'utils/imageBase64'
 import { errorToast } from 'utils/wrapWithToast'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
-import ImageUpload, { ImageValue } from './ImageUpload'
+import ImageUpload from './ImageUpload'
 import FormHeader from './FormHeader'
 import SubmitFooter from './SubmitFooter'
 import {
@@ -72,13 +72,10 @@ const IMAGE_STORAGE_KEY = 'addTokenForm:image'
 
 const AddToken: React.FC = () => {
   const [formData, setFormData] = useLocalStorage('addTokenForm', DEFAULT_FORM)
-  const [image, setImage] = useLocalStorage<ImageValue | null>(
-    IMAGE_STORAGE_KEY,
-    null,
-    () =>
-      errorToast(
-        "Couldn't save image to browser storage. You can still submit now, but it won't survive a refresh.",
-      ),
+  const [image, setImage] = useImageStorage(IMAGE_STORAGE_KEY, () =>
+    errorToast(
+      "Couldn't save image to browser storage. You can still submit now, but it won't survive a refresh.",
+    ),
   )
 
   const [network, setNetwork] = useState<NetworkOption>(formData.network)
@@ -147,17 +144,7 @@ const AddToken: React.FC = () => {
     !!imageError ||
     isSubmitting
 
-  const handleSubmit = () => {
-    let imageFile: File | null = null
-    if (image) {
-      try {
-        imageFile = base64ToFile(image.base64, image.name)
-      } catch {
-        errorToast('Saved image is corrupted. Please re-pick the logo.')
-        setImage(null)
-        return
-      }
-    }
+  const handleSubmit = () =>
     submit(
       {
         Address: `${network.value}:${address}`,
@@ -167,11 +154,8 @@ const AddToken: React.FC = () => {
         Logo: '',
         Website: website,
       },
-      imageFile
-        ? { Logo: { file: imageFile, role: Roles.Logo } }
-        : undefined,
+      image ? { Logo: { file: image, role: Roles.Logo } } : undefined,
     )
-  }
 
   return (
     <AddContainer>

@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
+import { useImageStorage } from 'hooks/useImageStorage'
 import { useValidationIssues } from 'hooks/useValidationIssues'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
-import { base64ToFile } from 'utils/imageBase64'
 import { errorToast } from 'utils/wrapWithToast'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
-import ImageUpload, { ImageValue } from './ImageUpload'
+import ImageUpload from './ImageUpload'
 import FormHeader from './FormHeader'
 import SubmitFooter from './SubmitFooter'
 import {
@@ -53,13 +53,10 @@ const IMAGE_STORAGE_KEY = 'addCDNForm:image'
 
 const AddCDN: React.FC = () => {
   const [formData, setFormData] = useLocalStorage('addCDNForm', DEFAULT_FORM)
-  const [image, setImage] = useLocalStorage<ImageValue | null>(
-    IMAGE_STORAGE_KEY,
-    null,
-    () =>
-      errorToast(
-        "Couldn't save image to browser storage. You can still submit now, but it won't survive a refresh.",
-      ),
+  const [image, setImage] = useImageStorage(IMAGE_STORAGE_KEY, () =>
+    errorToast(
+      "Couldn't save image to browser storage. You can still submit now, but it won't survive a refresh.",
+    ),
   )
 
   const [network, setNetwork] = useState<NetworkOption>(formData.network)
@@ -111,28 +108,17 @@ const AddCDN: React.FC = () => {
     !!imageError ||
     isSubmitting
 
-  const handleSubmit = () => {
-    let imageFile: File | null = null
-    if (image) {
-      try {
-        imageFile = base64ToFile(image.base64, image.name)
-      } catch {
-        errorToast('Saved image is corrupted. Please re-pick the visual proof.')
-        setImage(null)
-        return
-      }
-    }
+  const handleSubmit = () =>
     submit(
       {
         'Contract address': `${network.value}:${address}`,
         'Domain name': domain,
         'Visual proof': '',
       },
-      imageFile
-        ? { 'Visual proof': { file: imageFile, role: Roles.CurateItemImage } }
+      image
+        ? { 'Visual proof': { file: image, role: Roles.CurateItemImage } }
         : undefined,
     )
-  }
 
   return (
     <AddContainer>

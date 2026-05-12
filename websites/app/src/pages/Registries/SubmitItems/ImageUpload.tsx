@@ -1,7 +1,6 @@
-import React, { Dispatch, SetStateAction } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { isPngFile } from 'utils/pngValidation'
-import { fileToBase64 } from 'utils/imageBase64'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
 import Tooltip from 'components/Tooltip'
@@ -47,20 +46,27 @@ const StyledUploadIcon = styled(UploadIcon)`
   }
 `
 
-export interface ImageValue {
-  base64: string
-  name: string
-}
-
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024
 
 const ImageUpload: React.FC<{
-  value: ImageValue | null
-  onChange: (value: ImageValue | null) => void
+  value: File | null
+  onChange: (value: File | null) => void
   setImageError: Dispatch<SetStateAction<string | null>>
   registry: string
   tooltip?: string
 }> = ({ value, onChange, setImageError, registry, tooltip }) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!value) {
+      setPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(value)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [value])
+
   const validateImage = async (image: File): Promise<string | null> => {
     if (image.size > MAX_IMAGE_SIZE_BYTES) {
       return 'Image size should not exceed 4MB.'
@@ -87,17 +93,10 @@ const ImageUpload: React.FC<{
     const error = await validateImage(picked)
     if (error) {
       setImageError(error)
-      onChange(null)
       return
     }
-    try {
-      const base64 = await fileToBase64(picked)
-      setImageError(null)
-      onChange({ base64, name: picked.name })
-    } catch {
-      setImageError('Failed to read image file.')
-      onChange(null)
-    }
+    setImageError(null)
+    onChange(picked)
   }
 
   return (
@@ -113,8 +112,8 @@ const ImageUpload: React.FC<{
           accept={registry === 'tokens' ? '.png' : 'image/*'}
         />
       </StyledLabel>
-      {value && (
-        <img width={200} height={200} src={value.base64} alt="preview" />
+      {previewUrl && (
+        <img width={200} height={200} src={previewUrl} alt="preview" />
       )}
     </>
   )
