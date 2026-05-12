@@ -114,7 +114,11 @@ const ImageUpload: React.FC<{
         <StyledInput
           type="file"
           onChange={handleFileChange}
-          accept={registry === 'tokens' ? '.png' : 'image/*'}
+          accept={
+            registry === 'tokens'
+              ? '.png'
+              : (restriction?.allowedMimeTypes.join(',') ?? 'image/*')
+          }
         />
       </StyledLabel>
       {previewUrl && (
