@@ -18,6 +18,10 @@ import { queryKeys } from 'hooks/queries/consts'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
 import { parseWagmiError } from 'utils/parseWagmiError'
 import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
+import {
+  getRoleRestriction,
+  validateFileAgainstRestriction,
+} from 'utils/atlasUploadRestrictions'
 
 const Container = styled.div`
   position: relative;
@@ -187,7 +191,8 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
   const [isLocalLoading, setIsLocalLoading] = useState(false)
 
   const { submitEvidence, isLoading: isContractLoading } = useCurateInteractions()
-  const { uploadFile } = useAtlasProvider()
+  const { uploadFile, roleRestrictions } = useAtlasProvider()
+  const evidenceRestriction = getRoleRestriction(Roles.Evidence, roleRestrictions)
   const queryClient = useQueryClient()
 
   const isLoading = isLocalLoading || isContractLoading
@@ -199,6 +204,12 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    const error = validateFileAgainstRestriction(file, evidenceRestriction)
+    if (error) {
+      errorToast(error)
+      e.target.value = ''
+      return
+    }
     setAttachedFileName(file.name)
     const reader = new FileReader()
     reader.onloadend = () => {
@@ -312,6 +323,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
             <HiddenFileInput
               type="file"
               onChange={handleFileChange}
+              accept={evidenceRestriction?.allowedMimeTypes.join(',')}
               disabled={isLoading}
             />
           </FileUploadButton>

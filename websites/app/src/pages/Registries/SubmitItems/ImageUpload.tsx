@@ -2,6 +2,10 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { isPngFile } from 'utils/pngValidation'
+import {
+  getRoleRestriction,
+  validateFileAgainstRestriction,
+} from 'utils/atlasUploadRestrictions'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
 import Tooltip from 'components/Tooltip'
@@ -57,8 +61,7 @@ const ImageUpload: React.FC<{
 }> = ({ value, onChange, setImageError, registry, role, tooltip }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const { roleRestrictions } = useAtlasProvider()
-  const maxSize = roleRestrictions?.find((r) => r.name === role)?.restriction
-    .maxSize
+  const restriction = getRoleRestriction(role, roleRestrictions)
 
   useEffect(() => {
     if (!value) {
@@ -71,10 +74,8 @@ const ImageUpload: React.FC<{
   }, [value])
 
   const validateImage = async (image: File): Promise<string | null> => {
-    if (maxSize !== undefined && image.size > maxSize) {
-      const mb = (maxSize / (1024 * 1024)).toFixed(2).replace(/\.?0+$/, '')
-      return `Image size should not exceed ${mb}MB.`
-    }
+    const restrictionError = validateFileAgainstRestriction(image, restriction)
+    if (restrictionError) return restrictionError
     if (registry === 'tokens') {
       if (
         !image.type.startsWith('image/png') &&
