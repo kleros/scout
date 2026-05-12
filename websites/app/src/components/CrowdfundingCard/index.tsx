@@ -9,6 +9,9 @@ import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
 import { GraphItemDetails } from '../../utils/itemDetails'
 import { errorToast } from '../../utils/wrapWithToast'
+import { parseWagmiError } from '../../utils/parseWagmiError'
+import useNativeBalance from '../../hooks/useNativeBalance'
+import { EnsureChain } from 'components/EnsureChain'
 
 const Card = styled.div`
   background: ${({ theme }) => theme.backgroundThree};
@@ -298,6 +301,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const theme = useTheme()
   const [selectedSide, setSelectedSide] = useState<PARTY>(PARTY.NONE)
   const [contributionShare, setContributionShare] = useState(1)
+  const { balance: nativeBalance } = useNativeBalance()
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
   const navigate = useNavigate()
@@ -382,7 +386,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
       }
     } catch (error) {
       console.error('Error funding appeal:', error)
-      errorToast(error instanceof Error ? error.message : 'Failed to fund appeal')
+      errorToast(parseWagmiError(error) || 'Failed to fund appeal')
     }
   }
 
@@ -452,12 +456,23 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                 <RewardAmount>{Number(formatEther(potentialRewardForContribution)).toFixed(4)} {nativeCurrency}</RewardAmount>
               </InfoRow>
             </ContributionInfo>
-            <ContributeButton
-              onClick={handleFundAppeal}
-              disabled={isLoading || contributionAmount === 0n}
-            >
-              {isLoading ? 'Processing...' : `Fund ${Number(formatEther(contributionAmount)).toFixed(4)} ${nativeCurrency}`}
-            </ContributeButton>
+            <EnsureChain>
+              <ContributeButton
+                onClick={handleFundAppeal}
+                disabled={
+                  isLoading ||
+                  contributionAmount === 0n ||
+                  (nativeBalance !== undefined && nativeBalance < contributionAmount)
+                }
+              >
+                {isLoading ? 'Processing...' : `Fund ${Number(formatEther(contributionAmount)).toFixed(4)} ${nativeCurrency}`}
+              </ContributeButton>
+            </EnsureChain>
+            {nativeBalance !== undefined && contributionAmount > 0n && nativeBalance < contributionAmount && (
+              <div style={{ color: theme.error, fontSize: 13, fontWeight: 500, marginTop: 8 }}>
+                Insufficient balance. You have {Number(formatEther(nativeBalance)).toFixed(4)} {nativeCurrency} but want to contribute {Number(formatEther(contributionAmount)).toFixed(4)} {nativeCurrency}.
+              </div>
+            )}
             {selectedSide !== PARTY.NONE && (
               <ContributeButton
                 onClick={() => setSelectedSide(PARTY.NONE)}

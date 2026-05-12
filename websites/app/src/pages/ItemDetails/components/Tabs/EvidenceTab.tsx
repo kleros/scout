@@ -1,9 +1,6 @@
 import React, { useRef } from 'react'
-import styled, { css } from 'styled-components'
+import styled from 'styled-components'
 import { Address } from 'viem'
-import { landscapeStyle } from 'styles/landscapeStyle'
-import { responsiveSize } from 'styles/responsiveSize'
-import ReactMarkdown from 'react-markdown'
 import { useSearchParams, Link } from 'react-router-dom'
 import { StyledButton } from 'components/Button'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
@@ -70,15 +67,22 @@ const Evidence = styled.div`
   }
 `
 
+const EvidenceHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+`
+
 const EvidenceTitle = styled.div`
   font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
-  margin-bottom: 16px;
-  padding-bottom: 0;
-  border-bottom: none;
-  position: relative;
-  z-index: 1;
+  flex: 1;
+  min-width: 0;
 `
 
 const EvidenceNumber = styled.span`
@@ -86,15 +90,14 @@ const EvidenceNumber = styled.span`
 `
 
 const EvidenceDescription = styled.div`
-  flex-direction: column;
+  white-space: pre-line;
   word-break: break-word;
-  gap: 4px;
   margin: 16px 0;
   padding: 0;
   background: transparent;
   border-radius: 8px;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: ${({ theme }) => theme.secondaryText};
   position: relative;
   z-index: 1;
@@ -137,15 +140,6 @@ const NoEvidenceText = styled.div`
   z-index: 2;
 `
 
-const StyledReactMarkdown = styled(ReactMarkdown)`
-  color: ${({ theme }) => theme.secondaryText};
-
-  p {
-    margin: 4px 0;
-    color: inherit;
-  }
-`
-
 const SubmitEvidenceButton = styled(StyledButton).attrs({ variant: 'primary', size: 'medium' })`
   ${hoverLongTransitionTiming}
   margin: 0;
@@ -153,37 +147,36 @@ const SubmitEvidenceButton = styled(StyledButton).attrs({ variant: 'primary', si
   height: 40px;
 `
 
-const AttachmentButton = styled.button`
-  height: fit-content;
+const AttachmentLink = styled.button`
   display: inline-flex;
   align-items: center;
-  cursor: pointer;
-  color: ${({ theme }) => theme.primaryText};
+  flex-shrink: 0;
+  gap: 6px;
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.secondaryBlue}4D;
-  border-radius: 8px;
-  padding: 8px 12px;
-  gap: ${responsiveSize(6, 8)};
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: inherit;
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.2s ease;
-  position: relative;
-  z-index: 1;
-  margin: 8px 0;
+  color: ${({ theme }) => theme.secondaryBlue};
+  cursor: pointer;
+  transition: color 0.2s ease;
 
-  &:hover {
-    border-color: ${({ theme }) => theme.secondaryBlue}CC;
-    transform: translateY(-1px);
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: ${({ theme }) => theme.secondaryBlue};
+    transition: fill 0.2s ease;
   }
 
-  ${landscapeStyle(
-    () => css`
-      > svg {
-        width: 16px;
-        fill: ${({ theme }) => theme.primaryText};
-      }
-    `,
-  )}
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
+  }
+
+  &:hover svg {
+    fill: ${({ theme }) => theme.primaryBlue};
+  }
 `
 
 const SubmissionDate = styled(Link)`
@@ -270,32 +263,30 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
         {evidences.length > 0 ? (
           evidences.map((evidence, idx) => (
             <Evidence key={idx}>
-              <EvidenceTitle>
-                <EvidenceNumber>#{idx + 1}. </EvidenceNumber>
-                {evidence?.title}
-              </EvidenceTitle>
-              <EvidenceDescription>
-                <StyledReactMarkdown>
-                  {evidence?.description || ''}
-                </StyledReactMarkdown>
-              </EvidenceDescription>
-              {evidence?.fileURI ? (
-                <AttachmentButton
-                  onClick={() => {
-                    if (evidence?.fileURI) {
+              <EvidenceHeader>
+                <EvidenceTitle>
+                  <EvidenceNumber>#{idx + 1}. </EvidenceNumber>
+                  {evidence?.title}
+                </EvidenceTitle>
+                {evidence?.fileURI ? (
+                  <AttachmentLink
+                    onClick={() => {
                       setSearchParams((prev) => {
                         const next = new URLSearchParams(prev)
                         next.set('attachment', `https://cdn.kleros.link${evidence.fileURI}`)
                         return next
                       }, { replace: true })
                       scrollTop()
-                    }
-                  }}
-                >
-                  <AttachmentIcon />
-                  View Attached File
-                </AttachmentButton>
-              ) : null}
+                    }}
+                  >
+                    <AttachmentIcon />
+                    View attached file
+                  </AttachmentLink>
+                ) : null}
+              </EvidenceHeader>
+              <EvidenceDescription>
+                {evidence?.description || ''}
+              </EvidenceDescription>
               <EvidenceMetadata>
                 <EvidenceMetadataItem>
                   <strong>Submitted on:</strong>

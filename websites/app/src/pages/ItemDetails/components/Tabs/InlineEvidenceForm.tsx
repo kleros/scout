@@ -2,10 +2,12 @@ import React, { forwardRef, useEffect, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { useQueryClient } from '@tanstack/react-query'
 import { Address } from 'viem'
+import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 
 import { landscapeStyle } from 'styles/landscapeStyle'
 
 import { EnsureChain } from 'components/EnsureChain'
+import EnsureAuth from 'components/EnsureAuth'
 import TransactionButton from 'components/TransactionButton'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 
@@ -13,9 +15,9 @@ import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { queryKeys } from 'hooks/queries/consts'
 
-import ipfsPublish from 'utils/ipfsPublish'
-import { getIPFSPath } from 'utils/getIPFSPath'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
+import { parseWagmiError } from 'utils/parseWagmiError'
+import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
 
 const Container = styled.div`
   position: relative;
@@ -185,6 +187,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
   const [isLocalLoading, setIsLocalLoading] = useState(false)
 
   const { submitEvidence, isLoading: isContractLoading } = useCurateInteractions()
+  const { uploadFile } = useAtlasProvider()
   const queryClient = useQueryClient()
 
   const isLoading = isLocalLoading || isContractLoading
@@ -235,9 +238,9 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
 
       if (attachedFile) {
         infoToast('Uploading file to IPFS...')
-        const fileData = await attachedFile.arrayBuffer()
-        const fileIpfsObject = await ipfsPublish(attachedFile.name, fileData)
-        fileURI = getIPFSPath(fileIpfsObject)
+        const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
+        if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
+        fileURI = uploadedPath
         const extension = attachedFile.name.split('.').pop()
         fileTypeExtension = extension ? `.${extension}` : null
       }
@@ -255,10 +258,13 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       if (fileTypeExtension) evidenceObject.fileTypeExtension = fileTypeExtension
 
       infoToast('Uploading evidence to IPFS...')
-      const enc = new TextEncoder()
-      const evidenceData = enc.encode(JSON.stringify(evidenceObject))
-      const ipfsObject = await ipfsPublish('evidence.json', evidenceData.buffer)
-      const ipfsPath = getIPFSPath(ipfsObject)
+      const evidenceFile = new File(
+        [JSON.stringify(evidenceObject)],
+        'evidence.json',
+        { type: 'application/json' },
+      )
+      const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
+      if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
 
       const result = await submitEvidence(registryAddress, itemID, ipfsPath)
 
@@ -272,7 +278,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       }
     } catch (error) {
       console.error('Error submitting evidence:', error)
-      errorToast(error instanceof Error ? error.message : 'Failed to submit evidence')
+      errorToast(parseWagmiError(error) || 'Failed to submit evidence')
     } finally {
       setIsLocalLoading(false)
     }
@@ -320,14 +326,16 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       </FileUploadContainer>
       <ButtonWrapper>
         <EnsureChain>
-          <TransactionButton
-            isLoading={isLoading}
-            loadingText="Processing..."
-            disabled={submitDisabled}
-            onClick={handleSubmit}
-          >
-            Submit
-          </TransactionButton>
+          <EnsureAuth>
+            <TransactionButton
+              isLoading={isLoading}
+              loadingText="Processing..."
+              disabled={submitDisabled}
+              onClick={handleSubmit}
+            >
+              Submit
+            </TransactionButton>
+          </EnsureAuth>
         </EnsureChain>
       </ButtonWrapper>
     </Container>

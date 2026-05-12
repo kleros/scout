@@ -1,16 +1,18 @@
 import React, { useMemo } from 'react'
 import styled, { useTheme } from 'styled-components'
-import { formatEther } from 'ethers'
+import { Link } from 'react-router-dom'
 import 'react-loading-skeleton/dist/skeleton.css'
 import AddressDisplay from 'components/AddressDisplay'
 import SubmittedByLink from 'components/SubmittedByLink'
 import { revRegistryMap, registryDisplayNames, buildItemPath, getPropValue, getItemAddress } from 'utils/items'
 import { formatTimestamp } from 'utils/formatTimestamp'
+import { formatValue } from 'utils/formatValue'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import useRegistryParameters from 'hooks/useRegistryParameters'
+import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
 import {
   Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
-  MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer, ViewLink,
+  MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer,
 } from './profileCardStyles'
 
 const HeaderLeft = styled.div`
@@ -76,7 +78,7 @@ const ButtonsContainer = styled.div`
   gap: 8px;
 `
 
-const ViewCaseLink = styled.a`
+const ViewItemLink = styled(Link)`
   ${hoverLongTransitionTiming}
   display: inline-flex;
   align-items: center;
@@ -95,6 +97,36 @@ const ViewCaseLink = styled.a`
     background: ${({ theme }) => theme.secondaryPurple}15;
     border-color: ${({ theme }) => theme.secondaryPurple};
     color: ${({ theme }) => theme.secondaryPurple};
+  }
+`
+
+const ViewCaseLink = styled.a`
+  ${hoverLongTransitionTiming}
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.buttonSecondaryBorder};
+  color: ${({ theme }) => theme.primaryText};
+
+  svg {
+    width: 12px;
+    height: 12px;
+    fill: ${({ theme }) => theme.primaryText};
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: ${({ theme }) => theme.hoverBackground};
+    border-color: ${({ theme }) => theme.primaryText};
+    color: ${({ theme }) => theme.primaryText};
   }
 `
 
@@ -164,9 +196,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
     const baseDeposit = BigInt(request.deposit)
     const arbitrationCost = registryParams?.arbitrationCost ?? 0n
     const total = baseDeposit + arbitrationCost
-    return Number(formatEther(total)).toLocaleString('en-US', {
-      maximumFractionDigits: 2,
-    })
+    return formatValue(total, 2)
   }, [request?.deposit, registryParams?.arbitrationCost])
 
   const requester = request?.requester ?? ''
@@ -265,6 +295,9 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
           </InfoRow>
 
           <ButtonsContainer>
+            <ViewItemLink to={itemUrl} state={{ fromApp: true, from: 'profile', profileTab: 'disputes' }}>
+              View Item
+            </ViewItemLink>
             {disputeID && (
               <ViewCaseLink
                 href={`https://klerosboard.com/100/cases/${disputeID}`}
@@ -272,9 +305,9 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
                 rel="noopener noreferrer"
               >
                 View Case
+                <NewTabIcon />
               </ViewCaseLink>
             )}
-            <ViewLink to={itemUrl} state={{ fromApp: true, from: 'profile', profileTab: 'disputes' }}>View Item</ViewLink>
           </ButtonsContainer>
         </MetaLine>
       </Body>

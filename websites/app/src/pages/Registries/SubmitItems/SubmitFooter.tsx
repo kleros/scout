@@ -2,13 +2,23 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import { formatEther } from 'viem'
 import { EnsureChain } from 'components/EnsureChain'
+import EnsureAuth from 'components/EnsureAuth'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
+import { formatValue } from 'utils/formatValue'
+import useNativeBalance from 'hooks/useNativeBalance'
 import {
   SubmitButton,
   ExpectedPayouts,
   PayoutsContainer,
 } from './index'
+
+const InsufficientBalanceText = styled.div`
+  color: ${({ theme }) => theme.error};
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
+`
 
 const Wrapper = styled.div`
   display: flex;
@@ -38,6 +48,14 @@ const SubmitFooter: React.FC<Props> = ({
   submitLabel,
 }) => {
   const [acknowledged, setAcknowledged] = useState(false)
+  const { balance: nativeBalance } = useNativeBalance()
+  const requiredValue = deposits
+    ? deposits.arbitrationCost + deposits.submissionBaseDeposit
+    : undefined
+  const insufficientBalance =
+    nativeBalance !== undefined &&
+    requiredValue !== undefined &&
+    nativeBalance < requiredValue
 
   return (
     <Wrapper>
@@ -49,22 +67,27 @@ const SubmitFooter: React.FC<Props> = ({
       />
       <PayoutsContainer>
         <EnsureChain>
-          <SubmitButton
-            disabled={disabled || !acknowledged}
-            onClick={onSubmit}
-          >
-            {isSubmitting ? 'Submitting...' : submitLabel}
-          </SubmitButton>
+          <EnsureAuth>
+            <SubmitButton
+              disabled={disabled || !acknowledged || insufficientBalance}
+              onClick={onSubmit}
+            >
+              {isSubmitting ? 'Submitting...' : submitLabel}
+            </SubmitButton>
+          </EnsureAuth>
         </EnsureChain>
         <ExpectedPayouts>
           Deposit:{' '}
-          {deposits
-            ? formatEther(
-                deposits.arbitrationCost + deposits.submissionBaseDeposit,
-              ) + ' xDAI'
+          {requiredValue !== undefined
+            ? formatEther(requiredValue) + ' xDAI'
             : null}
         </ExpectedPayouts>
       </PayoutsContainer>
+      {insufficientBalance && (
+        <InsufficientBalanceText>
+          Insufficient balance. You have {formatValue(nativeBalance!)} xDAI but need {formatValue(requiredValue!)} xDAI.
+        </InsufficientBalanceText>
+      )}
     </Wrapper>
   )
 }

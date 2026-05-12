@@ -9,15 +9,19 @@ import { StyledCloseButton, ClosedButtonContainer } from 'pages/Registries'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 import { EnsureChain } from 'components/EnsureChain'
-import ipfsPublish from 'utils/ipfsPublish'
-import { getIPFSPath } from 'utils/getIPFSPath'
+import EnsureAuth from 'components/EnsureAuth'
+import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { Address } from 'viem'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
+import { parseWagmiError } from 'utils/parseWagmiError'
 import TransactionButton from 'components/TransactionButton'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
+import useNativeBalance from 'hooks/useNativeBalance'
+import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
+import { formatValue } from 'utils/formatValue'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
 const REGISTRY_SINGULAR: Record<string, string> = {
@@ -141,6 +145,13 @@ const DepositText = styled.span`
   font-weight: 500;
   color: ${({ theme }) => theme.primaryText};
   opacity: 0.9;
+`
+
+const InsufficientBalanceText = styled.div`
+  color: ${({ theme }) => theme.error};
+  font-size: 13px;
+  font-weight: 500;
+  width: 100%;
 `
 
 const FileUploadContainer = styled.div`
@@ -282,6 +293,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   })()
   const { challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
+  const { uploadFile } = useAtlasProvider()
   const navigate = useNavigate()
 
   // Combined loading state for both IPFS upload and contract interaction
@@ -357,6 +369,12 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   }, [deposits, arbitrationCostData, evidenceConfirmationType])
 
+  const { balance: nativeBalance } = useNativeBalance()
+  const insufficientBalance =
+    nativeBalance !== undefined &&
+    depositValue !== undefined &&
+    nativeBalance < depositValue
+
   return (
     <ModalOverlay $isOpen={isConfirmationOpen} onClick={handleOverlayClick}>
       <Container>
@@ -418,10 +436,11 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
           />
           <ButtonWrapper>
             <EnsureChain>
+              <EnsureAuth>
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."
-                disabled={!acknowledged || !evidenceText.trim()}
+                disabled={!acknowledged || !evidenceText.trim() || insufficientBalance}
                 onClick={async () => {
                   // Set loading state immediately
                   setIsLocalLoading(true)
@@ -445,9 +464,9 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
                     if (attachedFile) {
                       infoToast('Uploading file to IPFS...')
-                      const fileData = await attachedFile.arrayBuffer()
-                      const fileIpfsObject = await ipfsPublish(attachedFile.name, fileData)
-                      fileURI = getIPFSPath(fileIpfsObject)
+                      const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
+                      if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
+                      fileURI = uploadedPath
                       const extension = attachedFile.name.split('.').pop()
                       fileTypeExtension = extension ? `.${extension}` : null
                     }
@@ -471,10 +490,13 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     }
 
                     infoToast('Uploading evidence to IPFS...')
-                    const enc = new TextEncoder()
-                    const evidenceData = enc.encode(JSON.stringify(evidenceObject))
-                    const ipfsObject = await ipfsPublish('evidence.json', evidenceData.buffer)
-                    const ipfsPath = getIPFSPath(ipfsObject)
+                    const evidenceFile = new File(
+                      [JSON.stringify(evidenceObject)],
+                      'evidence.json',
+                      { type: 'application/json' },
+                    )
+                    const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
+                    if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
 
                     const registryAddress = detailsData.registryAddress as Address
                     const itemId = detailsData.itemID
@@ -540,7 +562,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     }
                   } catch (error) {
                     console.error('Error performing action:', error)
-                    errorToast(error instanceof Error ? error.message : 'Failed to perform action')
+                    errorToast(parseWagmiError(error) || 'Failed to perform action')
                   } finally {
                     setIsLocalLoading(false)
                   }
@@ -548,11 +570,17 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               >
                 {submitLabel}
               </TransactionButton>
+              </EnsureAuth>
             </EnsureChain>
             {depositValue !== undefined && (
               <DepositText>
                 Deposit: {formatEther(depositValue)} xDAI
               </DepositText>
+            )}
+            {insufficientBalance && (
+              <InsufficientBalanceText>
+                Insufficient balance. You have {formatValue(nativeBalance!)} xDAI but need {formatValue(depositValue!)} xDAI.
+              </InsufficientBalanceText>
             )}
           </ButtonWrapper>
         </InnerContainer>

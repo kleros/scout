@@ -1,9 +1,9 @@
 import type { Address } from 'viem'
-import ipfsPublish from 'utils/ipfsPublish'
-import { getIPFSPath } from 'utils/getIPFSPath'
+import { Roles } from '@kleros/kleros-app'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
 import type { Column } from 'utils/items'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
+import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
 
 interface Params {
   addItem: (
@@ -11,6 +11,7 @@ interface Params {
     itemData: string,
     deposits: DepositParams,
   ) => Promise<WrapWithToastReturnType>
+  uploadFile: (file: File, role: Roles) => Promise<string | null>
   registryAddress: Address
   columns: Column[]
   values: Record<string, string>
@@ -19,14 +20,17 @@ interface Params {
 
 export const publishAndAddItem = async ({
   addItem,
+  uploadFile,
   registryAddress,
   columns,
   values,
   deposits,
 }: Params) => {
   const item = { columns, values }
-  const fileData = new TextEncoder().encode(JSON.stringify(item))
-  const ipfsObject = await ipfsPublish('item.json', fileData)
-  const ipfsPath = getIPFSPath(ipfsObject)
+  const file = new File([JSON.stringify(item)], 'item.json', {
+    type: 'application/json',
+  })
+  const ipfsPath = await uploadFile(file, JSON_UPLOAD_ROLE)
+  if (!ipfsPath) throw new Error('Failed to upload item metadata to IPFS.')
   return addItem(registryAddress, ipfsPath, deposits)
 }
