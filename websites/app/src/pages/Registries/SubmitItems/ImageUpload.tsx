@@ -52,6 +52,8 @@ export interface ImageValue {
   name: string
 }
 
+const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024
+
 const ImageUpload: React.FC<{
   value: ImageValue | null
   onChange: (value: ImageValue | null) => void
@@ -60,6 +62,9 @@ const ImageUpload: React.FC<{
   tooltip?: string
 }> = ({ value, onChange, setImageError, registry, tooltip }) => {
   const validateImage = async (image: File): Promise<string | null> => {
+    if (image.size > MAX_IMAGE_SIZE_BYTES) {
+      return 'Image size should not exceed 4MB.'
+    }
     if (registry === 'tokens') {
       if (
         !image.type.startsWith('image/png') &&
@@ -71,10 +76,6 @@ const ImageUpload: React.FC<{
       const isActuallyPng = await isPngFile(image)
       if (!isActuallyPng) {
         return 'Invalid PNG file. The file content does not match PNG format specifications.'
-      }
-
-      if (image.size > 4 * 1024 * 1024) {
-        return 'Image size should not exceed 4MB.'
       }
     }
     return null
