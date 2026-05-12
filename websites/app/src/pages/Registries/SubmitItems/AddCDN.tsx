@@ -151,6 +151,7 @@ const AddCDN: React.FC = () => {
         value={image}
         onChange={setImage}
         registry="cdn"
+        role={Roles.CurateItemImage}
         tooltip={columns[2].description}
         setImageError={setImageError}
       />

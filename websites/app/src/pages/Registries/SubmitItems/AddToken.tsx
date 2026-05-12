@@ -210,6 +210,7 @@ const AddToken: React.FC = () => {
         value={image}
         onChange={setImage}
         registry="tokens"
+        role={Roles.Logo}
         tooltip={columns[4].description}
         setImageError={setImageError}
       />

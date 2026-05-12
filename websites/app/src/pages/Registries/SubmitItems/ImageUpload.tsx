@@ -1,5 +1,6 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
+import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { isPngFile } from 'utils/pngValidation'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
@@ -46,16 +47,18 @@ const StyledUploadIcon = styled(UploadIcon)`
   }
 `
 
-const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024
-
 const ImageUpload: React.FC<{
   value: File | null
   onChange: (value: File | null) => void
   setImageError: Dispatch<SetStateAction<string | null>>
   registry: string
+  role: Roles
   tooltip?: string
-}> = ({ value, onChange, setImageError, registry, tooltip }) => {
+}> = ({ value, onChange, setImageError, registry, role, tooltip }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const { roleRestrictions } = useAtlasProvider()
+  const maxSize = roleRestrictions?.find((r) => r.name === role)?.restriction
+    .maxSize
 
   useEffect(() => {
     if (!value) {
@@ -68,8 +71,9 @@ const ImageUpload: React.FC<{
   }, [value])
 
   const validateImage = async (image: File): Promise<string | null> => {
-    if (image.size > MAX_IMAGE_SIZE_BYTES) {
-      return 'Image size should not exceed 4MB.'
+    if (maxSize !== undefined && image.size > maxSize) {
+      const mb = (maxSize / (1024 * 1024)).toFixed(2).replace(/\.?0+$/, '')
+      return `Image size should not exceed ${mb}MB.`
     }
     if (registry === 'tokens') {
       if (
