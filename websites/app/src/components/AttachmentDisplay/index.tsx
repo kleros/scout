@@ -34,6 +34,7 @@ const FileViewerSurface = styled.div`
   --klerosUIComponentsLightBackground: ${({ theme }) => theme.backgroundFour};
   --klerosUIComponentsPrimaryText: ${({ theme }) => theme.klerosUIComponentsPrimaryText};
   --klerosUIComponentsSecondaryText: ${({ theme }) => theme.klerosUIComponentsSecondaryText};
+  --klerosUIComponentsImageCheckerColor: ${({ theme }) => theme.klerosUIComponentsSkeletonHighlight};
   --color-klerosUIComponentsWhiteBackground: ${({ theme }) => theme.klerosUIComponentsWhiteBackground};
   --color-klerosUIComponentsLightBackground: ${({ theme }) => theme.backgroundFour};
   --color-klerosUIComponentsPrimaryText: ${({ theme }) => theme.klerosUIComponentsPrimaryText};
