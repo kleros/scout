@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
+import { useImageStorage } from 'hooks/useImageStorage'
 import { useValidationIssues } from 'hooks/useValidationIssues'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
+import { errorToast } from 'utils/wrapWithToast'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
 import FormHeader from './FormHeader'
@@ -43,7 +46,8 @@ const columns = [
   },
   {
     label: 'Logo',
-    description: 'The PNG logo of the token (at least 128px X 128px in size',
+    description:
+      'The PNG logo of the token (at least 128px x 128px in size, max 1MB).',
     type: 'image',
     isIdentifier: false,
   },
@@ -62,19 +66,24 @@ const DEFAULT_FORM = {
   decimals: '',
   name: '',
   symbol: '',
-  path: '',
   website: '',
 }
 
+const IMAGE_STORAGE_KEY = 'addTokenForm:image'
+
 const AddToken: React.FC = () => {
   const [formData, setFormData] = useLocalStorage('addTokenForm', DEFAULT_FORM)
+  const [image, setImage] = useImageStorage(IMAGE_STORAGE_KEY, () =>
+    errorToast(
+      "Couldn't save image to browser storage. You can still submit now, but it won't survive a refresh.",
+    ),
+  )
 
   const [network, setNetwork] = useState<NetworkOption>(formData.network)
   const [address, setAddress] = useState<string>(formData.address)
   const [decimals, setDecimals] = useState<string>(formData.decimals)
   const [name, setName] = useState<string>(formData.name)
   const [symbol, setSymbol] = useState<string>(formData.symbol)
-  const [path, setPath] = useState<string>(formData.path)
   const [website, setWebsite] = useState<string>(formData.website)
   const [imageError, setImageError] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
@@ -97,8 +106,8 @@ const AddToken: React.FC = () => {
   }, [searchParams])
 
   useEffect(() => {
-    setFormData({ network, address, decimals, name, symbol, path, website })
-  }, [network, address, decimals, name, symbol, path, website, setFormData])
+    setFormData({ network, address, decimals, name, symbol, website })
+  }, [network, address, decimals, name, symbol, website, setFormData])
 
   const { data: issues, isLoading: issuesLoading } = useValidationIssues({
     chainId: network.value,
@@ -119,8 +128,8 @@ const AddToken: React.FC = () => {
       setDecimals('')
       setName('')
       setSymbol('')
-      setPath('')
       setWebsite('')
+      setImage(null)
     },
   })
 
@@ -131,20 +140,23 @@ const AddToken: React.FC = () => {
     !symbol ||
     !!issues ||
     issuesLoading ||
-    !path ||
+    !image ||
     !website ||
     !!imageError ||
     isSubmitting
 
   const handleSubmit = () =>
-    submit({
-      Address: `${network.value}:${address}`,
-      Name: name,
-      Symbol: symbol,
-      Decimals: decimals,
-      Logo: path,
-      Website: website,
-    })
+    submit(
+      {
+        Address: `${network.value}:${address}`,
+        Name: name,
+        Symbol: symbol,
+        Decimals: decimals,
+        Logo: '',
+        Website: website,
+      },
+      image ? { Logo: { file: image, role: Roles.Logo } } : undefined,
+    )
 
   return (
     <AddContainer>
@@ -196,9 +208,10 @@ const AddToken: React.FC = () => {
       />
       {issues?.symbol && <ErrorMessage>{issues.symbol.message}</ErrorMessage>}
       <ImageUpload
-        path={path}
-        setPath={setPath}
+        value={image}
+        onChange={setImage}
         registry="tokens"
+        role={Roles.Logo}
         tooltip={columns[4].description}
         setImageError={setImageError}
       />

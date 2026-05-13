@@ -21,6 +21,10 @@ import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 import useNativeBalance from 'hooks/useNativeBalance'
 import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
+import {
+  getRoleRestriction,
+  validateFileAgainstRestriction,
+} from 'utils/atlasUploadRestrictions'
 import { formatValue } from 'utils/formatValue'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
@@ -293,7 +297,8 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   })()
   const { challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
-  const { uploadFile } = useAtlasProvider()
+  const { uploadFile, roleRestrictions } = useAtlasProvider()
+  const evidenceRestriction = getRoleRestriction(Roles.Evidence, roleRestrictions)
   const navigate = useNavigate()
 
   // Combined loading state for both IPFS upload and contract interaction
@@ -306,17 +311,22 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      setAttachedFileName(file.name)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const result = reader.result?.toString()
-        if (result) {
-          setAttachedFileBase64(result)
-        }
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+    const error = validateFileAgainstRestriction(file, evidenceRestriction)
+    if (error) {
+      errorToast(error)
+      e.target.value = ''
+      return
     }
+    setAttachedFileName(file.name)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const result = reader.result?.toString()
+      if (result) {
+        setAttachedFileBase64(result)
+      }
+    }
+    reader.readAsDataURL(file)
   }
 
   const handleRemoveFile = () => {
@@ -416,6 +426,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                 <HiddenFileInput
                   type="file"
                   onChange={handleFileChange}
+                  accept={evidenceRestriction?.allowedMimeTypes.join(',')}
                   disabled={isLoading}
                 />
               </FileUploadButton>

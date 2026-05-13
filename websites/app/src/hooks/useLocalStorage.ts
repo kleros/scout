@@ -1,6 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+export function useLocalStorage<T>(
+  key: string,
+  initialValue: T,
+  onWriteError?: (error: unknown) => void,
+): [T, (value: T) => void] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -11,12 +15,16 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
     }
   });
 
+  const onWriteErrorRef = useRef(onWriteError);
+  onWriteErrorRef.current = onWriteError;
+
   const setValue = useCallback((value: T) => {
+    setStoredValue(value);
     try {
-      setStoredValue(value);
       window.localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
       console.error(error);
+      onWriteErrorRef.current?.(error);
     }
   }, [key]);
 

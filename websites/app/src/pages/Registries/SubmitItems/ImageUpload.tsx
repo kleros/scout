@@ -2,11 +2,13 @@ import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { isPngFile } from 'utils/pngValidation'
+import {
+  getRoleRestriction,
+  validateFileAgainstRestriction,
+} from 'utils/atlasUploadRestrictions'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
 import Tooltip from 'components/Tooltip'
-import { EnsureChain } from 'components/EnsureChain'
-import EnsureAuth from 'components/EnsureAuth'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -49,68 +51,79 @@ const StyledUploadIcon = styled(UploadIcon)`
   }
 `
 
+const getImageDimensions = (
+  file: File,
+): Promise<{ width: number; height: number }> =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve({ width: img.naturalWidth, height: img.naturalHeight })
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Failed to read image dimensions'))
+    }
+    img.src = url
+  })
+
 const ImageUpload: React.FC<{
-  path: string
-  setPath: Dispatch<SetStateAction<string>>
+  value: File | null
+  onChange: (value: File | null) => void
   setImageError: Dispatch<SetStateAction<string | null>>
   registry: string
+  role: Roles
   tooltip?: string
-}> = ({ path, setPath, setImageError, registry, tooltip }) => {
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const { uploadFile } = useAtlasProvider()
+}> = ({ value, onChange, setImageError, registry, role, tooltip }) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const { roleRestrictions } = useAtlasProvider()
+  const restriction = getRoleRestriction(role, roleRestrictions)
 
-  const validateImage = async (file: File): Promise<string | null> => {
+  useEffect(() => {
+    if (!value) {
+      setPreviewUrl(null)
+      return
+    }
+    const url = URL.createObjectURL(value)
+    setPreviewUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [value])
+
+  const validateImage = async (image: File): Promise<string | null> => {
     if (registry === 'tokens') {
-      // Check file extension and MIME type first (basic validation)
-      if (!file.type.startsWith('image/png') && !file.name.toLowerCase().endsWith('.png')) {
+      if (image.size > 1024 * 1024) {
+        return 'Logo must not exceed 1MB for Tokens registry.'
+      }
+      if (
+        !image.type.startsWith('image/png') &&
+        !image.name.toLowerCase().endsWith('.png')
+      ) {
         return 'Only PNG images are allowed for Tokens registry.'
       }
-
-      // Check actual file content to ensure it's a real PNG file
-      const isActuallyPng = await isPngFile(file)
+      const isActuallyPng = await isPngFile(image)
       if (!isActuallyPng) {
         return 'Invalid PNG file. The file content does not match PNG format specifications.'
       }
-
-      if (file.size > 4 * 1024 * 1024) {
-        return 'Image size should not exceed 4MB.'
+      try {
+        const { width, height } = await getImageDimensions(image)
+        if (width < 128 || height < 128) {
+          return 'Logo must be at least 128px x 128px for Tokens registry.'
+        }
+      } catch {
+        return 'Could not read image dimensions. Please try a different PNG.'
       }
+      return null
     }
-    return null
+    return validateFileAgainstRestriction(image, restriction)
   }
 
-  useEffect(() => {
-    if (!imageFile) return
-    const uploadImageToIPFS = async () => {
-      const error = await validateImage(imageFile)
-      if (error) {
-        setImageError(error)
-        return
-      }
-
-      try {
-        const role = registry === 'tokens' ? Roles.Logo : Roles.CurateItemImage
-        const ipfsPath = await uploadFile(imageFile, role)
-        if (!ipfsPath) {
-          setImageError('Failed to upload image. Please try again.')
-          return
-        }
-        setPath(ipfsPath)
-        setImageError(null)
-      } catch (err) {
-        setImageError(
-          err instanceof Error ? err.message : 'Failed to upload image. Please try again.'
-        )
-      }
-    }
-    uploadImageToIPFS()
-  }, [imageFile, registry, setPath, setImageError, uploadFile])
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setImageFile(file)
-    }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0]
+    if (!picked) return
+    onChange(picked)
+    const error = await validateImage(picked)
+    setImageError(error)
   }
 
   return (
@@ -118,25 +131,20 @@ const ImageUpload: React.FC<{
       <FieldLabel>
         {tooltip ? <Tooltip data-tooltip={tooltip}>Image</Tooltip> : 'Image'}
       </FieldLabel>
-      <EnsureChain>
-        <EnsureAuth>
-          <StyledLabel>
-            Upload Image <StyledUploadIcon />
-            <StyledInput
-              type="file"
-              onChange={handleFileChange}
-              accept={registry === 'tokens' ? '.png' : 'image/*'}
-            />
-          </StyledLabel>
-        </EnsureAuth>
-      </EnsureChain>
-      {path && (
-        <img
-          width={200}
-          height={200}
-          src={`https://cdn.kleros.link${path}`}
-          alt="preview"
+      <StyledLabel>
+        Upload Image <StyledUploadIcon />
+        <StyledInput
+          type="file"
+          onChange={handleFileChange}
+          accept={
+            registry === 'tokens'
+              ? '.png'
+              : (restriction?.allowedMimeTypes.join(',') ?? 'image/*')
+          }
         />
+      </StyledLabel>
+      {previewUrl && (
+        <img width={200} height={200} src={previewUrl} alt="preview" />
       )}
     </>
   )
