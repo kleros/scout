@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
+import { useImageStorage } from 'hooks/useImageStorage'
 import { useValidationIssues } from 'hooks/useValidationIssues'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
+import { errorToast } from 'utils/wrapWithToast'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
 import ImageUpload from './ImageUpload'
 import FormHeader from './FormHeader'
@@ -44,16 +47,21 @@ const DEFAULT_FORM = {
   network: { value: 'eip155:1', label: 'Mainnet' } as NetworkOption,
   address: '',
   domain: '',
-  path: '',
 }
+
+const IMAGE_STORAGE_KEY = 'addCDNForm:image'
 
 const AddCDN: React.FC = () => {
   const [formData, setFormData] = useLocalStorage('addCDNForm', DEFAULT_FORM)
+  const [image, setImage] = useImageStorage(IMAGE_STORAGE_KEY, () =>
+    errorToast(
+      "Couldn't save image to browser storage. You can still submit now, but it won't survive a refresh.",
+    ),
+  )
 
   const [network, setNetwork] = useState<NetworkOption>(formData.network)
   const [address, setAddress] = useState<string>(formData.address)
   const [domain, setDomain] = useState<string>(formData.domain)
-  const [path, setPath] = useState<string>(formData.path)
   const [imageError, setImageError] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
 
@@ -69,8 +77,8 @@ const AddCDN: React.FC = () => {
   }, [searchParams])
 
   useEffect(() => {
-    setFormData({ network, address, domain, path })
-  }, [network, address, domain, path, setFormData])
+    setFormData({ network, address, domain })
+  }, [network, address, domain, setFormData])
 
   const { data: issues, isLoading: issuesLoading } = useValidationIssues({
     chainId: network.value,
@@ -87,7 +95,7 @@ const AddCDN: React.FC = () => {
       setNetwork(DEFAULT_FORM.network)
       setAddress('')
       setDomain('')
-      setPath('')
+      setImage(null)
     },
   })
 
@@ -96,16 +104,21 @@ const AddCDN: React.FC = () => {
     !domain ||
     !!issues ||
     issuesLoading ||
-    !path ||
+    !image ||
     !!imageError ||
     isSubmitting
 
   const handleSubmit = () =>
-    submit({
-      'Contract address': `${network.value}:${address}`,
-      'Domain name': domain,
-      'Visual proof': path,
-    })
+    submit(
+      {
+        'Contract address': `${network.value}:${address}`,
+        'Domain name': domain,
+        'Visual proof': '',
+      },
+      image
+        ? { 'Visual proof': { file: image, role: Roles.CurateItemImage } }
+        : undefined,
+    )
 
   return (
     <AddContainer>
@@ -135,9 +148,10 @@ const AddCDN: React.FC = () => {
         <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
       )}
       <ImageUpload
-        path={path}
-        setPath={setPath}
+        value={image}
+        onChange={setImage}
         registry="cdn"
+        role={Roles.CurateItemImage}
         tooltip={columns[2].description}
         setImageError={setImageError}
       />
