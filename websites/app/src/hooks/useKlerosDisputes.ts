@@ -72,25 +72,20 @@ const fetchCourtDisputes = async (
   return result.data?.disputes ?? [];
 };
 
-// Fetch each tracked court independently and interleave the results so every
-// court is represented. A single court_in query ordered by dispute ID would be
-// dominated by whichever court has the highest IDs, hiding disputes from the
-// others.
+// Fetch each tracked court independently so every court is represented, then
+// merge the results and sort by dispute number descending. A single court_in
+// query would be limited to `first` rows total and could miss the latest
+// disputes from courts with lower IDs, so we fetch `first` per court and trim
+// after sorting.
 const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
-  const perCourt = Math.ceil(first / TRACKED_DISPUTE_COURT_IDS.length);
-
   const perCourtDisputes = await Promise.all(
-    TRACKED_DISPUTE_COURT_IDS.map((court) => fetchCourtDisputes(court, perCourt)),
+    TRACKED_DISPUTE_COURT_IDS.map((court) => fetchCourtDisputes(court, first)),
   );
 
-  const interleaved: KlerosDispute[] = [];
-  for (let i = 0; i < perCourt; i++) {
-    for (const courtDisputes of perCourtDisputes) {
-      if (courtDisputes[i]) interleaved.push(courtDisputes[i]);
-    }
-  }
-
-  return interleaved.slice(0, first);
+  return perCourtDisputes
+    .flat()
+    .sort((a, b) => Number(b.disputeIDNumber) - Number(a.disputeIDNumber))
+    .slice(0, first);
 };
 
 export const useKlerosDisputes = (first = 10) => {
