@@ -174,10 +174,20 @@ export const getItemDisplayName = (item: { props?: Array<{ label: string; value:
 
 /** Extracts the chain ID from an item's key fields.
  *  For most registries: key0 format is "eip155:chainId:0x..." or "solana:..."
- *  For tags-queries: chain ID is stored directly in key2 */
-export const getChainId = (item: { key0?: string; key2?: string; registryAddress?: string }): string | undefined => {
+ *  For tags-queries: the Github repo / commit hash / EVM chain ID identifiers
+ *  live in key0/key1/key2, but their column order is not stable across
+ *  submissions. Across every live entry the three values appear as a rotation of
+ *  [repo, hash, chainId] (the repo is never in the middle), so once we locate the
+ *  repo — the only URL — the chain ID sits two positions after it (mod 3). This
+ *  stays correct even when a commit hash happens to be all-digits, which a naive
+ *  "pick the numeric key" rule does not. */
+export const getChainId = (item: { key0?: string; key1?: string; key2?: string; registryAddress?: string }): string | undefined => {
   if (item?.registryAddress === registryMap['tags-queries']) {
-    return item?.key2 || undefined
+    const keys = [item?.key0, item?.key1, item?.key2]
+    const repoIndex = keys.findIndex((k) => !!k && /^https?:\/\//.test(k))
+    // No URL found: fall back to the legacy assumption (chain ID in key2).
+    if (repoIndex === -1) return item?.key2 || undefined
+    return keys[(repoIndex + 2) % 3] || undefined
   }
   const parts = item?.key0?.split(':')
   return parts?.[1]

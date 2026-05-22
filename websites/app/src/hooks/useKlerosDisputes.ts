@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { gql } from 'graphql-request';
-import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, XDAI_CURATION_COURT_ID } from 'consts';
+import { SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, TRACKED_DISPUTE_COURT_IDS } from 'consts';
 
 interface KlerosDispute {
   id: string;
@@ -42,43 +42,55 @@ const CACHE_CONFIG = {
   retry: 2,
 } as const;
 
-const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
-  try {
-    
-    const response = await fetch(SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+const fetchCourtDisputes = async (
+  court: string,
+  first: number,
+): Promise<KlerosDispute[]> => {
+  const response = await fetch(SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      query: KLEROS_DISPUTES_QUERY,
+      variables: {
+        first,
+        orderBy: 'disputeIDNumber',
+        orderDirection: 'desc',
+        court,
       },
-      body: JSON.stringify({
-        query: KLEROS_DISPUTES_QUERY,
-        variables: {
-          first,
-          orderBy: 'disputeIDNumber',
-          orderDirection: 'desc',
-          court: XDAI_CURATION_COURT_ID,
-        },
-      }),
-    });
+    }),
+  });
 
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-    }
-
-    const result: { data: KlerosDisputesResponse } = await response.json();
-    
-    if (!result.data?.disputes) {
-      return [];
-    }
-
-    
-    return result.data.disputes;
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
   }
+
+  const result: { data?: KlerosDisputesResponse } = await response.json();
+  return result.data?.disputes ?? [];
+};
+
+// Fetch each tracked court independently and interleave the results so every
+// court is represented. A single court_in query ordered by dispute ID would be
+// dominated by whichever court has the highest IDs, hiding disputes from the
+// others.
+const fetchKlerosDisputes = async (first = 10): Promise<KlerosDispute[]> => {
+  const perCourt = Math.ceil(first / TRACKED_DISPUTE_COURT_IDS.length);
+
+  const perCourtDisputes = await Promise.all(
+    TRACKED_DISPUTE_COURT_IDS.map((court) => fetchCourtDisputes(court, perCourt)),
+  );
+
+  const interleaved: KlerosDispute[] = [];
+  for (let i = 0; i < perCourt; i++) {
+    for (const courtDisputes of perCourtDisputes) {
+      if (courtDisputes[i]) interleaved.push(courtDisputes[i]);
+    }
+  }
+
+  return interleaved.slice(0, first);
 };
 
 export const useKlerosDisputes = (first = 10) => {
