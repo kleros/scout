@@ -65,6 +65,7 @@ const AddTagsQueries: React.FC = () => {
     chainId: evmChainId,
     registry: 'tags-queries',
     link: githubRepository,
+    commitHash,
   })
 
   const { submit, isSubmitting, deposits } = useCurateSubmit({
@@ -116,6 +117,9 @@ const AddTagsQueries: React.FC = () => {
         value={commitHash}
         onChange={(e) => setCommitHash(e.target.value)}
       />
+      {issues?.commitHash && (
+        <ErrorMessage>{issues.commitHash.message}</ErrorMessage>
+      )}
       <FieldLabel>
         <Tooltip data-tooltip={columns[2].description}>EVM Chain ID</Tooltip>
       </FieldLabel>
@@ -124,6 +128,12 @@ const AddTagsQueries: React.FC = () => {
         value={evmChainId}
         onChange={(e) => setEvmChainId(e.target.value)}
       />
+      {issues?.chainId && (
+        <ErrorMessage>{issues.chainId.message}</ErrorMessage>
+      )}
+      {issues?.duplicate && (
+        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
+      )}
       <FieldLabel>
         <Tooltip data-tooltip={columns[3].description}>Description</Tooltip>
       </FieldLabel>

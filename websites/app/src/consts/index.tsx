@@ -26,8 +26,15 @@ export const KLEROS_CDN_BASE = 'https://cdn.kleros.link'
 
 export const GNOSIS_RPC_URL = 'https://rpc.gnosischain.com'
 
-// xDAI Curation Court ID on Kleros
+// Kleros court IDs on Gnosis Chain
 export const XDAI_CURATION_COURT_ID = '1'
+export const JAVASCRIPT_COURT_ID = '14'
+
+// Courts tracked in the "Latest Disputes" section
+export const TRACKED_DISPUTE_COURT_IDS = [
+  XDAI_CURATION_COURT_ID,
+  JAVASCRIPT_COURT_ID,
+]
 
 // DappLooker chart IDs
 export const CURATORS_CHART_ID = 'f531beb6-120f-4fa9-b71d-5176488785d4'
