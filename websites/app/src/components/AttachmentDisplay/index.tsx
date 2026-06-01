@@ -17,7 +17,9 @@ import { usePolicyHistory } from "hooks/usePolicyHistory";
 
 import Header from "./Header";
 
-const FileViewer = lazy(() => import("components/FileViewer"));
+const FileViewer = lazy(() =>
+  import("@kleros/ui-components-library").then((m) => ({ default: m.FileViewer }))
+);
 
 const Container = styled.div`
   width: 100%;
@@ -25,6 +27,18 @@ const Container = styled.div`
   flex-direction: column;
   gap: 8px;
   max-width: ${MAX_WIDTH_LANDSCAPE};
+`;
+
+const FileViewerSurface = styled.div`
+  --klerosUIComponentsWhiteBackground: ${({ theme }) => theme.klerosUIComponentsWhiteBackground};
+  --klerosUIComponentsLightBackground: ${({ theme }) => theme.backgroundFour};
+  --klerosUIComponentsPrimaryText: ${({ theme }) => theme.klerosUIComponentsPrimaryText};
+  --klerosUIComponentsSecondaryText: ${({ theme }) => theme.klerosUIComponentsSecondaryText};
+  --klerosUIComponentsImageCheckerColor: ${({ theme }) => theme.klerosUIComponentsSkeletonHighlight};
+  --color-klerosUIComponentsWhiteBackground: ${({ theme }) => theme.klerosUIComponentsWhiteBackground};
+  --color-klerosUIComponentsLightBackground: ${({ theme }) => theme.backgroundFour};
+  --color-klerosUIComponentsPrimaryText: ${({ theme }) => theme.klerosUIComponentsPrimaryText};
+  --color-klerosUIComponentsSecondaryText: ${({ theme }) => theme.klerosUIComponentsSecondaryText};
 `;
 
 const LoaderContainer = styled.div`
@@ -182,7 +196,9 @@ const EvidenceAttachmentDisplay: React.FC = () => {
               </LoaderContainer>
             }
           >
-            <FileViewer url={url} />
+            <FileViewerSurface>
+              <FileViewer url={url} />
+            </FileViewerSurface>
           </Suspense>
         </>
       ) : null}
