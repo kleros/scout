@@ -298,7 +298,7 @@ export const LatestDisputes: React.FC = () => {
         </Header>
         <DisputesList>
           <EmptyState>
-            No active disputes found in xDAI Curation Court
+            No active disputes found in the tracked courts
             {disputes.length > 0 && (
               <div>({disputes.length} disputes received but not grouped)</div>
             )}

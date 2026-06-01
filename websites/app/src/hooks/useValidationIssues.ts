@@ -13,6 +13,7 @@ export interface ValidationParams {
   publicNameTag?: string
   link?: string
   symbol?: string
+  commitHash?: string
 }
 
 export const useValidationIssues = (params: ValidationParams) => {
@@ -23,8 +24,9 @@ export const useValidationIssues = (params: ValidationParams) => {
   const publicNameTag = useDebouncedValue(params.publicNameTag ?? '')
   const link = useDebouncedValue(params.link ?? '')
   const symbol = useDebouncedValue(params.symbol ?? '')
+  const commitHash = useDebouncedValue(params.commitHash ?? '')
 
-  const cacheKey = `addressIssues:${chainId}:${address}:${registry}:${domain}:${projectName}:${publicNameTag}:${link}:${symbol}`
+  const cacheKey = `addressIssues:${chainId}:${address}:${registry}:${domain}:${projectName}:${publicNameTag}:${link}:${symbol}:${commitHash}`
 
   const cachedIssues = useMemo<Issue | null>(() => {
     const cached = localStorage.getItem(cacheKey)
@@ -48,6 +50,7 @@ export const useValidationIssues = (params: ValidationParams) => {
       publicNameTag,
       link,
       symbol,
+      commitHash,
     ],
     queryFn: async () => {
       const res = await getAddressValidationIssue(
@@ -59,12 +62,19 @@ export const useValidationIssues = (params: ValidationParams) => {
         publicNameTag,
         link,
         symbol,
+        commitHash,
       )
       localStorage.setItem(cacheKey, JSON.stringify(res))
       return res
     },
     enabled: Boolean(
-      address || domain || projectName || publicNameTag || link || symbol,
+      address ||
+        domain ||
+        projectName ||
+        publicNameTag ||
+        link ||
+        symbol ||
+        commitHash,
     ),
     placeholderData: cachedIssues,
   })
