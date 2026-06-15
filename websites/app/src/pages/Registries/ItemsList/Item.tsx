@@ -347,9 +347,7 @@ const Item = React.memo(
                 </div>
                 <b>
                   <StyledWebsiteAnchor
-                    href={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    url={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
                   >
                     {getPropValue('Github Repository URL')}
                   </StyledWebsiteAnchor>
@@ -363,11 +361,7 @@ const Item = React.memo(
                 </strong>
                 <div>{getPropValue('Project Name')}</div>
                 <div>{getPropValue('Public Name Tag')}</div>
-                <StyledWebsiteAnchor
-                  href={getPropValue('UI/Website Link')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <StyledWebsiteAnchor url={getPropValue('UI/Website Link')}>
                   {getPropValue('UI/Website Link')}
                 </StyledWebsiteAnchor>
               </>
@@ -396,11 +390,7 @@ const Item = React.memo(
                 <SymbolLabel>{getPropValue('Symbol')}</SymbolLabel>
                 <NameLabel>{getPropValue('Name')}</NameLabel>
                 {getPropValue('Website') ? (
-                  <StyledWebsiteAnchor
-                    href={getPropValue('Website')}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <StyledWebsiteAnchor url={getPropValue('Website')}>
                     {getPropValue('Website')}
                   </StyledWebsiteAnchor>
                 ) : null}
@@ -410,11 +400,7 @@ const Item = React.memo(
               <>
                 <AddressDisplay address={getPropValue('Contract address')} />
                 <WrappedWebsiteContainer>
-                  <StyledWebsiteAnchor
-                    href={`https://${getPropValue('Domain name')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <StyledWebsiteAnchor url={getPropValue('Domain name')}>
                     {getPropValue('Domain name')}
                   </StyledWebsiteAnchor>
                 </WrappedWebsiteContainer>

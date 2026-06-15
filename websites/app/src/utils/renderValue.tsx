@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 import Skeleton from 'react-loading-skeleton'
 import AddressDisplay from 'components/AddressDisplay'
+import SafeLink from 'components/SafeLink'
 import { useAttachment } from 'hooks/useAttachment'
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
@@ -21,7 +22,7 @@ const StyledButton = styled.button`
   }
 `;
 
-export const StyledWebsiteAnchor = styled.a`
+export const StyledWebsiteAnchor = styled(SafeLink)`
   ${hoverShortTransitionTiming}
   color: ${({ theme }) => theme.secondaryText};
   text-decoration: underline;
@@ -71,19 +72,7 @@ export const renderValue = (key, value) => {
   }
 
   if (['Domain name', 'UI/Website Link', 'Website'].includes(key) && value) {
-    const href =
-      value.startsWith('http://') || value.startsWith('https://')
-        ? value
-        : `https://${value}`
-    return (
-      <StyledWebsiteAnchor
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {value}
-      </StyledWebsiteAnchor>
-    )
+    return <StyledWebsiteAnchor url={value}>{value}</StyledWebsiteAnchor>
   }
 
   return value
