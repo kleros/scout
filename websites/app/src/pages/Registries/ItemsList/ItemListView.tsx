@@ -5,6 +5,7 @@ import { formatEther } from 'ethers';
 import { GraphItem, registryMap, buildItemPath, getRegistryKey, getItemThumbnailUrl, getItemDisplayStatus, statusDescriptionMap, bountyDescriptionMap, getPropValue as getItemProp } from 'utils/items';
 import Tooltip from 'components/Tooltip';
 import AddressDisplay from 'components/AddressDisplay';
+import SafeLink from 'components/SafeLink';
 // import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'; // UNUSED: Only needed for submitter display which is commented out
 import { formatTimestamp } from 'utils/formatTimestamp';
 import useHumanizedCountdown, {
@@ -151,7 +152,7 @@ const NameText = styled.div`
   white-space: nowrap;
 `;
 
-const WebsiteLink = styled.a`
+const WebsiteLink = styled(SafeLink)`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 14px;
   text-decoration: none;
@@ -386,9 +387,7 @@ const ItemListView = React.memo(
             <Cell>
               {website ? (
                 <WebsiteLink
-                  href={website.startsWith('http') ? website : `https://${website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  url={website}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {website}
@@ -450,9 +449,7 @@ const ItemListView = React.memo(
             <Cell>
               {website ? (
                 <WebsiteLink
-                  href={website.startsWith('http') ? website : `https://${website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  url={website}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {website}
@@ -493,7 +490,7 @@ const ItemListView = React.memo(
 
       if (item.registryAddress === registryMap['cdn']) {
         const domainName = getPropValue('Domain name');
-        const website = domainName ? `https://${domainName}` : '';
+        const website = domainName || '';
         const proofUrl = getItemThumbnailUrl(item) || '';
 
         return (
@@ -539,9 +536,7 @@ const ItemListView = React.memo(
             <Cell>
               {website ? (
                 <WebsiteLink
-                  href={website}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  url={website}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {website}
@@ -602,9 +597,7 @@ const ItemListView = React.memo(
             <Cell>
               {repository ? (
                 <WebsiteLink
-                  href={repository}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  url={repository}
                   onClick={(e) => e.stopPropagation()}
                 >
                   {repository}

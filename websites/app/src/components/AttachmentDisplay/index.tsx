@@ -13,6 +13,7 @@ import LoadingGif from 'gifs/loading-icosahedron.gif'
 
 import { registryAddresses, RegistryType } from "consts/contracts";
 import { KLEROS_CDN_BASE } from "consts/index";
+import { getAllowedAttachmentUrl } from "utils/url-validation";
 import { usePolicyHistory } from "hooks/usePolicyHistory";
 
 import Header from "./Header";
@@ -127,6 +128,7 @@ const EvidenceAttachmentDisplay: React.FC = () => {
   const { registryName } = useParams<{ registryName: string }>();
 
   const url = searchParams.get("attachment");
+  const safeUrl = getAllowedAttachmentUrl(url);
 
   const policyTx = searchParams.get("policyTx");
 
@@ -183,9 +185,9 @@ const EvidenceAttachmentDisplay: React.FC = () => {
           )}
         </PastPolicyBanner>
       )}
-      {url ? (
+      {safeUrl ? (
         <>
-          <NewTabInfo href={url} rel="noreferrer" target="_blank">
+          <NewTabInfo href={safeUrl} rel="noreferrer" target="_blank">
             Open in new tab
             <StyledNewTabIcon />
           </NewTabInfo>
@@ -197,7 +199,7 @@ const EvidenceAttachmentDisplay: React.FC = () => {
             }
           >
             <FileViewerSurface>
-              <FileViewer url={url} />
+              <FileViewer url={safeUrl} />
             </FileViewerSurface>
           </Suspense>
         </>

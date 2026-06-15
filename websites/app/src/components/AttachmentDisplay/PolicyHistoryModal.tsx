@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import Skeleton from 'react-loading-skeleton';
 import { registryAddresses, RegistryType } from 'consts/contracts';
 import { KLEROS_CDN_BASE } from 'consts/index';
+import { getAllowedAttachmentUrl } from 'utils/url-validation';
 import { PolicyHistoryEntry } from 'utils/fetchPolicyHistory';
 import { usePolicyHistory } from 'hooks/usePolicyHistory';
 import { useFocusOutside } from 'hooks/useFocusOutside';
@@ -251,6 +252,9 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
               const isViewing = currentPolicyTx
                 ? entry.txHash === currentPolicyTx
                 : isCurrent && currentIpfsPath === entry.policyURI;
+              const policyHref = getAllowedAttachmentUrl(
+                `${KLEROS_CDN_BASE}${entry.policyURI}`,
+              );
               return (
                 <HistoryItem key={entry.txHash} $isCurrent={isCurrent} $isViewing={isViewing}>
                   <ItemHeader>
@@ -268,15 +272,19 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
                     <ViewButton onClick={() => handleViewPolicy(entry)}>
                       View Policy
                     </ViewButton>
-                    <Separator>|</Separator>
-                    <PolicyLink
-                      href={`${KLEROS_CDN_BASE}${entry.policyURI}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Open in new tab
-                      <NewTabIcon />
-                    </PolicyLink>
+                    {policyHref && (
+                      <>
+                        <Separator>|</Separator>
+                        <PolicyLink
+                          href={policyHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Open in new tab
+                          <NewTabIcon />
+                        </PolicyLink>
+                      </>
+                    )}
                     <Separator>|</Separator>
                     <TxLink to={`/tx/${entry.txHash}`}>
                       tx: {truncateHash(entry.txHash)}
