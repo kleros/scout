@@ -123,6 +123,31 @@ const ViewCurrentButton = styled.button`
   }
 `;
 
+const UnsafeUrlContainer = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const UnsafeUrlMessage = styled.p`
+  margin: 0;
+  font-size: 16px;
+  color: ${({ theme }) => theme.secondaryText};
+`;
+
+const UnsafeUrlBox = styled.div`
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 4px;
+  background: ${({ theme }) => theme.backgroundFour};
+  color: ${({ theme }) => theme.primaryText};
+  font-family: monospace;
+  font-size: 14px;
+  word-break: break-all;
+`;
+
 const EvidenceAttachmentDisplay: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { registryName } = useParams<{ registryName: string }>();
@@ -203,6 +228,12 @@ const EvidenceAttachmentDisplay: React.FC = () => {
             </FileViewerSurface>
           </Suspense>
         </>
+      ) : null}
+      {url && !safeUrl ? (
+        <UnsafeUrlContainer>
+          <UnsafeUrlMessage>This link cannot be previewed here.</UnsafeUrlMessage>
+          <UnsafeUrlBox>{url}</UnsafeUrlBox>
+        </UnsafeUrlContainer>
       ) : null}
     </Container>
   );
