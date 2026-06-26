@@ -186,7 +186,7 @@ const HeaderNav: React.FC = () => {
 
       <StyledNavLink to="/rewards">Active Rewards</StyledNavLink>
 
-      <StyledNavLink to="/guide">Quick Guide</StyledNavLink>
+      <StyledNavLink to="/guide">Learn · AI</StyledNavLink>
     </Container>
   );
 };

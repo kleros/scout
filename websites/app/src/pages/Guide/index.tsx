@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled, { css } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
@@ -51,6 +51,47 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   margin: 4px 0 0 0;
   color: ${({ theme }) => theme.secondaryText};
+`;
+
+const AudienceSelector = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 28px;
+  padding: 16px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.whiteLowOpacitySubtle};
+`;
+
+const SelectorLabel = styled.span`
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 14px;
+`;
+
+const SelectorOptions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const SelectorButton = styled.button<{ $isSelected: boolean }>`
+  ${hoverShortTransitionTiming}
+  min-width: 86px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 7px;
+  border: 1px solid ${({ $isSelected, theme }) => ($isSelected ? theme.primaryBlue : theme.stroke)};
+  background: ${({ $isSelected, theme }) => ($isSelected ? `${theme.primaryBlue}1F` : "transparent")};
+  color: ${({ $isSelected, theme }) => ($isSelected ? theme.primaryText : theme.secondaryText)};
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryText};
+    border-color: ${({ theme }) => theme.primaryText};
+  }
 `;
 
 const CardRow = styled.div`
@@ -161,6 +202,76 @@ const AttentionLabel = styled.label`
   color: ${({ theme }) => theme.tintYellow};
 `;
 
+const AgentPanel = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 760px;
+`;
+
+const AgentIntro = styled.div`
+  padding: 24px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.whiteLowOpacitySubtle};
+`;
+
+const AgentTitle = styled.h2`
+  margin: 0 0 8px;
+  font-size: 20px;
+  color: ${({ theme }) => theme.primaryText};
+`;
+
+const AgentDescription = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.secondaryText};
+  line-height: 1.45;
+`;
+
+const AgentLinkGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+`;
+
+const AgentLinkCard = styled.a`
+  ${hoverShortTransitionTiming}
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  min-height: 132px;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  color: ${({ theme }) => theme.primaryText};
+  text-decoration: none;
+  background: transparent;
+
+  &:hover {
+    transform: scale(1.02);
+    border-color: ${({ theme }) => theme.primary};
+    box-shadow: ${({ theme }) => theme.shadowDropdown};
+  }
+`;
+
+const AgentLinkTitle = styled.span`
+  font-size: 16px;
+  font-weight: 600;
+`;
+
+const AgentLinkDescription = styled.span`
+  color: ${({ theme }) => theme.tertiaryText};
+  font-size: 14px;
+  line-height: 1.35;
+`;
+
+const AgentChecklist = styled.ul`
+  margin: 0;
+  padding-left: 20px;
+  color: ${({ theme }) => theme.secondaryText};
+  line-height: 1.45;
+`;
+
 const SubmittingItem = () => (
   <SectionContainer>
     <SectionHeader>Submitting an Item</SectionHeader>
@@ -228,7 +339,52 @@ const ChallengePhase = () => (
   </SectionContainer>
 );
 
+const AgentGuide = () => (
+  <AgentPanel>
+    <AgentIntro>
+      <AgentTitle>I am an agent.</AgentTitle>
+      <AgentDescription>
+        Start with the machine-readable instructions, then load the canonical Kleros Curate
+        skill references before acting on Scout submissions, challenges, evidence, appeals,
+        registry data, token lists, address tags, or CDN mappings.
+      </AgentDescription>
+    </AgentIntro>
+
+    <AgentLinkGrid>
+      <AgentLinkCard href="/llms.txt" rel="help">
+        <AgentLinkTitle>Start here: /llms.txt</AgentLinkTitle>
+        <AgentLinkDescription>
+          Short Scout-specific entrypoint with required read order and safety rules.
+        </AgentLinkDescription>
+      </AgentLinkCard>
+      <AgentLinkCard href="/scout-agent-context.md" rel="help">
+        <AgentLinkTitle>Expanded Scout context</AgentLinkTitle>
+        <AgentLinkDescription>
+          Local workflow guide for the four supported Scout registries on Gnosis.
+        </AgentLinkDescription>
+      </AgentLinkCard>
+      <AgentLinkCard href="https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md">
+        <AgentLinkTitle>Canonical Kleros Curate skill</AgentLinkTitle>
+        <AgentLinkDescription>
+          Source of truth if any local Scout guidance conflicts with kleros-skills.
+        </AgentLinkDescription>
+      </AgentLinkCard>
+    </AgentLinkGrid>
+
+    <AgentIntro>
+      <AgentTitle>Do not proceed until these checks pass.</AgentTitle>
+      <AgentChecklist>
+        <li>Confirm the registry is one of the four Scout registry addresses.</li>
+        <li>Read scout-registries.md and light-curate.md together.</li>
+        <li>Use Scout seed templates first, then cross-check current MetaEvidence.</li>
+        <li>Read the current policy and compute deposits from fresh onchain reads.</li>
+      </AgentChecklist>
+    </AgentIntro>
+  </AgentPanel>
+);
+
 const QuickGuidePage: React.FC = () => {
+  const [audience, setAudience] = useState<'human' | 'agent'>('human');
   const navigate = useNavigate();
 
   const handleRewardsClick = () => {
@@ -241,51 +397,79 @@ const QuickGuidePage: React.FC = () => {
       <Header>
         <BookCircleIcon />
         <div>
-          <Title>Quick Guide</Title>
+          <Title>Learn · AI</Title>
           <Subtitle>
             Keep the community safe, earn bounties, and have fun in Kleros Scout!
           </Subtitle>
         </div>
       </Header>
 
-      <Frame>
-        <SubmittingItem />
-        <ChallengingSubmission />
-        <ChallengePhase />
-      </Frame>
+      <AudienceSelector aria-label="Choose guide audience">
+        <SelectorLabel>I am:</SelectorLabel>
+        <SelectorOptions>
+          <SelectorButton
+            type="button"
+            $isSelected={audience === 'human'}
+            onClick={() => setAudience('human')}
+            aria-pressed={audience === 'human'}
+          >
+            Human
+          </SelectorButton>
+          <SelectorButton
+            type="button"
+            $isSelected={audience === 'agent'}
+            onClick={() => setAudience('agent')}
+            aria-pressed={audience === 'agent'}
+          >
+            Agent
+          </SelectorButton>
+        </SelectorOptions>
+      </AudienceSelector>
 
-      <CardRow>
-        <ClickableInfoCard onClick={handleRewardsClick}>
-          <BountiesIcon />
-          <CardTitleAndDescription>
-            <CardTitle>Bounties</CardTitle>
-            <CardDescription>
-              Find and challenge suspicious submissions. If you win the challenge,
-              you'll always earn a bounty!
-            </CardDescription>
-          </CardTitleAndDescription>
-        </ClickableInfoCard>
-        <ClickableInfoCard onClick={handleRewardsClick}>
-          <RewardsIcon />
-          <CardTitleAndDescription>
-            <CardTitle>Rewards</CardTitle>
-            <CardDescription>
-              Explore active reward plans and submit compliant items to earn
-              rewards.
-            </CardDescription>
-          </CardTitleAndDescription>
-        </ClickableInfoCard>
-      </CardRow>
+      {audience === 'agent' ? (
+        <AgentGuide />
+      ) : (
+        <>
+          <Frame>
+            <SubmittingItem />
+            <ChallengingSubmission />
+            <ChallengePhase />
+          </Frame>
 
-      <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
-        <DocumentationIcon />
-        <CardTitleAndDescription>
-          <CardTitle>Documentation</CardTitle>
-          <CardDescription>
-            For more details check the full documentation.
-          </CardDescription>
-        </CardTitleAndDescription>
-      </ClickableInfoCard>
+          <CardRow>
+            <ClickableInfoCard onClick={handleRewardsClick}>
+              <BountiesIcon />
+              <CardTitleAndDescription>
+                <CardTitle>Bounties</CardTitle>
+                <CardDescription>
+                  Find and challenge suspicious submissions. If you win the challenge,
+                  you'll always earn a bounty!
+                </CardDescription>
+              </CardTitleAndDescription>
+            </ClickableInfoCard>
+            <ClickableInfoCard onClick={handleRewardsClick}>
+              <RewardsIcon />
+              <CardTitleAndDescription>
+                <CardTitle>Rewards</CardTitle>
+                <CardDescription>
+                  Explore active reward plans and submit compliant items to earn
+                  rewards.
+                </CardDescription>
+              </CardTitleAndDescription>
+            </ClickableInfoCard>
+          </CardRow>
+
+          <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
+            <DocumentationIcon />
+            <CardTitleAndDescription>
+              <CardTitle>Documentation</CardTitle>
+              <CardDescription>
+                For more details check the full documentation.
+              </CardDescription>
+            </CardTitleAndDescription>
+          </ClickableInfoCard>
+        </>
+      )}
     </Container>
   );
 };
