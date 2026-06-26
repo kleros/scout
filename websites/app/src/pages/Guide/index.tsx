@@ -437,14 +437,17 @@ scope:
     </AgentTerminal>
 
     <AgentIntro>
-      <AgentTitle>Copy-paste prompt</AgentTitle>
+      <AgentTitle>Agent quickstart</AgentTitle>
       <AgentDescription>
-        Paste this into an agent that does not automatically discover Scout instructions.
+        Fetch the context directly from this deployment.
       </AgentDescription>
       <AgentPromptBlock
         readOnly
-        aria-label="Copy-paste prompt for agents"
-        value={`Before working on Kleros Scout, fetch and read the Scout agent instructions at ${window.location.origin}/llms.txt. Then follow the required read order in that file and do not submit, challenge, or analyze Scout registry items until the canonical kleros-skills references are loaded.`}
+        aria-label="Agent quickstart commands"
+        value={`curl -fsSL ${window.location.origin}/skill.md
+curl -fsSL ${window.location.origin}/llms.txt
+curl -fsSL ${window.location.origin}/scout-agent-context.md
+curl -fsSL https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md`}
         onFocus={(event) => event.currentTarget.select()}
       />
     </AgentIntro>

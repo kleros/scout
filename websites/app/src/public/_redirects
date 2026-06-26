@@ -1,4 +1,6 @@
 /.well-known/llms.txt    /llms.txt                   200
+/skill.md                /llms.txt                   200
+/agent.md                /scout-agent-context.md     200
 /agent-context.md        /scout-agent-context.md     200
 /llms-full.txt           /scout-agent-context.md     200
 
