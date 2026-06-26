@@ -56,13 +56,10 @@ const Subtitle = styled.p`
 const AudienceSelector = styled.div`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 28px;
-  padding: 16px;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 12px;
-  background: ${({ theme }) => theme.whiteLowOpacitySubtle};
+  margin: 0 0 32px;
 `;
 
 const SelectorLabel = styled.span`
@@ -205,15 +202,17 @@ const AttentionLabel = styled.label`
 const AgentPanel = styled.section`
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 760px;
+  gap: 16px;
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
 `;
 
 const AgentIntro = styled.div`
-  padding: 24px;
+  padding: 20px;
   border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 12px;
-  background: ${({ theme }) => theme.whiteLowOpacitySubtle};
+  border-radius: 8px;
+  background: ${({ theme }) => theme.lightGrey};
 `;
 
 const AgentTitle = styled.h2`
@@ -228,45 +227,84 @@ const AgentDescription = styled.p`
   line-height: 1.45;
 `;
 
-const AgentLinkGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
+const AgentTerminal = styled.div`
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 8px;
+  background: #050505;
+  overflow: hidden;
 `;
 
-const AgentLinkCard = styled.a`
-  ${hoverShortTransitionTiming}
+const AgentTerminalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
+  color: ${({ theme }) => theme.secondaryText};
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 12px;
+`;
+
+const AgentStatus = styled.span`
+  color: ${({ theme }) => theme.success};
+`;
+
+const AgentEndpointList = styled.div`
   display: flex;
   flex-direction: column;
+`;
+
+const AgentEndpoint = styled.a`
+  ${hoverShortTransitionTiming}
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 8px;
-  padding: 20px;
-  min-height: 132px;
-  border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.stroke};
+  padding: 16px;
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
   color: ${({ theme }) => theme.primaryText};
   text-decoration: none;
-  background: transparent;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 14px;
+
+  &:last-child {
+    border-bottom: 0;
+  }
 
   &:hover {
-    transform: scale(1.02);
-    border-color: ${({ theme }) => theme.primary};
-    box-shadow: ${({ theme }) => theme.shadowDropdown};
+    background: ${({ theme }) => theme.whiteLowOpacitySubtle};
   }
+
+  ${landscapeStyle(
+    () => css`
+      grid-template-columns: 210px 1fr;
+      gap: 16px;
+    `
+  )}
 `;
 
-const AgentLinkTitle = styled.span`
-  font-size: 16px;
-  font-weight: 600;
+const AgentEndpointLabel = styled.span`
+  color: ${({ theme }) => theme.primaryBlue};
 `;
 
-const AgentLinkDescription = styled.span`
-  color: ${({ theme }) => theme.tertiaryText};
-  font-size: 14px;
-  line-height: 1.35;
+const AgentEndpointUrl = styled.span`
+  color: ${({ theme }) => theme.secondaryText};
+  overflow-wrap: anywhere;
+`;
+
+const AgentCommandBlock = styled.pre`
+  margin: 0;
+  padding: 16px;
+  color: ${({ theme }) => theme.secondaryText};
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 `;
 
 const AgentChecklist = styled.ul`
-  margin: 0;
+  margin: 12px 0 0;
   padding-left: 20px;
   color: ${({ theme }) => theme.secondaryText};
   line-height: 1.45;
@@ -342,37 +380,45 @@ const ChallengePhase = () => (
 const AgentGuide = () => (
   <AgentPanel>
     <AgentIntro>
-      <AgentTitle>I am an agent.</AgentTitle>
+      <AgentTitle>Agent mode</AgentTitle>
       <AgentDescription>
-        Start with the machine-readable instructions, then load the canonical Kleros Curate
-        skill references before acting on Scout submissions, challenges, evidence, appeals,
-        registry data, token lists, address tags, or CDN mappings.
+        Fetch the machine-readable entrypoint first. Do not act on Scout submissions,
+        challenges, evidence, appeals, registry data, token lists, address tags, or CDN
+        mappings until the canonical Kleros Curate references are loaded.
       </AgentDescription>
     </AgentIntro>
 
-    <AgentLinkGrid>
-      <AgentLinkCard href="/llms.txt" rel="help">
-        <AgentLinkTitle>Start here: /llms.txt</AgentLinkTitle>
-        <AgentLinkDescription>
-          Short Scout-specific entrypoint with required read order and safety rules.
-        </AgentLinkDescription>
-      </AgentLinkCard>
-      <AgentLinkCard href="/scout-agent-context.md" rel="help">
-        <AgentLinkTitle>Expanded Scout context</AgentLinkTitle>
-        <AgentLinkDescription>
-          Local workflow guide for the four supported Scout registries on Gnosis.
-        </AgentLinkDescription>
-      </AgentLinkCard>
-      <AgentLinkCard href="https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md">
-        <AgentLinkTitle>Canonical Kleros Curate skill</AgentLinkTitle>
-        <AgentLinkDescription>
-          Source of truth if any local Scout guidance conflicts with kleros-skills.
-        </AgentLinkDescription>
-      </AgentLinkCard>
-    </AgentLinkGrid>
+    <AgentTerminal>
+      <AgentTerminalHeader>
+        <span>SCOUT_AGENT_CONTEXT</span>
+        <AgentStatus>READY</AgentStatus>
+      </AgentTerminalHeader>
+      <AgentEndpointList>
+        <AgentEndpoint href="/llms.txt" rel="help">
+          <AgentEndpointLabel>ENTRYPOINT</AgentEndpointLabel>
+          <AgentEndpointUrl>/llms.txt</AgentEndpointUrl>
+        </AgentEndpoint>
+        <AgentEndpoint href="/scout-agent-context.md" rel="help">
+          <AgentEndpointLabel>LOCAL_CONTEXT</AgentEndpointLabel>
+          <AgentEndpointUrl>/scout-agent-context.md</AgentEndpointUrl>
+        </AgentEndpoint>
+        <AgentEndpoint href="https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md">
+          <AgentEndpointLabel>CANONICAL_SKILL</AgentEndpointLabel>
+          <AgentEndpointUrl>https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md</AgentEndpointUrl>
+        </AgentEndpoint>
+      </AgentEndpointList>
+      <AgentCommandBlock>{`required_read_order:
+  1. kleros-curate/SKILL.md
+  2. references/scout-registries.md
+  3. references/light-curate.md
+
+scope:
+  Scout overlay only applies to the four fixed Gnosis registries.
+  If the registry address does not match, verify Curate flavor before acting.`}</AgentCommandBlock>
+    </AgentTerminal>
 
     <AgentIntro>
-      <AgentTitle>Do not proceed until these checks pass.</AgentTitle>
+      <AgentTitle>Execution guardrails</AgentTitle>
       <AgentChecklist>
         <li>Confirm the registry is one of the four Scout registry addresses.</li>
         <li>Read scout-registries.md and light-curate.md together.</li>
