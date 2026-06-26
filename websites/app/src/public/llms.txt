@@ -1,0 +1,38 @@
+# Kleros Scout Agent Instructions
+
+Scout is a Kleros Curate interface for fixed Gnosis Chain registries. Scout is not a separate contract type: it uses LightGeneralizedTCR contracts.
+
+For expanded local context, read:
+
+https://scout.kleros.io/scout-agent-context.md
+
+When working with Scout submissions, challenges, evidence, appeals, registry data, token lists, address tags, or CDN mappings, read these files before acting:
+
+1. https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md
+2. https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/scout-registries.md
+3. https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/light-curate.md
+
+Scout-specific rules:
+
+- Treat Scout as Light Curate on Gnosis, chainId 100.
+- `scout-registries.md` applies only to these four Scout registries on Gnosis:
+  - ATQ / Address Tags Query: `0xAe6aaed5434244be3699c56E7Ebc828194F26dc3`
+  - Address Tags: `0x66260C69d03837016d88c9877e61e08Ef74C59F2`
+  - Kleros Tokens: `0xeE1502e29795Ef6C2D60F8D7120596abE3baD990`
+  - CDN / Contract Domain Names: `0x957A53A994860BE4750810131d9c876b2f52d6E1`
+- If the registry is not one of those four addresses, do not use Scout seed templates. Treat it as normal Light Curate unless another Curate flavor is verified.
+- Use `scout-registries.md` for Scout registry addresses, seed templates, Scout-specific image requirements, and submission checklist.
+- Use `light-curate.md` for all LightGeneralizedTCR contract operations.
+- Do not infer item schemas from memory. Use the Scout seed template, then cross-check against current MetaEvidence.
+- Do not guess deposits, arbitration costs, challenge windows, policies, addresses, or field schemas.
+- Read the current policy before deciding whether an item is valid.
+- Compute deposits from live onchain reads before submitting transactions.
+- If this file conflicts with `kleros-skills`, the canonical `kleros-skills` files win.
+
+Useful task references:
+
+- MetaEvidence: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/shared-metaevidence.md
+- item.json construction: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/shared-item-json.md
+- Deposits: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/shared-deposits.md
+- IPFS upload: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/shared-ipfs-upload.md
+- ABI fragments: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/shared-abi-fragments.md
