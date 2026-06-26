@@ -303,6 +303,25 @@ const AgentCommandBlock = styled.pre`
   overflow-wrap: anywhere;
 `;
 
+const AgentPromptBlock = styled.textarea`
+  width: 100%;
+  min-height: 128px;
+  resize: vertical;
+  padding: 16px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 8px;
+  background: #050505;
+  color: ${({ theme }) => theme.primaryText};
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+
+  &:focus {
+    border-color: ${({ theme }) => theme.primaryBlue};
+  }
+`;
+
 const AgentChecklist = styled.ul`
   margin: 12px 0 0;
   padding-left: 20px;
@@ -416,6 +435,19 @@ scope:
   Scout overlay only applies to the four fixed Gnosis registries.
   If the registry address does not match, verify Curate flavor before acting.`}</AgentCommandBlock>
     </AgentTerminal>
+
+    <AgentIntro>
+      <AgentTitle>Copy-paste prompt</AgentTitle>
+      <AgentDescription>
+        Paste this into an agent that does not automatically discover Scout instructions.
+      </AgentDescription>
+      <AgentPromptBlock
+        readOnly
+        aria-label="Copy-paste prompt for agents"
+        value={`Before working on Kleros Scout, fetch and read the Scout agent instructions at ${window.location.origin}/llms.txt. Then follow the required read order in that file and do not submit, challenge, or analyze Scout registry items until the canonical kleros-skills references are loaded.`}
+        onFocus={(event) => event.currentTarget.select()}
+      />
+    </AgentIntro>
 
     <AgentIntro>
       <AgentTitle>Execution guardrails</AgentTitle>
