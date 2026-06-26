@@ -4,7 +4,7 @@ Scout is a Kleros Curate interface for fixed Gnosis Chain registries. Scout is n
 
 For expanded local context, read:
 
-https://scout.kleros.io/scout-agent-context.md
+/scout-agent-context.md
 
 When working with Scout submissions, challenges, evidence, appeals, registry data, token lists, address tags, or CDN mappings, read these files before acting:
 
