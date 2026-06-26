@@ -1,5 +1,7 @@
 /.well-known/llms.txt    /llms.txt                   200
-/skill.md                /llms.txt                   200
+/skill.md                https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md                                      302
+/skill/scout-registries.md    https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/scout-registries.md        302
+/skill/light-curate.md        https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/light-curate.md              302
 /agent.md                /scout-agent-context.md     200
 /agent-context.md        /scout-agent-context.md     200
 /llms-full.txt           /scout-agent-context.md     200

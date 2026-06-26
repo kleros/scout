@@ -12,6 +12,17 @@ import WarningOutlineIcon from "svgs/icons/warning-outline.svg";
 import { hoverShortTransitionTiming } from "styles/commonStyles";
 import ScrollTop from "components/ScrollTop";
 
+const KLEROS_CURATE_SKILL_URL =
+  "https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md";
+const SCOUT_REGISTRIES_SKILL_URL =
+  "https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/scout-registries.md";
+const LIGHT_CURATE_SKILL_URL =
+  "https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/light-curate.md";
+
+const AGENT_QUICKSTART_COMMANDS = `curl -fsSL ${KLEROS_CURATE_SKILL_URL}
+curl -fsSL ${SCOUT_REGISTRIES_SKILL_URL}
+curl -fsSL ${LIGHT_CURATE_SKILL_URL}`;
+
 const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
   padding: 32px 16px 64px;
@@ -399,6 +410,20 @@ const ChallengePhase = () => (
 const AgentGuide = () => (
   <AgentPanel>
     <AgentIntro>
+      <AgentTitle>Agent quickstart</AgentTitle>
+      <AgentDescription>
+        Fetch the canonical Kleros Curate skill first, then the Scout registry and
+        Light Curate references before acting on Scout data.
+      </AgentDescription>
+      <AgentPromptBlock
+        readOnly
+        aria-label="Agent quickstart commands"
+        value={AGENT_QUICKSTART_COMMANDS}
+        onFocus={(event) => event.currentTarget.select()}
+      />
+    </AgentIntro>
+
+    <AgentIntro>
       <AgentTitle>Agent mode</AgentTitle>
       <AgentDescription>
         Fetch the machine-readable entrypoint first. Do not act on Scout submissions,
@@ -413,6 +438,10 @@ const AgentGuide = () => (
         <AgentStatus>READY</AgentStatus>
       </AgentTerminalHeader>
       <AgentEndpointList>
+        <AgentEndpoint href={KLEROS_CURATE_SKILL_URL}>
+          <AgentEndpointLabel>CANONICAL_SKILL</AgentEndpointLabel>
+          <AgentEndpointUrl>{KLEROS_CURATE_SKILL_URL}</AgentEndpointUrl>
+        </AgentEndpoint>
         <AgentEndpoint href="/llms.txt" rel="help">
           <AgentEndpointLabel>ENTRYPOINT</AgentEndpointLabel>
           <AgentEndpointUrl>/llms.txt</AgentEndpointUrl>
@@ -420,10 +449,6 @@ const AgentGuide = () => (
         <AgentEndpoint href="/scout-agent-context.md" rel="help">
           <AgentEndpointLabel>LOCAL_CONTEXT</AgentEndpointLabel>
           <AgentEndpointUrl>/scout-agent-context.md</AgentEndpointUrl>
-        </AgentEndpoint>
-        <AgentEndpoint href="https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md">
-          <AgentEndpointLabel>CANONICAL_SKILL</AgentEndpointLabel>
-          <AgentEndpointUrl>https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md</AgentEndpointUrl>
         </AgentEndpoint>
       </AgentEndpointList>
       <AgentCommandBlock>{`required_read_order:
@@ -435,22 +460,6 @@ scope:
   Scout overlay only applies to the four fixed Gnosis registries.
   If the registry address does not match, verify Curate flavor before acting.`}</AgentCommandBlock>
     </AgentTerminal>
-
-    <AgentIntro>
-      <AgentTitle>Agent quickstart</AgentTitle>
-      <AgentDescription>
-        Fetch the context directly from this deployment.
-      </AgentDescription>
-      <AgentPromptBlock
-        readOnly
-        aria-label="Agent quickstart commands"
-        value={`curl -fsSL ${window.location.origin}/skill.md
-curl -fsSL ${window.location.origin}/llms.txt
-curl -fsSL ${window.location.origin}/scout-agent-context.md
-curl -fsSL https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md`}
-        onFocus={(event) => event.currentTarget.select()}
-      />
-    </AgentIntro>
 
     <AgentIntro>
       <AgentTitle>Execution guardrails</AgentTitle>
