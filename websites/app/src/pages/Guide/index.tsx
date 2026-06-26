@@ -238,82 +238,6 @@ const AgentDescription = styled.p`
   line-height: 1.45;
 `;
 
-const AgentTerminal = styled.div`
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 8px;
-  background: #050505;
-  overflow: hidden;
-`;
-
-const AgentTerminalHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.stroke};
-  color: ${({ theme }) => theme.secondaryText};
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 12px;
-`;
-
-const AgentStatus = styled.span`
-  color: ${({ theme }) => theme.success};
-`;
-
-const AgentEndpointList = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const AgentEndpoint = styled.a`
-  ${hoverShortTransitionTiming}
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  padding: 16px;
-  border-bottom: 1px solid ${({ theme }) => theme.stroke};
-  color: ${({ theme }) => theme.primaryText};
-  text-decoration: none;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 14px;
-
-  &:last-child {
-    border-bottom: 0;
-  }
-
-  &:hover {
-    background: ${({ theme }) => theme.whiteLowOpacitySubtle};
-  }
-
-  ${landscapeStyle(
-    () => css`
-      grid-template-columns: 210px 1fr;
-      gap: 16px;
-    `
-  )}
-`;
-
-const AgentEndpointLabel = styled.span`
-  color: ${({ theme }) => theme.primaryBlue};
-`;
-
-const AgentEndpointUrl = styled.span`
-  color: ${({ theme }) => theme.secondaryText};
-  overflow-wrap: anywhere;
-`;
-
-const AgentCommandBlock = styled.pre`
-  margin: 0;
-  padding: 16px;
-  color: ${({ theme }) => theme.secondaryText};
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 13px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-`;
-
 const AgentPromptBlock = styled.textarea`
   width: 100%;
   min-height: 128px;
@@ -331,13 +255,6 @@ const AgentPromptBlock = styled.textarea`
   &:focus {
     border-color: ${({ theme }) => theme.primaryBlue};
   }
-`;
-
-const AgentChecklist = styled.ul`
-  margin: 12px 0 0;
-  padding-left: 20px;
-  color: ${({ theme }) => theme.secondaryText};
-  line-height: 1.45;
 `;
 
 const SubmittingItem = () => (
@@ -421,54 +338,6 @@ const AgentGuide = () => (
         value={AGENT_QUICKSTART_COMMANDS}
         onFocus={(event) => event.currentTarget.select()}
       />
-    </AgentIntro>
-
-    <AgentIntro>
-      <AgentTitle>Agent mode</AgentTitle>
-      <AgentDescription>
-        Fetch the machine-readable entrypoint first. Do not act on Scout submissions,
-        challenges, evidence, appeals, registry data, token lists, address tags, or CDN
-        mappings until the canonical Kleros Curate references are loaded.
-      </AgentDescription>
-    </AgentIntro>
-
-    <AgentTerminal>
-      <AgentTerminalHeader>
-        <span>SCOUT_AGENT_CONTEXT</span>
-        <AgentStatus>READY</AgentStatus>
-      </AgentTerminalHeader>
-      <AgentEndpointList>
-        <AgentEndpoint href={KLEROS_CURATE_SKILL_URL}>
-          <AgentEndpointLabel>CANONICAL_SKILL</AgentEndpointLabel>
-          <AgentEndpointUrl>{KLEROS_CURATE_SKILL_URL}</AgentEndpointUrl>
-        </AgentEndpoint>
-        <AgentEndpoint href="/llms.txt" rel="help">
-          <AgentEndpointLabel>ENTRYPOINT</AgentEndpointLabel>
-          <AgentEndpointUrl>/llms.txt</AgentEndpointUrl>
-        </AgentEndpoint>
-        <AgentEndpoint href="/scout-agent-context.md" rel="help">
-          <AgentEndpointLabel>LOCAL_CONTEXT</AgentEndpointLabel>
-          <AgentEndpointUrl>/scout-agent-context.md</AgentEndpointUrl>
-        </AgentEndpoint>
-      </AgentEndpointList>
-      <AgentCommandBlock>{`required_read_order:
-  1. kleros-curate/SKILL.md
-  2. references/scout-registries.md
-  3. references/light-curate.md
-
-scope:
-  Scout overlay only applies to the four fixed Gnosis registries.
-  If the registry address does not match, verify Curate flavor before acting.`}</AgentCommandBlock>
-    </AgentTerminal>
-
-    <AgentIntro>
-      <AgentTitle>Execution guardrails</AgentTitle>
-      <AgentChecklist>
-        <li>Confirm the registry is one of the four Scout registry addresses.</li>
-        <li>Read scout-registries.md and light-curate.md together.</li>
-        <li>Use Scout seed templates first, then cross-check current MetaEvidence.</li>
-        <li>Read the current policy and compute deposits from fresh onchain reads.</li>
-      </AgentChecklist>
     </AgentIntro>
   </AgentPanel>
 );
