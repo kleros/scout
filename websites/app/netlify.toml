@@ -6,6 +6,9 @@
   NODE_VERSION = "20.18.3"
   YARN_VERSION = "4.8.1"
   NPM_FLAGS = "--legacy-peer-deps"
+  # Vite/Rollup holds the full module graph in memory; the default ~2GB heap
+  # on Netlify's build image OOMs. Raise it so production builds complete.
+  NODE_OPTIONS = "--max-old-space-size=4096"
 
 [[redirects]]
   from = "/*"
