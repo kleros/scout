@@ -231,7 +231,7 @@ const NavBar: React.FC = () => {
 
               <LightButton
                 isMobileNavbar={true}
-                text="Learn · AI"
+                text="Guide & Skills"
                 onClick={() => {
                   navigate("/guide");
                   toggleIsOpen();

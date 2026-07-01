@@ -13,6 +13,7 @@ import { hoverShortTransitionTiming } from "styles/commonStyles";
 import ScrollTop from "components/ScrollTop";
 
 const SCOUT_AGENT_ENTRY_URL = "https://scout-app.kleros.io/llms-full.txt";
+const SCOUT_AGENT_PROMPT = `Read ${SCOUT_AGENT_ENTRY_URL} and follow it before interacting with Kleros Scout.`;
 
 const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
@@ -211,6 +212,22 @@ const copyTextToClipboard = async (text: string) => {
     // Fall back below when clipboard permission is blocked.
   }
 
+  let didCopy = false;
+  const handleCopy = (event: ClipboardEvent) => {
+    event.clipboardData?.setData("text/plain", text);
+    event.preventDefault();
+    didCopy = true;
+  };
+
+  document.addEventListener("copy", handleCopy);
+  try {
+    didCopy = document.execCommand("copy") || didCopy;
+  } finally {
+    document.removeEventListener("copy", handleCopy);
+  }
+
+  if (didCopy) return true;
+
   const textArea = document.createElement("textarea");
   textArea.value = text;
   textArea.setAttribute("readonly", "");
@@ -237,35 +254,102 @@ const AgentPanel = styled.section`
   margin: 0 auto;
 `;
 
-const AgentLinkRow = styled.div`
+const AgentPromptCard = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 8px;
 `;
 
-const AgentInstructionsLink = styled.a`
-  min-width: 0;
-  color: inherit;
+const AgentPromptHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+`;
+
+const AgentPromptTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: ${({ theme }) => theme.primaryBlue};
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 13px;
-  line-height: 1.4;
+  font-weight: 700;
+  text-transform: uppercase;
+`;
+
+const AgentPromptStep = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+`;
+
+const AgentPromptMeta = styled.span`
+  color: ${({ theme }) => theme.secondaryText};
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 13px;
+`;
+
+const AgentPromptRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 8px;
+  background: ${({ theme }) => theme.lightGrey};
+
+  ${landscapeStyle(
+    () => css`
+      padding: 20px;
+    `
+  )}
+`;
+
+const AgentPromptText = styled.code`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: ${({ theme }) => theme.primaryText};
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 `;
 
-const AgentCopyIconButton = styled.button`
+const AgentPromptMarker = styled.span`
+  color: ${({ theme }) => theme.primaryBlue};
+  font-weight: 700;
+`;
+
+const AgentCopyButton = styled.button`
   ${hoverShortTransitionTiming}
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 7px;
   background: transparent;
-  color: inherit;
+  color: ${({ theme }) => theme.primaryText};
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   flex-shrink: 0;
 
   svg {
@@ -274,7 +358,8 @@ const AgentCopyIconButton = styled.button`
   }
 
   &:hover {
-    opacity: 0.7;
+    border-color: ${({ theme }) => theme.primaryBlue};
+    color: ${({ theme }) => theme.primaryBlue};
   }
 `;
 
@@ -357,26 +442,38 @@ const ChallengePhase = () => (
 );
 
 const AgentGuide = () => {
-  const handleCopyAgentLink = async () => {
-    await copyTextToClipboard(SCOUT_AGENT_ENTRY_URL);
+  const handleCopyAgentPrompt = async () => {
+    await copyTextToClipboard(SCOUT_AGENT_PROMPT);
   };
 
   return (
     <AgentPanel>
-      <AgentLinkRow>
-        <AgentInstructionsLink href={SCOUT_AGENT_ENTRY_URL}>
-          {SCOUT_AGENT_ENTRY_URL}
-        </AgentInstructionsLink>
-        <AgentCopyIconButton
-          type="button"
-          aria-label="Copy agent link"
-          title="Copy"
-          data-agent-instructions-url={SCOUT_AGENT_ENTRY_URL}
-          onClick={handleCopyAgentLink}
-        >
-          <CopyIcon />
-        </AgentCopyIconButton>
-      </AgentLinkRow>
+      <AgentPromptCard>
+        <AgentPromptHeader>
+          <AgentPromptTitle>
+            <AgentPromptStep>1</AgentPromptStep>
+            Paste this into your agent
+          </AgentPromptTitle>
+          <AgentPromptMeta>One line · works in any agent</AgentPromptMeta>
+        </AgentPromptHeader>
+
+        <AgentPromptRow>
+          <AgentPromptText>
+            <AgentPromptMarker>&gt;</AgentPromptMarker>
+            <span>{SCOUT_AGENT_PROMPT}</span>
+          </AgentPromptText>
+          <AgentCopyButton
+            type="button"
+            aria-label="Copy agent prompt"
+            data-agent-instructions-url={SCOUT_AGENT_ENTRY_URL}
+            data-agent-prompt={SCOUT_AGENT_PROMPT}
+            onClick={handleCopyAgentPrompt}
+          >
+            <CopyIcon />
+            Copy prompt
+          </AgentCopyButton>
+        </AgentPromptRow>
+      </AgentPromptCard>
     </AgentPanel>
   );
 };
@@ -395,7 +492,7 @@ const QuickGuidePage: React.FC = () => {
       <Header>
         <BookCircleIcon />
         <div>
-          <Title>Learn · AI</Title>
+          <Title>Guide & Skills</Title>
           <Subtitle>
             Keep the community safe, earn bounties, and have fun in Kleros Scout!
           </Subtitle>
