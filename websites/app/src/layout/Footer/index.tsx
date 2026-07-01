@@ -125,9 +125,9 @@ const Footer: React.FC = () => (
         <StyledAgentLink
           href="/llms.txt"
           rel="help"
-          title="Agent instructions for Scout submissions"
+          title="LLM instructions for Scout agents"
         >
-          Agent instructions
+          For agents
         </StyledAgentLink>
       </FooterLinks>
       <SocialMedia />

@@ -12,16 +12,7 @@ import WarningOutlineIcon from "svgs/icons/warning-outline.svg";
 import { hoverShortTransitionTiming } from "styles/commonStyles";
 import ScrollTop from "components/ScrollTop";
 
-const KLEROS_CURATE_SKILL_URL =
-  "https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md";
-const SCOUT_REGISTRIES_SKILL_URL =
-  "https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/scout-registries.md";
-const LIGHT_CURATE_SKILL_URL =
-  "https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/light-curate.md";
-
-const AGENT_QUICKSTART_COMMANDS = `curl -fsSL ${KLEROS_CURATE_SKILL_URL}
-curl -fsSL ${SCOUT_REGISTRIES_SKILL_URL}
-curl -fsSL ${LIGHT_CURATE_SKILL_URL}`;
+const SCOUT_AGENT_ENTRY_URL = "https://scout-app.kleros.io/llms-full.txt";
 
 const Container = styled.div`
   color: ${({ theme }) => theme.primaryText};
@@ -210,6 +201,33 @@ const AttentionLabel = styled.label`
   color: ${({ theme }) => theme.tintYellow};
 `;
 
+const copyTextToClipboard = async (text: string) => {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Fall back below when clipboard permission is blocked.
+  }
+
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.setAttribute("readonly", "");
+  textArea.style.position = "fixed";
+  textArea.style.top = "-1000px";
+  textArea.style.opacity = "0";
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  try {
+    return document.execCommand("copy");
+  } finally {
+    document.body.removeChild(textArea);
+  }
+};
+
 const AgentPanel = styled.section`
   display: flex;
   flex-direction: column;
@@ -219,43 +237,57 @@ const AgentPanel = styled.section`
   margin: 0 auto;
 `;
 
-const AgentIntro = styled.div`
-  padding: 20px;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 8px;
-  background: ${({ theme }) => theme.lightGrey};
-`;
-
-const AgentTitle = styled.h2`
-  margin: 0 0 8px;
-  font-size: 20px;
-  color: ${({ theme }) => theme.primaryText};
-`;
-
-const AgentDescription = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.secondaryText};
-  line-height: 1.45;
-`;
-
-const AgentPromptBlock = styled.textarea`
+const AgentLinkRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
-  min-height: 128px;
-  resize: vertical;
-  padding: 16px;
-  border: 1px solid ${({ theme }) => theme.stroke};
-  border-radius: 8px;
-  background: #050505;
-  color: ${({ theme }) => theme.primaryText};
+`;
+
+const AgentInstructionsLink = styled.a`
+  min-width: 0;
+  color: inherit;
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 13px;
-  line-height: 1.5;
-  outline: none;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+`;
 
-  &:focus {
-    border-color: ${({ theme }) => theme.primaryBlue};
+const AgentCopyIconButton = styled.button`
+  ${hoverShortTransitionTiming}
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    opacity: 0.7;
   }
 `;
+
+const CopyIcon = () => (
+  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <rect x="5.5" y="2.5" width="8" height="10" rx="1.5" stroke="currentColor" />
+    <path
+      d="M3.5 5.5H3A1.5 1.5 0 0 0 1.5 7v6A1.5 1.5 0 0 0 3 14.5h5A1.5 1.5 0 0 0 9.5 13v-.5"
+      stroke="currentColor"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 const SubmittingItem = () => (
   <SectionContainer>
@@ -324,23 +356,30 @@ const ChallengePhase = () => (
   </SectionContainer>
 );
 
-const AgentGuide = () => (
-  <AgentPanel>
-    <AgentIntro>
-      <AgentTitle>Agent quickstart</AgentTitle>
-      <AgentDescription>
-        Fetch the canonical Kleros Curate skill first, then the Scout registry and
-        Light Curate references before acting on Scout data.
-      </AgentDescription>
-      <AgentPromptBlock
-        readOnly
-        aria-label="Agent quickstart commands"
-        value={AGENT_QUICKSTART_COMMANDS}
-        onFocus={(event) => event.currentTarget.select()}
-      />
-    </AgentIntro>
-  </AgentPanel>
-);
+const AgentGuide = () => {
+  const handleCopyAgentLink = async () => {
+    await copyTextToClipboard(SCOUT_AGENT_ENTRY_URL);
+  };
+
+  return (
+    <AgentPanel>
+      <AgentLinkRow>
+        <AgentInstructionsLink href={SCOUT_AGENT_ENTRY_URL}>
+          {SCOUT_AGENT_ENTRY_URL}
+        </AgentInstructionsLink>
+        <AgentCopyIconButton
+          type="button"
+          aria-label="Copy agent link"
+          title="Copy"
+          data-agent-instructions-url={SCOUT_AGENT_ENTRY_URL}
+          onClick={handleCopyAgentLink}
+        >
+          <CopyIcon />
+        </AgentCopyIconButton>
+      </AgentLinkRow>
+    </AgentPanel>
+  );
+};
 
 const QuickGuidePage: React.FC = () => {
   const [audience, setAudience] = useState<'human' | 'agent'>('human');

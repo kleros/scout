@@ -1,3 +1,27 @@
 /*
   Link: </llms.txt>; rel="alternate"; type="text/plain"; title="Scout agent instructions"
+  Link: </llms-full.txt>; rel="help"; type="text/plain"; title="Scout full agent context"
   Link: </scout-agent-context.md>; rel="help"; type="text/markdown"; title="Scout agent context"
+
+/robots.txt
+  Content-Type: text/plain; charset=utf-8
+  X-Robots-Tag: index, follow
+
+/llms.txt
+  Content-Type: text/plain; charset=utf-8
+  X-Robots-Tag: index, follow
+  Link: <https://scout-app.kleros.io/llms.txt>; rel="canonical"; type="text/plain"; title="Scout agent instructions"
+
+/.well-known/llms.txt
+  Content-Type: text/plain; charset=utf-8
+  X-Robots-Tag: index, follow
+  Link: <https://scout-app.kleros.io/llms.txt>; rel="canonical"; type="text/plain"; title="Scout agent instructions"
+
+/llms-full.txt
+  Content-Type: text/plain; charset=utf-8
+  X-Robots-Tag: index, follow
+  Link: <https://scout-app.kleros.io/llms-full.txt>; rel="canonical"; type="text/plain"; title="Scout full agent context"
+
+/scout-agent-context.md
+  Content-Type: text/markdown; charset=utf-8
+  X-Robots-Tag: index, follow
