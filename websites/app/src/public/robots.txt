@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+# Agent instructions:
+# https://scout-app.kleros.io/llms.txt
+# https://scout-app.kleros.io/llms-full.txt
