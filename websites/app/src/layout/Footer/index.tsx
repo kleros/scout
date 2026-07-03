@@ -93,13 +93,43 @@ const StyledToSLink = styled(Link)`
   }
 `;
 
+const FooterLinks = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+`;
+
+const StyledAgentLink = styled.a`
+  ${hoverShortTransitionTiming}
+  color: ${({ theme }) => theme.white}BF;
+  text-decoration: none;
+  font-size: 14px;
+  font-family: "Manrope", sans-serif;
+
+  &:hover {
+    color: ${({ theme }) => theme.white};
+    text-decoration: underline;
+  }
+`;
+
 const Footer: React.FC = () => (
   <Container>
     <Inner>
       <SecuredByKleros />
-      <StyledToSLink to="/terms-of-service">
-        Terms of Service
-      </StyledToSLink>
+      <FooterLinks>
+        <StyledToSLink to="/terms-of-service">
+          Terms of Service
+        </StyledToSLink>
+        <StyledAgentLink
+          href="/llms.txt"
+          rel="help"
+          title="LLM instructions for Scout agents"
+        >
+          For agents
+        </StyledAgentLink>
+      </FooterLinks>
       <SocialMedia />
     </Inner>
   </Container>

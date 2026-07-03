@@ -1,0 +1,17 @@
+# Kleros Scout llms.txt
+
+This well-known mirror exists for agent discovery.
+
+Canonical instructions:
+
+https://scout-app.kleros.io/llms.txt
+
+Full Scout agent entrypoint:
+
+https://scout-app.kleros.io/llms-full.txt
+
+Required read order:
+
+1. https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md
+2. https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/scout-registries.md
+3. https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/light-curate.md

@@ -1,0 +1,28 @@
+# Kleros Scout llms.txt
+
+Summary: Kleros Scout is a UI for four fixed Gnosis Chain Kleros Curate LightGeneralizedTCR registries. Agents must read Scout-specific registry context before acting on submissions, challenges, removals, evidence, appeals, registry data, token lists, address tags, or CDN mappings.
+
+Start here:
+
+1. Full Scout agent entrypoint: https://scout-app.kleros.io/llms-full.txt
+2. Canonical Curate skill: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/SKILL.md
+3. Scout registry rules: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/scout-registries.md
+4. Light Curate operations: https://raw.githubusercontent.com/kleros/kleros-skills/master/kleros-curate/references/light-curate.md
+
+Task routing:
+
+- Scout submissions: read `llms-full.txt`, then `SKILL.md`, `scout-registries.md`, and `light-curate.md`.
+- Scout challenges, removals, evidence, and appeals: read `llms-full.txt`, then verify the current registry policy and request state.
+- Registry schemas, seed templates, image rules, and Scout-specific addresses: use `scout-registries.md`.
+- LightGeneralizedTCR contract calls, deposits, requests, evidence, appeals, and execution: use `light-curate.md`.
+
+Scope:
+
+`scout-registries.md` is valid only for these four Gnosis Chain registries:
+
+- ATQ / Address Tags Query: `0xAe6aaed5434244be3699c56E7Ebc828194F26dc3`
+- Address Tags: `0x66260C69d03837016d88c9877e61e08Ef74C59F2`
+- Kleros Tokens: `0xeE1502e29795Ef6C2D60F8D7120596abE3baD990`
+- CDN / Contract Domain Names: `0x957A53A994860BE4750810131d9c876b2f52d6E1`
+
+If a registry address is not one of those four, do not apply Scout seed templates or Scout-only assumptions. Verify the Curate flavor first.
