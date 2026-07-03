@@ -81,6 +81,21 @@ export const useItemsQuery = ({
       if (!shouldFetch) return { items: [], totalCount: 0 }
 
       const isTagsQueriesRegistry = registry.includes('tags-queries')
+
+      // The date column shows the request *resolution* time for resolved items
+      // (Absent -> Removed/Rejected, and Registered), but a live countdown for
+      // pending items. So order by resolution time when the view is resolved-only,
+      // otherwise fall back to submission time (which matches the countdown order).
+      // Ordering by submission time on a resolved view makes dates zig-zag, because
+      // resolution = submission + challenge period (+ any dispute time), which varies
+      // per item. See order_by and the date filter below.
+      const resolvedStatuses = ['Absent', 'Registered']
+      const isResolvedOnly =
+        status.length > 0 && status.every((s) => resolvedStatuses.includes(s))
+      const orderField = isResolvedOnly
+        ? 'latestRequestResolutionTime'
+        : 'latestRequestSubmissionTime'
+
       const selectedChainIds = network.filter((id) => id !== 'unknown')
       const includeUnknown = network.includes('unknown')
       const definedChainIds = chains.map((c) => c.id)
@@ -119,12 +134,12 @@ export const useItemsQuery = ({
       if (dateRange === 'custom') {
         const { fromTs, toTs } = getCustomDateTimestamps(customDateFrom, customDateTo)
         const conditions: string[] = []
-        if (fromTs > 0) conditions.push(`{latestRequestSubmissionTime: {_gte: "${fromTs}"}}`)
-        if (toTs > 0) conditions.push(`{latestRequestSubmissionTime: {_lte: "${toTs}"}}`)
+        if (fromTs > 0) conditions.push(`{${orderField}: {_gte: "${fromTs}"}}`)
+        if (toTs > 0) conditions.push(`{${orderField}: {_lte: "${toTs}"}}`)
         if (conditions.length > 0) dateFilterObject = conditions.join(',')
       } else if (dateRange !== 'all') {
         const ts = getDateRangeTimestamp(dateRange)
-        if (ts > 0) dateFilterObject = `{latestRequestSubmissionTime: {_gte: "${ts}"}}`
+        if (ts > 0) dateFilterObject = `{${orderField}: {_gte: "${ts}"}}`
       }
 
       const textFilterObject = text
@@ -170,7 +185,7 @@ export const useItemsQuery = ({
             where: ${whereClause}
             offset: $skip
             limit: $first
-            order_by: {latestRequestSubmissionTime : $orderDirection }
+            order_by: {${orderField} : $orderDirection }
           ) {
             id
             latestRequestSubmissionTime
