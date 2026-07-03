@@ -43,6 +43,19 @@ export const useExportItems = (filters: ExportFilters) => {
       const isTagsQueriesRegistry =
         registryId === '0xae6aaed5434244be3699c56e7ebc828194f26dc3'
 
+      // Match the exported row order to the eventDate column each row carries
+      // (see ExportModal: resolution time for Registered/Absent, submission time
+      // for pending). Ordering resolved-only exports by submission time makes the
+      // eventDate column zig-zag, since resolution = submission + variable challenge
+      // period. Mirror the same logic as useItemsQuery. Falls back to submission
+      // time for pending/mixed exports (whose eventDate is submission time anyway).
+      const resolvedStatuses = ['Absent', 'Registered']
+      const isResolvedOnly =
+        status.length > 0 && status.every((s) => resolvedStatuses.includes(s))
+      const orderField = isResolvedOnly
+        ? 'latestRequestResolutionTime'
+        : 'latestRequestSubmissionTime'
+
       // Build network filter
       const selectedChainIds = network.filter((id) => id !== 'unknown')
       const includeUnknown = network.includes('unknown')
@@ -104,13 +117,13 @@ export const useExportItems = (filters: ExportFilters) => {
         if (fromDate) {
           const fromTimestamp = Math.floor(new Date(fromDate).getTime() / 1000)
           conditions.push(
-            `{latestRequestSubmissionTime: { _gte: "${fromTimestamp}"}}`,
+            `{${orderField}: { _gte: "${fromTimestamp}"}}`,
           )
         }
         if (toDate) {
           const toTimestamp = Math.floor(new Date(toDate).getTime() / 1000)
           conditions.push(
-            `{latestRequestSubmissionTime: {_lte: "${toTimestamp}"}}`,
+            `{${orderField}: {_lte: "${toTimestamp}"}}`,
           )
         }
         dateFilterObject =
@@ -143,7 +156,7 @@ export const useExportItems = (filters: ExportFilters) => {
             }
           offset: $skip
           limit: $first
-          order_by: {latestRequestSubmissionTime: desc}
+          order_by: {${orderField}: desc}
           ) {
             id
             latestRequestSubmissionTime
