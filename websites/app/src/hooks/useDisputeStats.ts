@@ -82,6 +82,7 @@ const DISPUTE_STATS_QUERY = `
       status
       requests(where: {disputed: {_eq: true}, resolved: {_eq: true}, challenger: {_eq: $userAddress}}, order_by: {submissionTime: desc}, limit: 100) {
         disputeOutcome
+        deposit
       }
     }
   }
@@ -98,6 +99,10 @@ export interface DisputeStats {
   // Win/loss as challenger
   winsAsChallenger: number;
   lossesAsChallenger: number;
+  // Sum of the requesters' base deposits collected by winning challenges (xDAI wei).
+  // The winning challenger pockets the pot minus their own stake, which nets out
+  // to the requester's base deposit; appeal-round fee rewards are not included.
+  bountiesWonWei: bigint;
   // Totals
   totalWins: number;
   totalLosses: number;
@@ -149,12 +154,19 @@ export const useDisputeStats = (address?: string) => {
       // Calculate wins/losses for challenger role
       let winsAsChallenger = 0;
       let lossesAsChallenger = 0;
+      let bountiesWonWei = 0n;
       for (const item of resolvedAsChallenger) {
         for (const request of item.requests ?? []) {
           const won = didRequesterWin(request.disputeOutcome);
           // Challenger wins when requester loses
-          if (won === false) winsAsChallenger++;
-          else if (won === true) lossesAsChallenger++;
+          if (won === false) {
+            winsAsChallenger++;
+            try {
+              bountiesWonWei += BigInt(request.deposit ?? 0);
+            } catch {
+              // skip malformed deposits
+            }
+          } else if (won === true) lossesAsChallenger++;
         }
       }
 
@@ -173,6 +185,7 @@ export const useDisputeStats = (address?: string) => {
           lossesAsRequester,
           winsAsChallenger,
           lossesAsChallenger,
+          bountiesWonWei,
           totalWins: winsAsRequester + winsAsChallenger,
           totalLosses: lossesAsRequester + lossesAsChallenger,
         },

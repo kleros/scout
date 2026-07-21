@@ -1,8 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
-import { fetchItemPropsFromIpfs, patchQueryWithIpfs } from 'utils/items'
+import { fetchItemPropsFromIpfs } from 'utils/items'
 import { KLEROS_CDN_BASE } from 'consts/index'
 import { GraphItemDetails } from '../../utils/itemDetails'
 
@@ -89,7 +89,6 @@ export const useItemDetailsQuery = ({
   enabled = true,
 }: UseItemDetailsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
-  const queryClient = useQueryClient()
 
   return useQuery({
     queryKey: queryKeys.itemDetails(itemId),
@@ -105,12 +104,14 @@ export const useItemDetailsQuery = ({
 
       const item: GraphItemDetails = result.litem
 
-      patchQueryWithIpfs(
-        queryClient,
-        queryKeys.itemDetails(itemId),
-        [item],
-        async () => (await fetchItemPropsFromIpfs([item], KLEROS_CDN_BASE))[0],
-      )
+      // Await the IPFS fallback inline rather than patching the cache in the
+      // background: this page renders a single item, and resolving before the
+      // query settles keeps the loading skeleton up instead of flashing the
+      // "IPFS data unavailable" warning. It also keeps interval refetches from
+      // clobbering previously patched props with the raw propless item.
+      if (item && (!item.props || item.props.length === 0) && item.data) {
+        return (await fetchItemPropsFromIpfs([item], KLEROS_CDN_BASE))[0]
+      }
 
       return item
     },
