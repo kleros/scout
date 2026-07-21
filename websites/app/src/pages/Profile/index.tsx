@@ -7,7 +7,9 @@ import { useAccount } from "wagmi";
 import ProfileIcon from "svgs/icons/activity.svg";
 import { useSubmitterStats } from "hooks/useSubmitterStats";
 import { useDisputeStats } from "hooks/useDisputeStats";
+import { useCurateRewards } from "hooks/useCurateRewards";
 import { commify } from "utils/commify";
+import { formatValue } from "utils/formatValue";
 import { shortenAddress } from "utils/shortenAddress";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
@@ -49,11 +51,36 @@ const Header = styled.div`
   align-items: center;
   gap: 16px;
   margin-bottom: 32px;
+  flex-wrap: wrap;
   svg {
     width: 64px;
     height: 64px;
     flex-shrink: 0;
   }
+`;
+
+const HeaderStatsContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  ${landscapeStyle(
+    () => css`
+      margin-left: auto;
+    `
+  )}
+`;
+
+const HeaderStatBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 120px;
+  padding: 12px 20px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 12px;
 `;
 
 const Title = styled.h1`
@@ -280,6 +307,7 @@ const Profile: React.FC = () => {
   const address = (userAddress || connectedAddress || "").toLowerCase();
   const { data, isLoading } = useSubmitterStats(address);
   const { data: disputeData, isLoading: isLoadingDisputes } = useDisputeStats(address);
+  const { data: rewardsData, isLoading: isLoadingRewards } = useCurateRewards(address);
   const stats = data?.submitter;
   const disputeStats = disputeData?.disputeStats;
 
@@ -469,6 +497,30 @@ const Profile: React.FC = () => {
                 </TotalSubmissionsCount> total submissions. Follow up {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase() ? 'your' : 'on'} submissions, challenges, and other interactions with Scout.
               </Subtitle>
             </div>
+            <HeaderStatsContainer>
+              <HeaderStatBox title="Challenges won — each successful challenge earned this address the challenged submitter's deposit">
+                <StatLabel>Challenge Bounties</StatLabel>
+                <StatValue color={theme.success}>
+                  {isLoadingDisputes ? (
+                    <Skeleton width={40} height={24} />
+                  ) : (
+                    commify(disputeStats?.winsAsChallenger ?? 0)
+                  )}
+                </StatValue>
+              </HeaderStatBox>
+              <HeaderStatBox>
+                <StatLabel>Rewards</StatLabel>
+                <StatValue color={theme.secondaryBlue}>
+                  {isLoadingRewards ? (
+                    <Skeleton width={80} height={24} />
+                  ) : rewardsData ? (
+                    `${formatValue(rewardsData.totalWei, 0)} ${rewardsData.tokenSymbol}`
+                  ) : (
+                    "–"
+                  )}
+                </StatValue>
+              </HeaderStatBox>
+            </HeaderStatsContainer>
           </Header>
           <FilterControlsContainer>
             <ProfileSearchBar text={filters.text} setText={filters.setText} />

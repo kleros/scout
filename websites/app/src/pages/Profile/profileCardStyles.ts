@@ -91,6 +91,27 @@ export const StyledChainContainer = styled(LabelValue)`
   margin-bottom: -8px;
 `
 
+export const ActionsGroup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+`
+
+export const RewardedBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: ${({ theme }) => theme.success};
+  border: 1px solid ${({ theme }) => theme.success}66;
+  background: ${({ theme }) => theme.success}14;
+`
+
 export const ViewLink = styled(Link)`
   ${hoverLongTransitionTiming}
   display: inline-flex;
