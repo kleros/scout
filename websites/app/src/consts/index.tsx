@@ -32,11 +32,13 @@ export const GNOSIS_RPC_URL = 'https://rpc.gnosischain.com'
 // Kleros court IDs on Gnosis Chain
 export const XDAI_CURATION_COURT_ID = '1'
 export const JAVASCRIPT_COURT_ID = '14'
+export const CURATION_HIDDEN_VOTE_COURT_ID = '19'
 
 // Courts tracked in the "Latest Disputes" section
 export const TRACKED_DISPUTE_COURT_IDS = [
   XDAI_CURATION_COURT_ID,
   JAVASCRIPT_COURT_ID,
+  CURATION_HIDDEN_VOTE_COURT_ID,
 ]
 
 // DappLooker chart IDs
