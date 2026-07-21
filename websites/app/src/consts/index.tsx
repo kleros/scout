@@ -24,6 +24,9 @@ export const SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT = subgraphKlerosDisplayGnos
 
 export const KLEROS_CDN_BASE = 'https://cdn.kleros.link'
 
+// Index of monthly curate-rewards snapshots (array of IPFS links, one per month)
+export const CURATE_REWARDS_SNAPSHOTS_URL = 'https://rewards.kleros.io/curate-rewards.json'
+
 export const GNOSIS_RPC_URL = 'https://rpc.gnosischain.com'
 
 // Kleros court IDs on Gnosis Chain

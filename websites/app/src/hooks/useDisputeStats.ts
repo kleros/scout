@@ -62,10 +62,8 @@ const DISPUTE_STATS_QUERY = `
     ) {
       id
       status
-      requests(where: {disputed: {_eq: true}, resolved: {_eq: true}}, order_by: {submissionTime: desc}, limit: 1) {
-        requestType
+      requests(where: {disputed: {_eq: true}, resolved: {_eq: true}, requester: {_eq: $userAddress}}, order_by: {submissionTime: desc}, limit: 100) {
         disputeOutcome
-        resolved
       }
     }
     # Resolved disputes where user was the challenger
@@ -82,10 +80,8 @@ const DISPUTE_STATS_QUERY = `
     ) {
       id
       status
-      requests(where: {disputed: {_eq: true}, resolved: {_eq: true}}, order_by: {submissionTime: desc}, limit: 1) {
-        requestType
+      requests(where: {disputed: {_eq: true}, resolved: {_eq: true}, challenger: {_eq: $userAddress}}, order_by: {submissionTime: desc}, limit: 100) {
         disputeOutcome
-        resolved
       }
     }
   }
@@ -138,25 +134,28 @@ export const useDisputeStats = (address?: string) => {
       const activeChallengerIds = new Set(activeAsChallenger.map((i: any) => i.id));
       const allActiveIds = new Set([...activeRequesterIds, ...activeChallengerIds]);
 
-      // Calculate wins/losses for requester role
+      // Calculate wins/losses for requester role, counting every disputed
+      // request the user was a party to (an item can have several)
       let winsAsRequester = 0;
       let lossesAsRequester = 0;
       for (const item of resolvedAsRequester) {
-        const outcome = item.requests?.[0]?.disputeOutcome;
-        const won = didRequesterWin(outcome);
-        if (won === true) winsAsRequester++;
-        else if (won === false) lossesAsRequester++;
+        for (const request of item.requests ?? []) {
+          const won = didRequesterWin(request.disputeOutcome);
+          if (won === true) winsAsRequester++;
+          else if (won === false) lossesAsRequester++;
+        }
       }
 
       // Calculate wins/losses for challenger role
       let winsAsChallenger = 0;
       let lossesAsChallenger = 0;
       for (const item of resolvedAsChallenger) {
-        const outcome = item.requests?.[0]?.disputeOutcome;
-        const won = didRequesterWin(outcome);
-        // Challenger wins when requester loses
-        if (won === false) winsAsChallenger++;
-        else if (won === true) lossesAsChallenger++;
+        for (const request of item.requests ?? []) {
+          const won = didRequesterWin(request.disputeOutcome);
+          // Challenger wins when requester loses
+          if (won === false) winsAsChallenger++;
+          else if (won === true) lossesAsChallenger++;
+        }
       }
 
       // Dedupe resolved disputes

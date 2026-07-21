@@ -13,9 +13,12 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import { formatValue } from 'utils/formatValue'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
 import useRegistryParameters from 'hooks/useRegistryParameters'
+import { useCurateRewards } from 'hooks/useCurateRewards'
+import { getItemRewardTotal } from 'utils/rewardedItems'
 import {
   Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
   MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer, ViewLink,
+  ActionsGroup, RewardedBadge,
 } from './profileCardStyles'
 
 const HeaderLeft = styled.div`
@@ -76,6 +79,12 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
   }, [item.requests, registryParams?.arbitrationCost])
 
   const requester = item.requests?.[0]?.requester ?? ''
+
+  const { data: rewardsData } = useCurateRewards(requester)
+  const rewardTotalWei = useMemo(
+    () => getItemRewardTotal(item, rewardsData?.rewardedEntries),
+    [item, rewardsData?.rewardedEntries],
+  )
 
   const chainId = getPropValue(item, 'EVM Chain ID')
   const itemAddr = getItemAddress(item, registryKey)
@@ -151,7 +160,16 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
             )}
           </InfoRow>
 
-          <ViewLink to={itemPath} state={{ fromApp: true, from: 'profile', profileTab: fromProfile }}>View</ViewLink>
+          <ActionsGroup>
+            {rewardTotalWei > 0n && (
+              <RewardedBadge
+                title={`This submission earned ${formatValue(rewardTotalWei, 0)} ${rewardsData?.tokenSymbol ?? 'PNK'} in curation rewards`}
+              >
+                Rewarded
+              </RewardedBadge>
+            )}
+            <ViewLink to={itemPath} state={{ fromApp: true, from: 'profile', profileTab: fromProfile }}>View</ViewLink>
+          </ActionsGroup>
         </MetaLine>
       </Body>
     </Card>
