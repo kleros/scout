@@ -3,12 +3,12 @@ import styled, { css } from 'styled-components'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
 import humanizeDuration from 'humanize-duration'
-import { gnosis } from '@reown/appkit/networks'
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { useTxResultQuery, isTxHashValid } from 'hooks/queries/useTxResultQuery'
 import { shortenAddress } from 'utils/shortenAddress'
+import { GNOSIS_CHAIN_ID, getAddressExplorerUrl, getTxExplorerUrl } from 'utils/chains'
 import Copyable from 'components/Copyable'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import LoadingItems from 'pages/Registries/LoadingItems'
@@ -17,14 +17,12 @@ import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import GnosisIcon from 'assets/svgs/chains/gnosis.svg'
 
 // The tx page queries Gnosis exclusively (the registries live only there), so all
-// chain-identifying strings are resolved from the chain config once, not spread around.
-// viem's gnosis object has `name: 'Gnosis'` and `nativeCurrency.symbol: 'XDAI'`; Scout's
-// branded forms are "Gnosis Chain" and "xDAI", so we override those two display strings.
-const EXPLORER_URL = gnosis.blockExplorers?.default?.url ?? 'https://gnosisscan.io'
+// chain-identifying strings are resolved here once, not spread around.
+// Scout's branded forms are "Gnosis Chain" and "xDAI".
 const CHAIN_NAME = 'Gnosis Chain'
 const NATIVE_SYMBOL = 'xDAI'
-const explorerTxUrl = (hash: string) => `${EXPLORER_URL}/tx/${hash}`
-const explorerAddrUrl = (addr: string) => `${EXPLORER_URL}/address/${addr}`
+const explorerTxUrl = (hash: string) => getTxExplorerUrl(GNOSIS_CHAIN_ID, hash)
+const explorerAddrUrl = (addr: string) => getAddressExplorerUrl(GNOSIS_CHAIN_ID, addr)
 
 const Container = styled.div`
   display: flex;
@@ -494,7 +492,7 @@ const TxResult: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View on Gnosisscan <OpenIcon />
+                  View on Blockscout <OpenIcon />
                 </ExternalLink>
               </div>
             </Message>

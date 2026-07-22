@@ -1,6 +1,6 @@
 import React from 'react'
 import styled, { useTheme } from 'styled-components'
-import { chains } from 'utils/chains'
+import { chains, getAddressExplorerUrl } from 'utils/chains'
 import { chainColorMap } from 'utils/colorMappings'
 import { getChainIcon } from 'utils/chainIcons'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
@@ -91,7 +91,7 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
           info="Copy Address"
         >
           <StyledExternalLink
-            href={`https://${reference?.explorer}/address/${parts?.[2]}`}
+            href={getAddressExplorerUrl(reference?.id ?? '', parts[2])}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
