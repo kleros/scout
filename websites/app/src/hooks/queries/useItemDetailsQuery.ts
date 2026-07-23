@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
@@ -89,6 +89,7 @@ export const useItemDetailsQuery = ({
   enabled = true,
 }: UseItemDetailsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
+  const queryClient = useQueryClient()
 
   return useQuery({
     queryKey: queryKeys.itemDetails(itemId),
@@ -110,6 +111,25 @@ export const useItemDetailsQuery = ({
       // "IPFS data unavailable" warning. It also keeps interval refetches from
       // clobbering previously patched props with the raw propless item.
       if (item && (!item.props || item.props.length === 0) && item.data) {
+        // CID content is immutable, so props resolved on an earlier cycle stay
+        // valid while `data` is unchanged. Reusing them (with the keys the
+        // fallback derived from identifier props) spares a gateway round-trip
+        // on every interval refetch, and keeps a transient gateway failure
+        // from replacing good props with the raw item — which would resurface
+        // the "IPFS data unavailable" warning mid-session.
+        const prev = queryClient.getQueryData<GraphItemDetails>(
+          queryKeys.itemDetails(itemId),
+        )
+        if (prev && prev.props?.length > 0 && prev.data === item.data) {
+          return {
+            ...item,
+            props: prev.props,
+            key0: item.key0 || prev.key0,
+            key1: item.key1 || prev.key1,
+            key2: item.key2 || prev.key2,
+            key3: item.key3 || prev.key3,
+          }
+        }
         return (await fetchItemPropsFromIpfs([item], KLEROS_CDN_BASE))[0]
       }
 

@@ -23,7 +23,12 @@ export const verifyIpfsFileAvailable = async (
       await new Promise((resolve) => setTimeout(resolve, 2_000 * attempt))
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(5_000) })
-      if (response.ok) return true
+      if (response.ok) {
+        // Headers are enough proof — drop the body so verifying a large
+        // attachment doesn't download the whole file.
+        response.body?.cancel().catch(() => {})
+        return true
+      }
     } catch {
       // Gateway timeout or network error — retry.
     }
