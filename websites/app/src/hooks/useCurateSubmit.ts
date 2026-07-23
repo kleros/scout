@@ -6,6 +6,7 @@ import { useCurateInteractions } from './contracts/useCurateInteractions'
 import { useItemCountsQuery } from './queries'
 import { clearLocalStorage } from './useLocalStorage'
 import { publishAndAddItem } from 'utils/publishAndAddItem'
+import { assertIpfsFileAvailable } from 'utils/ipfs'
 import { infoToast, errorToast } from 'utils/wrapWithToast'
 import { parseWagmiError } from 'utils/parseWagmiError'
 import {
@@ -57,6 +58,7 @@ export const useCurateSubmit = ({
           infoToast(`Uploading ${label.toLowerCase()} to IPFS...`)
           const path = await uploadFile(file, role)
           if (!path) throw new Error(`Failed to upload ${label} to IPFS.`)
+          await assertIpfsFileAvailable(path, label.toLowerCase())
           resolvedValues[label] = path
         }
       }

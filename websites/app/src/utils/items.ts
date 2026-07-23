@@ -1,4 +1,5 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query'
+import { normalizeIpfsPath } from 'utils/ipfs'
 
 export type RegistryKey = 'single-tags' | 'tags-queries' | 'cdn' | 'tokens'
 
@@ -236,12 +237,26 @@ export const fetchItemPropsFromIpfs = async <T extends { data?: string; props?: 
     if (!item.data) return item
 
     try {
-      let ipfsPath = item.data
-      if (ipfsPath.startsWith('/ipfs/')) { /* already normalized */ }
-      else if (ipfsPath.startsWith('ipfs/')) ipfsPath = `/${ipfsPath}`
-      else if (ipfsPath.startsWith('ipfs://')) ipfsPath = ipfsPath.replace('ipfs://', '/ipfs/')
-      else ipfsPath = `/ipfs/${ipfsPath}`
-      const response = await fetch(`${cdnBase}${ipfsPath}`)
+      // Some legacy items stored the metadata JSON inline in `data` instead of
+      // an IPFS URI — recover their props without any network fetch.
+      if (item.data.trim().startsWith('{')) {
+        const inline = JSON.parse(item.data)
+        const values = inline.values ?? inline
+        const props: Prop[] = Object.entries(values).map(([label, value]) => ({
+          label,
+          description: '',
+          type: 'text',
+          isIdentifier: false,
+          value: String(value),
+        }))
+        return { ...item, props }
+      }
+
+      // Bounded so callers that await this (e.g. the item details queryFn)
+      // can't hang indefinitely on a dead CID.
+      const response = await fetch(`${cdnBase}${normalizeIpfsPath(item.data)}`, {
+        signal: AbortSignal.timeout(5_000),
+      })
       if (!response.ok) return item
       const json = await response.json()
       const props: Prop[] = json.columns.map((column: any) => ({

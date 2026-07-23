@@ -83,6 +83,12 @@ const HeaderStatBox = styled.div`
   border-radius: 12px;
 `;
 
+const StatSubValue = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.secondaryText};
+  white-space: nowrap;
+`;
+
 const Title = styled.h1`
   font-size: 24px;
   margin: 0;
@@ -498,7 +504,7 @@ const Profile: React.FC = () => {
               </Subtitle>
             </div>
             <HeaderStatsContainer>
-              <HeaderStatBox title="Challenges won — each successful challenge earned this address the challenged submitter's deposit">
+              <HeaderStatBox title="Challenges won — each successful challenge earned this address the challenged submitter's deposit (appeal fee rewards not included)">
                 <StatLabel>Challenge Bounties</StatLabel>
                 <StatValue color={theme.success}>
                   {isLoadingDisputes ? (
@@ -507,6 +513,11 @@ const Profile: React.FC = () => {
                     commify(disputeStats?.winsAsChallenger ?? 0)
                   )}
                 </StatValue>
+                {!isLoadingDisputes && (disputeStats?.bountiesWonWei ?? 0n) > 0n && (
+                  <StatSubValue>
+                    ≈ {formatValue(disputeStats?.bountiesWonWei ?? 0n, 0)} xDAI earned
+                  </StatSubValue>
+                )}
               </HeaderStatBox>
               <HeaderStatBox>
                 <StatLabel>Rewards</StatLabel>
