@@ -4,6 +4,8 @@ import type { DepositParams } from 'utils/fetchRegistryDeposits'
 import type { Column } from 'utils/items'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
+import { assertIpfsFileAvailable } from 'utils/ipfs'
+import { infoToast } from 'utils/wrapWithToast'
 
 interface Params {
   addItem: (
@@ -32,5 +34,7 @@ export const publishAndAddItem = async ({
   })
   const ipfsPath = await uploadFile(file, JSON_UPLOAD_ROLE)
   if (!ipfsPath) throw new Error('Failed to upload item metadata to IPFS.')
+  infoToast('Verifying item metadata is retrievable from IPFS...')
+  await assertIpfsFileAvailable(ipfsPath, 'item metadata')
   return addItem(registryAddress, ipfsPath, deposits)
 }

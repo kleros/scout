@@ -18,6 +18,7 @@ import { queryKeys } from 'hooks/queries/consts'
 import { errorToast, infoToast } from 'utils/wrapWithToast'
 import { parseWagmiError } from 'utils/parseWagmiError'
 import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
+import { assertIpfsFileAvailable } from 'utils/ipfs'
 import {
   getRoleRestriction,
   validateFileAgainstRestriction,
@@ -251,6 +252,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
         infoToast('Uploading file to IPFS...')
         const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
         if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
+        await assertIpfsFileAvailable(uploadedPath, 'attachment')
         fileURI = uploadedPath
         const extension = attachedFile.name.split('.').pop()
         fileTypeExtension = extension ? `.${extension}` : null
@@ -276,6 +278,8 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       )
       const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
       if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
+      infoToast('Verifying evidence is retrievable from IPFS...')
+      await assertIpfsFileAvailable(ipfsPath, 'evidence')
 
       const result = await submitEvidence(registryAddress, itemID, ipfsPath)
 

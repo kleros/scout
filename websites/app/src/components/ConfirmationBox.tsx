@@ -21,6 +21,7 @@ import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
 import useNativeBalance from 'hooks/useNativeBalance'
 import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
+import { assertIpfsFileAvailable } from 'utils/ipfs'
 import {
   getRoleRestriction,
   validateFileAgainstRestriction,
@@ -477,6 +478,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                       infoToast('Uploading file to IPFS...')
                       const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
                       if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
+                      await assertIpfsFileAvailable(uploadedPath, 'attachment')
                       fileURI = uploadedPath
                       const extension = attachedFile.name.split('.').pop()
                       fileTypeExtension = extension ? `.${extension}` : null
@@ -508,6 +510,8 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
                     )
                     const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
                     if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
+                    infoToast('Verifying evidence is retrievable from IPFS...')
+                    await assertIpfsFileAvailable(ipfsPath, 'evidence')
 
                     const registryAddress = detailsData.registryAddress as Address
                     const itemId = detailsData.itemID
