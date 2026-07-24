@@ -128,7 +128,7 @@ export const chains = [
     namespace: 'eip155',
     name: 'zkSync',
     label: 'zkSync',
-    explorer: 'explorer.zksync.io',
+    explorer: 'zksync.blockscout.com',
   },
   {
     id: '369',
@@ -227,5 +227,12 @@ export const chains = [
     name: "Blast",
     label: "BLAST",
     explorer: "blastscan.io"
-  }
+  },
+  {
+    id: '4663',
+    namespace: 'eip155',
+    name: 'Robinhood Chain',
+    label: 'Robinhood',
+    explorer: 'robinhoodchain.blockscout.com',
+  },
 ];
