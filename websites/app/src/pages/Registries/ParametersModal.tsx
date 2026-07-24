@@ -5,6 +5,7 @@ import { formatEther } from 'ethers'
 import humanizeDuration from 'humanize-duration'
 import Skeleton from 'react-loading-skeleton'
 import { FocusedRegistry } from 'utils/itemCounts'
+import { GNOSIS_CHAIN_ID, getAddressExplorerUrl } from 'utils/chains'
 import { useItemCountsQuery } from 'hooks/queries'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
@@ -145,7 +146,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                   <ParamLabel>Governor</ParamLabel>
                 </Tooltip>
                 <ParamLink
-                  href={`https://gnosisscan.io/address/${deposits.governor}`}
+                  href={getAddressExplorerUrl(GNOSIS_CHAIN_ID, deposits.governor)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

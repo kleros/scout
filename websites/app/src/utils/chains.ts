@@ -3,6 +3,19 @@ export const getNamespaceForChainId = (chainId: string) => {
   return chain?.namespace;
 };
 
+export const GNOSIS_CHAIN_ID = '100';
+
+export const getExplorerBaseUrl = (chainId: string) => {
+  const chain = chains.find((c) => c.id === chainId);
+  return `https://${chain?.explorer}`;
+};
+
+export const getAddressExplorerUrl = (chainId: string, address: string) =>
+  `${getExplorerBaseUrl(chainId)}/address/${address}`;
+
+export const getTxExplorerUrl = (chainId: string, txHash: string) =>
+  `${getExplorerBaseUrl(chainId)}/tx/${txHash}`;
+
 export const chains = [
   {
     id: '1',
@@ -23,7 +36,7 @@ export const chains = [
     namespace: 'eip155',
     name: 'Gnosis Chain',
     label: 'Gnosis',
-    explorer: 'gnosisscan.io',
+    explorer: 'gnosis.blockscout.com',
   },
   {
     id: '137',
