@@ -5,9 +5,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import ScoutBackground from 'pngs/scout-background.png'
 import MetamaskPopupDarkMode from 'pngs/metamask-popup-dark-mode.png'
 import MetamaskLogo from 'svgs/promo-banner/metamask.svg'
-import GalxeIcon from 'svgs/promo-banner/galxe.svg'
 import { Button } from 'components/Button'
-import GalxeModal, { handleAnchorClick } from 'components/GalxeModal'
 
 const Container = styled.div`
   display: flex;
@@ -77,51 +75,6 @@ const StyledButton = styled(Button)`
   )}
 `
 
-const StyledAnchor = styled.a`
-  display: flex;
-  align-items: center;
-  margin-top: 4px;
-  color: #fff;
-  text-decoration: underline;
-  flex-wrap: wrap;
-  text-align: center;
-  justify-content: center;
-  width: 100%;
-
-  &:hover {
-    color: #ccc;
-  }
-
-  ${landscapeStyle(
-    () => css`
-      justify-content: flex-start;
-    `
-  )}
-`
-
-const GalxeIconStyled = styled(GalxeIcon)`
-  display: flex;
-  margin-bottom: ${responsiveSize(8, 0)};
-  margin-right: 8px;
-  align-items: center;
-  justify-content: center;
-`
-
-const connectToMetaMask = async (
-  setIsConnected: React.Dispatch<React.SetStateAction<boolean>>,
-  setAddress: React.Dispatch<React.SetStateAction<string | null>>
-) => {
-  try {
-    const accounts = await window.ethereum.request({
-      method: 'eth_requestAccounts',
-    })
-    setIsConnected(true)
-    setAddress(accounts[0])
-  } catch (error) {
-    console.error('Error connecting to MetaMask:', error)
-  }
-}
-
 const installSnap = async () => {
   return await window.ethereum.request({
     method: 'wallet_requestSnaps',
@@ -134,24 +87,17 @@ const installSnap = async () => {
 export const checkInstallation = async ({
   isConnected,
   setIsConnected,
-  address,
-  setAddress,
-  setIsModalOpen,
 }: {
   isConnected: boolean
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>
-  address: string | null
-  setAddress: React.Dispatch<React.SetStateAction<string | null>>
-  setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
   let connected = isConnected
   if (!connected) {
     try {
-      const accounts = await window.ethereum.request({
+      await window.ethereum.request({
         method: 'eth_requestAccounts',
       })
       setIsConnected(true)
-      setAddress(accounts[0])
       connected = true
     } catch (error) {
       console.error('Error connecting to MetaMask:', error)
@@ -165,7 +111,6 @@ export const checkInstallation = async ({
 
   try {
     await installSnap()
-    setIsModalOpen(true)
   } catch (error) {
     console.error('Error checking snaps installation:', error)
   }
@@ -179,8 +124,6 @@ const MetamaskPopup = styled.img`
 
 const InstallMetamaskSnap: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [address, setAddress] = useState<string | null>(null)
 
   return (
     <Container>
@@ -197,30 +140,13 @@ const InstallMetamaskSnap: React.FC = () => {
             checkInstallation({
               isConnected,
               setIsConnected,
-              address,
-              setAddress,
-              setIsModalOpen,
             })
           }
         >
           <MetamaskLogo /> Add Kleros Scout to Metamask
         </StyledButton>
-        <StyledAnchor
-          href="https://app.galxe.com/quest/kleros/GCYsVtdurQ"
-          target="_blank"
-          rel="noreferrer noopener"
-          onClick={(e) => handleAnchorClick(e, address, setIsModalOpen)}
-        >
-          <GalxeIconStyled />
-          Claim your Galxe NFT if you’ve already installed!
-        </StyledAnchor>
       </LeftContent>
       <MetamaskPopup src={MetamaskPopupDarkMode} alt="Metamask Popup" />
-      <GalxeModal
-        isModalOpen={isModalOpen}
-        setIsModalOpen={setIsModalOpen}
-        address={address}
-      />
     </Container>
   )
 }
