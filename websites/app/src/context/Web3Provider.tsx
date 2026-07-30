@@ -1,63 +1,39 @@
 import React from "react";
 
-import {
-  mainnet,
-  arbitrumSepolia,
-  arbitrum,
-  gnosisChiado,
-  sepolia,
-  gnosis,
-  type AppKitNetwork,
-} from "@reown/appkit/networks";
+import { mainnet, gnosis, type AppKitNetwork } from "@reown/appkit/networks";
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { fallback, http, WagmiProvider, webSocket } from "wagmi";
+import { fallback, http, WagmiProvider, webSocket, type Transport } from "wagmi";
 
-import { ALL_CHAINS, DEFAULT_CHAIN } from "consts/chains";
+import { ALL_CHAINS } from "consts/chains";
 
+// Alchemy only serves mainnet ENS name/avatar lookups for the connected
+// wallet; the public mainnet leg below keeps those working without it, so a
+// missing key degrades gracefully instead of blocking boot.
 const alchemyApiKey = import.meta.env.ALCHEMY_API_KEY;
 if (!alchemyApiKey) {
-  throw new Error("Alchemy API key is not set in ALCHEMY_API_KEY environment variable.");
+  console.warn("ALCHEMY_API_KEY is not set; mainnet reads (ENS) will rely on the public RPC only.");
 }
-
-// https://github.com/alchemyplatform/alchemy-sdk-js/blob/c4440cb/src/types/types.ts#L98-L153
-const alchemyToViemChain: Record<number, string> = {
-  [arbitrumSepolia.id]: "arb-sepolia",
-  [arbitrum.id]: "arb-mainnet",
-  [mainnet.id]: "eth-mainnet",
-  [sepolia.id]: "eth-sepolia",
-  [gnosis.id]: "gnosis-mainnet",
-  [gnosisChiado.id]: "gnosis-chiado",
-};
-
-type AlchemyProtocol = "https" | "wss";
-
-// https://github.com/alchemyplatform/alchemy-sdk-js/blob/c4440cb/src/util/const.ts#L16-L18
-function alchemyURL(protocol: AlchemyProtocol, chainId: number | string): string {
-  const network = alchemyToViemChain[chainId];
-  if (!network) {
-    throw new Error(`Unsupported chain ID: ${chainId}`);
-  }
-  return `${protocol}://${network}.g.alchemy.com/v2/${alchemyApiKey}`;
-}
-
-export const getChainRpcUrl = (protocol: AlchemyProtocol, chainId: number | string) => {
-  return alchemyURL(protocol, chainId);
-};
-
-export const getDefaultChainRpcUrl = (protocol: AlchemyProtocol) => {
-  return getChainRpcUrl(protocol, DEFAULT_CHAIN);
-};
 
 export const getTransports = () => {
-  const alchemyTransport = (chain: AppKitNetwork) =>
-    fallback([http(alchemyURL("https", chain.id)), webSocket(alchemyURL("wss", chain.id))]);
   const defaultTransport = (chain: AppKitNetwork) =>
     fallback([http(chain.rpcUrls.default?.http?.[0]), webSocket(chain.rpcUrls.default?.webSocket?.[0])]);
 
+  // Alchemy-first (unchanged primary behavior), with a public fallback leg
+  // so ENS display survives an Alchemy outage. Publicnode is pinned instead
+  // of the chain default because viem's default (eth.merkle.io) aggressively
+  // rate-limits.
+  const mainnetTransports: Transport[] = alchemyApiKey
+    ? [
+        http(`https://eth-mainnet.g.alchemy.com/v2/${alchemyApiKey}`),
+        webSocket(`wss://eth-mainnet.g.alchemy.com/v2/${alchemyApiKey}`),
+      ]
+    : [];
+  mainnetTransports.push(http("https://ethereum-rpc.publicnode.com"));
+
   return {
     [gnosis.id]: defaultTransport(gnosis),
-    [mainnet.id]: alchemyTransport(mainnet), // Always enabled for ENS resolution
+    [mainnet.id]: fallback(mainnetTransports), // Always enabled for ENS resolution
   };
 };
 
@@ -69,8 +45,11 @@ if (!projectId) {
   throw new Error("WalletConnect project ID is not set in WALLETCONNECT_PROJECT_ID environment variable.");
 }
 
+// Mainnet is wagmi-only (absent from the AppKit modal networks below): it
+// exists solely so the ENS hooks (chainId: 1) have a configured client.
+// Without it wagmi throws ChainNotConfiguredError and ENS never resolves.
 export const wagmiAdapter = new WagmiAdapter({
-  networks: chains,
+  networks: [...chains, mainnet] as [AppKitNetwork, ...AppKitNetwork[]],
   projectId,
   transports,
 });
