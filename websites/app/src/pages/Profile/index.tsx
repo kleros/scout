@@ -22,8 +22,7 @@ import FilterModal from "components/FilterModal";
 import { SearchBar as ProfileSearchBar } from "pages/Registries/Search";
 import Copyable from "components/Copyable";
 import { ExternalLink } from "components/ExternalLink";
-import { DEFAULT_CHAIN, getChain } from "consts/chains";
-import { chains } from "utils/chains";
+import { chains, getAddressExplorerUrl, GNOSIS_CHAIN_ID } from "utils/chains";
 import { useProfileFilters } from "context/FilterContext";
 import ScrollTop from "components/ScrollTop";
 
@@ -385,7 +384,7 @@ const Profile: React.FC = () => {
 
   const addressExplorerLink = useMemo(() => {
     if (!userAddress) return null;
-    return `${getChain(DEFAULT_CHAIN)?.blockExplorers?.default.url}/address/${userAddress}`;
+    return getAddressExplorerUrl(GNOSIS_CHAIN_ID, userAddress);
   }, [userAddress]);
   const navigate = useNavigate();
   const location = useLocation();
