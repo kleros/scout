@@ -1,4 +1,4 @@
-import { DEFAULT_CHAIN, getChain } from "consts/chains";
+import { getTxExplorerUrl, GNOSIS_CHAIN_ID } from "utils/chains";
 
 export const isUndefined = (maybeObject: any): maybeObject is undefined | null =>
   typeof maybeObject === "undefined" || maybeObject === null;
@@ -9,4 +9,4 @@ export const isUndefined = (maybeObject: any): maybeObject is undefined | null =
 export const isEmpty = (str: string): boolean => str.trim() === "";
 
 export const getTxnExplorerLink = (hash: string) =>
-  `${getChain(DEFAULT_CHAIN)?.blockExplorers?.default.url}/tx/${hash}`;
+  getTxExplorerUrl(GNOSIS_CHAIN_ID, hash);
