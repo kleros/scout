@@ -554,7 +554,7 @@ const QuickGuidePage: React.FC = () => {
             </ClickableInfoCard>
           </CardRow>
 
-          <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/curate/kleros-scout', '_blank')}>
+          <ClickableInfoCard onClick={() => window.open('https://docs.kleros.io/products/scout', '_blank')}>
             <DocumentationIcon />
             <CardTitleAndDescription>
               <CardTitle>Documentation</CardTitle>
