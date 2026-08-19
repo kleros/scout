@@ -97,7 +97,7 @@ const ITEMS = [
   {
     text: "App Guide",
     Icon: Guide,
-    url: "https://docs.kleros.io/products/curate/kleros-scout",
+    url: "https://docs.kleros.io/products/scout",
   },
   {
     text: "Crypto Beginner's Guide",
@@ -107,7 +107,7 @@ const ITEMS = [
   {
     text: "FAQ",
     Icon: Faq,
-    url: "https://docs.kleros.io/products/curate/kleros-scout/faqs",
+    url: "https://docs.kleros.io/products/scout-faq",
   },
 ];
 

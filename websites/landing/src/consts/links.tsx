@@ -13,7 +13,7 @@ export const links = [
   { name: 'Kleros Scout App', link: SCOUT_APP_URL },
   {
     name: 'Docs',
-    link: 'https://docs.kleros.io/products/curate/kleros-scout-metamask-snaps',
+    link: 'https://docs.kleros.io/products/scout',
   },
   { name: 'Join our Telegram', link: 'https://t.me/KlerosCurate' },
   { name: 'Submit & Earn Rewards', link: SCOUT_APP_URL },
