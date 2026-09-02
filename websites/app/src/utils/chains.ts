@@ -235,4 +235,11 @@ export const chains = [
     label: 'Robinhood',
     explorer: 'robinhoodchain.blockscout.com',
   },
+  {
+    id: '999',
+    namespace: 'eip155',
+    name: 'Hyperliquid',
+    label: 'HYPE',
+    explorer: 'hyperevmscan.io',
+  },
 ];
