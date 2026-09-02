@@ -28,6 +28,7 @@ import BittorrentIcon from 'svgs/chains/bittorrent.svg';
 import BobaIcon from 'svgs/chains/boba.svg';
 import WemixIcon from 'svgs/chains/wemix.svg';
 import RobinhoodIcon from 'svgs/chains/robinhood.svg';
+import HyperliquidIcon from 'svgs/chains/hyperliquid.svg';
 
 const chainIconMap: Record<string, React.ComponentType<any>> = {
   '1': EthereumIcon,
@@ -61,6 +62,7 @@ const chainIconMap: Record<string, React.ComponentType<any>> = {
   '146': SonicIcon,
   '81457': BlastIcon,
   '4663': RobinhoodIcon,
+  '999': HyperliquidIcon,
 };
 
 export const getChainIcon = (chainId: string) => chainIconMap[chainId] || null;
