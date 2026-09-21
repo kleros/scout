@@ -247,6 +247,6 @@ export const chains = [
     namespace: 'eip155',
     name: 'Arc Mainnet',
     label: 'ARC',
-    explorer: 'explorer.arc.io',
+    explorer: 'arc.etherscan.io',
   },
 ];
