@@ -242,4 +242,11 @@ export const chains = [
     label: 'HYPE',
     explorer: 'hyperevmscan.io',
   },
+  {
+    id: '5042',
+    namespace: 'eip155',
+    name: 'Arc Mainnet',
+    label: 'ARC',
+    explorer: 'explorer.arc.io',
+  },
 ];

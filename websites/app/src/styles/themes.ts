@@ -205,6 +205,7 @@ export const darkTheme = {
     'eip155:369': '#5B2D8E',
     'eip155:4326': '#2E4A7A',
     'eip155:81457': '#7A7028',
+    'eip155:5042': '#2D4576',
     'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp': '#985828',
   } as Record<string, string>,
 };
