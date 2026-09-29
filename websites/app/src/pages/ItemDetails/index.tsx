@@ -24,6 +24,7 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
+import { AttentionBanner } from 'components/Attention'
 
 const Container = styled.div`
   display: flex;
@@ -84,6 +85,14 @@ const ReturnButton = styled(Link)`
 
   &:hover svg path {
     fill: ${({ theme }) => theme.primaryBlue};
+  }
+`
+
+const AttentionSlot = styled.div`
+  margin-bottom: 16px;
+
+  &:empty {
+    display: none;
   }
 `
 
@@ -480,6 +489,13 @@ const ItemDetails: React.FC = () => {
               Return
             </ReturnButton>
           </TopBar>
+
+          <AttentionSlot>
+            <AttentionBanner
+              itemId={itemId}
+              refreshKey={JSON.stringify(detailsData?.requests?.[0]?.rounds?.[0] ?? null)}
+            />
+          </AttentionSlot>
 
           <MainCard>
             <RightSection>

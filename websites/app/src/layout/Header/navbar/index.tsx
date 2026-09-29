@@ -15,6 +15,7 @@ import { registryNavOptions } from "utils/items";
 
 import ConnectWallet from "components/ConnectWallet";
 import LightButton from "components/LightButton";
+import { AttentionBadge } from "components/Attention";
 import OverlayPortal from "components/OverlayPortal";
 import { Overlay } from "components/Overlay";
 
@@ -60,6 +61,11 @@ const Container = styled.div<{ isOpen: boolean; }>`
   hr {
     margin: 24px 0;
   }
+`;
+
+const WithBadge = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 const WalletContainer = styled.div`
@@ -207,17 +213,20 @@ const NavBar: React.FC = () => {
                 </RegistriesDropdown>
               </div>
 
-              <LightButton
-                isMobileNavbar={true}
-                text="My Profile"
-                onClick={() => {
-                  navigate(`/profile/pending${
-                    connectedAddress ? `?address=${connectedAddress.toLowerCase()}` : ""
-                  }`);
-                  toggleIsOpen();
-                }}
-                Icon={ProfileIcon}
-              />
+              <WithBadge>
+                <LightButton
+                  isMobileNavbar={true}
+                  text="My Profile"
+                  onClick={() => {
+                    navigate(`/profile/pending${
+                      connectedAddress ? `?address=${connectedAddress.toLowerCase()}` : ""
+                    }`);
+                    toggleIsOpen();
+                  }}
+                  Icon={ProfileIcon}
+                />
+                <AttentionBadge />
+              </WithBadge>
 
               <LightButton
                 isMobileNavbar={true}

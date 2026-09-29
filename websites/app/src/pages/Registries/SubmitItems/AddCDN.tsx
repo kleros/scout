@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useImageStorage } from 'hooks/useImageStorage'
-import { useValidationIssues } from 'hooks/useValidationIssues'
+import { useSubmissionChecks } from 'hooks/useSubmissionChecks'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
 import { errorToast } from 'utils/wrapWithToast'
@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from './index'
 import Tooltip from 'components/Tooltip'
+import { ChecksPanel, FieldChecks } from 'components/SubmissionChecks'
 
 const columns = [
   {
@@ -80,12 +81,28 @@ const AddCDN: React.FC = () => {
     setFormData({ network, address, domain })
   }, [network, address, domain, setFormData])
 
-  const { data: issues, isLoading: issuesLoading } = useValidationIssues({
-    chainId: network.value,
-    registry: 'cdn',
-    address,
-    domain,
-  })
+  const values = useMemo(
+    () => ({
+      'Contract address': `${network.value}:${address}`,
+      'Domain name': domain,
+      'Visual proof': '',
+    }),
+    [network.value, address, domain],
+  )
+  const draft = useMemo(
+    () => ({
+      registry: 'cdn' as const,
+      values,
+      files: { 'Visual proof': image },
+    }),
+    [values, image],
+  )
+  const checks = useSubmissionChecks(draft)
+  const applyFix = useCallback((field: string, value: string) => {
+    if (field === 'Contract address')
+      setAddress(value.slice(value.lastIndexOf(':') + 1))
+    else if (field === 'Domain name') setDomain(value)
+  }, [])
 
   const { submit, isSubmitting, deposits } = useCurateSubmit({
     registryKey: 'cdn',
@@ -102,19 +119,15 @@ const AddCDN: React.FC = () => {
   const submittingDisabled =
     !address ||
     !domain ||
-    !!issues ||
-    issuesLoading ||
+    checks.blocking ||
+    checks.checking ||
     !image ||
     !!imageError ||
     isSubmitting
 
   const handleSubmit = () =>
     submit(
-      {
-        'Contract address': `${network.value}:${address}`,
-        'Domain name': domain,
-        'Visual proof': '',
-      },
+      values,
       image
         ? { 'Visual proof': { file: image, role: Roles.CurateItemImage } }
         : undefined,
@@ -134,7 +147,11 @@ const AddCDN: React.FC = () => {
         registry="cdn"
         tooltip={columns[0].description}
       />
-      {issues?.address && <ErrorMessage>{issues.address.message}</ErrorMessage>}
+      <FieldChecks
+        results={checks.results}
+        field="Contract address"
+        onApplyFix={applyFix}
+      />
       <FieldLabel>
         <Tooltip data-tooltip={columns[1].description}>Domain</Tooltip>
       </FieldLabel>
@@ -143,10 +160,11 @@ const AddCDN: React.FC = () => {
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
       />
-      {issues?.domain && <ErrorMessage>{issues.domain.message}</ErrorMessage>}
-      {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
-      )}
+      <FieldChecks
+        results={checks.results}
+        field="Domain name"
+        onApplyFix={applyFix}
+      />
       <ImageUpload
         value={image}
         onChange={setImage}
@@ -156,6 +174,12 @@ const AddCDN: React.FC = () => {
         setImageError={setImageError}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
+      <ChecksPanel
+        results={checks.results}
+        checking={checks.checking}
+        onRetry={checks.retry}
+        onApplyFix={applyFix}
+      />
       <SubmitFooter
         deposits={deposits}
         disabled={submittingDisabled}

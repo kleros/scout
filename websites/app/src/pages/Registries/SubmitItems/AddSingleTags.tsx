@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLocalStorage } from 'hooks/useLocalStorage'
-import { useValidationIssues } from 'hooks/useValidationIssues'
+import { useSubmissionChecks } from 'hooks/useSubmissionChecks'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
 import RichAddressForm, { NetworkOption } from './RichAddressForm'
@@ -9,11 +9,11 @@ import FormHeader from './FormHeader'
 import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
-  ErrorMessage,
   StyledTextInput,
   FieldLabel,
 } from './index'
 import Tooltip from 'components/Tooltip'
+import { ChecksPanel, FieldChecks } from 'components/SubmissionChecks'
 
 const columns = [
   {
@@ -93,14 +93,24 @@ const AddAddressTag: React.FC = () => {
     setFormData({ network, address, projectName, publicNameTag, publicNote, website })
   }, [network, address, projectName, publicNameTag, publicNote, website, setFormData])
 
-  const { data: issues, isLoading: issuesLoading } = useValidationIssues({
-    chainId: network.value,
-    registry: 'single-tags',
-    address,
-    projectName,
-    publicNameTag,
-    link: website,
-  })
+  const values = useMemo(
+    () => ({
+      'Contract Address': `${network.value}:${address}`,
+      'Public Name Tag': publicNameTag,
+      'Project Name': projectName,
+      'UI/Website Link': website,
+      'Public Note': publicNote,
+    }),
+    [network.value, address, publicNameTag, projectName, website, publicNote],
+  )
+  const draft = useMemo(() => ({ registry: 'single-tags' as const, values }), [values])
+  const checks = useSubmissionChecks(draft)
+  const applyFix = useCallback((field: string, value: string) => {
+    if (field === 'Contract Address') setAddress(value.slice(value.lastIndexOf(':') + 1))
+    else if (field === 'Public Name Tag') setPublicNameTag(value)
+    else if (field === 'Project Name') setProjectName(value)
+    else if (field === 'UI/Website Link') setWebsite(value)
+  }, [])
 
   const { submit, isSubmitting, deposits } = useCurateSubmit({
     registryKey: 'single-tags',
@@ -122,18 +132,11 @@ const AddAddressTag: React.FC = () => {
     !publicNameTag ||
     !publicNote ||
     !website ||
-    !!issues ||
-    issuesLoading ||
+    checks.blocking ||
+    checks.checking ||
     isSubmitting
 
-  const handleSubmit = () =>
-    submit({
-      'Contract Address': `${network.value}:${address}`,
-      'Public Name Tag': publicNameTag,
-      'Project Name': projectName,
-      'UI/Website Link': website,
-      'Public Note': publicNote,
-    })
+  const handleSubmit = () => submit(values)
 
   return (
     <AddContainer>
@@ -149,10 +152,7 @@ const AddAddressTag: React.FC = () => {
         registry="single-tags"
         tooltip={columns[0].description}
       />
-      {issues?.address && <ErrorMessage>{issues.address.message}</ErrorMessage>}
-      {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
-      )}
+      <FieldChecks results={checks.results} field="Contract Address" onApplyFix={applyFix} />
       <FieldLabel>
         <Tooltip data-tooltip={columns[2].description}>Project name</Tooltip>
       </FieldLabel>
@@ -161,9 +161,7 @@ const AddAddressTag: React.FC = () => {
         value={projectName}
         onChange={(e) => setProjectName(e.target.value)}
       />
-      {issues?.projectName && (
-        <ErrorMessage>{issues.projectName.message}</ErrorMessage>
-      )}
+      <FieldChecks results={checks.results} field="Project Name" onApplyFix={applyFix} />
       <FieldLabel>
         <Tooltip data-tooltip={columns[1].description}>Public Name Tag</Tooltip>
       </FieldLabel>
@@ -172,9 +170,7 @@ const AddAddressTag: React.FC = () => {
         value={publicNameTag}
         onChange={(e) => setPublicNameTag(e.target.value)}
       />
-      {issues?.publicNameTag && (
-        <ErrorMessage>{issues.publicNameTag.message}</ErrorMessage>
-      )}
+      <FieldChecks results={checks.results} field="Public Name Tag" onApplyFix={applyFix} />
       <FieldLabel>
         <Tooltip data-tooltip={columns[4].description}>Public note</Tooltip>
       </FieldLabel>
@@ -183,6 +179,7 @@ const AddAddressTag: React.FC = () => {
         value={publicNote}
         onChange={(e) => setPublicNote(e.target.value)}
       />
+      <FieldChecks results={checks.results} field="Public Note" onApplyFix={applyFix} />
       <FieldLabel>
         <Tooltip data-tooltip={columns[3].description}>UI/Website link</Tooltip>
       </FieldLabel>
@@ -191,7 +188,13 @@ const AddAddressTag: React.FC = () => {
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
       />
-      {issues?.link && <ErrorMessage>{issues.link.message}</ErrorMessage>}
+      <FieldChecks results={checks.results} field="UI/Website Link" onApplyFix={applyFix} />
+      <ChecksPanel
+        results={checks.results}
+        checking={checks.checking}
+        onRetry={checks.retry}
+        onApplyFix={applyFix}
+      />
       <SubmitFooter
         deposits={deposits}
         disabled={submittingDisabled}

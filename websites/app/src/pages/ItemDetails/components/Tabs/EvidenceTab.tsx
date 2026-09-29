@@ -1,7 +1,8 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { Address } from 'viem'
 import { useSearchParams, Link } from 'react-router-dom'
+import { useAccount } from 'wagmi'
 import { StyledButton } from 'components/Button'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import AttachmentIcon from 'assets/svgs/icons/attachment.svg'
@@ -11,6 +12,11 @@ import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/Accou
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { useScrollTop } from 'hooks/useScrollTop'
 import InlineEvidenceForm from './InlineEvidenceForm'
+import {
+  useMarkEvidenceSeen,
+  useSeenEvidenceState,
+} from 'hooks/useSeenEvidence'
+import { unreadEvidence } from 'utils/cases/attention'
 
 const EvidenceSection = styled.div<{ hasEvidence?: boolean }>`
   display: flex;
@@ -87,6 +93,20 @@ const EvidenceTitle = styled.div`
 
 const EvidenceNumber = styled.span`
   color: ${({ theme }) => theme.secondaryText};
+`
+
+const NewChip = styled.span`
+  display: inline-block;
+  margin-right: 8px;
+  padding: 2px 8px;
+  border: 1px solid ${({ theme }) => theme.warning};
+  border-radius: 999px;
+  color: ${({ theme }) => theme.warning};
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  vertical-align: 2px;
 `
 
 const EvidenceDescription = styled.div`
@@ -243,6 +263,40 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
   const [searchParams, setSearchParams] = useSearchParams()
   const scrollTop = useScrollTop()
   const formRef = useRef<HTMLDivElement>(null)
+  const { address: viewer } = useAccount()
+  const itemKey = compositeItemId.toLowerCase()
+
+  // What was already read when the tab opened (on any device, once the
+  // server's reads are in), so "New" stays visible during this visit while
+  // everything shown gets marked as read.
+  const { seen, ready } = useSeenEvidenceState(viewer)
+  const openKey = `${viewer?.toLowerCase()}:${itemKey}`
+  const [opened, setOpened] = useState<{ key: string; until: number }>()
+  useEffect(() => {
+    if (viewer && ready && opened?.key !== openKey)
+      setOpened({ key: openKey, until: seen[itemKey] ?? 0 })
+  }, [viewer, ready, opened?.key, openKey, seen, itemKey])
+  const seenAtOpen = opened?.key === openKey ? opened.until : undefined
+  const unread = useMemo(
+    () =>
+      new Set(
+        viewer && seenAtOpen !== undefined
+          ? unreadEvidence(evidences, viewer, seenAtOpen)
+          : [],
+      ),
+    [evidences, viewer, seenAtOpen],
+  )
+  const isNew = (evidence: unknown) => unread.has(evidence)
+  const latest = evidences.reduce(
+    (max, e) => Math.max(max, Number(e?.timestamp) || 0),
+    0,
+  )
+  // Read here and, when signed in, on every device; that also reads the
+  // alerts about this evidence in the bell.
+  const markSeen = useMarkEvidenceSeen(viewer)
+  useEffect(() => {
+    if (seenAtOpen !== undefined && latest > 0) markSeen(itemKey, latest)
+  }, [seenAtOpen, markSeen, itemKey, latest])
 
   const handleScrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
@@ -265,6 +319,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
             <Evidence key={idx}>
               <EvidenceHeader>
                 <EvidenceTitle>
+                  {isNew(evidence) ? <NewChip>New</NewChip> : null}
                   <EvidenceNumber>#{idx + 1}. </EvidenceNumber>
                   {evidence?.title}
                 </EvidenceTitle>

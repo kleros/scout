@@ -15,6 +15,7 @@ import HourglassIcon from 'svgs/icons/hourglass.svg'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import { useCurateRewards } from 'hooks/useCurateRewards'
 import { getItemRewardTotal } from 'utils/rewardedItems'
+import { CaseStatusLine, EvidenceCount } from 'components/Attention/CaseStatus'
 import {
   Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
   MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer, ViewLink,
@@ -126,6 +127,7 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
       <Divider />
 
       <Body>
+        {fromProfile === 'pending' ? <CaseStatusLine itemId={item.id} /> : null}
         <MetaLine>
           <InfoRow>
             <LabelValue>
@@ -161,6 +163,12 @@ const ItemCard = ({ item, fromProfile = 'pending' }: { item: any; fromProfile?: 
           </InfoRow>
 
           <ActionsGroup>
+            <EvidenceCount
+              itemId={item.id}
+              itemPath={itemPath}
+              evidences={item.requests?.[0]?.evidenceGroup?.evidences}
+              active={fromProfile === 'pending'}
+            />
             {rewardTotalWei > 0n && (
               <RewardedBadge
                 title={`This submission earned ${formatValue(rewardTotalWei, 0)} ${rewardsData?.tokenSymbol ?? 'PNK'} in curation rewards`}

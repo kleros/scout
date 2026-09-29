@@ -25,6 +25,7 @@ import { ExternalLink } from "components/ExternalLink";
 import { chains, getAddressExplorerUrl, GNOSIS_CHAIN_ID } from "utils/chains";
 import { useProfileFilters } from "context/FilterContext";
 import ScrollTop from "components/ScrollTop";
+import { AttentionPanel } from "components/Attention";
 
 const Container = styled.div`
   display: flex;
@@ -232,6 +233,11 @@ const ConnectWalletContainer = styled.div`
     border: 1px solid ${({ theme }) => theme.lightGrey};
     margin: 0;
   }
+`;
+
+// The attention panel sits between the header and the lists.
+const AttentionSlot = styled.div`
+  margin-bottom: 32px;
 `;
 
 const FilterControlsContainer = styled.div`
@@ -532,6 +538,11 @@ const Profile: React.FC = () => {
               </HeaderStatBox>
             </HeaderStatsContainer>
           </Header>
+          {isConnected && userAddress && userAddress.toLowerCase() === connectedAddress?.toLowerCase() ? (
+            <AttentionSlot>
+              <AttentionPanel address={userAddress} />
+            </AttentionSlot>
+          ) : null}
           <FilterControlsContainer>
             <ProfileSearchBar text={filters.text} setText={filters.setText} />
             <FilterButton onClick={() => setIsFilterModalOpen(true)} />

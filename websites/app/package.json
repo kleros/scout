@@ -25,7 +25,8 @@
     "clean": "rimraf node_modules dist",
     "start": "wagmi generate && vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node scripts/test.mjs"
   },
   "dependencies": {
     "@kleros/kleros-app": "^2.0.2",
@@ -62,6 +63,7 @@
     "react-use": "^17.4.0",
     "recharts": "^3.1.2",
     "styled-components": "^5.3.9",
+    "typescript-5": "npm:typescript@5.9.3",
     "viem": "^2.24.1",
     "wagmi": "^2.14.15"
   },
@@ -78,6 +80,7 @@
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.0.0",
     "eslint-plugin-react-hooks": "^4.0.0",
+    "jsdom": "^16.6.0",
     "process": "^0.11.10",
     "typescript": "^4.9.5",
     "vite": "^6.3.5",
