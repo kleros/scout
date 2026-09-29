@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import styled, { css, useTheme } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
 import { PARTY, SUBGRAPH_RULING, itemToStatusCode, STATUS_CODE } from '../../utils/itemStatus'
@@ -12,6 +13,7 @@ import { errorToast } from '../../utils/wrapWithToast'
 import { parseWagmiError } from '../../utils/parseWagmiError'
 import useNativeBalance from '../../hooks/useNativeBalance'
 import { EnsureChain } from 'components/EnsureChain'
+import PayoutWarning from 'components/PayoutWarning'
 
 const Card = styled.div`
   background: ${({ theme }) => theme.backgroundThree};
@@ -302,6 +304,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const [selectedSide, setSelectedSide] = useState<PARTY>(PARTY.NONE)
   const [contributionShare, setContributionShare] = useState(1)
   const { balance: nativeBalance } = useNativeBalance()
+  const { address: connectedAddress } = useAccount()
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
   const navigate = useNavigate()
@@ -456,6 +459,10 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                 <RewardAmount>{Number(formatEther(potentialRewardForContribution)).toFixed(4)} {nativeCurrency}</RewardAmount>
               </InfoRow>
             </ContributionInfo>
+            <PayoutWarning
+              address={connectedAddress}
+              stake="Refunds and rewards for this contribution"
+            />
             <EnsureChain>
               <ContributeButton
                 onClick={handleFundAppeal}

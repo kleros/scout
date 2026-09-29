@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 import { formatEther } from 'viem'
+import { useAccount } from 'wagmi'
 import { EnsureChain } from 'components/EnsureChain'
 import EnsureAuth from 'components/EnsureAuth'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
+import PayoutWarning from 'components/PayoutWarning'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
 import { formatValue } from 'utils/formatValue'
 import useNativeBalance from 'hooks/useNativeBalance'
@@ -48,6 +50,7 @@ const SubmitFooter: React.FC<Props> = ({
   submitLabel,
 }) => {
   const [acknowledged, setAcknowledged] = useState(false)
+  const { address } = useAccount()
   const { balance: nativeBalance } = useNativeBalance()
   const requiredValue = deposits
     ? deposits.arbitrationCost + deposits.submissionBaseDeposit
@@ -59,6 +62,7 @@ const SubmitFooter: React.FC<Props> = ({
 
   return (
     <Wrapper>
+      <PayoutWarning address={address} stake="Your deposit refund" />
       <PolicyAcknowledgement
         registryName={registryName}
         warningText={SUBMIT_WARNING}
