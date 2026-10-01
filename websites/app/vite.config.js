@@ -11,6 +11,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // Local notification API (`yarn notify:dev`); opt-in so plain `yarn start` stays quiet.
+      ...(process.env.NOTIFY_API_URL ? { '/api/notify': { target: process.env.NOTIFY_API_URL } } : {}),
       '/api/dapplooker/public': {
         target: 'https://analytics.dapplooker.com',
         changeOrigin: true,

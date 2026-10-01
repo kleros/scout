@@ -40,6 +40,12 @@ query PendingItems($userAddress: String!, $first: Int!, $skip: Int!, $status: [s
       deposit
       submissionTime
       disputed
+      evidenceGroup {
+        evidences {
+          party
+          timestamp
+        }
+      }
     }
   }
 }

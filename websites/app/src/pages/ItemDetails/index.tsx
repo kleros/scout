@@ -24,6 +24,8 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
+import FollowButton from 'components/FollowButton'
+import { AttentionBanner } from 'components/Attention'
 
 const Container = styled.div`
   display: flex;
@@ -51,6 +53,12 @@ const TopBar = styled.div`
   margin-bottom: 16px;
   gap: 16px;
   flex-wrap: wrap;
+`
+
+const TopActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `
 
 const ReturnButton = styled(Link)`
@@ -84,6 +92,14 @@ const ReturnButton = styled(Link)`
 
   &:hover svg path {
     fill: ${({ theme }) => theme.primaryBlue};
+  }
+`
+
+const AttentionSlot = styled.div`
+  margin-bottom: 16px;
+
+  &:empty {
+    display: none;
   }
 `
 
@@ -475,11 +491,21 @@ const ItemDetails: React.FC = () => {
 
           <TopBar>
             <Breadcrumb registryName={breadcrumbName} itemName={displayName} registryUrl={registryUrl} useHistoryBack={cameFromApp} />
-            <ReturnButton to={registryUrl} onClick={handleBackClick}>
-              <ArrowLeftIcon />
-              Return
-            </ReturnButton>
+            <TopActions>
+              <FollowButton itemId={itemId} />
+              <ReturnButton to={registryUrl} onClick={handleBackClick}>
+                <ArrowLeftIcon />
+                Return
+              </ReturnButton>
+            </TopActions>
           </TopBar>
+
+          <AttentionSlot>
+            <AttentionBanner
+              itemId={itemId}
+              refreshKey={JSON.stringify(detailsData?.requests?.[0]?.rounds?.[0] ?? null)}
+            />
+          </AttentionSlot>
 
           <MainCard>
             <RightSection>

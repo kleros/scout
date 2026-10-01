@@ -6,6 +6,8 @@ import { responsiveSize } from 'styles/responsiveSize'
 import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
 import CrowdfundingCard from 'components/CrowdfundingCard'
 import { STATUS_CODE } from 'utils/itemStatus'
+import { downloadCalendar } from 'utils/calendar'
+import { getItemDisplayName, revRegistryMap } from 'utils/items'
 import ItemTimeline from '../ItemTimeline'
 import ItemFieldsDisplay from '../ItemFieldsDisplay'
 import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
@@ -159,6 +161,65 @@ const ScoutWatermark = styled.div`
   }
 `
 
+const CalendarButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.secondaryBlue};
+  cursor: pointer;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
+  }
+`
+
+/** Calendar events (with alarms) for the open appeal round's deadlines. */
+const downloadAppealDeadlines = (detailsData: any, round: any, registryAddress: string) => {
+  const start = Number(round.appealPeriodStart) * 1000
+  const end = Number(round.appealPeriodEnd) * 1000
+  const name = getItemDisplayName(detailsData, revRegistryMap[registryAddress] ?? '')
+  const url = window.location.href.split('#')[0]
+  const uid = `${detailsData.itemID}-${round.appealPeriodStart}`
+  const ruling = String(round.ruling)
+  const loser = ruling === 'Reject' || ruling === '2' ? 'submitter' : ruling === 'Accept' || ruling === '1' ? 'challenger' : null
+  const events = loser
+    ? [
+        {
+          uid: `${uid}-loser@scout.kleros.io`,
+          title: `Scout: last moment for the ${loser} side to fund an appeal (${name})`,
+          description: `The side that lost the ruling (the ${loser}) must be fully funded before this time to appeal. Otherwise the ruling stands.`,
+          url,
+          at: start + (end - start) / 2,
+          alarmsHoursBefore: [6, 1],
+        },
+        {
+          uid: `${uid}-winner@scout.kleros.io`,
+          title: `Scout: appeal deadline for the ${loser === 'submitter' ? 'challenger' : 'submitter'} side (${name})`,
+          description: `If the ${loser} side funded its appeal, the side that won the ruling must be fully funded before this time or it loses the case.`,
+          url,
+          at: end,
+          alarmsHoursBefore: [12, 3, 1],
+        },
+      ]
+    : [
+        {
+          uid: `${uid}-both@scout.kleros.io`,
+          title: `Scout: appeal deadline (${name})`,
+          description: 'Jurors did not reach a ruling. If only one side is fully funded at this time, that side wins.',
+          url,
+          at: end,
+          alarmsHoursBefore: [6, 1],
+        },
+      ]
+  downloadCalendar(
+    `scout-appeal-${detailsData.itemID.slice(0, 10)}.ics`,
+    events.filter((event) => event.at > Date.now()),
+  )
+}
+
 interface ItemDetailsTabProps {
   detailsData: any
   statusCode: number | null
@@ -310,6 +371,17 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
                         )}
                       </AppealInfoItem>
                     </>
+                  )}
+                  {currentRulingRound?.appealPeriodEnd && Number(currentRulingRound.appealPeriodEnd) * 1000 > Date.now() && (
+                    <AppealInfoItem>
+                      <AppealInfoLabel>Reminders</AppealInfoLabel>
+                      <CalendarButton
+                        type="button"
+                        onClick={() => downloadAppealDeadlines(detailsData, currentRulingRound, registryAddress)}
+                      >
+                        Add deadlines to calendar
+                      </CalendarButton>
+                    </AppealInfoItem>
                   )}
                 </>
               )}

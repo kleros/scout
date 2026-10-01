@@ -57,6 +57,12 @@ query Disputes($userAddress: String!, $registryAddresses: [String!]!, $first: In
       disputeOutcome
       resolved
       resolutionTime
+      evidenceGroup {
+        evidences {
+          party
+          timestamp
+        }
+      }
     }
   }
   # Disputes where user is the challenger
@@ -99,6 +105,12 @@ query Disputes($userAddress: String!, $registryAddresses: [String!]!, $first: In
       disputeOutcome
       resolved
       resolutionTime
+      evidenceGroup {
+        evidences {
+          party
+          timestamp
+        }
+      }
     }
   }
 }

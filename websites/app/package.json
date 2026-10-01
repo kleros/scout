@@ -25,7 +25,9 @@
     "clean": "rimraf node_modules dist",
     "start": "wagmi generate && vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node scripts/test.mjs",
+    "notify:dev": "node scripts/notify-dev.mjs"
   },
   "dependencies": {
     "@kleros/kleros-app": "^2.0.2",
@@ -47,6 +49,7 @@
     "json-2-csv": "^5.5.9",
     "overlayscrollbars": "^2.3.0",
     "overlayscrollbars-react": "^0.5.2",
+    "postgres": "3.4.9",
     "react": "^18.0.0",
     "react-day-picker": "^9.13.2",
     "react-dom": "^18.0.0",
@@ -62,22 +65,28 @@
     "react-use": "^17.4.0",
     "recharts": "^3.1.2",
     "styled-components": "^5.3.9",
+    "typescript-5": "npm:typescript@5.9.3",
     "viem": "^2.24.1",
-    "wagmi": "^2.14.15"
+    "wagmi": "^2.14.15",
+    "web-push": "3.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@netlify/functions": "6.0.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "@types/react-modal": "^3.14.1",
     "@types/react-router-dom": "5.3.3",
     "@types/styled-components": "^5.1.26",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react-swc": "^3.10.1",
     "@wagmi/cli": "^2.3.2",
     "buffer": "^5.5.0",
     "eslint": "^8.0.0",
     "eslint-plugin-react": "^7.0.0",
     "eslint-plugin-react-hooks": "^4.0.0",
+    "jsdom": "^16.6.0",
     "process": "^0.11.10",
     "typescript": "^4.9.5",
     "vite": "^6.3.5",
@@ -92,6 +101,38 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "src/public/notify-sw.js"
+        ],
+        "env": {
+          "serviceworker": true
+        },
+        "rules": {
+          "no-restricted-globals": "off"
+        }
+      },
+      {
+        "files": [
+          "netlify/**/*.mts"
+        ],
+        "parser": "@typescript-eslint/parser",
+        "plugins": [
+          "@typescript-eslint"
+        ],
+        "rules": {
+          "no-unused-vars": "off",
+          "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+              "args": "none",
+              "ignoreRestSiblings": true
+            }
+          ]
+        }
+      }
     ]
   },
   "browserslist": {

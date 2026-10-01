@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useImageStorage } from 'hooks/useImageStorage'
-import { useValidationIssues } from 'hooks/useValidationIssues'
+import { useSubmissionChecks } from 'hooks/useSubmissionChecks'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import { parseCaip10 } from 'utils/parseCaip10'
 import { errorToast } from 'utils/wrapWithToast'
@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from './index'
 import Tooltip from 'components/Tooltip'
+import { ChecksPanel, FieldChecks } from 'components/SubmissionChecks'
 
 const columns = [
   {
@@ -109,14 +110,29 @@ const AddToken: React.FC = () => {
     setFormData({ network, address, decimals, name, symbol, website })
   }, [network, address, decimals, name, symbol, website, setFormData])
 
-  const { data: issues, isLoading: issuesLoading } = useValidationIssues({
-    chainId: network.value,
-    registry: 'tokens',
-    address,
-    projectName: name,
-    link: website,
-    symbol,
-  })
+  const values = useMemo(
+    () => ({
+      Address: `${network.value}:${address}`,
+      Name: name,
+      Symbol: symbol,
+      Decimals: decimals,
+      Logo: '',
+      Website: website,
+    }),
+    [network.value, address, name, symbol, decimals, website],
+  )
+  const draft = useMemo(
+    () => ({ registry: 'tokens' as const, values, files: { Logo: image } }),
+    [values, image],
+  )
+  const checks = useSubmissionChecks(draft)
+  const applyFix = useCallback((field: string, value: string) => {
+    if (field === 'Address') setAddress(value.slice(value.lastIndexOf(':') + 1))
+    else if (field === 'Name') setName(value)
+    else if (field === 'Symbol') setSymbol(value)
+    else if (field === 'Decimals') setDecimals(value)
+    else if (field === 'Website') setWebsite(value)
+  }, [])
 
   const { submit, isSubmitting, deposits } = useCurateSubmit({
     registryKey: 'tokens',
@@ -138,8 +154,8 @@ const AddToken: React.FC = () => {
     !decimals ||
     !name ||
     !symbol ||
-    !!issues ||
-    issuesLoading ||
+    checks.blocking ||
+    checks.checking ||
     !image ||
     !website ||
     !!imageError ||
@@ -147,14 +163,7 @@ const AddToken: React.FC = () => {
 
   const handleSubmit = () =>
     submit(
-      {
-        Address: `${network.value}:${address}`,
-        Name: name,
-        Symbol: symbol,
-        Decimals: decimals,
-        Logo: '',
-        Website: website,
-      },
+      values,
       image ? { Logo: { file: image, role: Roles.Logo } } : undefined,
     )
 
@@ -172,10 +181,11 @@ const AddToken: React.FC = () => {
         registry="tokens"
         tooltip={columns[0].description}
       />
-      {issues?.address && <ErrorMessage>{issues.address.message}</ErrorMessage>}
-      {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
-      )}
+      <FieldChecks
+        results={checks.results}
+        field="Address"
+        onApplyFix={applyFix}
+      />
       <FieldLabel>
         <Tooltip data-tooltip={columns[3].description}>Decimals</Tooltip>
       </FieldLabel>
@@ -187,6 +197,11 @@ const AddToken: React.FC = () => {
           if (/^\d*$/.test(value)) setDecimals(value)
         }}
       />
+      <FieldChecks
+        results={checks.results}
+        field="Decimals"
+        onApplyFix={applyFix}
+      />
       <FieldLabel>
         <Tooltip data-tooltip={columns[1].description}>Name</Tooltip>
       </FieldLabel>
@@ -195,9 +210,11 @@ const AddToken: React.FC = () => {
         value={name}
         onChange={(e) => setName(e.target.value)}
       />
-      {issues?.projectName && (
-        <ErrorMessage>{issues.projectName.message}</ErrorMessage>
-      )}
+      <FieldChecks
+        results={checks.results}
+        field="Name"
+        onApplyFix={applyFix}
+      />
       <FieldLabel>
         <Tooltip data-tooltip={columns[2].description}>Symbol</Tooltip>
       </FieldLabel>
@@ -206,7 +223,11 @@ const AddToken: React.FC = () => {
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
       />
-      {issues?.symbol && <ErrorMessage>{issues.symbol.message}</ErrorMessage>}
+      <FieldChecks
+        results={checks.results}
+        field="Symbol"
+        onApplyFix={applyFix}
+      />
       <ImageUpload
         value={image}
         onChange={setImage}
@@ -216,6 +237,7 @@ const AddToken: React.FC = () => {
         setImageError={setImageError}
       />
       {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
+      <FieldChecks results={checks.results} field="Logo" />
       <FieldLabel>
         <Tooltip data-tooltip={columns[5].description}>Website</Tooltip>
       </FieldLabel>
@@ -224,7 +246,17 @@ const AddToken: React.FC = () => {
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
       />
-      {issues?.link && <ErrorMessage>{issues.link.message}</ErrorMessage>}
+      <FieldChecks
+        results={checks.results}
+        field="Website"
+        onApplyFix={applyFix}
+      />
+      <ChecksPanel
+        results={checks.results}
+        checking={checks.checking}
+        onRetry={checks.retry}
+        onApplyFix={applyFix}
+      />
       <SubmitFooter
         deposits={deposits}
         disabled={submittingDisabled}

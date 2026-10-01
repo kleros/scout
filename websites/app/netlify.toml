@@ -10,6 +10,12 @@
   # on Netlify's build image OOMs. Raise it so production builds complete.
   NODE_OPTIONS = "--max-old-space-size=4096"
 
+# Notification service (netlify/notify): the /api/notify/* API plus two
+# scheduled functions (watcher, deliver). See netlify/notify/README.md.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

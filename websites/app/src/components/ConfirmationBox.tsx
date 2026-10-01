@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
 import { formatEther } from 'viem'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
@@ -16,6 +17,7 @@ import { errorToast, infoToast } from 'utils/wrapWithToast'
 import { parseWagmiError } from 'utils/parseWagmiError'
 import TransactionButton from 'components/TransactionButton'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
+import PayoutWarning from 'components/PayoutWarning'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
@@ -385,6 +387,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     nativeBalance !== undefined &&
     depositValue !== undefined &&
     nativeBalance < depositValue
+  const { address: connectedAddress } = useAccount()
 
   return (
     <ModalOverlay $isOpen={isConfirmationOpen} onClick={handleOverlayClick}>
@@ -440,6 +443,10 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               </FilePreview>
             )}
           </FileUploadContainer>
+          <PayoutWarning
+            address={connectedAddress}
+            stake="Your deposit refund and any reward"
+          />
           <PolicyAcknowledgement
             registryName={registryName}
             warningText={warningText}
