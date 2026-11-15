@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 import { MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import { tosTitle, tosIntro, tosSections } from 'shared/tosContent'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
 
 const Container = styled.div`
   display: flex;
@@ -35,40 +36,48 @@ const Paragraph = styled.p`
   color: ${({ theme }) => theme.secondaryText};
 `
 
+// Bullets and the paragraph colour, as on the landing site (a reset removes the bullets and the
+// global list style makes items white).
 const List = styled.ul`
   margin: 0 0 16px 24px;
   padding: 0;
   font-size: 15px;
   color: ${({ theme }) => theme.secondaryText};
+  list-style: disc outside;
 
   li {
     margin-bottom: 8px;
+    color: inherit;
   }
 `
 
-const TermsOfService: React.FC = () => (
-  <Container>
-    <Title>{tosTitle}</Title>
-    {tosIntro.map((text, i) => (
-      <Paragraph key={i}>{text}</Paragraph>
-    ))}
-    {tosSections.map((section) => (
-      <React.Fragment key={section.title}>
-        <SectionTitle>{section.title}</SectionTitle>
-        {section.content.map((block, i) =>
-          block.type === 'paragraph' ? (
-            <Paragraph key={i}>{block.text}</Paragraph>
-          ) : (
-            <List key={i}>
-              {block.items.map((item, j) => (
-                <li key={j}>{item}</li>
-              ))}
-            </List>
-          )
-        )}
-      </React.Fragment>
-    ))}
-  </Container>
-)
+const TermsOfService: React.FC = () => {
+  useDocumentTitle('Terms of Service')
+
+  return (
+    <Container>
+      <Title>{tosTitle}</Title>
+      {tosIntro.map((text, i) => (
+        <Paragraph key={i}>{text}</Paragraph>
+      ))}
+      {tosSections.map((section) => (
+        <React.Fragment key={section.title}>
+          <SectionTitle>{section.title}</SectionTitle>
+          {section.content.map((block, i) =>
+            block.type === 'paragraph' ? (
+              <Paragraph key={i}>{block.text}</Paragraph>
+            ) : (
+              <List key={i}>
+                {block.items.map((item, j) => (
+                  <li key={j}>{item}</li>
+                ))}
+              </List>
+            )
+          )}
+        </React.Fragment>
+      ))}
+    </Container>
+  )
+}
 
 export default TermsOfService

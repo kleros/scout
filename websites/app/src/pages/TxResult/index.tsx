@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { formatEther } from 'ethers'
@@ -6,12 +6,15 @@ import humanizeDuration from 'humanize-duration'
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
-import { useTxResultQuery, isTxHashValid } from 'hooks/queries/useTxResultQuery'
+import { useTxResultQuery, isTxHashValid, isTxNotFoundError } from 'hooks/queries/useTxResultQuery'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
 import { shortenAddress } from 'utils/shortenAddress'
+import { formatTimestamp } from 'utils/formatTimestamp'
 import { GNOSIS_CHAIN_ID, getAddressExplorerUrl, getTxExplorerUrl } from 'utils/chains'
 import Copyable from 'components/Copyable'
+import ErrorState from 'components/ErrorState'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
-import LoadingItems from 'pages/Registries/LoadingItems'
+import LoadingGif from 'gifs/loading-icosahedron.gif'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import GnosisIcon from 'assets/svgs/chains/gnosis.svg'
@@ -320,7 +323,8 @@ const AddressLink = styled(Link)`
 
 const InfoBanner = styled.div`
   padding: 12px 24px;
-  background: ${({ theme }) => theme.stroke}40;
+  /* stroke is already #RRGGBBAA: appending another alpha made the colour invalid (no background). */
+  background: ${({ theme }) => theme.subtleBackground};
   color: ${({ theme }) => theme.secondaryText};
   font-size: 13px;
   line-height: 1.5;
@@ -339,6 +343,41 @@ const MessageTitle = styled.div`
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 8px;
+`
+
+const LoadingBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 24px;
+  text-align: center;
+  color: ${({ theme }) => theme.secondaryText};
+  font-size: 14px;
+  line-height: 1.6;
+`
+
+const LoadingImage = styled.img`
+  height: 90px;
+  margin-bottom: 8px;
+`
+
+const ExplorerFallback = styled.div`
+  display: flex;
+  justify-content: center;
+  padding: 0 24px 32px;
+  margin-top: -24px;
+
+  a {
+    gap: 6px;
+    font-size: 14px;
+  }
+`
+
+// The row values break anywhere (hashes); sentences and dates wrap between words.
+const ValueText = styled.span`
+  word-break: normal;
+  overflow-wrap: break-word;
 `
 
 const CheckIcon = () => (
@@ -393,10 +432,70 @@ const formatAmount = (wei: bigint): string => {
   return asNum.toFixed(6).replace(/\.?0+$/, '')
 }
 
-const formatUtcDate = (date: Date): string => date.toUTCString().replace(',', '')
-
 const shortenHash = (hash: string): string =>
   hash.length > 12 ? `${hash.slice(0, 8)}...${hash.slice(-6)}` : hash
+
+const isoFromSeconds = (seconds: number): string => new Date(seconds * 1000).toISOString()
+
+/** What the row of the amount is called: the registry keeps a deposit, or an appeal contribution. */
+const amountLabelFor = (operationType: string, isDirectRegistryCall: boolean): string => {
+  if (!isDirectRegistryCall) return 'Value'
+  switch (operationType) {
+    case 'Item Submission':
+    case 'Removal Request':
+    case 'Request Challenge':
+      return 'Deposit'
+    case 'Appeal Contribution':
+      return 'Contribution'
+    default:
+      return 'Value'
+  }
+}
+
+interface NextStepsInput {
+  operationType: string
+  /** e.g. "51.6 xDAI", or undefined when the amount is unknown. */
+  amount?: string
+  /** Unix seconds when the challenge period ends, when known. */
+  periodEnd?: number
+  periodOver: boolean
+}
+
+/**
+ * What happens next, in the item page's words and as LightGeneralizedTCR does it: an unchallenged
+ * request is executed after the challenge period and the requester gets the whole deposit back; a
+ * challenged one goes to Kleros jurors, and the winner gets both deposits (a winning challenger
+ * gets theirs back plus the requester's base deposit). The sentences stay true for an old
+ * transaction opened from an item's history.
+ */
+const nextStepsFor = ({ operationType, amount, periodEnd, periodOver }: NextStepsInput): string | null => {
+  // No line break inside an amount ("51.6 xDAI") or a date.
+  const deposit = amount ? `the ${amount.replace(/ /g, ' ')} deposit` : 'the deposit'
+  const before =
+    periodEnd !== undefined
+      ? `before ${formatTimestamp(periodEnd, true).replace(/ /g, ' ')}`
+      : 'during the challenge period'
+  switch (operationType) {
+    case 'Item Submission':
+      return periodOver
+        ? 'The challenge period is over. Go to the item to see its current status.'
+        : `If nobody challenges this submission ${before}, anyone can execute the request to include the item, and the submitter gets ${deposit} back. If it is challenged, Kleros jurors decide, and the submitter loses the deposit if they rule against the item.`
+    case 'Removal Request':
+      return periodOver
+        ? 'The challenge period is over. Go to the item to see its current status.'
+        : `If nobody challenges this removal request ${before}, anyone can execute the request to remove the item, and the remover gets ${deposit} back. If it is challenged, Kleros jurors decide, and the remover loses the deposit if they rule to keep the item.`
+    case 'Request Challenge':
+      return `This challenge sent the request to Kleros jurors. Follow the case and add evidence on the item page. If the jurors rule for the challenger, the challenger gets ${deposit} back plus the requester's base deposit as a bounty. If they rule for the requester, the challenger loses it.`
+    case 'Appeal Contribution':
+      return "If the funded side wins the dispute, the contributor gets this contribution back plus a share of the other side's fees. If it loses, the contribution is lost."
+    case 'Request Execution':
+      return 'The request was executed after its challenge period: the item has its new status, and the requester got the deposit back.'
+    case 'Evidence Submission':
+      return "The evidence is part of the item's record. It shows in the item's Evidence tab once Scout's indexer has picked it up."
+    default:
+      return null
+  }
+}
 
 /**
  * Per-operation action sentence for the hero title. Falls back to a neutral "Transaction"
@@ -440,7 +539,32 @@ const TxResult: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const valid = isTxHashValid(txHash)
-  const { data, isLoading, isError } = useTxResultQuery(valid ? txHash : undefined)
+  const { data, isError, error, failureCount, failureReason, refetch } =
+    useTxResultQuery(valid ? txHash : undefined)
+  useDocumentTitle(
+    valid && txHash ? `Transaction ${txHash.slice(0, 6)}…${txHash.slice(-4)}` : 'Invalid transaction hash',
+  )
+  // While "Try again" runs, the query has no error (react-query resets it), but the panel and its
+  // button stay in place, so the page does not jump and the last answer stays readable.
+  const [retrying, setRetrying] = useState(false)
+  const lastError = useRef<unknown>(null)
+  if (error) lastError.current = error
+  const showError = !data && (isError || retrying)
+  const handleRetry = () => {
+    setRetrying(true)
+    refetch().finally(() => setRetrying(false))
+  }
+  // Gnosis answered "no such transaction" (wrong hash, or not mined yet), as opposed to not answering.
+  const notFound = showError && isTxNotFoundError(lastError.current)
+  const loading = valid && !data && !showError
+  // A lookup normally takes about a second: after 8 seconds, say that the chain is slow to answer.
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    setSlow(false)
+    if (!loading) return
+    const timer = setTimeout(() => setSlow(true), 8000)
+    return () => clearTimeout(timer)
+  }, [loading])
 
   const registryKey = data?.operation.registryKey
   const registryDisplayName = data?.operation.registryDisplayName
@@ -479,25 +603,42 @@ const TxResult: React.FC = () => {
               <MessageTitle>Invalid transaction hash</MessageTitle>
               The URL must contain a 32-byte (0x-prefixed, 64 hex characters) transaction hash.
             </Message>
-          ) : isLoading ? (
-            <LoadingItems />
-          ) : isError || !data ? (
-            <Message>
-              <MessageTitle>Transaction not found</MessageTitle>
-              We couldn't locate this transaction on {CHAIN_NAME}. It may still be pending,
-              or the hash may be incorrect.
-              <div style={{ marginTop: 16 }}>
+          ) : data ? (
+            <SuccessBody data={data} />
+          ) : showError ? (
+            <>
+              <ErrorState
+                title={notFound ? 'Transaction not found' : 'The transaction did not load'}
+                message={
+                  notFound
+                    ? `We couldn't find this transaction on ${CHAIN_NAME}. If it was sent a moment ago, it may still be pending: try again in a few seconds. Otherwise, check that the hash in the link is correct.`
+                    : `${CHAIN_NAME} did not answer. Check your connection and try again.`
+                }
+                onRetry={handleRetry}
+                retrying={retrying}
+              />
+              <ExplorerFallback>
                 <ExternalLink
                   href={explorerTxUrl(txHash ?? '')}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View on Blockscout <OpenIcon />
+                  View on Blockscout
+                  <span className="visually-hidden"> (opens in a new tab)</span>
+                  <OpenIcon />
                 </ExternalLink>
-              </div>
-            </Message>
+              </ExplorerFallback>
+            </>
           ) : (
-            <SuccessBody data={data} />
+            <LoadingBlock role="status">
+              <LoadingImage src={LoadingGif} alt="" />
+              <span>Looking up this transaction on {CHAIN_NAME}...</span>
+              {failureCount > 0 && isTxNotFoundError(failureReason) ? (
+                <span>Still looking: a transaction sent a moment ago can take a few seconds to appear.</span>
+              ) : slow ? (
+                <span>{CHAIN_NAME} is slow to answer. Still trying...</span>
+              ) : null}
+            </LoadingBlock>
           )}
         </Card>
       </Inner>
@@ -518,6 +659,7 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
     gasUsed,
     effectiveGasPrice,
     value,
+    accepted,
     confirmedAt,
     operation,
     challengePeriodSeconds,
@@ -534,12 +676,36 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
     operation.isDirectRegistryCall && operation.registryDisplayName
       ? `${operation.registryDisplayName} Registry`
       : undefined
-  const hasDeposit = !reverted && value > 0n
+  // The registry keeps the deposit (or, for an appeal, what the side still needed) and sends any
+  // excess back in the same transaction, so the amount kept can be less than the amount sent.
+  const kept = accepted ?? value
+  const refunded = accepted !== undefined && value > accepted ? value - accepted : 0n
+  const hasAmount = !reverted && kept > 0n
+  const amountLabel = amountLabelFor(operation.operationType, operation.isDirectRegistryCall)
+  const confirmedAtSeconds = Math.floor(confirmedAt / 1000)
+  const hasPeriod =
+    !reverted &&
+    operation.showPeriod &&
+    challengePeriodSeconds !== undefined &&
+    challengePeriodSeconds > 0
+  // LightGeneralizedTCR accepts a challenge until submission time + challenge period (inclusive).
+  const periodEnd = hasPeriod ? confirmedAtSeconds + (challengePeriodSeconds as number) : undefined
+  const periodOver = periodEnd !== undefined && Date.now() / 1000 > periodEnd
   const title = reverted
     ? 'Transaction reverted'
     : titleFor(operation.operationType, operation.registryDisplayName, operation.isKnownRegistry)
   const canGoToItem = !reverted && itemID && operation.registryKey
   const showUnrelatedBanner = !reverted && !operation.isKnownRegistry
+  const nextSteps = reverted
+    ? `The transaction failed, so nothing changed. Only the network fee was spent: any ${NATIVE_SYMBOL} sent with it stayed in the wallet.`
+    : operation.isKnownRegistry
+      ? nextStepsFor({
+          operationType: operation.operationType,
+          amount: hasAmount && amountLabel === 'Deposit' ? `${formatAmount(kept)} ${NATIVE_SYMBOL}` : undefined,
+          periodEnd,
+          periodOver,
+        })
+      : null
 
   return (
     <>
@@ -551,7 +717,9 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
               {reverted ? <CrossIcon /> : <CheckIcon />}
               {reverted ? 'Reverted' : 'Confirmed'}
             </StatusChip>
-            <span>{formatUtcDate(new Date(confirmedAt))}</span>
+            <time dateTime={isoFromSeconds(confirmedAtSeconds)}>
+              {formatTimestamp(confirmedAtSeconds, true)}
+            </time>
           </HeroMeta>
         </HeroText>
         {canGoToItem && (
@@ -569,13 +737,23 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
         </InfoBanner>
       )}
 
+      {nextSteps && <InfoBanner>{nextSteps}</InfoBanner>}
+
       <Divider />
 
       <DetailsList>
-        {hasDeposit && (
+        {hasAmount && (
           <DetailRow>
-            <DetailLabel>Deposit</DetailLabel>
-            <DetailValue>{formatAmount(value)} {NATIVE_SYMBOL}</DetailValue>
+            <DetailLabel>{amountLabel}</DetailLabel>
+            <DetailValue>
+              {formatAmount(kept)} {NATIVE_SYMBOL}
+              {refunded > 0n && (
+                <SubLabel>
+                  {formatAmount(value)} {NATIVE_SYMBOL} sent, {formatAmount(refunded)} {NATIVE_SYMBOL}{' '}
+                  refunded in the same transaction
+                </SubLabel>
+              )}
+            </DetailValue>
           </DetailRow>
         )}
 
@@ -599,13 +777,12 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
         <DetailRow>
           <DetailLabel>From</DetailLabel>
           <DetailValue>
-            <AddressLink
-              to={`/profile/pending?address=${from.toLowerCase()}`}
-              aria-label="View activity for this address"
-            >
+            {/* The name keeps the visible address (WCAG 2.5.3): "View profile of 0x7E41...C3D4". */}
+            <AddressLink to={`/profile/pending?address=${from.toLowerCase()}`}>
+              <span className="visually-hidden">View profile of </span>
               <IdenticonOrAvatar size="20" address={from} />
               <AddressOrName address={from} smallDisplay />
-              <ArrowIcon />
+              <ArrowIcon aria-hidden="true" />
             </AddressLink>
             <Copyable copyableContent={from} info="Copy address">{null}</Copyable>
             <ExternalLink
@@ -639,15 +816,17 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
           </DetailRow>
         )}
 
-        {!reverted &&
-          operation.showPeriod &&
-          challengePeriodSeconds !== undefined &&
-          challengePeriodSeconds > 0 && (
-            <DetailRow>
-              <DetailLabel>Challenge period</DetailLabel>
-              <DetailValue>{shortHumanizer(challengePeriodSeconds * 1000)}</DetailValue>
-            </DetailRow>
-          )}
+        {hasPeriod && periodEnd !== undefined && (
+          <DetailRow>
+            <DetailLabel>Challenge period</DetailLabel>
+            <DetailValue>
+              <ValueText>
+                {shortHumanizer((challengePeriodSeconds as number) * 1000)}, {periodOver ? 'ended' : 'ends'}{' '}
+                <time dateTime={isoFromSeconds(periodEnd)}>{formatTimestamp(periodEnd, true)}</time>
+              </ValueText>
+            </DetailValue>
+          </DetailRow>
+        )}
 
         <DetailRow>
           <DetailLabel>Network</DetailLabel>

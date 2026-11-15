@@ -6,6 +6,7 @@ import RewardCardContent from "components/Dashboard/RewardCardContent";
 
 import ActiveRewards from "svgs/icons/rewards.svg";
 import ScrollTop from "components/ScrollTop";
+import { useDocumentTitle } from "hooks/useDocumentTitle";
 import { REWARDS_DATA, getCurrentMonthDeadline } from "components/Dashboard/rewardsConfig";
 
 const Container = styled.div`
@@ -66,6 +67,8 @@ const StyledRewardCard = styled(RewardCardContent)`
 const currentMonthDeadline = getCurrentMonthDeadline();
 
 const RewardsPage = () => {
+  useDocumentTitle("Active Rewards");
+
   return (
     <Container>
       <ScrollTop />

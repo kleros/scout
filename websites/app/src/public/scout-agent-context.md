@@ -22,11 +22,11 @@ Read these before submitting, challenging, removing, appealing, or analyzing Sco
 - Never guess addresses, schemas, field ordering, policies, deposits, arbitration costs, or challenge windows.
 - Scout registries are on Gnosis Chain, chainId 100.
 - Scout uses LightGeneralizedTCR contracts.
-- `scout-registries.md` is valid only for these four Scout registries:
-  - ATQ / Address Tags Query: `0xAe6aaed5434244be3699c56E7Ebc828194F26dc3`
-  - Address Tags: `0x66260C69d03837016d88c9877e61e08Ef74C59F2`
-  - Kleros Tokens: `0xeE1502e29795Ef6C2D60F8D7120596abE3baD990`
-  - CDN / Contract Domain Names: `0x957A53A994860BE4750810131d9c876b2f52d6E1`
+- `scout-registries.md` is valid only for these four Scout registries (the skill files use the first name; the Scout app shows the name and URL slug in brackets):
+  - ATQ / Address Tags Query (app: Tag Queries, slug `tags-queries`): `0xAe6aaed5434244be3699c56E7Ebc828194F26dc3`
+  - Address Tags (app: Single Tags, slug `single-tags`): `0x66260C69d03837016d88c9877e61e08Ef74C59F2`
+  - Kleros Tokens (app: Tokens, slug `tokens`): `0xeE1502e29795Ef6C2D60F8D7120596abE3baD990`
+  - CDN / Contract Domain Names (app: CDN, slug `cdn`): `0x957A53A994860BE4750810131d9c876b2f52d6E1`
 - If a registry address is not one of those four, do not apply Scout seed templates or Scout-only assumptions. Verify the contract type and proceed with the appropriate Curate reference.
 - Use Scout seed templates first, then cross-check with current MetaEvidence.
 - Do not change `item.json.columns`; only populate `values`.
@@ -51,6 +51,20 @@ For Scout submissions:
 10. Submit only if all checks pass.
 
 For contract operations, use `light-curate.md`.
+
+## Scout App Pages
+
+Link people to the page that matches what you are discussing. `<slug>` is one of the four slugs above.
+
+- Registry list: https://scout-app.kleros.io/<slug> (for example https://scout-app.kleros.io/tokens)
+- Item page: https://scout-app.kleros.io/<slug>/<itemID>, where `<itemID>` is the item's bytes32 ID in the registry contract (keccak256 of the item URI passed to `addItem`)
+- Submission form: https://scout-app.kleros.io/<slug>/submit
+- Submissions and disputes of an address: https://scout-app.kleros.io/profile/pending?address=<address> (tabs: `/profile/pending`, `/profile/resolved`, `/profile/disputes`)
+- A Gnosis Chain transaction, explained: https://scout-app.kleros.io/tx/<transaction hash>
+- Active rewards: https://scout-app.kleros.io/rewards
+- Guide for people: https://scout-app.kleros.io/guide
+
+## Supporting References
 
 For supporting details, use:
 
