@@ -1,8 +1,8 @@
 import styled, { css } from 'styled-components'
+import { Link } from 'react-router-dom'
 import { responsiveSize } from 'styles/responsiveSize'
-import { landscapeStyle } from 'styles/landscapeStyle'
 
-export const Button = styled.button`
+const buttonStyles = css`
   display: flex;
   color: #000000;
   background: #FFFFFF;
@@ -27,6 +27,10 @@ export const Button = styled.button`
     border: none;
     background: #B8B8B8;
   }
+`
+
+export const Button = styled.button`
+  ${buttonStyles}
 
   &:disabled {
     background: rgba(255, 255, 255, 0.1);
@@ -35,16 +39,14 @@ export const Button = styled.button`
   }
 `
 
-export const ButtonAnchor = styled.a`
-  font-family: 'Manrope', sans-serif;
+/** A link that looks like Button: one element, so one tab stop and one name for screen readers. */
+export const ButtonLink = styled.a`
+  ${buttonStyles}
   text-decoration: none;
-  color: #000;
+`
 
-  ${landscapeStyle(
-    () => css`
-      display: flex;
-      position: relative;
-      padding-right: 64px;
-    `
-  )}
+/** The same, for a page of this site (client-side navigation). */
+export const ButtonRouterLink = styled(Link)`
+  ${buttonStyles}
+  text-decoration: none;
 `

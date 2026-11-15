@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useId, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
+import { useReducedMotion } from 'hooks/useReducedMotion'
 import PolicyImage from 'svgs/how-to-submit/policy.svg'
 import SubmitImage from 'svgs/how-to-submit/submit.svg'
 import RewardsImage from 'svgs/how-to-submit/rewards.svg'
@@ -23,14 +24,18 @@ const Container = styled.div`
   )}
 `
 
+// The visible list and, on narrow screens, hidden copies of it in each state share one grid cell,
+// so the section is always as tall as its tallest state and the content below never jumps.
 const StepsContainer = styled.div`
-  display: flex;
+  display: grid;
   margin-top: 32px;
-  position: relative;
-  flex-direction: column;
   width: 578px;
-  gap: 42px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
+`
+
+const VisibleLayer = styled.div`
+  grid-area: 1 / 1;
+  align-self: start;
+  position: relative;
 
   ${landscapeStyle(
     () => css`
@@ -39,7 +44,27 @@ const StepsContainer = styled.div`
   )}
 `
 
-const Step = styled.div`
+const SizingLayer = styled.div`
+  grid-area: 1 / 1;
+  visibility: hidden;
+
+  ${landscapeStyle(
+    () => css`
+      display: none;
+    `
+  )}
+`
+
+const StepsList = styled.ol`
+  display: flex;
+  flex-direction: column;
+  gap: 42px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+`
+
+const Step = styled.li`
   display: flex;
   cursor: pointer;
   transition: transform 0.2s ease, opacity 0.2s ease;
@@ -82,13 +107,15 @@ const VerticalLine = styled.div<{ activeStep: number }>`
     )}
 `
 
-const StepIndicator = styled.div<{ isActive: boolean }>`
+const INACTIVE_COLOR = '#808080'
+
+const StepIndicator = styled.span<{ isActive: boolean }>`
   display: flex;
   min-width: ${({ isActive }) => (isActive ? '32px' : '30px')};
   height: ${({ isActive }) => (isActive ? '32px' : '30px')};
   border-radius: 50%;
   font-size: ${responsiveSize(20, 24)};
-  color: ${({ isActive }) => (isActive ? '#fff' : '#747474')};
+  color: ${({ isActive }) => (isActive ? '#fff' : INACTIVE_COLOR)};
   background-color: ${({ isActive }) => (isActive ? '#7186FF' : '#08020E')};
   border: ${({ isActive }) => (isActive ? 'none' : '1px solid #7186FF;')};
   justify-content: center;
@@ -106,9 +133,15 @@ const StepIndicator = styled.div<{ isActive: boolean }>`
     )}
 `
 
-const StepTitle = styled.div<{ isActive: boolean }>`
+const StepTitle = styled.button<{ isActive: boolean }>`
   display: flex;
-  color: ${({ isActive }) => (isActive ? '#7186FF' : '#747474')};
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  color: ${({ isActive }) => (isActive ? '#7186FF' : INACTIVE_COLOR)};
   font-weight: ${({ isActive }) => (isActive ? '600' : '400')};
   font-size: ${({ isActive }) =>
     isActive ? responsiveSize(20, 24) : responsiveSize(16, 20)};
@@ -138,8 +171,13 @@ const ImageContainer = styled.div`
   )}
 `
 
-const Paragraph = styled.div<{ isActive: boolean }>`
-  display: ${({ isActive }) => (isActive ? 'block' : 'none')};
+const Description = styled.div<{ isActive: boolean }>`
+  display: ${({ isActive }) => (isActive ? 'flex' : 'none')};
+  flex-direction: column;
+  gap: 8px;
+`
+
+const Paragraph = styled.div`
   color: #fff;
   font-size: ${responsiveSize(20, 24)};
   margin-bottom: 10px;
@@ -176,7 +214,7 @@ const steps = [
   {
     id: 3,
     title:
-      'Post the challenge period, your insight is accepted & eligible to earn rewards!',
+      'After the challenge period, your insight is accepted & eligible to earn rewards!',
     paragraphs: [
       'Once submitted, your insight is reviewed by the community. If it is challenged for any reason' +
         ' it is taken to the Kleros Court where a crowdsourced jury decides if the insight’s valid.' +
@@ -185,55 +223,98 @@ const steps = [
   },
 ]
 
-type Timeout = ReturnType<typeof setTimeout>
+const AUTO_ADVANCE_MS = 10000
+
+interface IStepsList {
+  activeStep: number
+  idPrefix?: string
+  onSelect?: (step: number) => void
+}
+
+// With idPrefix and onSelect it is the list people use; without them, a hidden copy used for sizing.
+const StepsListContent: React.FC<IStepsList> = ({ activeStep, idPrefix, onSelect }) => (
+  <StepsList>
+    {steps.map((step) => {
+      const isActive = activeStep === step.id
+      const descriptionId = idPrefix ? `${idPrefix}-step-${step.id}` : undefined
+      return (
+        // A click anywhere on the step selects it; the title button is the keyboard and screen-reader control.
+        <Step key={step.id} onClick={onSelect ? () => onSelect(step.id) : undefined}>
+          <StepIndicator isActive={isActive} aria-hidden="true">
+            {step.id}
+          </StepIndicator>
+          <TitleAndDescription>
+            <StepTitle
+              type="button"
+              isActive={isActive}
+              aria-expanded={onSelect ? isActive : undefined}
+              aria-controls={descriptionId}
+              tabIndex={onSelect ? undefined : -1}
+            >
+              {step.title}
+            </StepTitle>
+            <Description id={descriptionId} isActive={isActive}>
+              {step.paragraphs.map((paragraph, index) => (
+                <Paragraph key={index}>{paragraph}</Paragraph>
+              ))}
+            </Description>
+          </TitleAndDescription>
+        </Step>
+      )
+    })}
+  </StepsList>
+)
 
 const StepComponent = () => {
+  const idPrefix = useId()
+  const prefersReducedMotion = useReducedMotion()
   const [activeStep, setActiveStep] = useState(1)
-  const [isManuallyClicked, setIsManuallyClicked] = useState(false)
+  const [isManuallySelected, setIsManuallySelected] = useState(false)
+  const [isPointerInside, setIsPointerInside] = useState(false)
+  const [isFocusInside, setIsFocusInside] = useState(false)
+
+  // Steps advance on their own until someone picks one, never while the pointer or keyboard focus is in
+  // the section, and never for people who ask for reduced motion.
+  const autoAdvance =
+    !isManuallySelected && !isPointerInside && !isFocusInside && !prefersReducedMotion
 
   useEffect(() => {
-    let interval: Timeout
-
-    if (!isManuallyClicked) {
-      interval = setInterval(() => {
-        setActiveStep((prevStep) => (prevStep === 3 ? 1 : prevStep + 1))
-      }, 10000)
-    }
-
+    if (!autoAdvance) return
+    const interval = setInterval(() => {
+      setActiveStep((prevStep) => (prevStep === steps.length ? 1 : prevStep + 1))
+    }, AUTO_ADVANCE_MS)
     return () => clearInterval(interval)
-  }, [isManuallyClicked])
+  }, [autoAdvance])
+
+  const selectStep = (step: number) => {
+    setActiveStep(step)
+    setIsManuallySelected(true)
+  }
 
   return (
-    <Container>
+    <Container
+      onMouseEnter={() => setIsPointerInside(true)}
+      onMouseLeave={() => setIsPointerInside(false)}
+      onFocus={() => setIsFocusInside(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsFocusInside(false)
+      }}
+    >
       <StepsContainer>
-        <VerticalLine activeStep={activeStep} />
+        <VisibleLayer>
+          <VerticalLine activeStep={activeStep} />
+          <StepsListContent activeStep={activeStep} idPrefix={idPrefix} onSelect={selectStep} />
+        </VisibleLayer>
         {steps.map((step) => (
-          <Step
-            key={step.id}
-            onClick={() => {
-              setActiveStep(step.id), setIsManuallyClicked(true)
-            }}
-          >
-            <StepIndicator isActive={activeStep === step.id}>
-              {step.id}
-            </StepIndicator>
-            <TitleAndDescription>
-              <StepTitle isActive={activeStep === step.id}>
-                {step.title}
-              </StepTitle>
-              {step.paragraphs.map((paragraph, index) => (
-                <Paragraph key={index} isActive={activeStep === step.id}>
-                  {paragraph}
-                </Paragraph>
-              ))}
-            </TitleAndDescription>
-          </Step>
+          <SizingLayer key={step.id} aria-hidden="true">
+            <StepsListContent activeStep={step.id} />
+          </SizingLayer>
         ))}
       </StepsContainer>
       <ImageContainer>
-        {activeStep === 1 && <StyledImage as={PolicyImage} />}
-        {activeStep === 2 && <StyledImage as={SubmitImage} />}
-        {activeStep === 3 && <StyledImage as={RewardsImage} />}
+        {activeStep === 1 && <StyledImage as={PolicyImage} aria-hidden="true" />}
+        {activeStep === 2 && <StyledImage as={SubmitImage} aria-hidden="true" />}
+        {activeStep === 3 && <StyledImage as={RewardsImage} aria-hidden="true" />}
       </ImageContainer>
     </Container>
   )

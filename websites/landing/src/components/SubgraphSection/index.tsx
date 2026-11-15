@@ -29,13 +29,14 @@ interface ISubgraphSection {
   isForBuildersTab: boolean
 }
 
+// On For Builders this is the page's first and main heading; on Home it is a section of the page.
 const SubgraphSection: React.FC<ISubgraphSection> = ({ isForBuildersTab }) => {
   return (
     <Container>
-      <Title isForBuildersTab={isForBuildersTab}>
+      <Title isForBuildersTab={isForBuildersTab} as={isForBuildersTab ? 'h1' : 'h2'}>
         Supercharge your UX with contract insights!
       </Title>
-      <Carousel />
+      <Carousel titleAs={isForBuildersTab ? 'h2' : 'h3'} />
     </Container>
   )
 }

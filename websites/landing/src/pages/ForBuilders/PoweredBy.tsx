@@ -2,8 +2,8 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import CurateBackground from 'pngs/curate-background.png'
-import { Button, ButtonAnchor } from 'components/Button'
+import CurateBackground from 'pngs/curate-background.jpg'
+import { ButtonLink } from 'components/Button'
 
 const Container = styled.div`
   display: flex;
@@ -34,7 +34,8 @@ const LeftContent = styled.div`
   )}
 `
 
-const StyledTitle = styled.h1`
+const StyledTitle = styled.h2`
+  font-size: 2em;
   margin: 0;
   text-align: center;
   height: auto;
@@ -63,7 +64,7 @@ const StyledDescription = styled.p`
   )}
 `
 
-const StyledButtonAnchor = styled(ButtonAnchor)`
+const StyledButtonLink = styled(ButtonLink)`
   margin-top: ${responsiveSize(20, 12)};
 `
 
@@ -84,13 +85,13 @@ const PoweredBy = () => {
             on conditions.
           </StyledDescription>
         </DescriptionsContainer>
-        <StyledButtonAnchor
+        <StyledButtonLink
           href="https://t.me/KlerosCurate"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Button>Get in Touch</Button>
-        </StyledButtonAnchor>
+          Get in Touch
+        </StyledButtonLink>
       </LeftContent>
       <div></div>
     </Container>

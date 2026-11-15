@@ -2,7 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { SCOUT_APP_URL } from 'consts/urls'
 import Section from './Section'
-import { Button, ButtonAnchor } from 'components/Button'
+import { ButtonLink } from 'components/Button'
 import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import SubmitImage from 'svgs/contribute-and-earn/submit.svg'
@@ -32,12 +32,11 @@ const SectionsContainer = styled.div`
   font-family: 'Manrope', sans-serif;
 `
 
-const StyledButtonAnchor = styled(ButtonAnchor)`
+const StyledButtonLink = styled(ButtonLink)`
   margin-top: 32px;
 
   ${landscapeStyle(
     () => css`
-      padding-right: 0;
       margin-top: 16px;
     `
   )}
@@ -60,13 +59,13 @@ Scroll down to learn how to submit!"
           image={ChallengeImage}
         />
       </SectionsContainer>
-      <StyledButtonAnchor
+      <StyledButtonLink
         href={SCOUT_APP_URL}
         target="_blank"
         rel="noopener noreferrer"
       >
-        <Button>Contribute & earn rewards!</Button>
-      </StyledButtonAnchor>
+        Contribute & earn rewards!
+      </StyledButtonLink>
     </Container>
   )
 }

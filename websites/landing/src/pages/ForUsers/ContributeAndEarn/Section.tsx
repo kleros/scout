@@ -60,14 +60,14 @@ const StyledImage = styled.div`
 interface ISection {
   title: string
   description: string
-  image: string
+  image: React.ElementType
 }
 
 const Section: React.FC<ISection> = ({ title, description, image }) => {
   return (
     <Container>
       <ImagePlaceholder>
-        <StyledImage as={image} />
+        <StyledImage as={image} aria-hidden="true" />
       </ImagePlaceholder>
       <StyledTitle>{title}</StyledTitle>
       <StyledDescription>{description}</StyledDescription>

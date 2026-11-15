@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 import { MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import { tosTitle, tosIntro, tosSections } from 'shared/tosContent'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
 
 const Container = styled.div`
   display: flex;
@@ -30,11 +31,13 @@ const SectionTitle = styled.h2`
 `
 
 const Paragraph = styled.p`
+  max-width: 60ch;
   font-size: 15px;
   margin-bottom: 16px;
 `
 
 const List = styled.ul`
+  max-width: 60ch;
   margin: 0 0 16px 24px;
   padding: 0;
   font-size: 15px;
@@ -44,29 +47,33 @@ const List = styled.ul`
   }
 `
 
-const TermsOfService: React.FC = () => (
-  <Container>
-    <Title>{tosTitle}</Title>
-    {tosIntro.map((text, i) => (
-      <Paragraph key={i}>{text}</Paragraph>
-    ))}
-    {tosSections.map((section) => (
-      <React.Fragment key={section.title}>
-        <SectionTitle>{section.title}</SectionTitle>
-        {section.content.map((block, i) =>
-          block.type === 'paragraph' ? (
-            <Paragraph key={i}>{block.text}</Paragraph>
-          ) : (
-            <List key={i}>
-              {block.items.map((item, j) => (
-                <li key={j}>{item}</li>
-              ))}
-            </List>
-          )
-        )}
-      </React.Fragment>
-    ))}
-  </Container>
-)
+const TermsOfService: React.FC = () => {
+  useDocumentTitle('Terms of Service')
+
+  return (
+    <Container>
+      <Title>{tosTitle}</Title>
+      {tosIntro.map((text, i) => (
+        <Paragraph key={i}>{text}</Paragraph>
+      ))}
+      {tosSections.map((section) => (
+        <React.Fragment key={section.title}>
+          <SectionTitle>{section.title}</SectionTitle>
+          {section.content.map((block, i) =>
+            block.type === 'paragraph' ? (
+              <Paragraph key={i}>{block.text}</Paragraph>
+            ) : (
+              <List key={i}>
+                {block.items.map((item, j) => (
+                  <li key={j}>{item}</li>
+                ))}
+              </List>
+            )
+          )}
+        </React.Fragment>
+      ))}
+    </Container>
+  )
+}
 
 export default TermsOfService

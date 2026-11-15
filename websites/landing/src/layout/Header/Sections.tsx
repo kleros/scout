@@ -1,10 +1,10 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
+import { NavLink } from 'react-router-dom'
 import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { useLocation, useNavigate } from 'react-router-dom'
 
-const Container = styled.div`
+const Container = styled.nav`
   display: flex;
   flex-direction: row;
   gap: ${responsiveSize(32, 120)};
@@ -22,36 +22,29 @@ const Container = styled.div`
   )}
 `
 
-const NavbarDecoration = styled.div`
-  height: 4px;
-  background-color: #7186FF;
-  position: absolute;
-  bottom: 0;
-  transition: width 0.3s ease, left 0.3s ease;
-`
-
-const StyledItem = styled.div<{
-  isSelected: boolean
-  width?: number
-  left?: number
-}>`
-  text-decoration-color: ${({ isSelected }) =>
-    isSelected ? '#7186FF' : 'inherit'};
-  color: ${({ isSelected }) => (isSelected ? '#7186FF' : 'inherit')};
-  font-weight: ${({ isSelected }) => (isSelected ? 600 : 400)};
+// NavLink marks the current page with aria-current="page"; the purple text and underline follow it.
+const StyledNavLink = styled(NavLink)`
+  color: inherit;
+  font-weight: 400;
   font-family: 'Manrope', sans-serif;
-  cursor: pointer;
+  text-decoration: none;
   position: relative;
   transition: color 0.2s ease, opacity 0.2s ease;
 
   &:hover {
-    color: ${({ isSelected }) => (isSelected ? '#7186FF' : 'rgba(113, 134, 255, 0.8)')};
-    opacity: ${({ isSelected }) => (isSelected ? 1 : 0.9)};
+    color: rgba(113, 134, 255, 0.8);
+    opacity: 0.9;
   }
 
-  &::after {
+  &[aria-current='page'] {
+    color: #7186FF;
+    font-weight: 600;
+    opacity: 1;
+  }
+
+  &[aria-current='page']::after {
     display: flex;
-    content: ${({ isSelected }) => (isSelected ? '""' : 'none')};
+    content: '';
     position: absolute;
     left: -15%;
     bottom: -13px;
@@ -63,24 +56,12 @@ const StyledItem = styled.div<{
 
   ${landscapeStyle(
     () => css`
-      &::after {
+      &[aria-current='page']::after {
         bottom: -18px;
       }
     `
   )}
 `
-
-interface IItem {
-  name: string
-  isSelected: boolean
-  onClick: () => void
-}
-
-const Item: React.FC<IItem> = ({ name, isSelected, onClick }) => (
-  <StyledItem onClick={onClick} isSelected={isSelected}>
-    {name}
-  </StyledItem>
-)
 
 const ITEMS = [
   { name: 'Home', path: '/' },
@@ -88,38 +69,14 @@ const ITEMS = [
   { name: 'For Builders', path: '/for-builders' },
 ]
 
-const Sections: React.FC = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const currentPath = location.pathname
-
-  const decorationStyle = () => {
-    const activeItem = ITEMS.find((item) => currentPath.includes(item.path))
-    if (!activeItem) return { width: 0, left: 0 }
-
-    const element = document.querySelector(`[data-path="${activeItem.path}"]`)
-    return element
-      ? { width: element.clientWidth, left: element.offsetLeft }
-      : { width: 0, left: 0 }
-  }
-
-  return (
-    <>
-      <Container>
-        {ITEMS.map(({ name, path }) => (
-          <Item
-            key={name}
-            name={name}
-            isSelected={
-              currentPath === path || (currentPath === '/' && path === '/')
-            }
-            onClick={() => navigate(path)}
-          />
-        ))}
-      </Container>
-      <NavbarDecoration style={decorationStyle()} />
-    </>
-  )
-}
+const Sections: React.FC = () => (
+  <Container aria-label="Main">
+    {ITEMS.map(({ name, path }) => (
+      <StyledNavLink key={path} to={path} end={path === '/'}>
+        {name}
+      </StyledNavLink>
+    ))}
+  </Container>
+)
 
 export default Sections

@@ -1,10 +1,10 @@
 import React from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { SCOUT_APP_URL } from 'consts/urls'
 import Sections from './Sections'
-import { Button, ButtonAnchor } from 'components/Button'
+import { ButtonLink } from 'components/Button'
 import PromoBanner from 'components/PromoBanner'
 import ScoutLogo from 'svgs/header/kleros-scout.svg'
 
@@ -41,22 +41,25 @@ const StyledText = styled.h3`
   margin: 0;
 `
 
-const Title = styled.div`
+const Title = styled(Link)`
   display: flex;
   align-items: center;
   gap: 16px;
-  cursor: pointer;
   position: relative;
 
   ${landscapeStyle(
     () => css`
-      padding-left: 64px;
+      margin-left: 64px;
     `
   )}
 `
 
-const StyledButton = styled(Button)`
-  /* Inherits font-size: 16px and font-weight: 600 from base Button */
+const EnterAppLink = styled(ButtonLink)`
+  ${landscapeStyle(
+    () => css`
+      margin-right: 64px;
+    `
+  )}
 `
 
 const HorizontalLine = styled.div`
@@ -65,31 +68,19 @@ const HorizontalLine = styled.div`
   background-color: #7186FF;
 `
 
-const Navbar: React.FC = () => {
-  const navigate = useNavigate()
-
-  const handlerClickTitle = () => {
-    navigate('/')
-  }
-
-  return (
-    <>
-      <Container>
-        <Title onClick={handlerClickTitle}>
-          <StyledScoutLogo />
-        </Title>
-        <ButtonAnchor
-          href={SCOUT_APP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <StyledButton>Enter App</StyledButton>
-        </ButtonAnchor>
-        <Sections />
-      </Container>
-      <HorizontalLine />
-      <PromoBanner />
-    </>
-  )
-}
+const Navbar: React.FC = () => (
+  <header>
+    <Container>
+      <Title to="/" aria-label="Kleros Scout home">
+        <StyledScoutLogo aria-hidden="true" />
+      </Title>
+      <EnterAppLink href={SCOUT_APP_URL} target="_blank" rel="noopener noreferrer">
+        Enter App
+      </EnterAppLink>
+      <Sections />
+    </Container>
+    <HorizontalLine />
+    <PromoBanner />
+  </header>
+)
 export default Navbar

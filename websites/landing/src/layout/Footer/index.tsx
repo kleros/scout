@@ -4,7 +4,7 @@ import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import SecuredByKlerosLogo from 'svgs/footer/secured-by-kleros.svg'
 import Links from './Links'
 
-const FullWidthWrapper = styled.div`
+const FullWidthWrapper = styled.footer`
   background-color: #08020e;
   width: 100%;
   margin-top: auto;
@@ -61,9 +61,10 @@ const SecuredByKleros: React.FC = () => (
   <a
     href="https://kleros.io"
     target="_blank"
-    rel="noreferrer"
+    rel="noopener noreferrer"
+    aria-label="Secured by Kleros"
   >
-    <StyledSecuredByKlerosLogo />
+    <StyledSecuredByKlerosLogo aria-hidden="true" />
   </a>
 )
 

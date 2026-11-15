@@ -6,6 +6,7 @@ import Hero from './Hero'
 import ProjectsUsingScout from 'components/ProjectsUsingScout'
 import HowToSubmit from 'components/HowToSubmit'
 import SubgraphSection from 'components/SubgraphSection'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
 
 const Container = styled.div`
   display: flex;
@@ -23,6 +24,8 @@ const HeroAndProjectsUsingScout = styled.div`
 `
 
 const Home = () => {
+  useDocumentTitle()
+
   return (
     <Container>
       <HeroAndProjectsUsingScout>

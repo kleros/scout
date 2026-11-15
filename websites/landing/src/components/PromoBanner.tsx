@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useRef } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import MetamaskIcon from 'svgs/promo-banner/metamask.svg'
-import { checkInstallation } from 'pages/ForUsers/InstallMetamaskSnap'
+import { SNAP_DIRECTORY_URL, getMetaMaskProvider, installScoutSnap } from 'utils/snap'
 
 const Container = styled.a`
   display: flex;
@@ -44,18 +44,24 @@ const BoldText = styled.span`
 `
 
 const PromoBanner: React.FC = () => {
-  const [isConnected, setIsConnected] = useState(false)
+  const isInstalling = useRef(false)
+
+  // Without MetaMask the link simply opens the Snap's page in the MetaMask Snaps Directory.
+  // With MetaMask it asks MetaMask to install the Snap right away.
+  const handleClick = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const opensElsewhere = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0
+    if (opensElsewhere || !getMetaMaskProvider()) return
+    event.preventDefault()
+    if (isInstalling.current) return
+    isInstalling.current = true
+    const result = await installScoutSnap()
+    isInstalling.current = false
+    if (result === 'failed') window.open(SNAP_DIRECTORY_URL, '_blank', 'noopener,noreferrer')
+  }
 
   return (
-    <Container
-      onClick={() =>
-        checkInstallation({
-          isConnected,
-          setIsConnected,
-        })
-      }
-    >
-      <MetamaskIcon />
+    <Container href={SNAP_DIRECTORY_URL} target="_blank" rel="noopener noreferrer" onClick={handleClick}>
+      <MetamaskIcon aria-hidden="true" />
       <StyledP>
         Secure txns on your MetaMask Wallet by installing the{' '}
         <BoldText>Kleros Scout Snap</BoldText>

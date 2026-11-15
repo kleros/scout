@@ -8,6 +8,7 @@ import Home from 'pages/Home'
 import ForUsers from './pages/ForUsers'
 import ForBuilders from './pages/ForBuilders'
 import TermsOfService from './pages/TermsOfService'
+import NotFound from './pages/NotFound'
 
 const queryClient = new QueryClient()
 
@@ -21,7 +22,7 @@ const App: React.FC = () => {
             <Route path="for-users/*" element={<ForUsers />} />
             <Route path="for-builders/*" element={<ForBuilders />} />
             <Route path="terms-of-service" element={<TermsOfService />} />
-            <Route path="*" element={<h1>404 Not Found</h1>} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </QueryClientProvider>

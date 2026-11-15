@@ -5,6 +5,7 @@ import { SCOUT_APP_URL } from 'consts/urls'
 import ContributeAndEarn from './ContributeAndEarn'
 import HowToSubmit from 'components/HowToSubmit'
 import InstallMetamaskSnap from './InstallMetamaskSnap'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
 
 const Container = styled.div`
   display: flex;
@@ -16,6 +17,8 @@ const Container = styled.div`
 `
 
 const index: React.FC = () => {
+  useDocumentTitle('For Users')
+
   return (
     <Container>
       <ContributeAndEarn />

@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import styled from "styled-components";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -18,12 +18,26 @@ const StyledToastContainer = styled(ToastContainer)`
   padding-top: 70px;
 `;
 
-const OutletContainer = styled.div`
+const OutletContainer = styled.main`
   flex: 1;
   background-color: #08020E;
 `;
 
+// Client-side navigation keeps the previous page's scroll position; a new page should open at its top.
+const useScrollToTopOnNavigation = () => {
+  const { pathname } = useLocation();
+  const previousPathname = useRef(pathname);
+
+  useLayoutEffect(() => {
+    if (previousPathname.current === pathname) return;
+    previousPathname.current = pathname;
+    window.scrollTo(0, 0);
+  }, [pathname]);
+};
+
 const Layout: React.FC = () => {
+  useScrollToTopOnNavigation();
+
   return (
     <Container>
       <Header />

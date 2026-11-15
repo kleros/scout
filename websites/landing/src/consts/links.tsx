@@ -1,4 +1,4 @@
-import { SCOUT_APP_URL } from './urls';
+import { SCOUT_APP_URL, SCOUT_REWARDS_URL } from './urls';
 
 export const links = [
   { name: 'Get in touch', link: 'https://t.me/KlerosCurate' },
@@ -16,5 +16,5 @@ export const links = [
     link: 'https://docs.kleros.io/products/scout',
   },
   { name: 'Join our Telegram', link: 'https://t.me/KlerosCurate' },
-  { name: 'Submit & Earn Rewards', link: SCOUT_APP_URL },
+  { name: 'Submit & Earn Rewards', link: SCOUT_REWARDS_URL },
 ]

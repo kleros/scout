@@ -45,10 +45,10 @@ const StyledLink = styled(Link)`
 `
 
 const Links = () => (
-  <Container>
+  <Container aria-label="Footer">
     <StyledLink to="/terms-of-service">Terms of Service</StyledLink>
     {Object.values(links).map((site, i) => (
-      <StyledAnchor key={i} href={site.link} target="_blank" rel="noreferrer">
+      <StyledAnchor key={i} href={site.link} target="_blank" rel="noopener noreferrer">
         {site.name}
       </StyledAnchor>
     ))}

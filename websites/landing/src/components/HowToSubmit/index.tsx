@@ -4,7 +4,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { TOKENS_REGISTRY_URL, ADDRESS_TAGS_REGISTRY_URL, CDN_REGISTRY_URL } from 'consts/urls'
 import Steps from './Steps'
-import { Button, ButtonAnchor } from '../Button'
+import { ButtonLink } from '../Button'
 
 const Container = styled.div`
   display: flex;
@@ -21,7 +21,8 @@ const Container = styled.div`
   )}
 `
 
-const Title = styled.h1`
+const Title = styled.h2`
+  font-size: 2em;
   margin: 0;
   margin-bottom: ${responsiveSize(12, 24)};
   text-align: center;
@@ -63,7 +64,9 @@ padding: 0px;
 width: 148px;
 `
 
-const StatsTitle = styled.h1`
+const StatsTitle = styled.p`
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2em;
   margin: 0;
   margin-bottom: ${responsiveSize(12, 24)};
   text-align: center;
@@ -82,15 +85,9 @@ const StatsDescription = styled.p`
   letter-spacing: 0.08em;
 `
 
-const StyledButtonAnchor = styled(ButtonAnchor)<{ showStats: boolean }>`
+const StyledButtonLink = styled(ButtonLink)<{ showStats: boolean }>`
   margin-top: ${({ showStats }) =>
     showStats ? responsiveSize(24, 0) : responsiveSize(24, 48)};
-
-  ${landscapeStyle(
-    () => css`
-      padding-right: 0;
-    `
-  )}
 `
 
 const Anchor = styled.a`
@@ -170,14 +167,14 @@ const HowToSubmit: React.FC<IHowToSubmit> = ({
           </StatsContainer>
         </Box>
       )}
-      <StyledButtonAnchor
+      <StyledButtonLink
         {...{ showStats }}
         href={buttonLink}
         target="_blank"
         rel="noopener noreferrer"
       >
-        <Button>{buttonText}</Button>
-      </StyledButtonAnchor>
+        {buttonText}
+      </StyledButtonLink>
     </Container>
   )
 }

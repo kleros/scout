@@ -5,6 +5,7 @@ import SubgraphSection from 'components/SubgraphSection'
 import ProjectsUsingScout from 'components/ProjectsUsingScout'
 import HowToSubmit from 'components/HowToSubmit'
 import PoweredBy from './PoweredBy'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
 
 const Container = styled.div`
   display: flex;
@@ -22,6 +23,8 @@ const SubgraphSectionAndProjectsUsingScout = styled.div`
 `
 
 const ForBuilders: React.FC = () => {
+  useDocumentTitle('For Builders')
+
   return (
     <Container>
       <SubgraphSectionAndProjectsUsingScout>

@@ -4,8 +4,8 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { SCOUT_APP_URL } from 'consts/urls'
 import SecuredByKleros from 'svgs/footer/secured-by-kleros.svg'
-import EtherscanAndMetamaskImage from 'pngs/hero/etherscan-and-metamask.png'
-import { Button, ButtonAnchor } from 'components/Button'
+import EtherscanAndMetamaskImage from 'pngs/hero/etherscan-and-metamask.webp'
+import { ButtonLink } from 'components/Button'
 
 const Container = styled.div`
   display: flex;
@@ -54,7 +54,7 @@ const Intro = styled.p`
   )}
 `
 
-const Title = styled.p`
+const Title = styled.h1`
   display: flex;
   margin: 0 auto;
   font-size: ${responsiveSize(48, 64)};
@@ -94,14 +94,6 @@ const StyledImg = styled.img`
   height: ${responsiveSize(200, 340)};
 `
 
-const StyledButtonAnchor = styled(ButtonAnchor)`
-  ${landscapeStyle(
-    () => css`
-      padding-right: 0;
-    `
-  )}
-`
-
 const StyledSecuredByKleros = styled(SecuredByKleros)`
   align-self: center;
 
@@ -120,20 +112,19 @@ const Hero: React.FC = () => {
         <Title>Kleros Scout</Title>
         <Description>
           Kleros Scout pulls contract metadata from Kleros' community curated
-          registries to provide insights to the smart contract you are
+          registries to provide insights into the smart contract you are
           interacting with.
         </Description>
-        <StyledSecuredByKleros />
+        <StyledSecuredByKleros role="img" aria-label="Secured by Kleros" />
       </LeftSide>
       <RightSide>
-        <StyledImg src={EtherscanAndMetamaskImage} />
-        <StyledButtonAnchor
-          href={SCOUT_APP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Button>Submit & earn rewards!</Button>
-        </StyledButtonAnchor>
+        <StyledImg
+          src={EtherscanAndMetamaskImage}
+          alt="Etherscan contract page showing a name tag submitted by Kleros Curate, and a MetaMask transaction popup with Kleros Scout contract insights"
+        />
+        <ButtonLink href={SCOUT_APP_URL} target="_blank" rel="noopener noreferrer">
+          Submit & earn rewards!
+        </ButtonLink>
       </RightSide>
     </Container>
   )
