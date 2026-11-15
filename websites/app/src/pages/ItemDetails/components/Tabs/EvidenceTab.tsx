@@ -1,15 +1,17 @@
-import React, { useRef } from 'react'
-import styled from 'styled-components'
+import React, { useLayoutEffect, useRef } from 'react'
+import styled, { css } from 'styled-components'
 import { Address } from 'viem'
-import { useSearchParams, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { StyledButton } from 'components/Button'
+import SafeLink from 'components/SafeLink'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
+import { landscapeStyle } from 'styles/landscapeStyle'
 import AttachmentIcon from 'assets/svgs/icons/attachment.svg'
 import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
-import { useScrollTop } from 'hooks/useScrollTop'
+import { useAttachment } from 'hooks/useAttachment'
 import InlineEvidenceForm from './InlineEvidenceForm'
 
 const EvidenceSection = styled.div<{ hasEvidence?: boolean }>`
@@ -67,22 +69,36 @@ const Evidence = styled.div`
   }
 `
 
+/* On phones the attachment link goes under the title, so a long title keeps the card's width. */
 const EvidenceHeader = styled.div`
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: 8px 16px;
   margin-bottom: 16px;
   position: relative;
   z-index: 1;
+
+  ${landscapeStyle(
+    () => css`
+      flex-wrap: nowrap;
+    `
+  )}
 `
 
 const EvidenceTitle = styled.div`
   font-size: 16px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
-  flex: 1;
+  flex: 1 1 100%;
   min-width: 0;
+
+  ${landscapeStyle(
+    () => css`
+      flex-basis: 0;
+    `
+  )}
 `
 
 const EvidenceNumber = styled.span`
@@ -101,6 +117,26 @@ const EvidenceDescription = styled.div`
   color: ${({ theme }) => theme.secondaryText};
   position: relative;
   z-index: 1;
+`
+
+const DescriptionLink = styled(SafeLink)`
+  color: ${({ theme }) => theme.secondaryBlue};
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
+  }
+`
+
+const PartyRole = styled.span`
+  padding: 2px 8px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.primaryText};
 `
 
 const EvidenceMetadata = styled.div`
@@ -227,6 +263,49 @@ const PartyLink = styled(Link)`
   }
 `
 
+const URL_PATTERN = /https:\/\/[^\s<>"'`]+/g
+
+/** Drops what ends a sentence rather than a link: "see https://a.io/x." or "(https://a.io/x)". */
+const trimUrl = (url: string): string => {
+  let end = url.length
+  const count = (text: string, char: string) => text.split(char).length - 1
+  while (end > 0) {
+    const last = url[end - 1]
+    const kept = url.slice(0, end)
+    if ('.,;:!?\'"'.includes(last)) end--
+    else if (last === ')' && count(kept, '(') < count(kept, ')')) end--
+    else if (last === ']' && count(kept, '[') < count(kept, ']')) end--
+    else break
+  }
+  return url.slice(0, end)
+}
+
+/**
+ * Evidence text with its https links clickable. The full address is the link text, so the
+ * destination is always visible; SafeLink opens it in a new tab and refuses anything but https.
+ */
+const linkify = (text: string): React.ReactNode[] => {
+  const nodes: React.ReactNode[] = []
+  let last = 0
+  for (const match of text.matchAll(URL_PATTERN)) {
+    const url = trimUrl(match[0])
+    const start = match.index ?? 0
+    if (!url || url === 'https://') continue
+    if (start > last) nodes.push(text.slice(last, start))
+    nodes.push(
+      <DescriptionLink key={`${start}-${url}`} url={url}>
+        {url}
+      </DescriptionLink>,
+    )
+    last = start + url.length
+  }
+  if (last < text.length) nodes.push(text.slice(last))
+  return nodes
+}
+
+/** Where the reader was in the evidence list when they opened an attachment (per item, this tab only). */
+const scrollKey = (compositeItemId: string) => `evidenceScroll:${compositeItemId}`
+
 interface EvidenceTabProps {
   evidences: any[]
   registryAddress: Address
@@ -240,9 +319,40 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
   itemID,
   compositeItemId,
 }) => {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const scrollTop = useScrollTop()
+  // The shared opener gives the viewer its own history entry: Back (or the viewer's Return) closes it.
+  const openAttachment = useAttachment()
   const formRef = useRef<HTMLDivElement>(null)
+
+  // Back from an attachment: return to the evidence the reader was looking at, not the top.
+  useLayoutEffect(() => {
+    const key = scrollKey(compositeItemId)
+    const forget = () => {
+      try {
+        sessionStorage.removeItem(key)
+      } catch {
+        // Storage unavailable: nothing to forget.
+      }
+    }
+    let saved: { top?: number; at?: number } | null = null
+    try {
+      saved = JSON.parse(sessionStorage.getItem(key) || 'null')
+    } catch {
+      return
+    }
+    if (!saved) return
+    const top = Number(saved.top)
+    // Only a recent visit to an attachment counts, not one left hours ago.
+    if (!Number.isFinite(top) || Date.now() - Number(saved.at) > 30 * 60 * 1000) {
+      forget()
+      return
+    }
+    // The position is forgotten once used (not before: an effect can be cancelled and run again).
+    const frame = requestAnimationFrame(() => {
+      window.scrollTo({ top, behavior: 'auto' })
+      forget()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [compositeItemId])
 
   const handleScrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
@@ -251,7 +361,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
   return (
     <>
       <EvidenceSectionHeader>
-        <SubmitEvidenceButton onClick={handleScrollToForm}>
+        <SubmitEvidenceButton type="button" onClick={handleScrollToForm}>
           Submit Evidence
         </SubmitEvidenceButton>
       </EvidenceSectionHeader>
@@ -270,22 +380,26 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                 </EvidenceTitle>
                 {evidence?.fileURI ? (
                   <AttachmentLink
+                    type="button"
                     onClick={() => {
-                      setSearchParams((prev) => {
-                        const next = new URLSearchParams(prev)
-                        next.set('attachment', `https://cdn.kleros.link${evidence.fileURI}`)
-                        return next
-                      }, { replace: true })
-                      scrollTop()
+                      try {
+                        sessionStorage.setItem(
+                          scrollKey(compositeItemId),
+                          JSON.stringify({ top: window.scrollY, at: Date.now() }),
+                        )
+                      } catch {
+                        // Storage unavailable: the reader comes back at the top, as before.
+                      }
+                      openAttachment(`https://cdn.kleros.link${evidence.fileURI}`)
                     }}
                   >
-                    <AttachmentIcon />
+                    <AttachmentIcon aria-hidden="true" />
                     View attached file
                   </AttachmentLink>
                 ) : null}
               </EvidenceHeader>
               <EvidenceDescription>
-                {evidence?.description || ''}
+                {linkify(evidence?.description || '')}
               </EvidenceDescription>
               <EvidenceMetadata>
                 <EvidenceMetadataItem>
@@ -302,6 +416,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
                     <AddressOrName address={evidence.party as `0x${string}`} smallDisplay />
                     <ArrowIcon />
                   </PartyLink>
+                  {evidence.partyRole ? <PartyRole>{evidence.partyRole}</PartyRole> : null}
                 </EvidenceMetadataItem>
               </EvidenceMetadata>
             </Evidence>

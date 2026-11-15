@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useId, useRef } from 'react'
 import styled from 'styled-components'
 import { useSearchParams } from 'react-router-dom'
 import { Address } from 'viem'
 import ItemDetailsTab from './Tabs/ItemDetailsTab'
 import EvidenceTab from './Tabs/EvidenceTab'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
+import { AppealInfo } from 'utils/itemDetails'
 
 const TAB_KEYS = ['details', 'evidence'] as const
 type TabKey = (typeof TAB_KEYS)[number]
@@ -66,20 +67,17 @@ const EvidenceWrapper = styled.div`
 
 interface ItemDetailsContentProps {
   detailsData: any
-  deposits: any
-  arbitrationCostData: any
   statusCode: number | null
-  registryParametersLoading: boolean
+  now: number
   challengePeriodDuration: number | null
   shouldShowCrowdfunding: boolean
-  currentRulingRound: any
-  appealRemainingTime: any
-  formattedLoserTimeLeft: string | null
-  formattedWinnerTimeLeft: string | null
-  appealCost: any
-  appealCostLoading: boolean
+  appeal: AppealInfo | null
+  appealCost: bigint | null | undefined
   registryParameters: any
   registryAddress: string
+  appealDataFailed: boolean
+  retryingAppealData: boolean
+  onRetryAppealData: () => void
   evidences: any[]
   itemID: string
   compositeItemId: string
@@ -87,20 +85,17 @@ interface ItemDetailsContentProps {
 
 const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
   detailsData,
-  deposits,
-  arbitrationCostData,
   statusCode,
-  registryParametersLoading,
+  now,
   challengePeriodDuration,
   shouldShowCrowdfunding,
-  currentRulingRound,
-  appealRemainingTime,
-  formattedLoserTimeLeft,
-  formattedWinnerTimeLeft,
+  appeal,
   appealCost,
-  appealCostLoading,
   registryParameters,
   registryAddress,
+  appealDataFailed,
+  retryingAppealData,
+  onRetryAppealData,
   evidences,
   itemID,
   compositeItemId,
@@ -111,6 +106,8 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
     ? (tabParam as TabKey)
     : 'details'
   const currentTab = TAB_KEYS.indexOf(currentTabKey)
+  const idPrefix = useId()
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
 
   const setTab = (key: TabKey) => {
     setSearchParams(
@@ -121,45 +118,71 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
         else next.set('tab', key)
         return next
       },
-      { replace: false },
+      // Switching tabs replaces the history entry, so Back and Return leave the item in one step.
+      { replace: true },
     )
   }
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'details', label: 'Item Details' },
-    { key: 'evidence', label: 'Evidence' },
+    { key: 'evidence', label: `Evidence (${evidences.length})` },
   ]
+
+  // Arrow keys, Home and End move between the tabs (WAI-ARIA tabs pattern, automatic activation).
+  const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next: number | null = null
+    if (event.key === 'ArrowRight') next = (index + 1) % tabs.length
+    else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length
+    else if (event.key === 'Home') next = 0
+    else if (event.key === 'End') next = tabs.length - 1
+    if (next === null) return
+    event.preventDefault()
+    setTab(tabs[next].key)
+    tabRefs.current[next]?.focus()
+  }
+
+  const tabId = (key: TabKey) => `${idPrefix}-tab-${key}`
+  const panelId = `${idPrefix}-panel`
 
   return (
     <>
-      <TabsWrapper>
+      <TabsWrapper role="tablist" aria-label="Item sections">
         {tabs.map((tab, i) => (
           <TabButton
             key={tab.key}
+            ref={(element) => {
+              tabRefs.current[i] = element
+            }}
+            type="button"
+            role="tab"
+            id={tabId(tab.key)}
+            aria-selected={i === currentTab}
+            aria-controls={panelId}
+            tabIndex={i === currentTab ? 0 : -1}
             selected={i === currentTab}
             onClick={() => setTab(tab.key)}
+            onKeyDown={(event) => handleTabKeyDown(event, i)}
           >
             {tab.label}
           </TabButton>
         ))}
       </TabsWrapper>
 
-      <ContentWrapper>
+      <ContentWrapper role="tabpanel" id={panelId} aria-labelledby={tabId(currentTabKey)}>
         {currentTab === 0 ? (
           <ItemDetailsTab
             detailsData={detailsData}
             statusCode={statusCode}
-            registryParametersLoading={registryParametersLoading}
+            now={now}
             challengePeriodDuration={challengePeriodDuration}
             shouldShowCrowdfunding={shouldShowCrowdfunding}
-            currentRulingRound={currentRulingRound}
-            appealRemainingTime={appealRemainingTime}
-            formattedLoserTimeLeft={formattedLoserTimeLeft}
-            formattedWinnerTimeLeft={formattedWinnerTimeLeft}
+            appeal={appeal}
             appealCost={appealCost}
-            appealCostLoading={appealCostLoading}
             registryParameters={registryParameters}
             registryAddress={registryAddress}
+            appealDataFailed={appealDataFailed}
+            retryingAppealData={retryingAppealData}
+            onRetryAppealData={onRetryAppealData}
           />
         ) : (
           <EvidenceWrapper>

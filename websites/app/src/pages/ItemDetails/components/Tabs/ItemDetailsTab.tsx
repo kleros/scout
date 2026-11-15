@@ -5,9 +5,13 @@ import Skeleton from 'react-loading-skeleton'
 import { responsiveSize } from 'styles/responsiveSize'
 import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
 import CrowdfundingCard from 'components/CrowdfundingCard'
-import { STATUS_CODE } from 'utils/itemStatus'
+import ErrorState from 'components/ErrorState'
+import { PARTY, STATUS_CODE } from 'utils/itemStatus'
+import { AppealInfo, appealDeadlineFor, partyLabel, rulingLabel } from 'utils/itemDetails'
+import { formatTimestamp } from 'utils/formatTimestamp'
 import ItemTimeline from '../ItemTimeline'
 import ItemFieldsDisplay from '../ItemFieldsDisplay'
+import Deadline from '../Deadline'
 import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
 
 const AppealInfoBox = styled.div`
@@ -46,10 +50,33 @@ const AppealInfoLabel = styled.span`
   letter-spacing: 0.5px;
 `
 
-const AppealStatusValue = styled.span`
+/* The appeal state in a sentence: it wraps, so it takes the whole row. */
+const AppealStatusItem = styled(AppealInfoItem)`
+  flex-basis: 100%;
+`
+
+const AppealStatusText = styled.p`
+  margin: 0;
+  max-width: 640px;
   font-size: 14px;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.primaryText};
+`
+
+const SideDeadline = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: 12px;
   font-weight: 600;
   color: ${({ theme }) => theme.secondaryPurple};
+
+  small {
+    font-size: 12px;
+    font-weight: 400;
+    color: ${({ theme }) => theme.secondaryText};
+  }
 `
 
 const CaseLink = styled.a`
@@ -162,34 +189,134 @@ const ScoutWatermark = styled.div`
 interface ItemDetailsTabProps {
   detailsData: any
   statusCode: number | null
-  registryParametersLoading: boolean
+  /** The current time (unix seconds) the status code was computed with. */
+  now: number
   challengePeriodDuration: number | null
   shouldShowCrowdfunding: boolean
-  currentRulingRound: any
-  appealRemainingTime: any
-  formattedLoserTimeLeft: string | null
-  formattedWinnerTimeLeft: string | null
-  appealCost: any
-  appealCostLoading: boolean
+  appeal: AppealInfo | null
+  appealCost: bigint | null | undefined
   registryParameters: any
   registryAddress: string
+  /** The appeal fees (registry multipliers or the court's appeal cost) could not be read. */
+  appealDataFailed: boolean
+  retryingAppealData: boolean
+  onRetryAppealData: () => void
+}
+
+const sideName = (appeal: AppealInfo, party: PARTY) => partyLabel(appeal, party).toLowerCase()
+
+/**
+ * The state of the appeal in one sentence, as the contract applies it (LightGeneralizedTCR
+ * fundAppeal and rule): who has to fund, until when, and what happens otherwise.
+ */
+const AppealStatus: React.FC<{
+  appeal: AppealInfo
+  statusCode: number | null
+  now: number
+  crowdfunding: boolean
+}> = ({ appeal, statusCode, now, crowdfunding }) => {
+  const { hasPaidRequester, hasPaidChallenger, decisive, winner, loser, half, end } = appeal
+  const fundedAlone =
+    hasPaidRequester === hasPaidChallenger ? null : hasPaidRequester ? PARTY.REQUESTER : PARTY.CHALLENGER
+  const otherSide = (party: PARTY) => (party === PARTY.REQUESTER ? PARTY.CHALLENGER : PARTY.REQUESTER)
+
+  let content: React.ReactNode = null
+  if (crowdfunding) {
+    if (!decisive) {
+      content = fundedAlone ? (
+        <>
+          The {sideName(appeal, fundedAlone)} is fully funded. The {sideName(appeal, otherSide(fundedAlone))} has
+          until <Deadline at={end} variant="until" /> to be fully funded too, or loses.
+        </>
+      ) : (
+        <>
+          Jurors gave no decisive ruling. Either side can be funded until{' '}
+          <Deadline at={end} variant="until" />. If only one side is fully funded, it wins.
+        </>
+      )
+    } else if (loser === PARTY.REQUESTER ? hasPaidRequester : hasPaidChallenger) {
+      content = (
+        <>
+          The {sideName(appeal, loser)} funded the appeal. The {sideName(appeal, winner)} has until{' '}
+          <Deadline at={end} variant="until" /> to be fully funded too, or loses.
+        </>
+      )
+    } else {
+      content = (
+        <>
+          The {sideName(appeal, loser)} has until <Deadline at={half} variant="until" /> to fund an appeal, or the
+          ruling stands.
+        </>
+      )
+    }
+  } else if (statusCode === STATUS_CODE.WAITING_ENFORCEMENT) {
+    content = (
+      <>
+        The {sideName(appeal, loser)} did not fund an appeal in time, so the ruling stands. It can be enforced once
+        the appeal period ends ({formatTimestamp(end, true)}).
+      </>
+    )
+  } else if (statusCode === STATUS_CODE.WAITING_ARBITRATOR && appeal.hasRuling && now > end) {
+    if (fundedAlone) {
+      const name = sideName(appeal, fundedAlone)
+      content = `Appeal period over. The ${name} funded the appeal alone, so the ${name} wins when the ruling is enforced.`
+    } else if (!decisive) {
+      content = `Appeal period over with no decisive ruling. When it is enforced, ${
+        appeal.isRemoval ? 'the item stays in the registry' : 'the item is not included'
+      } and the deposits are split between the ${sideName(appeal, PARTY.REQUESTER)} and the challenger.`
+    } else {
+      content = 'Appeal period over. The ruling is final and will be enforced.'
+    }
+  }
+
+  if (!content) return null
+  return (
+    <AppealStatusItem>
+      <AppealInfoLabel>Appeal Status</AppealInfoLabel>
+      <AppealStatusText>{content}</AppealStatusText>
+    </AppealStatusItem>
+  )
+}
+
+/** One side of an open appeal: funded or not, and until when it can be funded. */
+const AppealSide: React.FC<{ appeal: AppealInfo; party: PARTY }> = ({ appeal, party }) => {
+  const funded = party === PARTY.REQUESTER ? appeal.hasPaidRequester : appeal.hasPaidChallenger
+  const role = appeal.decisive ? (party === appeal.winner ? ' (Winner)' : ' (Loser)') : ''
+  const deadline = appealDeadlineFor(appeal, party)
+  return (
+    <AppealInfoItem>
+      <AppealInfoLabel>
+        {partyLabel(appeal, party)}
+        {role}
+      </AppealInfoLabel>
+      <FundingStatus funded={funded}>{funded ? '✓ Funded' : 'Funding'}</FundingStatus>
+      {!funded && (
+        <SideDeadline>
+          <Deadline at={deadline} variant="left" />
+          <small>until {formatTimestamp(deadline, true)}</small>
+        </SideDeadline>
+      )}
+    </AppealInfoItem>
+  )
 }
 
 const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
   detailsData,
   statusCode,
-  registryParametersLoading,
+  now,
   challengePeriodDuration,
   shouldShowCrowdfunding,
-  currentRulingRound,
-  appealRemainingTime,
-  formattedLoserTimeLeft,
-  formattedWinnerTimeLeft,
+  appeal,
   appealCost,
-  appealCostLoading,
   registryParameters,
   registryAddress,
+  appealDataFailed,
+  retryingAppealData,
+  onRetryAppealData,
 }) => {
+  const latestRequest = detailsData.requests[0]
+  const resolved = !!latestRequest?.resolved
+
   return (
     <PaddedContent>
       <ScoutWatermark>
@@ -203,10 +330,10 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
 
       {/* Appeal Info Box - show for any disputed item (active or resolved) */}
       {/* Check if the current request OR the item itself was ever disputed */}
-      {(detailsData.disputed || detailsData.requests[0].disputed) && (
+      {(detailsData.disputed || latestRequest.disputed) && (
         <>
-          {/* Show skeleton only if we're still loading and not resolved */}
-          {!detailsData.requests[0].resolved && (statusCode === null || registryParametersLoading) && challengePeriodDuration !== null ? (
+          {/* Skeleton only while the status cannot be computed yet */}
+          {!resolved && statusCode === null ? (
             <AppealInfoBox>
               <AppealInfoItem>
                 <AppealInfoLabel>Current Ruling</AppealInfoLabel>
@@ -216,108 +343,43 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
                 <AppealInfoLabel>Track Case</AppealInfoLabel>
                 <Skeleton width="150px" height="20px" />
               </AppealInfoItem>
-              {statusCode === STATUS_CODE.CROWDFUNDING || statusCode === STATUS_CODE.CROWDFUNDING_WINNER ? (
-                <>
-                  <AppealInfoItem>
-                    <AppealInfoLabel>Appeal Status</AppealInfoLabel>
-                    <Skeleton width="150px" height="20px" />
-                  </AppealInfoItem>
-                  <AppealInfoItem>
-                    <AppealInfoLabel>Submitter</AppealInfoLabel>
-                    <Skeleton width="80px" height="28px" />
-                  </AppealInfoItem>
-                  <AppealInfoItem>
-                    <AppealInfoLabel>Challenger</AppealInfoLabel>
-                    <Skeleton width="80px" height="28px" />
-                  </AppealInfoItem>
-                </>
-              ) : null}
             </AppealInfoBox>
           ) : (
             <AppealInfoBox>
               {/* Only show current ruling if dispute is not resolved yet */}
-              {!detailsData.requests[0].resolved && (
+              {!resolved && (
                 <AppealInfoItem>
                   <AppealInfoLabel>Current Ruling</AppealInfoLabel>
-                  {(() => {
-                    const ruling = currentRulingRound?.ruling
-
-                    let badgeType = 'None'
-                    let badgeText = 'No Ruling Yet'
-
-                    if (ruling === 'Accept') {
-                      badgeType = 'Accept'
-                      badgeText = 'Accept Item'
-                    } else if (ruling === 'Reject') {
-                      badgeType = 'Reject'
-                      badgeText = 'Reject Item'
-                    } else if (ruling === 'None' || ruling === 'Refuse') {
-                      badgeType = 'Refuse'
-                      badgeText = 'Pending / Refused to Arbitrate'
-                    }
-
-                    return (
-                      <RulingBadge ruling={badgeType}>
-                        {badgeText}
-                      </RulingBadge>
-                    )
-                  })()}
+                  {/* Before jurors vote, the indexer reports the ruling "None" with no appeal period:
+                      that is "no ruling yet", not a refusal to arbitrate. */}
+                  {appeal?.hasRuling ? (
+                    <RulingBadge ruling={appeal.ruling === 'None' ? 'Refuse' : appeal.ruling}>
+                      {rulingLabel(appeal.ruling, appeal.isRemoval)}
+                    </RulingBadge>
+                  ) : (
+                    <RulingBadge ruling="Pending">No Ruling Yet</RulingBadge>
+                  )}
                 </AppealInfoItem>
               )}
-              {/* Only show crowdfunding info if dispute is not resolved yet */}
-              {!detailsData.requests[0].resolved && shouldShowCrowdfunding && (
+              {!resolved && appeal && (
+                <AppealStatus
+                  appeal={appeal}
+                  statusCode={statusCode}
+                  now={now}
+                  crowdfunding={shouldShowCrowdfunding}
+                />
+              )}
+              {!resolved && shouldShowCrowdfunding && appeal && (
                 <>
-                  <AppealInfoItem>
-                    <AppealInfoLabel>Appeal Status</AppealInfoLabel>
-                    <AppealStatusValue>
-                      Crowdfunding Active
-                    </AppealStatusValue>
-                  </AppealInfoItem>
-                  {detailsData.requests[0].rounds?.[0] && appealRemainingTime && (
-                    <>
-                      <AppealInfoItem>
-                        <AppealInfoLabel>
-                          Submitter {appealRemainingTime.loserIsRequester ? '(Loser)' : '(Winner)'}
-                        </AppealInfoLabel>
-                        <FundingStatus funded={detailsData.requests[0].rounds[0].hasPaidRequester}>
-                          {detailsData.requests[0].rounds[0].hasPaidRequester ? '✓ Funded' : 'Funding'}
-                        </FundingStatus>
-                        {!detailsData.requests[0].rounds[0].hasPaidRequester && (
-                          <AppealStatusValue as="div" style={{ fontSize: '12px', marginTop: '4px' }}>
-                            {appealRemainingTime.loserIsRequester && appealRemainingTime.isLoserPeriod
-                              ? `${formattedLoserTimeLeft} left`
-                              : !appealRemainingTime.loserIsRequester && !appealRemainingTime.isLoserPeriod
-                              ? `${formattedWinnerTimeLeft} left`
-                              : `Awaits loser's move`}
-                          </AppealStatusValue>
-                        )}
-                      </AppealInfoItem>
-                      <AppealInfoItem>
-                        <AppealInfoLabel>
-                          Challenger {!appealRemainingTime.loserIsRequester ? '(Loser)' : '(Winner)'}
-                        </AppealInfoLabel>
-                        <FundingStatus funded={detailsData.requests[0].rounds[0].hasPaidChallenger}>
-                          {detailsData.requests[0].rounds[0].hasPaidChallenger ? '✓ Funded' : 'Funding'}
-                        </FundingStatus>
-                        {!detailsData.requests[0].rounds[0].hasPaidChallenger && (
-                          <AppealStatusValue as="div" style={{ fontSize: '12px', marginTop: '4px' }}>
-                            {!appealRemainingTime.loserIsRequester && appealRemainingTime.isLoserPeriod
-                              ? `${formattedLoserTimeLeft} left`
-                              : appealRemainingTime.loserIsRequester && !appealRemainingTime.isLoserPeriod
-                              ? `${formattedWinnerTimeLeft} left`
-                              : `Awaits loser's move`}
-                          </AppealStatusValue>
-                        )}
-                      </AppealInfoItem>
-                    </>
-                  )}
+                  <AppealSide appeal={appeal} party={PARTY.REQUESTER} />
+                  <AppealSide appeal={appeal} party={PARTY.CHALLENGER} />
                 </>
               )}
               {/* Always show Klerosboard link for disputed items (even after resolved) */}
               <AppealInfoItem>
                 <AppealInfoLabel>Track Case</AppealInfoLabel>
                 <CaseLink
-                  href={`https://klerosboard.com/100/cases/${detailsData.requests[0].disputeID}`}
+                  href={`https://klerosboard.com/100/cases/${latestRequest.disputeID}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -329,9 +391,19 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
         </>
       )}
 
-      {detailsData.disputed && !detailsData.requests[0].resolved && shouldShowCrowdfunding && (
+      {detailsData.disputed && !resolved && shouldShowCrowdfunding && (
         <>
-          {(!registryParameters || !appealCost || appealCostLoading || registryParametersLoading) && challengePeriodDuration !== null && statusCode !== STATUS_CODE.WAITING_ARBITRATOR ? (
+          {appealDataFailed ? (
+            <ContentWrapper style={{ marginTop: '16px' }}>
+              <ErrorState
+                compact
+                title="The appeal fees did not load."
+                message="Scout reads them from Gnosis, which did not answer. Check your connection and try again."
+                onRetry={onRetryAppealData}
+                retrying={retryingAppealData}
+              />
+            </ContentWrapper>
+          ) : !registryParameters || !appealCost ? (
             <ContentWrapper style={{ marginTop: '16px' }}>
               <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                 <Skeleton width="200px" height="28px" style={{ margin: '0 auto 8px' }} />
@@ -355,7 +427,7 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
           ) : (
             <CrowdfundingCard
               item={detailsData}
-              timestamp={Math.floor(Date.now() / 1000)}
+              timestamp={now}
               challengePeriodDuration={challengePeriodDuration}
               appealCost={appealCost}
               sharedStakeMultiplier={registryParameters.sharedStakeMultiplier}

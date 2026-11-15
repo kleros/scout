@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useId, useMemo, useState } from 'react'
 import styled, { css, useTheme } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { landscapeStyle } from 'styles/landscapeStyle'
@@ -7,11 +7,51 @@ import { PARTY, SUBGRAPH_RULING, itemToStatusCode, STATUS_CODE } from '../../uti
 import useRequiredFees from '../../hooks/useRequiredFees'
 import useNativeCurrency from '../../hooks/useNativeCurrency'
 import { useCurateInteractions } from '../../hooks/contracts/useCurateInteractions'
-import { GraphItemDetails } from '../../utils/itemDetails'
+import { GraphItemDetails, appealDeadlineFor, getAppealInfo, partyLabel } from '../../utils/itemDetails'
 import { errorToast } from '../../utils/wrapWithToast'
-import { parseWagmiError } from '../../utils/parseWagmiError'
+import { isUserRejection, parseWagmiError } from '../../utils/parseWagmiError'
+import { formatTimestamp } from '../../utils/formatTimestamp'
+import { formatValue } from '../../utils/formatValue'
 import useNativeBalance from '../../hooks/useNativeBalance'
 import { EnsureChain } from 'components/EnsureChain'
+import Deadline from 'pages/ItemDetails/components/Deadline'
+
+/**
+ * An amount as typed: one comma with no dot is read as the decimal point (phones in comma-decimal
+ * regions offer no dot), "1,000" is left for the check below to refuse. Surrounding spaces dropped.
+ */
+const normalizeDecimalInput = (text: string): string => {
+  const trimmed = text.trim()
+  if (trimmed.includes('.')) return trimmed
+  if (trimmed.split(',').length - 1 !== 1) return trimmed
+  const [, fraction] = trimmed.split(',')
+  if (/^\d{3}$/.test(fraction)) return trimmed
+  return trimmed.replace(',', '.')
+}
+
+/** The typed amount in wei, read from the text (never through a float), or null if it is not an amount. */
+const parseTypedAmount = (text: string): bigint | null => {
+  const normalized = normalizeDecimalInput(text)
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(normalized)) return null
+  try {
+    return parseEther(normalized)
+  } catch {
+    return null
+  }
+}
+
+/** Every digit of an amount, as it is sent: "1116", "2.123456789" (for the amount field). */
+const exactAmount = (wei: bigint): string => {
+  const text = formatEther(wei)
+  return text.endsWith('.0') ? text.slice(0, -2) : text
+}
+
+/** Every digit of an amount with thousands separators: "1,116", "2.123456789" (for labels). */
+const exactAmountLabel = (wei: bigint): string => {
+  const [whole, fraction] = exactAmount(wei).split('.')
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return fraction ? `${grouped}.${fraction}` : grouped
+}
 
 const Card = styled.div`
   background: ${({ theme }) => theme.backgroundThree};
@@ -149,7 +189,6 @@ const Slider = styled.input`
   height: 6px;
   border-radius: 3px;
   background: ${({ theme }) => theme.lightGrey};
-  outline: none;
   -webkit-appearance: none;
 
   &::-webkit-slider-thumb {
@@ -204,7 +243,6 @@ const Input = styled.input`
   }
 
   &:focus {
-    outline: none;
     background: ${({ theme }) => theme.backgroundFour};
   }
 
@@ -275,6 +313,29 @@ const RewardAmount = styled.strong`
   color: ${({ theme }) => theme.success};
 `
 
+/* What a side has raised and until when it can be funded, always visible. */
+const SideFacts = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: ${({ theme }) => theme.secondaryText};
+
+  strong {
+    color: ${({ theme }) => theme.primaryText};
+    font-weight: 600;
+  }
+`
+
+const FieldHint = styled.p<{ $error?: boolean }>`
+  margin: -4px 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: ${({ theme, $error }) => ($error ? theme.error : theme.secondaryText)};
+`
+
+
 interface CrowdfundingCardProps {
   item: GraphItemDetails | null
   timestamp: number | null
@@ -299,8 +360,11 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   registryAddress,
 }) => {
   const theme = useTheme()
+  const fieldId = useId()
   const [selectedSide, setSelectedSide] = useState<PARTY>(PARTY.NONE)
   const [contributionShare, setContributionShare] = useState(1)
+  // What was typed in the amount field, shown as typed. Undefined while the slider sets the amount.
+  const [amountText, setAmountText] = useState<string>()
   const { balance: nativeBalance } = useNativeBalance()
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
@@ -333,7 +397,9 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
     return itemToStatusCode(item as any, timestamp, challengePeriodDuration)
   }, [item, timestamp, challengePeriodDuration])
 
-  if (!item || !challengePeriodDuration || !requesterFees || !challengerFees || !appealCost) {
+  const appeal = useMemo(() => getAppealInfo(item), [item])
+
+  if (!item || !challengePeriodDuration || !requesterFees || !challengerFees || !appealCost || !appeal) {
     return null
   }
 
@@ -344,7 +410,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const round = item.requests[0]?.rounds?.[0]
   if (!round) return null
 
-  const { hasPaidRequester, hasPaidChallenger, ruling } = round
+  const { hasPaidRequester, hasPaidChallenger } = round
   const amountPaidRequester = BigInt(round.amountPaidRequester)
   const amountPaidChallenger = BigInt(round.amountPaidChallenger)
 
@@ -356,16 +422,48 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
     ? Number((amountPaidChallenger * 10000n) / challengerFees.requiredForSide) / 100
     : 0
 
+  const sideName = (party: PARTY) => partyLabel(appeal, party).toLowerCase()
+
   const selectedFees = selectedSide === PARTY.REQUESTER ? requesterFees :
                        selectedSide === PARTY.CHALLENGER ? challengerFees : null
 
-  const contributionAmount = selectedFees && selectedFees.amountStillRequired > 0n
-    ? (selectedFees.amountStillRequired * BigInt(Math.ceil(contributionShare * Number(MULTIPLIER_DIVISOR)))) / MULTIPLIER_DIVISOR
+  // A typed amount is read as wei from the text and sent as typed, capped at what is still needed
+  // (the contract would return any excess). The slider sets a share of what is still needed.
+  const typedWei = amountText !== undefined ? parseTypedAmount(amountText) : null
+  const typedIsInvalid = amountText !== undefined && amountText.trim() !== '' && typedWei === null
+  const typedIsCapped =
+    typedWei !== null && !!selectedFees && typedWei > selectedFees.amountStillRequired
+  const typedIsZero = typedWei === 0n
+
+  const contributionAmount = !selectedFees || selectedFees.amountStillRequired <= 0n
+    ? 0n
+    : amountText !== undefined
+      ? typedWei === null
+        ? 0n
+        : typedIsCapped
+          ? selectedFees.amountStillRequired
+          : typedWei
+      : (selectedFees.amountStillRequired * BigInt(Math.ceil(contributionShare * Number(MULTIPLIER_DIVISOR)))) / MULTIPLIER_DIVISOR
+
+  const potentialRewardForContribution = selectedFees && selectedFees.potentialReward > 0n && selectedFees.amountStillRequired > 0n
+    ? (selectedFees.potentialReward * contributionAmount) / selectedFees.amountStillRequired
     : 0n
 
-  const potentialRewardForContribution = selectedFees && selectedFees.potentialReward > 0n
-    ? (selectedFees.potentialReward * BigInt(Math.ceil(contributionShare * Number(MULTIPLIER_DIVISOR)))) / MULTIPLIER_DIVISOR
-    : 0n
+  const selectSide = (side: PARTY) => {
+    setSelectedSide(side)
+    setContributionShare(1)
+    setAmountText(undefined)
+  }
+
+  const handleAmountChange = (text: string, stillRequired: bigint) => {
+    setAmountText(text)
+    const wei = parseTypedAmount(text)
+    if (wei === null || stillRequired <= 0n) return
+    // The share only moves the slider; the amount sent is the typed one.
+    setContributionShare(
+      wei >= stillRequired ? 1 : Number((wei * MULTIPLIER_DIVISOR) / stillRequired) / Number(MULTIPLIER_DIVISOR),
+    )
+  }
 
   const handleFundAppeal = async () => {
     if (!item || selectedSide === PARTY.NONE || contributionAmount === 0n) return
@@ -378,34 +476,54 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
         contributionAmount,
       )
       if (result?.status) {
-        setSelectedSide(PARTY.NONE)
-        setContributionShare(1)
+        selectSide(PARTY.NONE)
         if (result.result) {
           navigate(`/tx/${result.result.transactionHash}`)
         }
       }
     } catch (error) {
       console.error('Error funding appeal:', error)
-      errorToast(parseWagmiError(error) || 'Failed to fund appeal')
+      if (!isUserRejection(error)) errorToast(parseWagmiError(error) || 'Failed to fund appeal')
     }
+  }
+
+  const renderSideFacts = (side: PARTY) => {
+    const fees = side === PARTY.REQUESTER ? requesterFees : challengerFees
+    const isFunded = side === PARTY.REQUESTER ? hasPaidRequester : hasPaidChallenger
+    const paid = side === PARTY.REQUESTER ? amountPaidRequester : amountPaidChallenger
+    return (
+      <SideFacts>
+        <span>
+          <strong>{formatValue(paid)}</strong> of{' '}
+          {formatValue(fees.requiredForSide)} {nativeCurrency} raised
+        </span>
+        {!isFunded && (
+          <span>
+            Funding closes in <Deadline at={appealDeadlineFor(appeal, side)} />
+          </span>
+        )}
+      </SideFacts>
+    )
   }
 
   const renderContributionUI = (side: PARTY) => {
     const fees = side === PARTY.REQUESTER ? requesterFees : challengerFees
     const isFunded = side === PARTY.REQUESTER ? hasPaidRequester : hasPaidChallenger
     const isSelected = selectedSide === side
+    const amountId = `${fieldId}-amount-${side}`
+    const hintId = `${fieldId}-hint-${side}`
 
     if (isFunded) return null
 
     return (
       <ContributionSection>
         {!isSelected ? (
-          <ContributeButton onClick={() => setSelectedSide(side)}>
-            Contribute to {side === PARTY.REQUESTER ? 'Submitter' : 'Challenger'}
+          <ContributeButton type="button" onClick={() => selectSide(side)}>
+            Contribute to {partyLabel(appeal, side)}
           </ContributeButton>
         ) : (
           <>
-            <ContributionLabel>Contribution Amount</ContributionLabel>
+            <ContributionLabel htmlFor={amountId}>Contribution amount</ContributionLabel>
             <SliderContainer>
               <Slider
                 type="range"
@@ -413,51 +531,61 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                 max="1"
                 step="0.001"
                 value={contributionShare}
-                onChange={(e) => setContributionShare(parseFloat(e.target.value))}
+                aria-label={`Share of the ${formatValue(fees.amountStillRequired)} ${nativeCurrency} still needed`}
+                aria-valuetext={`${Math.round(contributionShare * 1000) / 10}% of what is still needed`}
+                onChange={(e) => {
+                  setAmountText(undefined)
+                  setContributionShare(parseFloat(e.target.value))
+                }}
               />
             </SliderContainer>
             <InputGroup>
               <Input
-                type="number"
-                min="0"
-                max={Number(formatEther(fees.amountStillRequired))}
-                step="0.01"
-                value={
-                  fees.amountStillRequired > 0n
-                    ? (contributionShare * Number(formatEther(fees.amountStillRequired))).toFixed(4)
-                    : '0'
-                }
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value) || 0
-                  if (fees.amountStillRequired > 0n) {
-                    const weiAmount = parseEther(value.toString())
-                    const share = Number((weiAmount * MULTIPLIER_DIVISOR) / fees.amountStillRequired) / Number(MULTIPLIER_DIVISOR)
-                    setContributionShare(Math.min(Math.max(share, 0), 1))
-                  }
-                }}
+                id={amountId}
+                type="text"
+                inputMode="decimal"
+                autoComplete="off"
+                aria-describedby={typedIsCapped || typedIsInvalid || typedIsZero ? hintId : undefined}
+                aria-invalid={typedIsInvalid || undefined}
+                value={amountText ?? (fees.amountStillRequired > 0n ? exactAmount(contributionAmount) : '0')}
+                onChange={(e) => handleAmountChange(e.target.value, fees.amountStillRequired)}
               />
               <Unit>{nativeCurrency}</Unit>
             </InputGroup>
+            {typedIsInvalid ? (
+              <FieldHint id={hintId} $error role="alert">
+                {/^\s*\d*[.,]?\d*\s*$/.test(amountText ?? '')
+                  ? 'Enter an amount with at most 18 decimals.'
+                  : `Enter an amount in ${nativeCurrency}, like 12.5.`}
+              </FieldHint>
+            ) : typedIsCapped ? (
+              <FieldHint id={hintId}>
+                Capped at {exactAmountLabel(fees.amountStillRequired)} {nativeCurrency}, the amount still needed.
+              </FieldHint>
+            ) : typedIsZero ? (
+              <FieldHint id={hintId}>Enter an amount above 0.</FieldHint>
+            ) : null}
             <ContributionInfo>
               <InfoRow>
-                <span>Total Required:</span>
-                <strong>{Number(formatEther(fees.requiredForSide)).toFixed(4)} {nativeCurrency}</strong>
+                <span>Required for the {sideName(side)}:</span>
+                <strong>{formatValue(fees.requiredForSide)} {nativeCurrency}</strong>
               </InfoRow>
               <InfoRow>
-                <span>Already Paid:</span>
-                <strong>{Number(formatEther(side === PARTY.REQUESTER ? amountPaidRequester : amountPaidChallenger)).toFixed(4)} {nativeCurrency}</strong>
+                <span>Already funded:</span>
+                <strong>{formatValue(side === PARTY.REQUESTER ? amountPaidRequester : amountPaidChallenger)} {nativeCurrency}</strong>
               </InfoRow>
               <InfoRow>
-                <span>Still Needed:</span>
-                <strong>{Number(formatEther(fees.amountStillRequired)).toFixed(4)} {nativeCurrency}</strong>
+                <span>Still needed:</span>
+                <strong>{formatValue(fees.amountStillRequired)} {nativeCurrency}</strong>
               </InfoRow>
               <InfoRow style={{ marginTop: '8px', paddingTop: '8px', borderTop: `1px solid ${theme.hoverBackground}` }}>
-                <span>Potential Reward:</span>
-                <RewardAmount>{Number(formatEther(potentialRewardForContribution)).toFixed(4)} {nativeCurrency}</RewardAmount>
+                <span>Your reward if the {sideName(side)} wins:</span>
+                <RewardAmount>{formatValue(potentialRewardForContribution)} {nativeCurrency}</RewardAmount>
               </InfoRow>
             </ContributionInfo>
             <EnsureChain>
               <ContributeButton
+                type="button"
                 onClick={handleFundAppeal}
                 disabled={
                   isLoading ||
@@ -465,17 +593,18 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                   (nativeBalance !== undefined && nativeBalance < contributionAmount)
                 }
               >
-                {isLoading ? 'Processing...' : `Fund ${Number(formatEther(contributionAmount)).toFixed(4)} ${nativeCurrency}`}
+                {isLoading ? 'Processing...' : `Fund ${exactAmountLabel(contributionAmount)} ${nativeCurrency}`}
               </ContributeButton>
             </EnsureChain>
             {nativeBalance !== undefined && contributionAmount > 0n && nativeBalance < contributionAmount && (
               <div style={{ color: theme.error, fontSize: 13, fontWeight: 500, marginTop: 8 }}>
-                Insufficient balance. You have {Number(formatEther(nativeBalance)).toFixed(4)} {nativeCurrency} but want to contribute {Number(formatEther(contributionAmount)).toFixed(4)} {nativeCurrency}.
+                Insufficient balance. You have {formatValue(nativeBalance)} {nativeCurrency} but want to contribute {exactAmountLabel(contributionAmount)} {nativeCurrency}.
               </div>
             )}
             {selectedSide !== PARTY.NONE && (
               <ContributeButton
-                onClick={() => setSelectedSide(PARTY.NONE)}
+                type="button"
+                onClick={() => selectSide(PARTY.NONE)}
                 style={{ marginTop: '8px', background: 'transparent', border: `1px solid ${theme.borderSubtle}`, color: 'inherit' }}
               >
                 Cancel
@@ -487,69 +616,68 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
     )
   }
 
+  const renderSide = (side: PARTY) => {
+    const fees = side === PARTY.REQUESTER ? requesterFees : challengerFees
+    const isFunded = side === PARTY.REQUESTER ? hasPaidRequester : hasPaidChallenger
+    const percentage = side === PARTY.REQUESTER ? requesterPercentage : challengerPercentage
+    const other = side === PARTY.REQUESTER ? PARTY.CHALLENGER : PARTY.REQUESTER
+    return (
+      <Section>
+        <SectionHeader>
+          <Title>{partyLabel(appeal, side)}</Title>
+          <StatusBadge funded={isFunded}>
+            {isFunded ? '✓ Funded' : 'Funding'}
+          </StatusBadge>
+        </SectionHeader>
+        <ProgressBarContainer>
+          <ProgressBarFill
+            percent={isFunded ? 100 : percentage}
+            status={isFunded ? 'success' : 'active'}
+          />
+        </ProgressBarContainer>
+        {renderSideFacts(side)}
+        <Description>
+          {isFunded
+            ? `Fully funded. If the ${sideName(other)} is not fully funded too, the ${sideName(side)} wins.`
+            : `Contribute to earn up to ${formatValue(fees.potentialReward)} ${nativeCurrency} if the ${sideName(side)} wins the dispute.`}
+        </Description>
+        {renderContributionUI(side)}
+      </Section>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Appeal Crowdfunding</CardTitle>
         <CardDescription>
-          Contribute appeal fees and earn rewards if the side you back wins the round
+          Anyone can fund either side&apos;s appeal fees. If both sides are fully funded, the appeal goes ahead:
+          backers of the side that wins the dispute get their contribution back plus a share of the other
+          side&apos;s fees, and backers of the other side lose theirs. If the appeal does not go ahead, every
+          contribution is reimbursed.
         </CardDescription>
       </CardHeader>
 
       <Content>
-        <Section>
-          <SectionHeader>
-            <Title>Submitter</Title>
-            <StatusBadge funded={hasPaidRequester}>
-              {hasPaidRequester ? '✓ Funded' : 'Funding'}
-            </StatusBadge>
-          </SectionHeader>
-          <ProgressBarContainer>
-            <ProgressBarFill
-              percent={hasPaidRequester ? 100 : requesterPercentage}
-              status={hasPaidRequester ? 'success' : 'active'}
-            />
-          </ProgressBarContainer>
-          <Description>
-            {hasPaidRequester
-              ? 'Fully funded. Challenger must also fund to avoid losing.'
-              : `Contribute to earn up to ${Number(formatEther(requesterFees.potentialReward)).toFixed(4)} ${nativeCurrency} if this side wins.`}
-          </Description>
-          {renderContributionUI(PARTY.REQUESTER)}
-        </Section>
-
-        <Section>
-          <SectionHeader>
-            <Title>Challenger</Title>
-            <StatusBadge funded={hasPaidChallenger}>
-              {hasPaidChallenger ? '✓ Funded' : 'Funding'}
-            </StatusBadge>
-          </SectionHeader>
-          <ProgressBarContainer>
-            <ProgressBarFill
-              percent={hasPaidChallenger ? 100 : challengerPercentage}
-              status={hasPaidChallenger ? 'success' : 'active'}
-            />
-          </ProgressBarContainer>
-          <Description>
-            {hasPaidChallenger
-              ? 'Fully funded. Submitter must also fund to avoid losing.'
-              : `Contribute to earn up to ${Number(formatEther(challengerFees.potentialReward)).toFixed(4)} ${nativeCurrency} if this side wins.`}
-          </Description>
-          {renderContributionUI(PARTY.CHALLENGER)}
-        </Section>
+        {renderSide(PARTY.REQUESTER)}
+        {renderSide(PARTY.CHALLENGER)}
 
         <InfoBox>
-          {(() => {
-            const isNoRuling = ruling === SUBGRAPH_RULING.NONE || ruling === 'Refuse' ||
-                              ruling === SUBGRAPH_RULING.NONE_NUM || ruling === 'None'
-
-            if (isNoRuling) {
-              return 'The arbitrator did not give a decisive ruling. If one side fully funds their appeal, the other side must also fund to avoid losing.'
-            }
-
-            return 'If one side fully funds their appeal, the other side must also fund to avoid losing the case.'
-          })()}
+          {appeal.decisive ? (
+            <>
+              The {sideName(appeal.loser)}, against the current ruling, must be fully funded by{' '}
+              {formatTimestamp(appeal.half, true)}, and the {sideName(appeal.winner)} by{' '}
+              {formatTimestamp(appeal.end, true)}.
+            </>
+          ) : (
+            <>
+              Jurors gave no decisive ruling, so both sides can be funded until{' '}
+              {formatTimestamp(appeal.end, true)}.
+            </>
+          )}{' '}
+          If only one side is fully funded, that side wins; if neither is, the current ruling stands. If the
+          jurors end with no decisive ruling, backers get their contributions back, less their share of the
+          court&apos;s appeal fee.
         </InfoBox>
       </Content>
     </Card>

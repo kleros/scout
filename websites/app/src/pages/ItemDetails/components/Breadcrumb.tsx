@@ -3,13 +3,14 @@ import styled from 'styled-components'
 import { Link, useNavigate } from 'react-router-dom'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 
-const BreadcrumbContainer = styled.div`
+const BreadcrumbContainer = styled.nav`
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
   color: ${({ theme }) => theme.secondaryBlue};
-  flex-wrap: wrap;
+  flex: 1 1 0;
+  min-width: 0;
 
   a {
     color: ${({ theme }) => theme.secondaryBlue};
@@ -35,10 +36,21 @@ const BreadcrumbContainer = styled.div`
 
 const Separator = styled.span`
   color: ${({ theme }) => theme.secondaryBlue};
+  flex-shrink: 0;
+`
+
+/* A long name (a Tag Query's description) stays on one line; the whole of it is in the title. */
+const CurrentItem = styled.span`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `
 
 const StyledLink = styled(Link)`
   /* Inherits styles from BreadcrumbContainer a selector */
+  flex-shrink: 0;
+  white-space: nowrap;
 `
 
 interface BreadcrumbProps {
@@ -60,15 +72,17 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ registryName, itemName, registr
   }
 
   return (
-    <BreadcrumbContainer>
+    <BreadcrumbContainer aria-label="Breadcrumb">
       <StyledLink
         to={registryUrl}
         onClick={handleRegistryClick}
       >
         {registryName}
       </StyledLink>
-      <Separator>/</Separator>
-      <span>{itemName}</span>
+      <Separator aria-hidden="true">/</Separator>
+      <CurrentItem title={itemName} aria-current="page">
+        {itemName}
+      </CurrentItem>
     </BreadcrumbContainer>
   )
 }

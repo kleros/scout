@@ -102,10 +102,12 @@ const StyledNewTabIcon = styled(NewTabIcon)`
   }
 `
 
+/* 24px tall at least: on phones the address and the date under it are separate targets. */
 const AddressLink = styled(Link)`
   display: flex;
   align-items: center;
   gap: 6px;
+  min-height: 24px;
   text-decoration: none;
   cursor: pointer !important;
   ${hoverShortTransitionTiming}
@@ -141,6 +143,8 @@ const TxLink = styled(Link)`
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-width: 24px;
+  min-height: 24px;
   text-decoration: none;
   ${hoverShortTransitionTiming}
 
@@ -158,6 +162,9 @@ const TxLink = styled(Link)`
 `
 
 const DateLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   color: ${({ theme }) => theme.secondaryText};
   font-size: 12px;
   font-weight: 400;
@@ -340,8 +347,10 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
             })
           }
 
-          // Appeal funding - show who funded their appeal
+          // Appeal funding - show who funded their appeal, in the order it happened
           if (round.appealPeriodEnd && Number(round.appealPeriodEnd) > 0) {
+            const fundingEntries: Array<{ at: number; item: TimelineItem }> = []
+
             // Show requester funding if they paid
             if (round.hasPaidRequester && request?.requester) {
               // Determine if requester is on winning or losing side based on ruling
@@ -357,26 +366,29 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                   ? round.lastFundedRequester
                   : round.appealedAt ?? round.appealPeriodStart
               const requesterFundedTx = round.txHashAppealFundedRequester
-              items.push({
-                title: fundingTitle,
-                party: (
-                  <PartyWrapper>
-                    <AddressLink to={`/profile/pending?address=${request.requester}`}>
-                      <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
-                      <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
-                      <ArrowIcon />
-                    </AddressLink>
-                  </PartyWrapper>
-                ),
-                subtitle: requesterFundedTx ? (
-                  <DateLink to={`/tx/${requesterFundedTx}`}>
-                    {formatTimestamp(Number(requesterFundedAt), true)}
-                  </DateLink>
-                ) : (
-                  formatTimestamp(Number(requesterFundedAt), true)
-                ),
-                rightSided: true,
-                variant: theme.primaryBlue,
+              fundingEntries.push({
+                at: Number(requesterFundedAt),
+                item: {
+                  title: fundingTitle,
+                  party: (
+                    <PartyWrapper>
+                      <AddressLink to={`/profile/pending?address=${request.requester}`}>
+                        <IdenticonOrAvatar size="20" address={request.requester as `0x${string}`} />
+                        <AddressOrName address={request.requester as `0x${string}`} smallDisplay />
+                        <ArrowIcon />
+                      </AddressLink>
+                    </PartyWrapper>
+                  ),
+                  subtitle: requesterFundedTx ? (
+                    <DateLink to={`/tx/${requesterFundedTx}`}>
+                      {formatTimestamp(Number(requesterFundedAt), true)}
+                    </DateLink>
+                  ) : (
+                    formatTimestamp(Number(requesterFundedAt), true)
+                  ),
+                  rightSided: true,
+                  variant: theme.primaryBlue,
+                },
               })
             }
 
@@ -395,35 +407,44 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                   ? round.lastFundedChallenger
                   : round.appealedAt ?? round.appealPeriodStart
               const challengerFundedTx = round.txHashAppealFundedChallenger
-              items.push({
-                title: fundingTitle,
-                party: (
-                  <PartyWrapper>
-                    <AddressLink to={`/profile/pending?address=${request.challenger}`}>
-                      <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
-                      <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
-                      <ArrowIcon />
-                    </AddressLink>
-                  </PartyWrapper>
-                ),
-                subtitle: challengerFundedTx ? (
-                  <DateLink to={`/tx/${challengerFundedTx}`}>
-                    {formatTimestamp(Number(challengerFundedAt), true)}
-                  </DateLink>
-                ) : (
-                  formatTimestamp(Number(challengerFundedAt), true)
-                ),
-                rightSided: true,
-                variant: theme.primaryBlue,
+              fundingEntries.push({
+                at: Number(challengerFundedAt),
+                item: {
+                  title: fundingTitle,
+                  party: (
+                    <PartyWrapper>
+                      <AddressLink to={`/profile/pending?address=${request.challenger}`}>
+                        <IdenticonOrAvatar size="20" address={request.challenger as `0x${string}`} />
+                        <AddressOrName address={request.challenger as `0x${string}`} smallDisplay />
+                        <ArrowIcon />
+                      </AddressLink>
+                    </PartyWrapper>
+                  ),
+                  subtitle: challengerFundedTx ? (
+                    <DateLink to={`/tx/${challengerFundedTx}`}>
+                      {formatTimestamp(Number(challengerFundedAt), true)}
+                    </DateLink>
+                  ) : (
+                    formatTimestamp(Number(challengerFundedAt), true)
+                  ),
+                  rightSided: true,
+                  variant: theme.primaryBlue,
+                },
               })
             }
 
-            // Appeal proceeds - only if there's another round after this one AND BOTH sides have funded
-            const currentTimestamp = Math.floor(Date.now() / 1000)
-            const appealPeriodEndTimestamp = Number(round.appealPeriodEnd)
+            // Earliest first, like the rest of the timeline (a stable sort keeps ties in place).
+            fundingEntries
+              .sort((a, b) => a.at - b.at)
+              .forEach((entry) => items.push(entry.item))
 
-            // Only show "Appeal Proceeds" if the appeal period has actually ended AND both sides have funded
-            if (index < sortedRounds.length - 1 && appealPeriodEndTimestamp < currentTimestamp && round.hasPaidRequester && round.hasPaidChallenger) {
+            // Appeal proceeds - only if there's another round after this one AND BOTH sides have funded.
+            // The contract raises the appeal in the transaction that completes the funding of the
+            // second side, so it happened then (appealedAt), not at the end of the appeal period.
+            const appealedAt =
+              round.appealedAt && Number(round.appealedAt) > 0 ? Number(round.appealedAt) : Number(round.appealPeriodEnd)
+
+            if (index < sortedRounds.length - 1 && round.hasPaidRequester && round.hasPaidChallenger) {
               const txHashAppealDecision = round.txHashAppealDecision
 
               items.push({
@@ -431,10 +452,10 @@ const ItemTimeline: React.FC<ItemTimelineProps> = ({ detailsData }) => {
                 party: '',
                 subtitle: txHashAppealDecision ? (
                   <DateLink to={`/tx/${txHashAppealDecision}`}>
-                    {formatTimestamp(Number(round.appealPeriodEnd), true)}
+                    {formatTimestamp(appealedAt, true)}
                   </DateLink>
                 ) : (
-                  formatTimestamp(Number(round.appealPeriodEnd), true)
+                  formatTimestamp(appealedAt, true)
                 ),
                 rightSided: true,
                 variant: theme.primaryBlue,

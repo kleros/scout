@@ -1,4 +1,4 @@
-import React, { forwardRef, useEffect, useState } from 'react'
+import React, { forwardRef, useEffect, useId, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { useQueryClient } from '@tanstack/react-query'
 import { Address } from 'viem'
@@ -15,8 +15,8 @@ import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { queryKeys } from 'hooks/queries/consts'
 
-import { errorToast, infoToast } from 'utils/wrapWithToast'
-import { parseWagmiError } from 'utils/parseWagmiError'
+import { errorToast, progressToast } from 'utils/wrapWithToast'
+import { isUserRejection, parseWagmiError } from 'utils/parseWagmiError'
 import { JSON_UPLOAD_ROLE } from 'utils/atlasRoles'
 import { assertIpfsFileAvailable } from 'utils/ipfs'
 import {
@@ -62,11 +62,10 @@ const FieldLabel = styled.label`
   color: ${({ theme }) => theme.primaryText};
 `
 
-const TextArea = styled.textarea`
+const fieldStyles = css`
   width: 100%;
   padding: 12px;
   border: 1px solid ${({ theme }) => theme.stroke};
-  outline: none;
   overflow: auto;
   border-radius: 8px;
   background: ${({ theme }) => theme.modalInputBackground};
@@ -88,6 +87,21 @@ const TextArea = styled.textarea`
   &::placeholder {
     color: ${({ theme }) => theme.secondaryText};
   }
+`
+
+const TextArea = styled.textarea`
+  ${fieldStyles}
+`
+
+/* The title is one line: an input, styled like the description field. */
+const TitleInput = styled.input`
+  ${fieldStyles}
+`
+
+const MissingStep = styled.p`
+  margin: 0;
+  font-size: 13px;
+  color: ${({ theme }) => theme.secondaryText};
 `
 
 const FileUploadContainer = styled.div`
@@ -114,6 +128,12 @@ const FileUploadButton = styled.label`
   &:hover {
     background: ${({ theme }) => theme.backgroundFour};
     border-color: ${({ theme }) => theme.secondaryBlue}80;
+  }
+
+  /* The file input inside is visually hidden: show its keyboard focus on the button. */
+  &:has(input:focus-visible) {
+    outline: 2px solid ${({ theme }) => theme.primaryBlue};
+    outline-offset: 2px;
   }
 
   svg {
@@ -147,6 +167,8 @@ const FilePreview = styled.div`
 `
 
 const RemoveFileButton = styled.button`
+  min-width: 24px;
+  min-height: 24px;
   background: none;
   border: none;
   color: ${({ theme }) => theme.error};
@@ -190,6 +212,7 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
   const [attachedFileBase64, setAttachedFileBase64] = useState<string | null>(formData.attachedFileBase64)
   const [attachedFileName, setAttachedFileName] = useState<string | null>(formData.attachedFileName)
   const [isLocalLoading, setIsLocalLoading] = useState(false)
+  const idPrefix = useId()
 
   const { submitEvidence, isLoading: isContractLoading } = useCurateInteractions()
   const { uploadFile, roleRestrictions } = useAtlasProvider()
@@ -243,19 +266,24 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
   })() : null
 
   const handleSubmit = async () => {
+    if (isLoading) return
     setIsLocalLoading(true)
+    // One toast follows the uploads and then the transaction.
+    const toastId = progressToast.start(
+      attachedFile ? 'Uploading your file to IPFS...' : 'Uploading your evidence to IPFS...',
+    )
     try {
       let fileURI: string | null = null
       let fileTypeExtension: string | null = null
 
       if (attachedFile) {
-        infoToast('Uploading file to IPFS...')
         const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
         if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
         await assertIpfsFileAvailable(uploadedPath, 'attachment')
         fileURI = uploadedPath
         const extension = attachedFile.name.split('.').pop()
         fileTypeExtension = extension ? `.${extension}` : null
+        progressToast.step(toastId, 'Uploading your evidence to IPFS...')
       }
 
       const evidenceObject: {
@@ -270,7 +298,6 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       if (fileURI) evidenceObject.fileURI = fileURI
       if (fileTypeExtension) evidenceObject.fileTypeExtension = fileTypeExtension
 
-      infoToast('Uploading evidence to IPFS...')
       const evidenceFile = new File(
         [JSON.stringify(evidenceObject)],
         'evidence.json',
@@ -278,10 +305,10 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       )
       const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
       if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
-      infoToast('Verifying evidence is retrievable from IPFS...')
+      progressToast.step(toastId, 'Checking that your evidence can be read back from IPFS...')
       await assertIpfsFileAvailable(ipfsPath, 'evidence')
 
-      const result = await submitEvidence(registryAddress, itemID, ipfsPath)
+      const result = await submitEvidence(registryAddress, itemID, ipfsPath, { toastId })
 
       if (result?.status) {
         setTitle('')
@@ -293,36 +320,52 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
       }
     } catch (error) {
       console.error('Error submitting evidence:', error)
-      errorToast(parseWagmiError(error) || 'Failed to submit evidence')
+      // Declining a request in the wallet is a choice: close the toast quietly.
+      if (isUserRejection(error)) progressToast.dismiss(toastId)
+      else progressToast.fail(toastId, parseWagmiError(error) || 'Failed to submit evidence')
     } finally {
       setIsLocalLoading(false)
     }
   }
 
-  const submitDisabled = !title.trim() || !description.trim()
+  const missingTitle = !title.trim()
+  const missingDescription = !description.trim()
+  const submitDisabled = missingTitle || missingDescription
+  const missingStep =
+    missingTitle && missingDescription
+      ? 'Add a title and a description to submit.'
+      : missingTitle
+        ? 'Add a title to submit.'
+        : missingDescription
+          ? 'Add a description to submit.'
+          : null
 
   return (
     <Container ref={ref}>
-      <Heading>Add Your Evidence</Heading>
-      <FieldLabel>Title</FieldLabel>
-      <TextArea
-        rows={1}
+      <Heading id={`${idPrefix}-heading`}>Add Your Evidence</Heading>
+      <FieldLabel htmlFor={`${idPrefix}-title`}>Title (required)</FieldLabel>
+      <TitleInput
+        id={`${idPrefix}-title`}
+        type="text"
+        required
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         disabled={isLoading}
       />
-      <FieldLabel>Description</FieldLabel>
+      <FieldLabel htmlFor={`${idPrefix}-description`}>Description (required)</FieldLabel>
       <TextArea
+        id={`${idPrefix}-description`}
         rows={3}
+        required
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         disabled={isLoading}
       />
       <FileUploadContainer>
-        <FieldLabel>Attach file (Optional)</FieldLabel>
+        <FieldLabel as="span">Attach file (Optional)</FieldLabel>
         {!attachedFile ? (
           <FileUploadButton>
-            <UploadIcon />
+            <UploadIcon aria-hidden="true" />
             Choose File
             <HiddenFileInput
               type="file"
@@ -334,7 +377,12 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
         ) : (
           <FilePreview>
             <span>{attachedFile.name}</span>
-            <RemoveFileButton onClick={handleRemoveFile} disabled={isLoading}>
+            <RemoveFileButton
+              type="button"
+              aria-label={`Remove ${attachedFile.name}`}
+              onClick={handleRemoveFile}
+              disabled={isLoading}
+            >
               ×
             </RemoveFileButton>
           </FilePreview>
@@ -347,13 +395,15 @@ const InlineEvidenceForm = forwardRef<HTMLDivElement, InlineEvidenceFormProps>((
               isLoading={isLoading}
               loadingText="Processing..."
               disabled={submitDisabled}
+              aria-describedby={missingStep ? `${idPrefix}-missing` : undefined}
               onClick={handleSubmit}
             >
-              Submit
+              Submit evidence
             </TransactionButton>
           </EnsureAuth>
         </EnsureChain>
       </ButtonWrapper>
+      {missingStep && !isLoading && <MissingStep id={`${idPrefix}-missing`}>{missingStep}</MissingStep>}
     </Container>
   )
 })

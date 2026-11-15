@@ -1,19 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
 import { formatEther } from 'viem'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
-import { StyledCloseButton, ClosedButtonContainer } from 'pages/Registries'
+import CloseIcon from 'svgs/icons/close.svg'
 import { GraphItemDetails } from 'utils/itemDetails'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
+import { useDialog } from 'hooks/useDialog'
 import { EnsureChain } from 'components/EnsureChain'
 import EnsureAuth from 'components/EnsureAuth'
 import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { Address } from 'viem'
-import { errorToast, infoToast } from 'utils/wrapWithToast'
-import { parseWagmiError } from 'utils/parseWagmiError'
+import { errorToast, progressToast } from 'utils/wrapWithToast'
+import { isUserRejection, parseWagmiError } from 'utils/parseWagmiError'
+import { formatTimeLeft } from 'hooks/countdown'
 import TransactionButton from 'components/TransactionButton'
 import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import UploadIcon from 'assets/svgs/icons/upload.svg'
@@ -29,18 +31,36 @@ import {
 import { formatValue } from 'utils/formatValue'
 import type { WrapWithToastReturnType } from 'utils/wrapWithToast'
 
-const REGISTRY_SINGULAR: Record<string, string> = {
-  tokens: 'Token',
-  cdn: 'CDN',
-  'single-tags': 'Tag',
-  'tags-queries': 'Query',
-}
-
+/*
+ * What comes back, per LightGeneralizedTCR: a challenger who wins gets the request's whole deposit
+ * pot, that is their own deposit back plus the requester's base deposit (the bounty); one who loses
+ * leaves it to the requester. An unchallenged removal is executed after the challenge period and
+ * the remover's deposit is returned.
+ */
 const buildChallengeWarning = (bounty: string, opposingParty: string) =>
-  `If the challenge is successful, you will receive 100% of your refund and also a bounty of ${bounty} for spotting the mistake. In case the arbitrator rules in favor of the ${opposingParty}, you are going to lose your deposit. Please ensure you read and understand the rules contained in the Policy below before challenging it.`
+  `If the jurors rule for you, you get your deposit back plus a bounty of ${bounty}. If they rule for the ${opposingParty}, you lose your deposit. Read the Policy below before you challenge.`
 
-const REMOVAL_WARNING =
-  'If your removal request is approved, you will receive 100% of your refund. If a challenger contests your removal and the arbitrator rules against you, you will lose your deposit. Please ensure you read and understand the rules contained in the Policy below before requesting removal.'
+const buildRemovalWarning = (challengePeriod: string | null) =>
+  `If nobody challenges your request within the challenge period${
+    challengePeriod ? ` (${challengePeriod})` : ''
+  }, anyone can then execute it: the item is removed and your deposit is returned. If someone challenges it and the jurors rule against you, you lose your deposit. Read the Policy below before you request the removal.`
+
+/** "3 days 12 hours" for the removal sentence (the challenge period is set per registry). */
+const formatPeriod = (seconds: number): string =>
+  formatTimeLeft(seconds * 1000, 2)
+    .replace(/(\d+)d/, (_, n) => `${n} day${n === '1' ? '' : 's'}`)
+    .replace(/(\d+)h/, (_, n) => `${n} hour${n === '1' ? '' : 's'}`)
+    .replace(/(\d+)min/, (_, n) => `${n} minute${n === '1' ? '' : 's'}`)
+
+/**
+ * The title repeats the page button that opened the dialog (in every registry it said "Token",
+ * "Tag" or "Query" here but "Item" on the page); the submit button says what it does.
+ */
+const ACTION_LABELS: Record<string, { title: string; submit: string; evidenceTitle: string }> = {
+  RegistrationRequested: { title: 'Challenge item', submit: 'Challenge item', evidenceTitle: 'Challenge Justification' },
+  Registered: { title: 'Remove item', submit: 'Request removal', evidenceTitle: 'Removal Justification' },
+  ClearingRequested: { title: 'Challenge removal', submit: 'Challenge removal', evidenceTitle: 'Challenge Removal Justification' },
+}
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
@@ -84,14 +104,47 @@ const InnerContainer = styled.div`
   gap: 16px;
 `
 
-const ConfirmationTitle = styled.h3`
+const TitleRow = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  margin-top: 0;
+  align-items: flex-start;
   gap: 24px;
+`
+
+const ConfirmationTitle = styled.h3`
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
+`
+
+const CloseButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin: -4px -4px 0 0;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.hoverBackground};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
 `
 
 const FieldLabel = styled.label`
@@ -99,11 +152,17 @@ const FieldLabel = styled.label`
   color: ${({ theme }) => theme.primaryText};
 `
 
+const MissingStep = styled.p`
+  width: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: ${({ theme }) => theme.secondaryText};
+`
+
 const TextArea = styled.textarea`
   width: 93%;
   padding: 12px;
   border: 1px solid ${({ theme }) => theme.stroke};
-  outline: none;
   overflow: auto;
   border-radius: 8px;
   background: ${({ theme }) => theme.modalInputBackground};
@@ -185,6 +244,12 @@ const FileUploadButton = styled.label`
     border-color: ${({ theme }) => theme.secondaryBlue}80;
   }
 
+  /* The file input inside is visually hidden: show its keyboard focus on the button. */
+  &:has(input:focus-visible) {
+    outline: 2px solid ${({ theme }) => theme.primaryBlue};
+    outline-offset: 2px;
+  }
+
   svg {
     width: 16px;
     height: 16px;
@@ -216,6 +281,8 @@ const FilePreview = styled.div`
 `
 
 const RemoveFileButton = styled.button`
+  min-width: 24px;
+  min-height: 24px;
   background: none;
   border: none;
   color: ${({ theme }) => theme.error};
@@ -229,14 +296,22 @@ const RemoveFileButton = styled.button`
   }
 `
 
+/** The base deposits the dialog needs (the item page reads them with the registry parameters). */
+type DepositAmounts = Pick<
+  DepositParams,
+  'submissionBaseDeposit' | 'removalBaseDeposit' | 'submissionChallengeBaseDeposit' | 'removalChallengeBaseDeposit'
+>
+
 interface IConfirmationBox {
   evidenceConfirmationType: string;
   isConfirmationOpen: boolean;
   setIsConfirmationOpen: (isOpen: boolean) => void;
   detailsData: GraphItemDetails;
-  deposits: DepositParams | undefined;
+  deposits: DepositAmounts | undefined;
   arbitrationCostData: bigint | undefined;
   registryName?: string;
+  /** The registry's challenge period in seconds, to say when an unchallenged removal goes through. */
+  challengePeriodDuration?: number | null;
 }
 
 const ConfirmationBox: React.FC<IConfirmationBox> = ({
@@ -247,6 +322,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   deposits,
   arbitrationCostData,
   registryName,
+  challengePeriodDuration,
 }) => {
   const cacheKey = `confirmationBox:${detailsData.registryAddress}:${detailsData.itemID}:${evidenceConfirmationType}`
 
@@ -262,10 +338,19 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   const [isLocalLoading, setIsLocalLoading] = useState(false)
   const [acknowledged, setAcknowledged] = useState(false)
 
+  const idPrefix = useId()
+  const titleId = `${idPrefix}-title`
+  const descriptionId = `${idPrefix}-description`
+  const missingStepId = `${idPrefix}-missing`
+  const descriptionRef = useRef<HTMLTextAreaElement>(null)
+
   useLockOverlayScroll(isConfirmationOpen)
 
-  const registrySingular =
-    (registryName && REGISTRY_SINGULAR[registryName]) || 'Item'
+  const labels = ACTION_LABELS[evidenceConfirmationType] ?? {
+    title: 'Submit',
+    submit: 'Submit',
+    evidenceTitle: '',
+  }
 
   const bountyDisplay = useMemo(() => {
     const raw = detailsData?.requests?.[0]?.deposit
@@ -278,25 +363,15 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
   }, [detailsData])
 
   const warningText = (() => {
-    if (evidenceConfirmationType === 'Registered') return REMOVAL_WARNING
+    if (evidenceConfirmationType === 'Registered') {
+      return buildRemovalWarning(challengePeriodDuration ? formatPeriod(challengePeriodDuration) : null)
+    }
     const opposingParty =
       evidenceConfirmationType === 'ClearingRequested' ? 'remover' : 'submitter'
-    const bountyFallback = `the ${opposingParty}'s deposit`
+    const bountyFallback = `the ${opposingParty}'s base deposit`
     return buildChallengeWarning(bountyDisplay ?? bountyFallback, opposingParty)
   })()
 
-  const submitLabel = (() => {
-    switch (evidenceConfirmationType) {
-      case 'RegistrationRequested':
-        return `Challenge ${registrySingular}`
-      case 'Registered':
-        return `Remove ${registrySingular}`
-      case 'ClearingRequested':
-        return `Challenge Removal`
-      default:
-        return 'Submit'
-    }
-  })()
   const { challengeRequest, removeItem, isLoading: isContractLoading } = useCurateInteractions()
   const { uploadFile, roleRestrictions } = useAtlasProvider()
   const evidenceRestriction = getRoleRestriction(Roles.Evidence, roleRestrictions)
@@ -360,11 +435,30 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   }
 
+  // A real dialog: focus moves to the description, Tab stays inside, Escape closes (not while
+  // sending), and focus returns to the button that opened it.
+  const { dialogProps } = useDialog(isConfirmationOpen, handleClose, { initialFocus: descriptionRef })
+
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       handleClose()
     }
   }
+
+  // The base deposit of this action (the arbitration cost is added to it).
+  const baseDeposit = useMemo(() => {
+    if (!deposits) return undefined
+    switch (evidenceConfirmationType) {
+      case 'RegistrationRequested':
+        return deposits.submissionChallengeBaseDeposit
+      case 'Registered':
+        return deposits.removalBaseDeposit
+      case 'ClearingRequested':
+        return deposits.removalChallengeBaseDeposit
+      default:
+        return undefined
+    }
+  }, [deposits, evidenceConfirmationType])
 
   const depositValue = useMemo(() => {
     if (!deposits || arbitrationCostData === undefined) return undefined
@@ -380,49 +474,175 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     }
   }, [deposits, arbitrationCostData, evidenceConfirmationType])
 
+  // What the deposit is made of, shown before anything is signed.
+  const depositBreakdown = (() => {
+    if (baseDeposit === undefined || arbitrationCostData === undefined) return null
+    const baseName = evidenceConfirmationType === 'Registered' ? 'removal deposit' : 'challenge deposit'
+    if (BigInt(baseDeposit) === 0n) return `the arbitration cost`
+    return `${formatEther(BigInt(baseDeposit))} xDAI ${baseName} + ${formatEther(arbitrationCostData)} xDAI arbitration cost`
+  })()
+
   const { balance: nativeBalance } = useNativeBalance()
   const insufficientBalance =
     nativeBalance !== undefined &&
     depositValue !== undefined &&
     nativeBalance < depositValue
 
+  const missingDescription = !evidenceText.trim()
+  const missingStep =
+    missingDescription && !acknowledged
+      ? 'Add a description and confirm that you have read the Policy to continue.'
+      : missingDescription
+        ? 'Add a description to continue.'
+        : !acknowledged
+          ? 'Confirm that you have read the Policy to continue.'
+          : null
+
+  const handleSubmit = async () => {
+    if (isLoading) return
+    const registryAddress = detailsData.registryAddress as Address
+    const itemId = detailsData.itemID
+    // Refuse before uploading anything: the deposit must be known.
+    if (!deposits || baseDeposit === undefined || arbitrationCostData === undefined) {
+      errorToast('The deposit has not loaded yet. Close this dialog and try again in a moment.')
+      return
+    }
+    const arbitrationCost = arbitrationCostData as bigint
+
+    // Set loading state immediately
+    setIsLocalLoading(true)
+    // One toast follows the uploads and then the transaction.
+    const toastId = progressToast.start(
+      attachedFile ? 'Uploading your file to IPFS...' : 'Uploading your evidence to IPFS...',
+    )
+
+    try {
+      // Upload attached file to IPFS if present
+      let fileURI: string | null = null
+      let fileTypeExtension: string | null = null
+
+      if (attachedFile) {
+        const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
+        if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
+        await assertIpfsFileAvailable(uploadedPath, 'attachment')
+        fileURI = uploadedPath
+        const extension = attachedFile.name.split('.').pop()
+        fileTypeExtension = extension ? `.${extension}` : null
+        progressToast.step(toastId, 'Uploading your evidence to IPFS...')
+      }
+
+      // Construct evidence object with optional file attachment
+      const evidenceObject: {
+        title: string
+        description: string
+        fileURI?: string
+        fileTypeExtension?: string
+      } = {
+        title: labels.evidenceTitle,
+        description: evidenceText,
+      }
+
+      if (fileURI) {
+        evidenceObject.fileURI = fileURI
+      }
+      if (fileTypeExtension) {
+        evidenceObject.fileTypeExtension = fileTypeExtension
+      }
+
+      const evidenceFile = new File(
+        [JSON.stringify(evidenceObject)],
+        'evidence.json',
+        { type: 'application/json' },
+      )
+      const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
+      if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
+      progressToast.step(toastId, 'Checking that your evidence can be read back from IPFS...')
+      await assertIpfsFileAvailable(ipfsPath, 'evidence')
+
+      let result: WrapWithToastReturnType | undefined
+      switch (evidenceConfirmationType) {
+        case 'RegistrationRequested':
+          result = await challengeRequest(
+            registryAddress,
+            itemId,
+            ipfsPath,
+            BigInt(deposits.submissionChallengeBaseDeposit),
+            arbitrationCost,
+            { toastId }
+          )
+          break
+        case 'Registered':
+          result = await removeItem(
+            registryAddress,
+            itemId,
+            ipfsPath,
+            // removeItem reads only removalBaseDeposit from it (type-only cast, same object as before).
+            deposits as DepositParams,
+            arbitrationCost,
+            { toastId }
+          )
+          break
+        case 'ClearingRequested':
+          result = await challengeRequest(
+            registryAddress,
+            itemId,
+            ipfsPath,
+            BigInt(deposits.removalChallengeBaseDeposit),
+            arbitrationCost,
+            { toastId }
+          )
+          break
+        default:
+          throw new Error('Invalid evidence confirmation type')
+      }
+
+      if (result?.status) {
+        // Reset form state before closing to prevent the useEffect from saving it again
+        setEvidenceText('')
+        setAttachedFileBase64(null)
+        setAttachedFileName(null)
+        // Clear localStorage after state is reset
+        localStorage.removeItem(cacheKey)
+        setIsConfirmationOpen(false)
+
+        if (result.result) {
+          navigate(`/tx/${result.result.transactionHash}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error performing action:', error)
+      // Declining a request in the wallet is a choice: close the toast quietly.
+      if (isUserRejection(error)) progressToast.dismiss(toastId)
+      else progressToast.fail(toastId, parseWagmiError(error) || 'Failed to perform action')
+    } finally {
+      setIsLocalLoading(false)
+    }
+  }
+
   return (
     <ModalOverlay $isOpen={isConfirmationOpen} onClick={handleOverlayClick}>
-      <Container>
+      <Container {...dialogProps} aria-labelledby={titleId}>
         <InnerContainer>
-          <ConfirmationTitle>
-            <div>
-              {(() => {
-                switch (evidenceConfirmationType) {
-                  case 'RegistrationRequested':
-                    return 'Challenge Item'
-                  case 'Registered':
-                    return 'Remove Item'
-                  case 'ClearingRequested':
-                    return 'Challenge Removal Request'
-                  default:
-                    return 'Default message'
-                }
-              })()}
-            </div>
-            <ClosedButtonContainer
-              onClick={handleClose}
-              style={{ cursor: isLoading ? 'not-allowed' : 'pointer', opacity: isLoading ? 0.5 : 1 }}
-            >
-              <StyledCloseButton />
-            </ClosedButtonContainer>
-          </ConfirmationTitle>
-          <FieldLabel>Description</FieldLabel>
+          <TitleRow>
+            <ConfirmationTitle id={titleId}>{labels.title}</ConfirmationTitle>
+            <CloseButton type="button" aria-label="Close" onClick={handleClose} disabled={isLoading}>
+              <CloseIcon aria-hidden="true" />
+            </CloseButton>
+          </TitleRow>
+          <FieldLabel htmlFor={descriptionId}>Description (required)</FieldLabel>
           <TextArea
+            id={descriptionId}
+            ref={descriptionRef}
             rows={3}
+            required
             value={evidenceText}
             onChange={(e) => setEvidenceText(e.target.value)}
           ></TextArea>
           <FileUploadContainer>
-            <FieldLabel>Attach file (Optional)</FieldLabel>
+            <FieldLabel as="span">Attach file (Optional)</FieldLabel>
             {!attachedFile ? (
               <FileUploadButton>
-                <UploadIcon />
+                <UploadIcon aria-hidden="true" />
                 Choose File
                 <HiddenFileInput
                   type="file"
@@ -434,7 +654,12 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             ) : (
               <FilePreview>
                 <span>{attachedFile.name}</span>
-                <RemoveFileButton onClick={handleRemoveFile} disabled={isLoading}>
+                <RemoveFileButton
+                  type="button"
+                  aria-label={`Remove ${attachedFile.name}`}
+                  onClick={handleRemoveFile}
+                  disabled={isLoading}
+                >
                   ×
                 </RemoveFileButton>
               </FilePreview>
@@ -452,145 +677,22 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
               <TransactionButton
                 isLoading={isLoading}
                 loadingText="Processing..."
-                disabled={!acknowledged || !evidenceText.trim() || insufficientBalance}
-                onClick={async () => {
-                  // Set loading state immediately
-                  setIsLocalLoading(true)
-
-                  try {
-                    const finalTitle = (() => {
-                      switch (evidenceConfirmationType) {
-                        case 'RegistrationRequested':
-                          return 'Challenge Justification'
-                        case 'Registered':
-                          return 'Removal Justification'
-                        case 'ClearingRequested':
-                          return 'Challenge Removal Justification'
-                        default:
-                          return ''
-                      }
-                    })()
-                    // Upload attached file to IPFS if present
-                    let fileURI: string | null = null
-                    let fileTypeExtension: string | null = null
-
-                    if (attachedFile) {
-                      infoToast('Uploading file to IPFS...')
-                      const uploadedPath = await uploadFile(attachedFile, Roles.Evidence)
-                      if (!uploadedPath) throw new Error('Failed to upload attachment to IPFS.')
-                      await assertIpfsFileAvailable(uploadedPath, 'attachment')
-                      fileURI = uploadedPath
-                      const extension = attachedFile.name.split('.').pop()
-                      fileTypeExtension = extension ? `.${extension}` : null
-                    }
-
-                    // Construct evidence object with optional file attachment
-                    const evidenceObject: {
-                      title: string
-                      description: string
-                      fileURI?: string
-                      fileTypeExtension?: string
-                    } = {
-                      title: finalTitle,
-                      description: evidenceText,
-                    }
-
-                    if (fileURI) {
-                      evidenceObject.fileURI = fileURI
-                    }
-                    if (fileTypeExtension) {
-                      evidenceObject.fileTypeExtension = fileTypeExtension
-                    }
-
-                    infoToast('Uploading evidence to IPFS...')
-                    const evidenceFile = new File(
-                      [JSON.stringify(evidenceObject)],
-                      'evidence.json',
-                      { type: 'application/json' },
-                    )
-                    const ipfsPath = await uploadFile(evidenceFile, JSON_UPLOAD_ROLE)
-                    if (!ipfsPath) throw new Error('Failed to upload evidence to IPFS.')
-                    infoToast('Verifying evidence is retrievable from IPFS...')
-                    await assertIpfsFileAvailable(ipfsPath, 'evidence')
-
-                    const registryAddress = detailsData.registryAddress as Address
-                    const itemId = detailsData.itemID
-                    const arbitrationCost = arbitrationCostData as bigint
-
-                    let result: WrapWithToastReturnType | undefined
-                    switch (evidenceConfirmationType) {
-                      case 'RegistrationRequested':
-                        if (!deposits || deposits.submissionChallengeBaseDeposit === undefined) {
-                          errorToast('Missing deposit parameters for challenging submission. Please try again.')
-                          return
-                        }
-                        result = await challengeRequest(
-                          registryAddress,
-                          itemId,
-                          ipfsPath,
-                          BigInt(deposits.submissionChallengeBaseDeposit),
-                          arbitrationCost
-                        )
-                        break
-                      case 'Registered':
-                        if (!deposits || deposits.removalBaseDeposit === undefined) {
-                          errorToast('Missing deposit parameters for removing item. Please try again.')
-                          return
-                        }
-                        result = await removeItem(
-                          registryAddress,
-                          itemId,
-                          ipfsPath,
-                          deposits,
-                          arbitrationCost
-                        )
-                        break
-                      case 'ClearingRequested':
-                        if (!deposits || deposits.removalChallengeBaseDeposit === undefined) {
-                          errorToast('Missing deposit parameters for challenging removal. Please try again.')
-                          return
-                        }
-                        result = await challengeRequest(
-                          registryAddress,
-                          itemId,
-                          ipfsPath,
-                          BigInt(deposits.removalChallengeBaseDeposit),
-                          arbitrationCost
-                        )
-                        break
-                      default:
-                        throw new Error('Invalid evidence confirmation type')
-                    }
-
-                    if (result?.status) {
-                      // Reset form state before closing to prevent the useEffect from saving it again
-                      setEvidenceText('')
-                      setAttachedFileBase64(null)
-                      setAttachedFileName(null)
-                      // Clear localStorage after state is reset
-                      localStorage.removeItem(cacheKey)
-                      setIsConfirmationOpen(false)
-
-                      if (result.result) {
-                        navigate(`/tx/${result.result.transactionHash}`)
-                      }
-                    }
-                  } catch (error) {
-                    console.error('Error performing action:', error)
-                    errorToast(parseWagmiError(error) || 'Failed to perform action')
-                  } finally {
-                    setIsLocalLoading(false)
-                  }
-                }}
+                disabled={!!missingStep || insufficientBalance}
+                aria-describedby={missingStep ? missingStepId : undefined}
+                onClick={handleSubmit}
               >
-                {submitLabel}
+                {labels.submit}
               </TransactionButton>
               </EnsureAuth>
             </EnsureChain>
             {depositValue !== undefined && (
               <DepositText>
                 Deposit: {formatEther(depositValue)} xDAI
+                {depositBreakdown ? ` (${depositBreakdown})` : ''}
               </DepositText>
+            )}
+            {missingStep && !isLoading && (
+              <MissingStep id={missingStepId}>{missingStep}</MissingStep>
             )}
             {insufficientBalance && (
               <InsufficientBalanceText>

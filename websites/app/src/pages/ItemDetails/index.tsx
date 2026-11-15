@@ -2,28 +2,44 @@ import React, { useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { useParams, useNavigate, useSearchParams, useLocation, Link } from 'react-router-dom'
 import { formatEther } from 'ethers'
+import { useAccount } from 'wagmi'
+import { useAppKit } from '@reown/appkit/react'
 import { landscapeStyle, MAX_WIDTH_LANDSCAPE } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { useItemDetailsQuery } from 'hooks/queries'
 import LoadingItems from '../Registries/LoadingItems'
 import ConfirmationBox from 'components/ConfirmationBox'
-import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown'
+import ErrorState from 'components/ErrorState'
+import { useClockAt } from 'hooks/countdown'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
 import ScrollTop from 'components/ScrollTop'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
 import EvidenceAttachmentDisplay from 'components/AttachmentDisplay'
 import useAppealCost from 'hooks/useAppealCost'
 import useRegistryParameters from 'hooks/useRegistryParameters'
-import { itemToStatusCode, STATUS_CODE, SUBGRAPH_RULING } from 'utils/itemStatus'
-import { registryMap, registryDisplayNames } from 'utils/items'
+import { itemToStatusCode, STATUS_CODE } from 'utils/itemStatus'
+import { registryMap, revRegistryMap, registryDisplayNames, getItemDisplayStatus } from 'utils/items'
+import { getAppealInfo, isRemovalRequest } from 'utils/itemDetails'
 import Item from '../Registries/ItemsList/Item'
 import Breadcrumb from './components/Breadcrumb'
+import Deadline from './components/Deadline'
 import ItemDetailsContent from './components/ItemDetailsContent'
+import ItemUnavailable from './components/ItemUnavailable'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
-import { errorToast } from 'utils/wrapWithToast'
+import { errorToast, infoToast } from 'utils/wrapWithToast'
+import { isUserRejection, parseWagmiError } from 'utils/parseWagmiError'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
+import { KLEROS_CDN_BASE } from 'consts/index'
+
+/** An item ID is a 32-byte hash: 0x and 64 hex characters. */
+const ITEM_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/
+
+/** The tab title keeps a long name (a Tag Query's description) short. */
+const shortName = (name: string, max = 60) =>
+  name.length > max ? `${name.slice(0, max - 1).trimEnd()}…` : name
 
 const Container = styled.div`
   display: flex;
@@ -142,13 +158,42 @@ const ItemCardWrapper = styled.div`
 `
 
 const IpfsWarning = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   background: ${({ theme }) => theme.lightBackground};
   border: 1px solid ${({ theme }) => theme.warning};
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 13px;
   color: ${({ theme }) => theme.warning};
-  word-break: break-all;
+  word-break: break-word;
+`
+
+const IpfsActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+
+  button,
+  a {
+    min-height: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    color: ${({ theme }) => theme.primaryText};
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 `
 
 const SubmissionDetailsSection = styled.div`
@@ -175,6 +220,7 @@ const DetailRow = styled.div`
   font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
   line-height: 1.5;
+  text-align: center;
 `
 
 const SubmitterLink = styled(Link)`
@@ -228,28 +274,42 @@ const SubmissionDate = styled(Link)`
 const ItemDetails: React.FC = () => {
   const { registryName: registryNameParam = '', itemID = '' } = useParams<{ registryName: string; itemID: string }>()
   const registryAddress = registryMap[registryNameParam] || registryNameParam
+  // A raw registry address in the link still names its registry, and links back to its list.
+  const registrySlug = registryMap[registryNameParam]
+    ? registryNameParam
+    : revRegistryMap[registryNameParam.toLowerCase()] ?? registryNameParam
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const { isConnected } = useAccount()
+  const { open: openWalletModal } = useAppKit()
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [evidenceConfirmationType, setEvidenceConfirmationType] = useState('')
 
-  // Reconstruct composite ID for GraphQL query (subgraph format: itemID@registryAddress)
-  const itemId = registryAddress && itemID ? `${itemID}@${registryAddress}` : ''
+  const isValidItemId = ITEM_ID_PATTERN.test(itemID)
+
+  // Reconstruct composite ID for GraphQL query (subgraph format: itemID@registryAddress).
+  // The indexer stores both in lower case, so a link typed in mixed case still finds the item.
+  const itemId = registryAddress && isValidItemId ? `${itemID}@${registryAddress}`.toLowerCase() : ''
 
   const isAttachmentOpen = useMemo(
     () => !!searchParams.get('attachment'),
     [searchParams],
   )
 
-  const { isLoading: detailsLoading, data: detailsData } = useItemDetailsQuery({
+  const {
+    data: detailsData,
+    isError: detailsFailed,
+    isFetching: detailsFetching,
+    refetch: refetchDetails,
+  } = useItemDetailsQuery({
     itemId: itemId,
     enabled: !!itemId,
   })
 
   const { executeRequest, isLoading: isExecuting } = useCurateInteractions()
 
-  const registryName = registryDisplayNames[registryNameParam] || registryNameParam || 'Unknown'
+  const registryName = registryDisplayNames[registrySlug] || registrySlug || 'Unknown'
 
   const displayName = useMemo(() => {
     if (!detailsData) return ''
@@ -261,19 +321,50 @@ const ItemDetails: React.FC = () => {
     return name || symbol || domain || tag || desc || 'Item'
   }, [detailsData])
 
+  useDocumentTitle(
+    !isValidItemId || detailsData === null
+      ? `Item not found · ${registryName}`
+      : detailsData
+        ? `${shortName(displayName)} · ${registryName}`
+        : detailsFailed
+          ? `Item did not load · ${registryName}`
+          : undefined,
+  )
+
   // Fetch registry parameters
-  const { data: registryParameters, isLoading: registryParametersLoading } = useRegistryParameters(registryAddress)
+  const {
+    data: registryParameters,
+    isLoading: registryParametersLoading,
+    isError: registryParametersError,
+    isFetching: registryParametersFetching,
+    refetch: refetchRegistryParameters,
+  } = useRegistryParameters(registryAddress)
+  // Deposits and the challenge period are read from Gnosis; with no copy cached, a failed read is an error.
+  const registryParametersFailed = registryParametersError && !registryParameters
 
   const challengePeriodDuration = useMemo(() => {
     return registryParameters ? Number(registryParameters.challengePeriodDuration) : null
   }, [registryParameters])
 
-  const challengeRemainingTime = useChallengeRemainingTime(
-    detailsData?.requests[0]?.submissionTime,
-    detailsData?.disputed,
-    challengePeriodDuration,
-  )
-  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2)
+  const latestRequest = detailsData?.requests?.[0]
+  const appeal = useMemo(() => getAppealInfo(detailsData), [detailsData])
+
+  // The end of the challenge period of a pending, unchallenged request.
+  const challengeDeadline =
+    latestRequest &&
+    challengePeriodDuration !== null &&
+    !detailsData?.disputed &&
+    (detailsData?.status === 'RegistrationRequested' || detailsData?.status === 'ClearingRequested')
+      ? Number(latestRequest.submissionTime) + challengePeriodDuration
+      : null
+
+  // The status changes at known moments (end of the challenge period, half and end of an appeal
+  // period): re-evaluate it then, instead of keeping the state the page was loaded in.
+  const now = useClockAt([
+    challengeDeadline,
+    appeal?.hasRuling ? appeal.half : null,
+    appeal?.hasRuling ? appeal.end : null,
+  ])
 
   const arbitrationCostData = useMemo(() => {
     return registryParameters?.arbitrationCost
@@ -291,8 +382,9 @@ const ItemDetails: React.FC = () => {
 
   const formattedDepositCost = useMemo(() => {
     if (!detailsData || !deposits || arbitrationCostData === undefined) {
-      // Show loading indicator if registry parameters are being fetched
-      return registryParametersLoading ? 'Loading...' : '??? xDAI'
+      // Show loading indicator if registry parameters are being fetched; nothing when they failed
+      // (the error under the card says so and offers to try again).
+      return registryParametersLoading ? 'Loading...' : undefined
     }
     let sum = 0n
     if (detailsData.status === 'Registered') {
@@ -306,7 +398,12 @@ const ItemDetails: React.FC = () => {
   }, [detailsData, deposits, arbitrationCostData, registryParametersLoading])
 
   // Fetch appeal cost for disputed items
-  const { data: appealCost, isLoading: appealCostLoading } = useAppealCost(
+  const {
+    data: appealCost,
+    isError: appealCostError,
+    isFetching: appealCostFetching,
+    refetch: refetchAppealCost,
+  } = useAppealCost(
     detailsData?.requests?.[0]?.arbitrator,
     detailsData?.requests?.[0]?.disputeID,
     detailsData?.requests?.[0]?.arbitratorExtraData,
@@ -314,90 +411,51 @@ const ItemDetails: React.FC = () => {
     detailsData?.requests?.[0]?.resolved,
     detailsData?.requests?.[0]?.rounds?.length,
   )
+  const appealCostFailed = appealCostError && !appealCost
 
+  // Each piece of evidence with the role of its author in the request it belongs to.
   const evidences = useMemo(() => {
     if (!detailsData) return []
     return detailsData.requests
-      .map((r) => r.evidenceGroup.evidences)
-      .flat(1)
+      .flatMap((request) => {
+        const requester = request.requester?.toLowerCase()
+        const challenger = request.challenger?.toLowerCase()
+        return request.evidenceGroup.evidences.map((evidence) => {
+          const party = evidence.party?.toLowerCase()
+          const partyRole =
+            party && party === requester
+              ? isRemovalRequest(request) ? 'Remover' : 'Submitter'
+              : party && party === challenger
+                ? 'Challenger'
+                : undefined
+          return { ...evidence, partyRole }
+        })
+      })
       .sort((a, b) => Number(a.timestamp) - Number(b.timestamp))
   }, [detailsData])
 
   const statusCode = useMemo(() => {
-    if (!detailsData || !challengePeriodDuration) return null
-    const timestamp = Math.floor(Date.now() / 1000)
-    return itemToStatusCode(detailsData as any, timestamp, challengePeriodDuration)
-  }, [detailsData, challengePeriodDuration])
+    if (!detailsData) return null
+    // A dispute's state does not depend on the challenge period; a pending request's does.
+    if (!detailsData.requests?.[0]?.disputed && !challengePeriodDuration) return null
+    return itemToStatusCode(detailsData as any, now, challengePeriodDuration ?? 0)
+  }, [detailsData, challengePeriodDuration, now])
 
-  const shouldShowCrowdfunding = useMemo(() => {
-    if (!detailsData?.disputed || detailsData.requests[0].resolved) return false
-    if (statusCode !== STATUS_CODE.CROWDFUNDING && statusCode !== STATUS_CODE.CROWDFUNDING_WINNER) return false
+  const shouldShowCrowdfunding =
+    !!detailsData?.disputed &&
+    !latestRequest?.resolved &&
+    (statusCode === STATUS_CODE.CROWDFUNDING || statusCode === STATUS_CODE.CROWDFUNDING_WINNER)
 
-    const round = detailsData.requests[0]?.rounds?.[0]
-    if (!round) return false
+  // A fresh object when the status changes, so the card re-reads it too (it memoises on the item):
+  // at the end of the challenge period "Challenge Item" becomes "Execute Submission" in place.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const cardItem = useMemo(() => (detailsData ? { ...detailsData } : detailsData), [detailsData, statusCode])
 
-    const { ruling, appealPeriodStart, appealPeriodEnd, hasPaidRequester, hasPaidChallenger } = round
-    const timestamp = Math.floor(Date.now() / 1000)
-
-    if (ruling && ruling !== SUBGRAPH_RULING.NONE && appealPeriodStart && appealPeriodEnd) {
-      const start = Number(appealPeriodStart)
-      const end = Number(appealPeriodEnd)
-      const halfwayPoint = start + (end - start) / 2
-
-      if (timestamp > halfwayPoint) {
-        const loserIsRequester = ruling === SUBGRAPH_RULING.REJECT || ruling === SUBGRAPH_RULING.REJECT_NUM || ruling === 'Reject'
-        const loserHasPaid = loserIsRequester ? hasPaidRequester : hasPaidChallenger
-
-        if (!loserHasPaid) {
-          return false
-        }
-      }
-    }
-
-    return true
-  }, [detailsData, statusCode])
-
-  const currentRulingRound = useMemo(() => {
-    if (!detailsData?.requests[0]?.rounds) return null
-    return detailsData.requests[0].rounds.find(round => round.ruling != null) || null
-  }, [detailsData])
-
-  const appealRemainingTime = useMemo(() => {
-    if (!shouldShowCrowdfunding || !currentRulingRound) return null
-
-    const { appealPeriodStart, appealPeriodEnd, ruling, hasPaidRequester, hasPaidChallenger } = currentRulingRound
-    if (!appealPeriodStart || !appealPeriodEnd) return null
-
-    const now = Date.now()
-    const start = Number(appealPeriodStart) * 1000
-    const end = Number(appealPeriodEnd) * 1000
-    const halfwayPoint = start + (end - start) / 2
-
-    const loserIsRequester = ruling === SUBGRAPH_RULING.REJECT || ruling === SUBGRAPH_RULING.REJECT_NUM || ruling === 'Reject'
-
-    const loserHasPaid = loserIsRequester ? hasPaidRequester : hasPaidChallenger
-
-    if (now < halfwayPoint) {
-      return {
-        loserTimeLeft: halfwayPoint - now,
-        winnerTimeLeft: loserHasPaid ? end - now : null,
-        isLoserPeriod: !loserHasPaid,
-        loserIsRequester,
-      }
-    } else if (loserHasPaid) {
-      return {
-        loserTimeLeft: null,
-        winnerTimeLeft: end - now,
-        isLoserPeriod: false,
-        loserIsRequester,
-      }
-    }
-
-    return null
-  }, [shouldShowCrowdfunding, currentRulingRound])
-
-  const formattedLoserTimeLeft = useHumanizedCountdown(appealRemainingTime?.loserTimeLeft || null, 2)
-  const formattedWinnerTimeLeft = useHumanizedCountdown(appealRemainingTime?.winnerTimeLeft || null, 2)
+  const appealDataFailed = shouldShowCrowdfunding && (registryParametersFailed || appealCostFailed)
+  const retryAppealData = () => {
+    if (registryParametersFailed) refetchRegistryParameters()
+    if (appealCostFailed) refetchAppealCost()
+  }
 
   // Capture navigation state on first render. location.state is set only by
   // in-app navigation and can be wiped by setSearchParams (e.g. opening an
@@ -416,8 +474,8 @@ const ItemDetails: React.FC = () => {
       return { registryUrl: `/profile/${navState.profileTab}`, breadcrumbName: 'Profile' }
     }
 
-    return { registryUrl: `/${registryNameParam}`, breadcrumbName: registryName }
-  }, [navState, registryName, registryNameParam])
+    return { registryUrl: `/${registrySlug}`, breadcrumbName: registryName }
+  }, [navState, registryName, registrySlug])
 
   const handleBackClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (e.ctrlKey || e.metaKey || e.button === 1) return
@@ -429,6 +487,11 @@ const ItemDetails: React.FC = () => {
 
   const handleExecuteRequest = async () => {
     if (!detailsData || isExecuting) return
+    // Executing sends a transaction: connect first.
+    if (!isConnected) {
+      openWalletModal({ view: 'Connect' })
+      return
+    }
 
     try {
       const result = await executeRequest(
@@ -440,17 +503,56 @@ const ItemDetails: React.FC = () => {
       }
     } catch (error) {
       console.error('Error executing request:', error)
-      errorToast('Failed to execute request. Please try again.')
+      // Declining in the wallet is a choice; anything else says what went wrong.
+      if (!isUserRejection(error)) errorToast(parseWagmiError(error) || 'Failed to execute request. Please try again.')
     }
   }
 
-  if (detailsLoading || !detailsData) {
+  // A registry address no registry has leads back home rather than to a "Page not found".
+  const knownRegistry = !!registryMap[registrySlug]
+  const backUrl = knownRegistry ? `/${registrySlug}` : '/home'
+  const backLabel = knownRegistry ? `Back to ${registryName}` : 'Go to Home'
+  if (!isValidItemId) {
     return (
       <Container>
-        <LoadingItems />
+        <ItemUnavailable kind="invalid" registryName={registryName} backUrl={backUrl} backLabel={backLabel} />
       </Container>
     )
   }
+
+  if (detailsData === undefined) {
+    return (
+      <Container>
+        {detailsFailed ? (
+          <ItemUnavailable
+            kind="error"
+            registryName={registryName}
+            backUrl={backUrl}
+            backLabel={backLabel}
+            onRetry={() => refetchDetails()}
+            retrying={detailsFetching}
+          />
+        ) : (
+          <LoadingItems label="Loading the item" />
+        )}
+      </Container>
+    )
+  }
+
+  if (detailsData === null) {
+    return (
+      <Container>
+        <ItemUnavailable kind="not-found" registryName={registryName} backUrl={backUrl} backLabel={backLabel} />
+      </Container>
+    )
+  }
+
+  const isPendingRequest =
+    !detailsData.disputed && (detailsData.status === 'RegistrationRequested' || detailsData.status === 'ClearingRequested')
+  const isRemoval = isRemovalRequest(latestRequest, detailsData.status)
+  // Deposits matter wherever the card offers to challenge or remove.
+  const showParametersError =
+    registryParametersFailed && !detailsData.disputed && detailsData.status !== 'Absent'
 
   return (
     <Container>
@@ -468,15 +570,20 @@ const ItemDetails: React.FC = () => {
                 detailsData,
                 deposits,
                 arbitrationCostData,
-                registryName: registryNameParam,
+                registryName: registrySlug,
+                challengePeriodDuration,
               }}
             />
           )}
 
+          {/* The page's heading for screen readers; the name is shown in the breadcrumb and the card. */}
+          <h1 className="visually-hidden">
+            {displayName} · {registryName}
+          </h1>
           <TopBar>
             <Breadcrumb registryName={breadcrumbName} itemName={displayName} registryUrl={registryUrl} useHistoryBack={cameFromApp} />
             <ReturnButton to={registryUrl} onClick={handleBackClick}>
-              <ArrowLeftIcon />
+              <ArrowLeftIcon aria-hidden="true" />
               Return
             </ReturnButton>
           </TopBar>
@@ -485,20 +592,17 @@ const ItemDetails: React.FC = () => {
             <RightSection>
               <ItemDetailsContent
                 detailsData={detailsData}
-                deposits={deposits}
-                arbitrationCostData={arbitrationCostData}
                 statusCode={statusCode}
-                registryParametersLoading={registryParametersLoading}
+                now={now}
                 challengePeriodDuration={challengePeriodDuration}
                 shouldShowCrowdfunding={shouldShowCrowdfunding}
-                currentRulingRound={currentRulingRound}
-                appealRemainingTime={appealRemainingTime}
-                formattedLoserTimeLeft={formattedLoserTimeLeft}
-                formattedWinnerTimeLeft={formattedWinnerTimeLeft}
+                appeal={appeal}
                 appealCost={appealCost}
-                appealCostLoading={appealCostLoading}
                 registryParameters={registryParameters}
                 registryAddress={registryAddress}
+                appealDataFailed={appealDataFailed}
+                retryingAppealData={registryParametersFetching || appealCostFetching}
+                onRetryAppealData={retryAppealData}
                 evidences={evidences}
                 itemID={itemID}
                 compositeItemId={itemId}
@@ -508,13 +612,18 @@ const ItemDetails: React.FC = () => {
             <LeftSection>
               <ItemCardWrapper>
                 <Item
-                  item={detailsData}
+                  item={cardItem ?? detailsData}
                   challengePeriodDuration={challengePeriodDuration}
                   showActionButtons={true}
                   onActionButtonClick={(actionType) => {
-                    // Check if deposits are loaded before opening modal
-                    if (!deposits || !arbitrationCostData) {
-                      errorToast('Loading deposit parameters... Please try again in a moment.')
+                    // The dialog needs the deposit: say why it cannot open yet.
+                    if (!deposits || arbitrationCostData === undefined) {
+                      if (registryParametersFailed) {
+                        refetchRegistryParameters()
+                        infoToast('Loading the deposit from Gnosis again. Try again in a moment.')
+                      } else {
+                        infoToast('The deposit is still loading. Try again in a moment.')
+                      }
                       return
                     }
                     setIsConfirmationOpen(true)
@@ -528,8 +637,16 @@ const ItemDetails: React.FC = () => {
               </ItemCardWrapper>
 
               {(!detailsData.props || detailsData.props.length === 0) && detailsData.data && (
-                <IpfsWarning>
-                  IPFS data unavailable for this item ({detailsData.data}).
+                <IpfsWarning role="alert">
+                  <span>This item&apos;s data could not be loaded from IPFS.</span>
+                  <IpfsActions>
+                    <button type="button" onClick={() => refetchDetails()} disabled={detailsFetching}>
+                      {detailsFetching ? 'Trying again...' : 'Try again'}
+                    </button>
+                    <a href={`${KLEROS_CDN_BASE}${detailsData.data}`} target="_blank" rel="noopener noreferrer">
+                      Open the raw file
+                    </a>
+                  </IpfsActions>
                 </IpfsWarning>
               )}
 
@@ -551,10 +668,28 @@ const ItemDetails: React.FC = () => {
                     <ArrowIcon />
                   </SubmitterLink>
                 </DetailRow>
-                {formattedChallengeRemainingTime && detailsData.status !== 'Registered' && (
-                  <DetailRow>
-                    Challenge period ends in: {formattedChallengeRemainingTime}
-                  </DetailRow>
+                {showParametersError && (
+                  // In place of the deadline row: what failed, and a way to try again.
+                  <ErrorState
+                    compact
+                    title="The deposit and the challenge period did not load."
+                    message="Scout reads them from Gnosis, which did not answer. Check your connection and try again."
+                    onRetry={() => refetchRegistryParameters()}
+                    retrying={registryParametersFetching}
+                  />
+                )}
+                {isPendingRequest && challengeDeadline !== null && (
+                  now <= challengeDeadline ? (
+                    <DetailRow>
+                      Challenge period ends in <Deadline at={challengeDeadline} />
+                    </DetailRow>
+                  ) : (
+                    <DetailRow>
+                      Challenge period over with no challenge. Anyone can now execute the request to{' '}
+                      {isRemoval ? 'remove the item' : 'include the item'}, and the{' '}
+                      {isRemoval ? 'remover' : 'submitter'} gets the deposit back.
+                    </DetailRow>
+                  )
                 )}
                 {detailsData.status === 'Registered' && (() => {
                   // Find the successful registration request (may not be requests[0] if a removal was challenged)
@@ -569,7 +704,9 @@ const ItemDetails: React.FC = () => {
                 })()}
                 {detailsData.status === 'Absent' && detailsData.requests?.[0]?.resolutionTime && (
                   <DetailRow>
-                    Removed on: {formatTimestamp(Number(detailsData.requests[0].resolutionTime), true)}
+                    {/* A rejected submission was never in the registry, so it was not "removed". */}
+                    {getItemDisplayStatus(detailsData) === 'Rejected' ? 'Rejected on:' : 'Removed on:'}{' '}
+                    {formatTimestamp(Number(detailsData.requests[0].resolutionTime), true)}
                   </DetailRow>
                 )}
               </SubmissionDetailsSection>

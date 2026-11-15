@@ -93,7 +93,9 @@ export const useItemDetailsQuery = ({
 
   return useQuery({
     queryKey: queryKeys.itemDetails(itemId),
-    queryFn: async (): Promise<GraphItemDetails> => {
+    // null when the indexer has no item with this ID (the page says "Item not found"); a failed
+    // request rejects, so the page can tell "not found" from "did not load".
+    queryFn: async (): Promise<GraphItemDetails | null> => {
       const requestId = crypto.randomUUID()
       const result = await graphqlBatcher.request(
         requestId,
@@ -103,7 +105,7 @@ export const useItemDetailsQuery = ({
         },
       )
 
-      const item: GraphItemDetails = result.litem
+      const item: GraphItemDetails | null = result?.litem ?? null
 
       // Await the IPFS fallback inline rather than patching the cache in the
       // background: this page renders a single item, and resolving before the

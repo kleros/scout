@@ -33,6 +33,14 @@ export enum SUBGRAPH_RULING {
 }
 
 /**
+ * The moment (unix seconds) the losing side's half of an appeal period ends: the contract only
+ * accepts the loser's contributions while `now < (appealPeriodStart + appealPeriodEnd) / 2`,
+ * an integer division.
+ */
+export const getAppealHalfTime = (appealPeriodStart: string | number, appealPeriodEnd: string | number): number =>
+  Math.floor((Number(appealPeriodStart) + Number(appealPeriodEnd)) / 2)
+
+/**
  * Determines the status code of an item based on its current state
  * Based on gtcr implementation
  */
@@ -109,9 +117,9 @@ export function itemToStatusCode(
     return STATUS_CODE.WAITING_ARBITRATOR
   }
 
-  // Calculate halfway point of appeal period
-  const appealPeriodDuration = Number(appealPeriodEnd) - Number(appealPeriodStart)
-  const appealHalfTime = Number(appealPeriodStart) + appealPeriodDuration / 2
+  // Halfway point of the appeal period, where the contract's integer division puts it
+  // (LightGeneralizedTCR.fundAppeal: the loser contributes while now < (start + end) / 2).
+  const appealHalfTime = getAppealHalfTime(appealPeriodStart, appealPeriodEnd)
 
   if (timestamp < appealHalfTime) {
     // In first half of appeal period - both sides can fund
