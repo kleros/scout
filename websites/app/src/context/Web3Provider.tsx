@@ -54,11 +54,21 @@ export const wagmiAdapter = new WagmiAdapter({
   transports,
 });
 
+// What wallets show in their connection request. The URL follows the domain the app is served
+// from: a fixed one makes WalletConnect flag a domain mismatch on any other host of this build.
+const origin = typeof window !== "undefined" ? window.location.origin : "https://scout-app.kleros.io";
+
 createAppKit({
   adapters: [wagmiAdapter],
   networks: chains,
   defaultNetwork: gnosis,
   projectId,
+  metadata: {
+    name: "Kleros Scout",
+    description: "Community-curated registries of tokens, contract domain names and address tags, secured by Kleros.",
+    url: origin,
+    icons: [`${origin}/apple-touch-icon.png`],
+  },
   allowUnsupportedChain: true,
   themeVariables: {
     "--w3m-color-mix-strength": 20,
