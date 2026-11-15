@@ -25,6 +25,7 @@ import Breadcrumb from './components/Breadcrumb'
 import Deadline from './components/Deadline'
 import ItemDetailsContent from './components/ItemDetailsContent'
 import ItemUnavailable from './components/ItemUnavailable'
+import WithdrawRewards from './components/WithdrawRewards'
 import { hoverShortTransitionTiming } from 'styles/commonStyles'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import { formatTimestamp } from 'utils/formatTimestamp'
@@ -460,7 +461,9 @@ const ItemDetails: React.FC = () => {
   // Capture navigation state on first render. location.state is set only by
   // in-app navigation and can be wiped by setSearchParams (e.g. opening an
   // attachment), so we snapshot it in a ref to keep it stable.
-  type NavState = { fromApp?: boolean; from?: string; profileTab?: string }
+  // profileSearch: the profile's query string ("?address=0x…&page=2"), so Return goes back to the
+  // same profile, tab and page.
+  type NavState = { fromApp?: boolean; from?: string; profileTab?: string; profileSearch?: string }
   const navStateRef = useRef<NavState | null>(location.state as NavState | null)
   const navState = navStateRef.current
   const cameFromApp = !!navState?.fromApp
@@ -471,7 +474,11 @@ const ItemDetails: React.FC = () => {
     }
 
     if (navState?.from === 'profile' && navState.profileTab) {
-      return { registryUrl: `/profile/${navState.profileTab}`, breadcrumbName: 'Profile' }
+      const search =
+        typeof navState.profileSearch === 'string' && navState.profileSearch.startsWith('?')
+          ? navState.profileSearch
+          : ''
+      return { registryUrl: `/profile/${navState.profileTab}${search}`, breadcrumbName: 'Profile' }
     }
 
     return { registryUrl: `/${registrySlug}`, breadcrumbName: registryName }
@@ -628,8 +635,12 @@ const ItemDetails: React.FC = () => {
                     }
                     setIsConfirmationOpen(true)
                     setEvidenceConfirmationType(actionType)
+                    // The page is no longer polled every few seconds: read the item again as the
+                    // dialog opens, so it acts on the item as it is now.
+                    refetchDetails()
                   }}
                   onExecuteButtonClick={handleExecuteRequest}
+                  isExecuting={isExecuting}
                   actionButtonCost={formattedDepositCost}
                   hideBottomTimers={true}
                   seamlessBottom={true}
@@ -710,6 +721,8 @@ const ItemDetails: React.FC = () => {
                   </DetailRow>
                 )}
               </SubmissionDetailsSection>
+
+              <WithdrawRewards item={detailsData} registryAddress={registryAddress} />
             </LeftSection>
           </MainCard>
         </>

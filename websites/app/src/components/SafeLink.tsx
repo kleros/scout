@@ -6,6 +6,10 @@ interface SafeLinkProps {
   className?: string
   children: React.ReactNode
   onClick?: React.MouseEventHandler<HTMLElement>
+  /** Hover text of the link (an unsafe link keeps its own explanation instead). */
+  title?: string
+  /** Accessible name, when the visible text alone does not say where the link leads. */
+  'aria-label'?: string
 }
 
 const DISABLED_STYLE: React.CSSProperties = {
@@ -24,6 +28,8 @@ const SafeLink: React.FC<SafeLinkProps> = ({
   className,
   children,
   onClick,
+  title,
+  'aria-label': ariaLabel,
 }) => {
   if (!url) return null
 
@@ -37,6 +43,8 @@ const SafeLink: React.FC<SafeLinkProps> = ({
         target="_blank"
         rel="noopener noreferrer"
         onClick={onClick}
+        title={title}
+        aria-label={ariaLabel}
       >
         {children}
       </a>

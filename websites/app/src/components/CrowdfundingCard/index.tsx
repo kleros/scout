@@ -1,6 +1,7 @@
 import React, { useId, useMemo, useState } from 'react'
 import styled, { css, useTheme } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther, parseEther } from 'ethers'
 import { PARTY, SUBGRAPH_RULING, itemToStatusCode, STATUS_CODE } from '../../utils/itemStatus'
@@ -13,8 +14,17 @@ import { isUserRejection, parseWagmiError } from '../../utils/parseWagmiError'
 import { formatTimestamp } from '../../utils/formatTimestamp'
 import { formatValue } from '../../utils/formatValue'
 import useNativeBalance from '../../hooks/useNativeBalance'
+import { queryKeys } from '../../hooks/queries/consts'
 import { EnsureChain } from 'components/EnsureChain'
 import Deadline from 'pages/ItemDetails/components/Deadline'
+
+/**
+ * The network fee is paid on top of the contribution. On Gnosis it is a fraction of a cent, so 0.01
+ * xDAI is ample: a balance between the contribution and the contribution plus this margin is warned
+ * about (the wallet would refuse the transaction), without blocking the button. Same rule as the
+ * submit forms (pages/Registries/SubmitItems/SubmitFooter.tsx).
+ */
+const FEE_MARGIN = parseEther('0.01')
 
 /**
  * An amount as typed: one comma with no dot is read as the decimal point (phones in comma-decimal
@@ -369,6 +379,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const nativeCurrency = useNativeCurrency()
   const { fundAppeal, isLoading } = useCurateInteractions()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const requesterFees = useRequiredFees({
     side: PARTY.REQUESTER,
@@ -453,6 +464,11 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
     setSelectedSide(side)
     setContributionShare(1)
     setAmountText(undefined)
+    // The page is not polled every few seconds: read the item again as a funding panel opens, so
+    // the amounts raised and still needed are current.
+    if (side !== PARTY.NONE && item?.id) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.itemDetails(item.id.toLowerCase()) })
+    }
   }
 
   const handleAmountChange = (text: string, stillRequired: bigint) => {
@@ -601,6 +617,15 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                 Insufficient balance. You have {formatValue(nativeBalance)} {nativeCurrency} but want to contribute {exactAmountLabel(contributionAmount)} {nativeCurrency}.
               </div>
             )}
+            {nativeBalance !== undefined &&
+              contributionAmount > 0n &&
+              nativeBalance >= contributionAmount &&
+              nativeBalance < contributionAmount + FEE_MARGIN && (
+                <div role="status" style={{ color: theme.error, fontSize: 13, fontWeight: 500, marginTop: 8 }}>
+                  Your {formatValue(nativeBalance)} {nativeCurrency} covers this contribution but may not cover the
+                  network fee. Add a little {nativeCurrency} (0.01 is plenty), or contribute a little less.
+                </div>
+              )}
             {selectedSide !== PARTY.NONE && (
               <ContributeButton
                 type="button"

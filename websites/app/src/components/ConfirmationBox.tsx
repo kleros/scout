@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { useNavigate } from 'react-router-dom'
-import { formatEther } from 'viem'
+import { formatEther, parseEther } from 'viem'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { DepositParams } from 'utils/fetchRegistryDeposits'
@@ -44,6 +44,21 @@ const buildRemovalWarning = (challengePeriod: string | null) =>
   `If nobody challenges your request within the challenge period${
     challengePeriod ? ` (${challengePeriod})` : ''
   }, anyone can then execute it: the item is removed and your deposit is returned. If someone challenges it and the jurors rule against you, you lose your deposit. Read the Policy below before you request the removal.`
+
+/**
+ * The network fee is paid on top of the deposit. On Gnosis it is a fraction of a cent, so 0.01 xDAI
+ * is ample: a balance between the deposit and the deposit plus this margin is warned about (the
+ * wallet would refuse the transaction after the uploads), without blocking the button. Same rule
+ * as the submit forms (pages/Registries/SubmitItems/SubmitFooter.tsx).
+ */
+const FEE_MARGIN = parseEther('0.01')
+
+/** What the dialog's button does, for "before you ..." sentences. */
+const ACTION_VERBS: Record<string, string> = {
+  RegistrationRequested: 'challenge',
+  Registered: 'request the removal',
+  ClearingRequested: 'challenge the removal',
+}
 
 /** "3 days 12 hours" for the removal sentence (the challenge period is set per registry). */
 const formatPeriod = (seconds: number): string =>
@@ -487,6 +502,11 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
     nativeBalance !== undefined &&
     depositValue !== undefined &&
     nativeBalance < depositValue
+  const feeMayNotBeCovered =
+    nativeBalance !== undefined &&
+    depositValue !== undefined &&
+    nativeBalance >= depositValue &&
+    nativeBalance < depositValue + FEE_MARGIN
 
   const missingDescription = !evidenceText.trim()
   const missingStep =
@@ -697,6 +717,12 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
             {insufficientBalance && (
               <InsufficientBalanceText>
                 Insufficient balance. You have {formatValue(nativeBalance!)} xDAI but need {formatValue(depositValue!)} xDAI.
+              </InsufficientBalanceText>
+            )}
+            {feeMayNotBeCovered && (
+              <InsufficientBalanceText role="status">
+                Your {formatValue(nativeBalance!)} xDAI covers the deposit but may not cover the network fee. Add a
+                little xDAI (0.01 is plenty) before you {ACTION_VERBS[evidenceConfirmationType] ?? 'continue'}.
               </InsufficientBalanceText>
             )}
           </ButtonWrapper>

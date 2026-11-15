@@ -19,6 +19,7 @@ import {
   hoverShortTransitionTiming,
 } from 'styles/commonStyles'
 import { StyledButton } from 'components/Button'
+import { EnsureChain } from 'components/EnsureChain'
 import HourglassIcon from 'svgs/icons/hourglass.svg'
 import CalendarIcon from 'svgs/icons/calendar.svg'
 import { itemToStatusCode, STATUS_CODE } from 'utils/itemStatus'
@@ -179,12 +180,36 @@ const ActionButton = styled(StyledButton).attrs({ variant: 'primary', size: 'med
   line-height: 1.2;
 `
 
+/* Connect / "Switch to Gnosis" in place of Execute: spaced like the card's buttons. */
+const ExecuteChainGate = styled(EnsureChain)`
+  margin: 8px 0;
+`
+
 const TransparentButton = styled.button`
   cursor: pointer;
   background: none;
   border: none;
   padding: 0;
   max-width: 100%;
+`
+
+/* In place of a logo or visual proof that did not load: same size, says so (instead of a shimmer). */
+const ImageUnavailable = styled.span<{ $round?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: ${({ $round }) => ($round ? '100px' : '240px')};
+  max-width: 100%;
+  height: ${({ $round }) => ($round ? '100px' : '140px')};
+  margin-top: ${({ $round }) => ($round ? '0' : '8px')};
+  padding: 8px;
+  border: 1px solid ${({ theme }) => theme.stroke};
+  border-radius: ${({ $round }) => ($round ? '50%' : '8px')};
+  font-size: 12px;
+  line-height: 1.4;
+  color: ${({ theme }) => theme.secondaryText};
+  text-align: center;
 `
 
 const LabelAndValue = styled.div`
@@ -286,6 +311,8 @@ interface ItemProps {
   showActionButtons?: boolean
   onActionButtonClick?: (actionType: string) => void
   onExecuteButtonClick?: () => void
+  /** The execute transaction is being prepared or sent: the button waits ("Executing..."). */
+  isExecuting?: boolean
   actionButtonCost?: string
   hideBottomTimers?: boolean
   seamlessBottom?: boolean
@@ -298,11 +325,14 @@ const Item = React.memo(
     showActionButtons = false,
     onActionButtonClick,
     onExecuteButtonClick,
+    isExecuting = false,
     actionButtonCost,
     hideBottomTimers = false,
     seamlessBottom = false,
   }: ItemProps) => {
-    const [imgLoaded, setImgLoaded] = useState(false)
+    // The card shows one image (a token logo or a CDN visual proof): which source loaded or failed.
+    const [loadedSrc, setLoadedSrc] = useState<string>()
+    const [failedSrc, setFailedSrc] = useState<string>()
     const openAttachment = useAttachment()
     const itemUrl = buildItemPath(item.id || item.itemID, item.registryAddress)
 
@@ -337,6 +367,14 @@ const Item = React.memo(
       : null
 
     const getPropValue = (label: string) => getItemProp(item, label)
+    const logoPath = getPropValue('Logo')
+    const visualProofPath = getPropValue('Visual proof')
+    const imagePath = item.registryAddress === registryMap['tokens'] ? logoPath : visualProofPath
+    const imageSrc = imagePath ? `https://cdn.kleros.link${imagePath}` : undefined
+    const imgLoaded = !!imageSrc && loadedSrc === imageSrc
+    const imgFailed = !!imageSrc && failedSrc === imageSrc
+    const chainId = getPropValue('EVM Chain ID')
+    const repositoryUrl = getPropValue('Github Repository URL')
 
     return (
       <Card seamlessBottom={seamlessBottom}>
@@ -351,31 +389,36 @@ const Item = React.memo(
           <UpperCardContent>
             {item.registryAddress === registryMap['tags-queries'] && (
               <>
-                <LabelAndValue>
-                  <ChainIdLabel>
-                    Chain: {getChainName(getPropValue('EVM Chain ID')) ?? getPropValue('EVM Chain ID')}{' '}
-                  </ChainIdLabel>
-                  <AddressDisplay
-                    address={`eip155:${getPropValue('EVM Chain ID')}`}
-                  />
-                </LabelAndValue>
+                {/* Nothing in place of a value the item's data did not provide (no empty chip). */}
+                {chainId && (
+                  <LabelAndValue>
+                    <ChainIdLabel>
+                      Chain: {getChainName(chainId) ?? chainId}{' '}
+                    </ChainIdLabel>
+                    <AddressDisplay address={`eip155:${chainId}`} />
+                  </LabelAndValue>
+                )}
                 <div>
                   <>{getPropValue('Description')}</>
                 </div>
-                <b>
-                  <StyledWebsiteAnchor
-                    url={`${getPropValue('Github Repository URL').replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
-                  >
-                    {getPropValue('Github Repository URL')}
-                  </StyledWebsiteAnchor>
-                </b>
+                {repositoryUrl && (
+                  <b>
+                    <StyledWebsiteAnchor
+                      url={`${repositoryUrl.replace('.git', '')}/commit/${getPropValue('Commit hash')}`}
+                    >
+                      {repositoryUrl}
+                    </StyledWebsiteAnchor>
+                  </b>
+                )}
               </>
             )}
             {item.registryAddress === registryMap['single-tags'] && (
               <>
-                <strong>
-                  <AddressDisplay address={getPropValue('Contract Address')} />
-                </strong>
+                {getPropValue('Contract Address') && (
+                  <strong>
+                    <AddressDisplay address={getPropValue('Contract Address')} />
+                  </strong>
+                )}
                 <div>{getPropValue('Project Name')}</div>
                 <div>{getPropValue('Public Name Tag')}</div>
                 <StyledWebsiteAnchor url={getPropValue('UI/Website Link')}>
@@ -385,22 +428,30 @@ const Item = React.memo(
             )}
             {item.registryAddress === registryMap['tokens'] && (
               <>
-                <AddressDisplay address={getPropValue('Address')} />
-                {getPropValue('Logo') && (
+                {getPropValue('Address') && <AddressDisplay address={getPropValue('Address')} />}
+                {logoPath && imageSrc && (
                   <TransparentButton
-                    onClick={() => {
-                      const tokenLogoURI = `https://cdn.kleros.link${getPropValue('Logo')}`
-                      openAttachment(tokenLogoURI)
-                    }}
+                    type="button"
+                    onClick={() => openAttachment(imageSrc)}
                   >
                     <TokenLogoWrapper>
-                      {!imgLoaded && <Skeleton circle height={100} width={100} />}
-                      <img
-                        src={`https://cdn.kleros.link${getPropValue('Logo')}`}
-                        alt="Logo"
-                        onLoad={() => setImgLoaded(true)}
-                        style={{ display: imgLoaded ? 'block' : 'none' }}
-                      />
+                      {imgFailed ? (
+                        // The viewer can still try to open the file.
+                        <ImageUnavailable $round>
+                          <span className="visually-hidden">Logo: </span>Image unavailable
+                        </ImageUnavailable>
+                      ) : (
+                        <>
+                          {!imgLoaded && <Skeleton circle height={100} width={100} />}
+                          <img
+                            src={imageSrc}
+                            alt="Logo"
+                            onLoad={() => setLoadedSrc(imageSrc)}
+                            onError={() => setFailedSrc(imageSrc)}
+                            style={{ display: imgLoaded ? 'block' : 'none' }}
+                          />
+                        </>
+                      )}
                     </TokenLogoWrapper>
                   </TransparentButton>
                 )}
@@ -415,26 +466,34 @@ const Item = React.memo(
             )}
             {item.registryAddress === registryMap['cdn'] && (
               <>
-                <AddressDisplay address={getPropValue('Contract address')} />
+                {getPropValue('Contract address') && <AddressDisplay address={getPropValue('Contract address')} />}
                 <WrappedWebsiteContainer>
                   <StyledWebsiteAnchor url={getPropValue('Domain name')}>
                     {getPropValue('Domain name')}
                   </StyledWebsiteAnchor>
                 </WrappedWebsiteContainer>
-                {getPropValue('Visual proof') && (
+                {visualProofPath && imageSrc && (
                   <TransparentButton
-                    onClick={() => {
-                      const visualProofURI = `https://cdn.kleros.link${getPropValue('Visual proof')}`
-                      openAttachment(visualProofURI)
-                    }}
+                    type="button"
+                    onClick={() => openAttachment(imageSrc)}
                   >
-                    {!imgLoaded && <Skeleton height={140} width={240} />}
-                    <VisualProofWrapper
-                      src={`https://cdn.kleros.link${getPropValue('Visual proof')}`}
-                      alt="Visual proof"
-                      onLoad={() => setImgLoaded(true)}
-                      style={{ display: imgLoaded ? '' : 'none' }}
-                    />
+                    {imgFailed ? (
+                      // The viewer can still try to open the file.
+                      <ImageUnavailable>
+                        <span className="visually-hidden">Visual proof: </span>Image unavailable
+                      </ImageUnavailable>
+                    ) : (
+                      <>
+                        {!imgLoaded && <Skeleton height={140} width={240} />}
+                        <VisualProofWrapper
+                          src={imageSrc}
+                          alt="Visual proof"
+                          onLoad={() => setLoadedSrc(imageSrc)}
+                          onError={() => setFailedSrc(imageSrc)}
+                          style={{ display: imgLoaded ? '' : 'none' }}
+                        />
+                      </>
+                    )}
                   </TransparentButton>
                 )}
               </>
@@ -442,12 +501,20 @@ const Item = React.memo(
           </UpperCardContent>
           <BottomCardContent>
             {showActionButtons && isPendingExecution && onExecuteButtonClick ? (
-              <ActionButton
-                onClick={onExecuteButtonClick}
-              >
-                {statusCode === STATUS_CODE.PENDING_SUBMISSION && 'Execute Submission'}
-                {statusCode === STATUS_CODE.PENDING_REMOVAL && 'Execute Removal'}
-              </ActionButton>
+              // Executing sends a transaction on Gnosis: without a wallet there, Connect or Switch instead.
+              <ExecuteChainGate>
+                <ActionButton
+                  type="button"
+                  onClick={onExecuteButtonClick}
+                  disabled={isExecuting}
+                >
+                  {isExecuting
+                    ? 'Executing...'
+                    : statusCode === STATUS_CODE.PENDING_SUBMISSION
+                      ? 'Execute Submission'
+                      : 'Execute Removal'}
+                </ActionButton>
+              </ExecuteChainGate>
             ) : showActionButtons && !item.disputed && item.status !== 'Absent' ? (
               <ActionButton
                 onClick={() => {

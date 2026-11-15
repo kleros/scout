@@ -80,7 +80,7 @@ const ItemUnavailable: React.FC<ItemUnavailableProps> = ({
     {kind === 'not-found' && (
       <p>
         No item with this ID exists in {registryName}. If it was submitted a moment ago, it may not be indexed yet:
-        this page checks again every few seconds.
+        this page keeps checking and shows it as soon as it is.
       </p>
     )}
     {kind === 'error' && <p>The data service did not answer. Check your connection and try again.</p>}

@@ -191,6 +191,9 @@ const ItemDetailsContent: React.FC<ItemDetailsContentProps> = ({
               registryAddress={registryAddress as Address}
               itemID={itemID}
               compositeItemId={compositeItemId}
+              hasOpenRequest={
+                detailsData.status === 'RegistrationRequested' || detailsData.status === 'ClearingRequested'
+              }
             />
           </EvidenceWrapper>
         )}

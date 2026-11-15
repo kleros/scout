@@ -176,6 +176,23 @@ const NoEvidenceText = styled.div`
   z-index: 2;
 `
 
+/* In place of the form when the item has no open request (Included, Removed or Rejected). */
+const NoOpenRequestNote = styled.p`
+  position: relative;
+  z-index: 1;
+  margin: 32px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  color: ${({ theme }) => theme.secondaryText};
+
+  ${landscapeStyle(
+    () => css`
+      margin-top: 48px;
+    `
+  )}
+`
+
 const SubmitEvidenceButton = styled(StyledButton).attrs({ variant: 'primary', size: 'medium' })`
   ${hoverLongTransitionTiming}
   margin: 0;
@@ -311,6 +328,12 @@ interface EvidenceTabProps {
   registryAddress: Address
   itemID: string
   compositeItemId: string
+  /**
+   * The item's latest request is still open (pending or disputed). Evidence sent once it is resolved
+   * lands in that closed request's evidence group, which no juror reads (LightGeneralizedTCR
+   * submitEvidence accepts it anyway; a later dispute belongs to a new request), so no form then.
+   */
+  hasOpenRequest: boolean
 }
 
 const EvidenceTab: React.FC<EvidenceTabProps> = ({
@@ -318,6 +341,7 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
   registryAddress,
   itemID,
   compositeItemId,
+  hasOpenRequest,
 }) => {
   // The shared opener gives the viewer its own history entry: Back (or the viewer's Return) closes it.
   const openAttachment = useAttachment()
@@ -360,11 +384,13 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
 
   return (
     <>
-      <EvidenceSectionHeader>
-        <SubmitEvidenceButton type="button" onClick={handleScrollToForm}>
-          Submit Evidence
-        </SubmitEvidenceButton>
-      </EvidenceSectionHeader>
+      {hasOpenRequest && (
+        <EvidenceSectionHeader>
+          <SubmitEvidenceButton type="button" onClick={handleScrollToForm}>
+            Submit Evidence
+          </SubmitEvidenceButton>
+        </EvidenceSectionHeader>
+      )}
 
       <EvidenceSection hasEvidence={evidences.length > 0}>
         <ScoutWatermark>
@@ -425,12 +451,16 @@ const EvidenceTab: React.FC<EvidenceTabProps> = ({
           <NoEvidenceText>No evidence submitted yet...</NoEvidenceText>
         )}
       </EvidenceSection>
-      <InlineEvidenceForm
-        ref={formRef}
-        registryAddress={registryAddress}
-        itemID={itemID}
-        compositeItemId={compositeItemId}
-      />
+      {hasOpenRequest ? (
+        <InlineEvidenceForm
+          ref={formRef}
+          registryAddress={registryAddress}
+          itemID={itemID}
+          compositeItemId={compositeItemId}
+        />
+      ) : (
+        <NoOpenRequestNote>Evidence can be added while a request is open. This item has no open request.</NoOpenRequestNote>
+      )}
     </>
   )
 }

@@ -1,49 +1,33 @@
 import { useEffect, useState } from 'react'
 import { registryMap } from 'utils/items';
-import { JsonRpcProvider, Contract } from 'ethers';
-import { GNOSIS_RPC_URL } from 'consts/index';
+import { useRegistryParameters } from './useRegistryParameters';
 
-export const useChallengePeriodDuration = (registryAddress: string) => {
-  const [duration, setDuration] = useState<number | null>(null);
+const KNOWN_REGISTRIES = new Set(Object.values(registryMap));
 
-  useEffect(() => {
-    const fetchDuration = async () => {
-      const provider = new JsonRpcProvider(GNOSIS_RPC_URL)
-      const abi = ['function challengePeriodDuration() view returns (uint256)']
-      let contractAddress
+/**
+ * A registry's challenge period in seconds, with the state of its read. It comes from the shared
+ * registry parameters (hooks/useRegistryParameters: one read per registry, through a provider with a
+ * static network, kept in memory and in localStorage for a day), so every row, list and item page of
+ * a registry shares one read instead of opening its own RPC connection.
+ * - `duration`: null until known (and for an address that is not one of Scout's registries);
+ * - `isLoading`: a read is under way and there is no value yet (show a placeholder);
+ * - `isError`: the read failed and there is no value to show (drop the placeholder).
+ */
+export const useChallengePeriodDurationQuery = (registryAddress: string) => {
+  const known = KNOWN_REGISTRIES.has(registryAddress);
+  const query = useRegistryParameters(known ? registryAddress : '');
+  const duration = query.data ? Number(query.data.challengePeriodDuration) : null;
+  return {
+    duration,
+    isLoading: known && duration === null && !query.isError,
+    isError: known && duration === null && query.isError,
+    refetch: query.refetch,
+  };
+};
 
-      switch (registryAddress) {
-        case registryMap['single-tags']:
-          contractAddress = registryMap['single-tags']
-          break
-        case registryMap['tags-queries']:
-          contractAddress = registryMap['tags-queries']
-          break
-        case registryMap['tokens']:
-          contractAddress = registryMap['tokens']
-          break
-        case registryMap['cdn']:
-          contractAddress = registryMap['cdn']
-          break
-        default:
-          console.error('Unknown registry')
-          return
-      }
-
-      try {
-        const contract = new Contract(contractAddress, abi, provider)
-        const result = await contract.challengePeriodDuration()
-        setDuration(Number(result))
-      } catch (error) {
-        console.error('Error fetching challenge period duration:', error)
-      }
-    }
-
-    fetchDuration()
-  }, [registryAddress])
-
-  return duration
-}
+/** A registry's challenge period in seconds, or null until it is known (see useChallengePeriodDurationQuery). */
+export const useChallengePeriodDuration = (registryAddress: string): number | null =>
+  useChallengePeriodDurationQuery(registryAddress).duration;
 
 export const useChallengeRemainingTime = (
   submissionTime: string | undefined,
