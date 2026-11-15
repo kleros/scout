@@ -12,6 +12,7 @@ import { BREAKPOINT_HEADER_DESKTOP } from "styles/landscapeStyle";
 import { responsiveSize } from "styles/responsiveSize";
 
 import ConnectWallet from "components/ConnectWallet";
+import AccountDisplay from "components/ConnectWallet/AccountDisplay";
 import OverlayPortal from "components/OverlayPortal";
 import { Overlay } from "components/Overlay";
 
@@ -61,10 +62,35 @@ const RightSide = styled.div`
   }
 `;
 
-const ConnectWalletContainer = styled.div<{ isConnected: boolean; isDefaultChain: boolean }>`
+const ConnectWalletContainer = styled.div`
   label {
     color: ${({ theme }) => theme.white};
     cursor: pointer;
+  }
+`;
+
+/** The account chip opens the same wallet panel as the gear. */
+const AccountButton = styled.button`
+  display: flex;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 300px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  /* Long ENS names stay on one line and never run into the centred navigation (the full name is in the panel). */
+  label {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (min-width: 1400px) {
+      max-width: 180px;
+    }
   }
 `;
 
@@ -102,13 +128,22 @@ const DesktopHeader: React.FC = () => {
         </CenterSide>
 
         <RightSide>
-          <ConnectWalletContainer
-            {...{ isConnected, isDefaultChain }}
-            onClick={isConnected && isDefaultChain ? toggleIsSettingsOpen : undefined}
-          >
-            <ConnectWallet />
+          <ConnectWalletContainer>
+            {isConnected && isDefaultChain ? (
+              <AccountButton
+                type="button"
+                aria-haspopup="dialog"
+                aria-expanded={isSettingsOpen}
+                onClick={() => toggleIsSettingsOpen()}
+              >
+                <span className="visually-hidden">Account </span>
+                <AccountDisplay />
+              </AccountButton>
+            ) : (
+              <ConnectWallet />
+            )}
           </ConnectWalletContainer>
-          <Menu {...{ toggleIsHelpOpen, toggleIsSettingsOpen }} />
+          <Menu {...{ toggleIsHelpOpen, toggleIsSettingsOpen, isHelpOpen, isSettingsOpen }} />
         </RightSide>
       </Container>
       {(isDappListOpen || isHelpOpen || isSettingsOpen) && (

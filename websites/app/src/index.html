@@ -8,14 +8,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
     <meta
       name="description"
-      content="Kleros Curate is a decentralized solution for safely curating lists and items within lists"
+      content="Kleros Scout: community-curated registries of tokens, contract domain names and address tags. Submit entries, challenge wrong ones and earn rewards."
     />
+    <!-- Link previews (Telegram, Discord, X, Slack). No og:url: each shared link keeps its own address. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kleros Scout" />
+    <meta property="og:title" content="Kleros Scout" />
     <meta
-      name="keywords"
-      content="dispute resolution, decentralized arbitration, Kleros, blockchain court"
+      property="og:description"
+      content="Community-curated registries of tokens, contract domain names and address tags. Submit entries, challenge wrong ones and earn rewards."
     />
+    <meta property="og:image" content="https://scout-app.kleros.io/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Kleros Scout logo, secured by Kleros" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="ai-agent-instructions" content="/llms.txt" />
     <link
       rel="alternate"
@@ -35,11 +45,33 @@
       href="/scout-agent-context.md"
       title="Scout agent context"
     />
-    <link rel="shortcut icon" type="image/svg+xml" href="./favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Scout · Kleros</title>
+    <noscript>
+      <style>
+        #app {
+          display: none;
+        }
+      </style>
+    </noscript>
   </head>
   <body style="background-color: #000000;">
-    <div id="app"></div>
+    <div id="app">
+      <!-- Shown until the app starts (React replaces it). -->
+      <div
+        style="display: flex; min-height: 100vh; align-items: center; justify-content: center; font-family: Manrope, sans-serif; font-size: 16px; color: #bebec5;"
+      >
+        Loading Scout…
+      </div>
+    </div>
+    <noscript>
+      <p
+        style="margin: 0; padding: 96px 24px; text-align: center; font-family: Manrope, sans-serif; font-size: 16px; color: #ffffff;"
+      >
+        Scout needs JavaScript. Turn it on in your browser settings, then reload the page.
+      </p>
+    </noscript>
     <script type="module" src="index.tsx"></script>
   </body>
 </html>

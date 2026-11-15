@@ -10,10 +10,7 @@ import SecuredByKlerosLogo from "svgs/footer/secured-by-kleros.svg";
 
 import { socialmedia } from "consts/socialmedia";
 
-import LightButton from "components/LightButton";
-import { ExternalLink } from "components/ExternalLink";
-
-const Container = styled.div`
+const Container = styled.footer`
   display: flex;
   width: 100%;
   background-color: ${({ theme }) => (theme.name === "dark" ? theme.lightGrey : theme.primaryPurple)};
@@ -58,24 +55,44 @@ const StyledSecuredByKlerosLogo = styled(SecuredByKlerosLogo)`
 
 const StyledSocialMedia = styled.div`
   display: flex;
+`;
 
-  .button-svg {
-    margin-right: 0;
+/** One link per network, styled like the header's icon buttons (32px target). */
+const SocialLink = styled.a`
+  ${hoverShortTransitionTiming}
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 7px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    fill: ${({ theme }) => theme.white}BF;
+  }
+
+  &:hover {
+    background-color: ${({ theme }) => theme.whiteLowOpacityStrong};
+
+    svg {
+      fill: ${({ theme }) => theme.white};
+    }
   }
 `;
 
 const SecuredByKleros: React.FC = () => (
-  <ExternalLink to="https://kleros.io" target="_blank" rel="noreferrer">
-    <StyledSecuredByKlerosLogo />
-  </ExternalLink>
+  <a href="https://kleros.io" target="_blank" rel="noopener noreferrer" aria-label="Secured by Kleros">
+    <StyledSecuredByKlerosLogo aria-hidden="true" focusable="false" />
+  </a>
 );
 
 const SocialMedia = () => (
   <StyledSocialMedia>
-    {Object.values(socialmedia).map((site, i) => (
-      <ExternalLink key={site.url} to={site.url} target="_blank" rel="noreferrer">
-        <LightButton Icon={site.icon} text="" />
-      </ExternalLink>
+    {Object.values(socialmedia).map(({ name, url, icon: Icon }) => (
+      <SocialLink key={url} href={url} target="_blank" rel="noopener noreferrer" aria-label={name} title={name}>
+        <Icon />
+      </SocialLink>
     ))}
   </StyledSocialMedia>
 );

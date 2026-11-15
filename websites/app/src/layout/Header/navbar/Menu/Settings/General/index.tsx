@@ -3,10 +3,12 @@ import styled from "styled-components";
 
 import { useAccount, useDisconnect } from "wagmi";
 
+import { DEFAULT_CHAIN } from "consts/chains";
+
 import Button from "components/Button";
 
+import ConnectWallet, { SwitchChainButton } from "components/ConnectWallet";
 import { ChainDisplay } from "components/ConnectWallet/AccountDisplay";
-import { EnsureChain } from "components/EnsureChain";
 import WalletAndProfile from "./WalletAndProfile";
 import { ISettings } from "../../../index";
 
@@ -33,6 +35,11 @@ const StyledChainContainer = styled.div`
   }
 `;
 
+const SwitchChainContainer = styled.div`
+  display: flex;
+  justify-content: center;
+`;
+
 const StyledButton = styled.div`
   display: flex;
   justify-content: center;
@@ -53,29 +60,36 @@ const UserContainer = styled.div`
 
 export const DisconnectWalletButton: React.FC = () => {
   const { disconnect } = useDisconnect();
-  return <Button onClick={() => disconnect()}>Disconnect</Button>;
+  return <Button type="button" onClick={() => disconnect()}>Disconnect</Button>;
 };
 
 const General: React.FC<ISettings> = ({ toggleIsSettingsOpen }) => {
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
 
   return (
     <EnsureChainContainer>
-      <EnsureChain>
+      {address ? (
         <Container>
-          {address && (
-            <UserContainer>
+          <UserContainer>
+            {/* On another network the account and Disconnect stay; only the network line becomes the switch. */}
+            {chainId === DEFAULT_CHAIN ? (
               <StyledChainContainer>
                 <ChainDisplay />
               </StyledChainContainer>
-              <WalletAndProfile {...{ toggleIsSettingsOpen }} />
-              <StyledButton>
-                <DisconnectWalletButton />
-              </StyledButton>
-            </UserContainer>
-          )}
+            ) : (
+              <SwitchChainContainer>
+                <SwitchChainButton />
+              </SwitchChainContainer>
+            )}
+            <WalletAndProfile {...{ toggleIsSettingsOpen }} />
+            <StyledButton>
+              <DisconnectWalletButton />
+            </StyledButton>
+          </UserContainer>
         </Container>
-      </EnsureChain>
+      ) : (
+        <ConnectWallet />
+      )}
     </EnsureChainContainer>
   );
 };

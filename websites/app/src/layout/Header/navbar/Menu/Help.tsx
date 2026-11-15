@@ -1,8 +1,10 @@
-import React, { useRef } from "react";
+import React from "react";
 import styled, { css } from "styled-components";
-import { landscapeStyle } from "styles/landscapeStyle";
+import { landscapeStyle, headerPanelRight } from "styles/landscapeStyle";
 
 import { useClickAway } from "react-use";
+
+import { useDialog } from "hooks/useDialog";
 
 import Guide from "svgs/icons/book.svg";
 import Bug from "svgs/icons/bug.svg";
@@ -36,7 +38,7 @@ const Container = styled.div`
       margin-top: 64px;
       width: 260px;
       top: 0;
-      right: 0;
+      right: ${headerPanelRight};
       left: auto;
       transform: none;
     `
@@ -112,21 +114,22 @@ const ITEMS = [
 ];
 
 const Help: React.FC<IHelp> = ({ toggleIsHelpOpen }) => {
-  const containerRef = useRef(null);
-  useClickAway(containerRef, () => {
-    toggleIsHelpOpen();
-  });
+  const close = () => toggleIsHelpOpen(false);
+  // Focus moves into the panel, Tab stays inside, Escape closes it and focus goes back to the Help button.
+  const { ref, dialogProps } = useDialog(true, close);
+  useClickAway(ref, close);
 
   return (
     <>
-      <Container ref={containerRef}>
+      <Container {...dialogProps} aria-label="Help">
         {ITEMS.map((item) => (
           <ListItem
             href={item.url}
             key={item.text}
             target="_blank"
+            rel="noopener noreferrer"
           >
-            <Icon as={item.Icon} />
+            <Icon as={item.Icon} aria-hidden="true" focusable="false" />
             <small>{item.text}</small>
           </ListItem>
         ))}

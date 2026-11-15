@@ -46,30 +46,46 @@ const ButtonContainer = styled.div`
 
 interface IMenu {
   isMobileNavbar?: boolean;
+  isHelpOpen?: boolean;
+  isSettingsOpen?: boolean;
 }
 
-const Menu: React.FC<ISettings & IHelp & IMenu> = ({ toggleIsHelpOpen, toggleIsSettingsOpen, isMobileNavbar }) => {
+const Menu: React.FC<ISettings & IHelp & IMenu> = ({
+  toggleIsHelpOpen,
+  toggleIsSettingsOpen,
+  isMobileNavbar,
+  isHelpOpen = false,
+  isSettingsOpen = false,
+}) => {
   const buttons = [
     // { text: "Notifications", Icon: NotificationsIcon },
     {
       text: "Settings",
       Icon: SettingsIcon,
-      onClick: () => toggleIsSettingsOpen(),
+      onPress: () => toggleIsSettingsOpen(),
+      isOpen: isSettingsOpen,
     },
     {
       text: "Help",
       Icon: HelpIcon,
-      onClick: () => {
+      onPress: () => {
         toggleIsHelpOpen();
       },
+      isOpen: isHelpOpen,
     },
   ];
 
   return (
     <Container>
-      {buttons.map(({ text, Icon, onClick }) => (
-        <ButtonContainer key={Icon}>
-          <LightButton {...{ text, onClick, Icon, isMobileNavbar }} />
+      {buttons.map(({ text, Icon, onPress, isOpen }) => (
+        <ButtonContainer key={text}>
+          {/* The text is hidden on wide screens, so the name comes from aria-label. */}
+          <LightButton
+            {...{ text, onPress, Icon, isMobileNavbar }}
+            aria-label={text}
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+          />
         </ButtonContainer>
       ))}
     </Container>

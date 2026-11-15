@@ -29,8 +29,8 @@ const StyledKlerosScoutLogo = styled(KlerosScoutLogo)`
 const Logo: React.FC = () => (
   <Container>
     {" "}
-    <Link to={"/"}>
-      <StyledKlerosScoutLogo />
+    <Link to={"/"} aria-label="Kleros Scout home">
+      <StyledKlerosScoutLogo aria-hidden="true" focusable="false" />
     </Link>
   </Container>
 );

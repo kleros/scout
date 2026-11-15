@@ -1,8 +1,9 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { useAccount } from "wagmi";
 
 import { hoverLongTransitionTiming } from "styles/commonStyles";
+import { landscapeStyle } from "styles/landscapeStyle";
 
 import ArrowIcon from "svgs/icons/arrow.svg";
 
@@ -15,10 +16,16 @@ const Container = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px 32px;
+  padding: 16px;
   gap: 24px;
   border: 1px solid ${({ theme }) => theme.stroke};
   border-radius: 30px;
+
+  ${landscapeStyle(
+    () => css`
+      padding: 16px 32px;
+    `
+  )}
 
   > label {
     color: ${({ theme }) => theme.white};
@@ -40,6 +47,7 @@ const AvatarAndAddressContainer = styled.div`
 const ReStyledArrowLink = styled(StyledArrowLink)`
   font-size: 14px;
   color: ${({ theme }) => theme.white};
+  white-space: nowrap;
 
   > svg {
     height: 14px;
@@ -69,7 +77,7 @@ const WalletAndProfile: React.FC<ISettings> = ({ toggleIsSettingsOpen }) => {
       </AvatarAndAddressContainer>
       <ReStyledArrowLink
         to={address ? `/profile/pending?address=${address.toLowerCase()}` : "/profile"}
-        onClick={toggleIsSettingsOpen}
+        onClick={() => toggleIsSettingsOpen(false)}
       >
         My Profile <ArrowIcon />
       </ReStyledArrowLink>

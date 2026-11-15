@@ -35,17 +35,34 @@ const StyledButton = styled(Button)<{ isMobileNavbar?: boolean }>`
   )}
 `;
 
+type SvgIcon = React.FC<React.SVGAttributes<SVGElement>>;
+
 interface ILightButton {
   text: string;
-  Icon?: React.FC<React.SVGAttributes<SVGElement>>;
-  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  /** An svgr component (`*.svg` imports are typed as strings by vite/client). */
+  Icon?: SvgIcon | string;
+  /** Runs on mouse, touch, Enter and Space (the library button only fires onClick for pointer clicks). */
+  onPress?: () => void;
   disabled?: boolean;
   className?: string;
   isMobileNavbar?: boolean;
+  /** Accessible name; needed whenever the text is empty or hidden (icon-only buttons). */
+  "aria-label"?: string;
+  "aria-expanded"?: boolean;
+  "aria-haspopup"?: boolean | "dialog" | "menu" | "listbox" | "tree" | "grid";
+  "aria-controls"?: string;
 }
 
-const LightButton: React.FC<ILightButton> = ({ text, Icon, onClick, disabled, className, isMobileNavbar }) => (
-  <StyledButton variant="primary" small {...{ text, Icon, onClick, disabled, className, isMobileNavbar }} />
+const LightButton: React.FC<ILightButton> = ({ text, Icon, onPress, disabled, className, isMobileNavbar, ...aria }) => (
+  <StyledButton
+    variant="primary"
+    small
+    {...{ text, className, isMobileNavbar }}
+    Icon={Icon as SvgIcon | undefined}
+    {...aria}
+    onPress={onPress ? () => onPress() : undefined}
+    isDisabled={disabled}
+  />
 );
 
 export default LightButton;

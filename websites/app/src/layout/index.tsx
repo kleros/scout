@@ -1,7 +1,9 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation, useNavigationType } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import { ErrorBoundary } from "react-error-boundary";
+import ErrorFallback from "components/ErrorFallback";
 import Footer from "./Footer";
 import Header from "./Header";
 import LoadingGif from "gifs/loading-icosahedron.gif";
@@ -12,14 +14,41 @@ const Container = styled.div`
   min-height: 100vh;
   width: 100%;
   background-color: ${({ theme }) => theme.lightGrey};
+  /* clip (not hidden) keeps the header sticky: hidden would make this box the sticky scroll container. */
   overflow-x: hidden;
+  @supports (overflow-x: clip) {
+    overflow-x: clip;
+  }
 `;
 
-const ContentArea = styled.div`
+const ContentArea = styled.main`
   display: flex;
   flex: 1;
   background-color: ${({ theme }) => theme.lightBackground};
   width: 100%;
+
+  /* Focused only by the skip link: no ring around the whole page. */
+  &:focus {
+    outline: none;
+  }
+`;
+
+const SkipLink = styled.a`
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10000;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: ${({ theme }) => theme.buttonWhite};
+  color: ${({ theme }) => theme.black};
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateY(-200%);
+
+  &:focus {
+    transform: none;
+  }
 `;
 
 const Notifications = styled(ToastContainer)`
@@ -101,16 +130,67 @@ const LoadingImage = styled.img`
   height: 90px;
 `;
 
+const LoadingFallback: React.FC = () => (
+  <LoadingContainer role="status">
+    <LoadingImage src={LoadingGif} alt="" />
+    <span className="visually-hidden">Loading…</span>
+  </LoadingContainer>
+);
+
+/**
+ * A new page opens at the top. Back and Forward keep the position the browser restores, a ?section= link is
+ * left to the page's ScrollTop, and the profile tabs count as one page so switching tab does not jump.
+ * A passive effect on purpose: it runs after the header menus release their scroll lock (which puts back the
+ * position from before the menu opened).
+ */
+const useScrollToTopOnNavigate = () => {
+  const { pathname, search } = useLocation();
+  const navigationType = useNavigationType();
+  const pageKey = pathname.startsWith("/profile/") ? "/profile" : pathname;
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (navigationType === "POP" || new URLSearchParams(search).has("section")) return;
+    window.scrollTo(0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageKey]);
+};
+
+// main is focusable only while the skip link uses it: a permanent tabindex would make every click on page text
+// focus it, and the next Tab would then start again from the top of the page.
+const skipToContent = (event: React.MouseEvent<HTMLAnchorElement>) => {
+  const main = document.getElementById("main");
+  if (!main) return;
+  event.preventDefault();
+  main.setAttribute("tabindex", "-1");
+  main.addEventListener("blur", () => main.removeAttribute("tabindex"), { once: true });
+  main.focus();
+};
+
 const Layout: React.FC = () => {
+  const { pathname } = useLocation();
+  useScrollToTopOnNavigate();
+
   return (
     <>
+      <SkipLink href="#main" onClick={skipToContent}>
+        Skip to content
+      </SkipLink>
       <Notifications />
       <Container>
         <Header />
-        <ContentArea>
-          <Suspense fallback={<LoadingContainer><LoadingImage src={LoadingGif} /></LoadingContainer>}>
-            <Outlet />
-          </Suspense>
+        <ContentArea id="main">
+          {/* A page that fails (or whose code no longer loads after a deploy) keeps the header and footer;
+              moving to another page clears the error. */}
+          <ErrorBoundary FallbackComponent={ErrorFallback} resetKeys={[pathname]}>
+            <Suspense fallback={<LoadingFallback />}>
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         </ContentArea>
         <Footer />
       </Container>
