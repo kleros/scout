@@ -13,13 +13,13 @@ import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
  *
  * When the indexer refuses or cannot be reached, the next requests wait a moment (longer each
  * time, up to BACKOFF_MAX_MS) instead of every query on the page retrying at once: retries spend
- * the same shared limit.
+ * the same shared limit. react-query's own retries (three, see app.tsx) run inside these pauses.
  */
 
 const BATCH_WINDOW_MS = 12
 const BATCH_MAX = 12
 const BACKOFF_START_MS = 1_000
-const BACKOFF_MAX_MS = 30_000
+const BACKOFF_MAX_MS = 8_000
 
 /** The indexer answered with an error for this query, or did not answer usefully. */
 export class IndexerError extends Error {
@@ -137,9 +137,13 @@ const flush = async () => {
     backoff = 0
   } catch (error) {
     // Refused (a rate limit reads as a failed fetch in the browser) or unreachable: hold the
-    // next requests back before asking again. Callers already received their own error.
-    backoff = Math.min(BACKOFF_MAX_MS, backoff ? backoff * 2 : BACKOFF_START_MS)
-    pausedUntil = Date.now() + backoff
+    // next requests back before asking again. Callers already received their own error. Only a
+    // failure after the last pause has run out lengthens it: several reads failing together are
+    // one outage, so the pages say "did not load" within seconds rather than after minutes.
+    if (Date.now() >= pausedUntil) {
+      backoff = Math.min(BACKOFF_MAX_MS, backoff ? backoff * 2 : BACKOFF_START_MS)
+      pausedUntil = Date.now() + backoff
+    }
     for (const group of groups) for (const item of group) item.reject(error)
   }
 }
