@@ -21,6 +21,13 @@ const Title = styled.p`
   color: ${({ theme }) => theme.primaryText};
 `
 
+const RetryButton = styled(StyledButton)`
+  &[aria-disabled='true'] {
+    opacity: 0.6;
+    cursor: progress;
+  }
+`
+
 const Message = styled.p`
   margin: 0;
   max-width: 480px;
@@ -59,9 +66,19 @@ const ErrorState: React.FC<ErrorStateProps> = ({
     <Title>{title}</Title>
     {message ? <Message>{message}</Message> : null}
     {onRetry ? (
-      <StyledButton type="button" variant="secondary" size="small" onClick={onRetry} disabled={retrying}>
+      // aria-disabled rather than disabled: a disabled button loses keyboard focus, which would
+      // drop a keyboard user to the top of the page while the retry runs.
+      <RetryButton
+        type="button"
+        variant="secondary"
+        size="small"
+        aria-disabled={retrying || undefined}
+        onClick={() => {
+          if (!retrying) onRetry()
+        }}
+      >
         {retrying ? 'Trying again...' : 'Try again'}
-      </StyledButton>
+      </RetryButton>
     ) : null}
   </Container>
 )
