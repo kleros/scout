@@ -55,6 +55,9 @@ const RankingItem = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* In a narrow card the count moves under the name rather than squeezing the name out. */
+  flex-wrap: wrap;
+  row-gap: 4px;
   padding: 12px 0;
   font-size: 14px;
   color: ${({ theme }) => theme.secondaryText};
@@ -75,12 +78,25 @@ const LeftSide = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 1 1 150px;
+  min-width: 0;
+`;
 
-  ${landscapeStyle(
-    () => css`
-      gap: 16px;
-    `
-  )}
+const ChainName = styled.span`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: ${({ theme }) => theme.primaryText};
+  font-size: 14px;
+`;
+
+const NoIcon = styled.span`
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid ${({ theme }) => theme.stroke};
 `;
 
 const RankPosition = styled.div`
@@ -116,8 +132,12 @@ const ChainIcon = styled.div`
 `;
 
 const ItemCount = styled.div`
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 8px;
   font-size: 14px;
   font-weight: 400;
+  white-space: nowrap;
   color: ${({ theme }) => theme.secondaryText};
 
   ${landscapeStyle(
@@ -127,11 +147,10 @@ const ItemCount = styled.div`
   )}
 `;
 
-const getChainIconByName = (chainName: string) => {
-  const chain = chains.find((c) => c.name.toLowerCase().includes(chainName.toLowerCase()));
-  if (!chain) return null;
-  const Icon = getChainIcon(chain.id);
-  return Icon ? <Icon /> : null;
+/** "Ethereum", "Base", "Arbitrum One": the chain list's name without a trailing "Mainnet". */
+export const getChainDisplayName = (chainId: string): string => {
+  const chain = chains.find((c) => c.id === chainId);
+  return chain ? chain.name.replace(/ Mainnet$/, '') : `Chain ${chainId}`;
 };
 
 const getOrdinalSuffix = (rank: number): string => {
@@ -147,7 +166,8 @@ const getOrdinalSuffix = (rank: number): string => {
 
 interface ChainData {
   rank: number;
-  chain: string;
+  /** Chain reference as in the chains list: "1", "137", "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp"... */
+  chainId: string;
   items: number;
 }
 
@@ -156,11 +176,13 @@ interface ChainRankingProps {
 }
 
 export const ChainRanking: React.FC<ChainRankingProps> = ({ data }) => {
-  const rankedData = useMemo(() => 
+  const rankedData = useMemo(() =>
     data.map(item => ({
       ...item,
+      name: getChainDisplayName(item.chainId),
+      Icon: getChainIcon(item.chainId),
       ordinal: `${item.rank}${getOrdinalSuffix(item.rank)}`,
-      formattedItems: `${item.items.toLocaleString()} items`
+      formattedItems: `${item.items.toLocaleString()} ${item.items === 1 ? 'item' : 'items'}`
     })),
     [data]
   );
@@ -170,12 +192,13 @@ export const ChainRanking: React.FC<ChainRankingProps> = ({ data }) => {
       <Title>Chain Ranking (Last 30 Days)</Title>
       <RankingList>
         {rankedData.map((item) => (
-          <RankingItem key={item.chain}>
+          <RankingItem key={item.chainId} title={`${item.name}: ${item.formattedItems}`}>
             <LeftSide>
               <RankPosition>{item.ordinal}</RankPosition>
-              <ChainIcon>
-                {getChainIconByName(item.chain)}
+              <ChainIcon aria-hidden="true">
+                {item.Icon ? <item.Icon focusable="false" /> : <NoIcon />}
               </ChainIcon>
+              <ChainName>{item.name}</ChainName>
             </LeftSide>
             <ItemCount>{item.formattedItems}</ItemCount>
           </RankingItem>

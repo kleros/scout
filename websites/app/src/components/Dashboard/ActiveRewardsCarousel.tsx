@@ -27,7 +27,7 @@ const Header = styled.div`
   )}
 `;
 
-const Title = styled.h3`
+const Title = styled.h2`
   color: ${({ theme }) => theme.secondaryBlue};
   font-size: 14px;
   font-weight: 400;
@@ -147,6 +147,7 @@ export const ActiveRewardsCarousel: React.FC = () => {
             description={reward.description}
             registryKey={reward.registryKey}
             deadline={deadline}
+            titleAs="h3"
           />
         ))}
       </CardsGrid>

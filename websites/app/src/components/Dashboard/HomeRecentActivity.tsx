@@ -4,19 +4,24 @@ import { landscapeStyle } from 'styles/landscapeStyle';
 import { Link } from 'react-router-dom';
 import { useItemsQuery } from 'hooks/queries/useItemsQuery';
 import { ITEMS_PER_PAGE } from 'pages/Registries/index';
-import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getPropValue, getItemDisplayName, getChainId, getItemDisplayStatus } from 'utils/items';
+import { revRegistryMap, GraphItem, buildItemPath, registryDisplayNames, getItemDisplayName, getChainId, getItemDisplayStatus } from 'utils/items';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
-import { getChainIcon } from 'utils/chainIcons';
-import useHumanizedCountdown, { useChallengeRemainingTime, useChallengePeriodDuration } from 'hooks/countdown';
 import Skeleton from 'react-loading-skeleton';
-import HourglassIcon from 'svgs/icons/hourglass.svg';
+import ErrorState from 'components/ErrorState';
 import ArrowIcon from 'assets/svgs/icons/arrow.svg';
+import {
+  ChainLogo,
+  ChallengePeriods,
+  ItemCountdown,
+  getItemSecondaryLabel,
+  useRegistryChallengePeriods,
+} from './itemRow';
 
 const Container = styled.div`
   padding: 24px 0;
 `;
 
-const Title = styled.h3`
+const Title = styled.h2`
   color: ${({ theme }) => theme.secondaryBlue};
   font-size: 16px;
   font-weight: 400;
@@ -31,6 +36,7 @@ const ActivityList = styled.div`
 `;
 
 const ActivityRow = styled.div`
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -69,7 +75,8 @@ const LeftSection = styled.div`
 
   ${landscapeStyle(
     () => css`
-      flex: 1 1 auto;
+      /* Grows from zero: a long name tag ellipsizes instead of pushing the status and View to a new line. */
+      flex: 1 1 0;
       max-width: none;
     `
   )}
@@ -106,6 +113,17 @@ const RegistryName = styled.span`
   )}
 `;
 
+/** Public name tag or address: what tells this row apart from others with the same name. */
+const SecondaryLabel = styled.span`
+  flex: 1 1 0;
+  min-width: 72px;
+  font-size: 12px;
+  color: ${({ theme }) => theme.secondaryText};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const TimeInfo = styled.div`
   display: flex;
   align-items: center;
@@ -135,6 +153,12 @@ const TimeInfo = styled.div`
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
+  /* Above the row-wide link, so hovering the time still shows the absolute date. */
+  time {
+    position: relative;
+    z-index: 1;
+  }
 `;
 
 const RightSection = styled.div`
@@ -152,6 +176,8 @@ const RightSection = styled.div`
       flex: initial;
       gap: 12px;
       justify-content: flex-start;
+      /* When the row wraps (narrow desktops), the second line stays right-aligned like one-line rows. */
+      margin-left: auto;
     `
   )}
 `;
@@ -204,9 +230,10 @@ const StatusGroup = styled.div`
   )}
 `;
 
-const ChainInfo = styled.div`
-  display: flex;
-  align-items: center;
+const ChainInfo = styled(ChainLogo)`
+  /* Above the row-wide link, so hovering the logo still shows the chain's name. */
+  position: relative;
+  z-index: 1;
 
   svg {
     width: 20px;
@@ -257,7 +284,16 @@ const ViewButton = styled(Link)`
     }
   }
 
-  &:hover {
+  /* The whole row opens the item, as its hover highlight suggests (and as search rows do). */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+  }
+
+  &:hover,
+  ${ActivityRow}:hover & {
     background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
@@ -326,62 +362,40 @@ const formatRegistryName = (registryName: string): string =>
 interface ActivityItemProps {
   item: GraphItem;
   itemUrl: string;
+  periods: ChallengePeriods;
 }
 
-const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
+const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl, periods }) => {
   const registryName = revRegistryMap[item.registryAddress] || 'Unknown';
   const displayName = getDisplayName(item);
+  const secondaryLabel = getItemSecondaryLabel(item, registryName);
   const status = getActivityStatus(item);
   const chainId = getChainId(item);
-  const ChainIcon = getChainIcon(chainId || '');
-
-  const challengePeriodDuration = useChallengePeriodDuration(item.registryAddress);
-  const endsAtSeconds = useChallengeRemainingTime(
-    item.requests?.[0]?.submissionTime,
-    item.disputed,
-    challengePeriodDuration,
-  );
-  const endsIn = useHumanizedCountdown(endsAtSeconds, 2);
-  const showEndsIn = Boolean(endsIn) && item.status !== 'Registered' && !item.disputed;
-  const isLoadingCountdown = item.status !== 'Registered' && challengePeriodDuration === null && !item.disputed;
-
-  const timeText = item.status === 'ClearingRequested' ? 'Will be removed in' : 'Will be included in';
-  const completedText = item.status === 'ClearingRequested' ? 'Removed' : 'Already included';
+  const registryLabel = formatRegistryName(registryName);
 
   return (
     <ActivityRow>
       <LeftSection>
         <ItemName>{displayName}</ItemName>
-        <RegistryName>({formatRegistryName(registryName)})</RegistryName>
+        <RegistryName>({registryLabel})</RegistryName>
+        {secondaryLabel ? <SecondaryLabel>{secondaryLabel}</SecondaryLabel> : null}
         {!item.disputed && (
           <TimeInfo>
-            {isLoadingCountdown ? (
-              <Skeleton width={150} height={12} />
-            ) : showEndsIn ? (
-              <>
-                <HourglassIcon />
-                <span>{timeText}: {endsIn}</span>
-              </>
-            ) : item.status !== 'Registered' ? null : (
-              <>
-                <HourglassIcon />
-                <span>{completedText}</span>
-              </>
-            )}
+            <ItemCountdown item={item} periods={periods} skeletonWidth={150} />
           </TimeInfo>
         )}
       </LeftSection>
       <RightSection>
         <StatusGroup>
           <StatusBadge status={status}>{status}</StatusBadge>
-          {ChainIcon && (
-            <ChainInfo>
-              <ChainIcon />
-            </ChainInfo>
-          )}
+          <ChainInfo chainId={chainId} />
         </StatusGroup>
-        <ViewButton to={itemUrl} state={{ fromApp: true, from: 'home' }}>
-          View <ArrowIcon />
+        <ViewButton
+          to={itemUrl}
+          state={{ fromApp: true, from: 'home' }}
+          aria-label={`View ${displayName}${secondaryLabel ? `, ${secondaryLabel}` : ''} (${registryLabel})`}
+        >
+          View <ArrowIcon aria-hidden="true" />
         </ViewButton>
       </RightSection>
     </ActivityRow>
@@ -390,12 +404,17 @@ const ActivityItem: React.FC<ActivityItemProps> = ({ item, itemUrl }) => {
 
 const INITIAL_DISPLAY = 12;
 
+const LoadMoreError = styled.div`
+  margin-top: 8px;
+`;
+
 export const HomeRecentActivity: React.FC = () => {
   const [page, setPage] = useState(1);
   const [allItems, setAllItems] = useState<GraphItem[]>([]);
   const [displayCount, setDisplayCount] = useState(INITIAL_DISPLAY);
+  const periods = useRegistryChallengePeriods();
 
-  const { data: searchResult, isLoading, isFetching } = useItemsQuery({
+  const { data: searchResult, isLoading, isFetching, isError, refetch } = useItemsQuery({
     registryNames: ['tokens', 'cdn', 'single-tags', 'tags-queries'],
     status: ['RegistrationRequested', 'ClearingRequested'],
     disputed: ['true', 'false'],
@@ -451,6 +470,22 @@ export const HomeRecentActivity: React.FC = () => {
     );
   }
 
+  // A failed read is not "no activity": say so and offer to ask again.
+  if (isError && !allItems.length) {
+    return (
+      <Container>
+        <Title>Recent Activity</Title>
+        <ErrorState
+          compact
+          title="Recent activity did not load."
+          message="The Scout data service did not answer. Check your connection and try again."
+          onRetry={() => refetch()}
+          retrying={isFetching}
+        />
+      </Container>
+    );
+  }
+
   if (!allItems.length) {
     return (
       <Container>
@@ -469,17 +504,30 @@ export const HomeRecentActivity: React.FC = () => {
             key={item.id}
             item={item}
             itemUrl={buildItemPath(item.id)}
+            periods={periods}
           />
         ))}
       </ActivityList>
-      {hasMore && (
+      {isError && page > 1 ? (
+        // The next page failed: retry that same page (Show more would skip it).
+        <LoadMoreError>
+          <ErrorState
+            compact
+            title="More activity did not load."
+            message="Check your connection and try again."
+            onRetry={() => refetch()}
+            retrying={isFetching}
+          />
+        </LoadMoreError>
+      ) : hasMore ? (
         <ShowMoreButton
+          type="button"
           onClick={handleShowMore}
           disabled={isFetching}
         >
           {isFetching ? 'Loading...' : 'Show more'}
         </ShowMoreButton>
-      )}
+      ) : null}
     </Container>
   );
 };

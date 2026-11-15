@@ -25,13 +25,16 @@ export const REWARDS_DATA: RewardData[] = [
 export const SUBMISSION_REWARD = "93,000 PNK";
 export const REMOVAL_REWARD = "7,000 PNK";
 
+/** The last day of the current month, in UTC, e.g. "30 November 2026 (UTC)". */
 export const getCurrentMonthDeadline = (): string => {
   const now = new Date();
   const lastDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0));
-  return lastDay.toLocaleDateString("en-GB", {
+  const date = lastDay.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
   });
+  // The month is counted in UTC: say so, or someone west of UTC reads the wrong midnight.
+  return `${date} (UTC)`;
 };

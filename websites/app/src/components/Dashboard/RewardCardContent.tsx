@@ -20,30 +20,32 @@ interface RewardCardContentProps {
   description: string;
   registryKey: string;
   deadline: string;
+  /** Heading level of the card title: h2 under a page title (/rewards), h3 under a section title (home). */
+  titleAs?: "h2" | "h3";
   className?: string;
 }
 
-const RewardCardContent: React.FC<RewardCardContentProps> = ({ title, description, registryKey, deadline, className }) => (
+const RewardCardContent: React.FC<RewardCardContentProps> = ({ title, description, registryKey, deadline, titleAs = "h2", className }) => (
   <RewardCard to={`/${registryKey}`} className={className}>
     <RewardCardTopSection>
       <RewardCardNewBadge>NEW</RewardCardNewBadge>
-      <RewardCardTitle>{title}</RewardCardTitle>
+      <RewardCardTitle as={titleAs}>{title}</RewardCardTitle>
       <RewardCardDescription>{description}</RewardCardDescription>
     </RewardCardTopSection>
     <RewardCardBottomSection>
       <RewardCardDetailRow>
-        <CalendarIcon />
+        <CalendarIcon aria-hidden="true" />
         <span>Deadline:</span>
         <RewardCardCalendarValue>{deadline}</RewardCardCalendarValue>
       </RewardCardDetailRow>
       <RewardCardDivider />
       <RewardCardDetailRow>
-        <CoinIcon />
+        <CoinIcon aria-hidden="true" />
         <span>Submissions:</span>
         <RewardCardRewardValue>{SUBMISSION_REWARD}</RewardCardRewardValue>
       </RewardCardDetailRow>
       <RewardCardDetailRow>
-        <CoinIcon />
+        <CoinIcon aria-hidden="true" />
         <span>Removals:</span>
         <RewardCardRewardValue>{REMOVAL_REWARD}</RewardCardRewardValue>
       </RewardCardDetailRow>

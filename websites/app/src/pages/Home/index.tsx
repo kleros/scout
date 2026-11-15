@@ -5,6 +5,7 @@ import { responsiveSize } from 'styles/responsiveSize';
 import 'react-loading-skeleton/dist/skeleton.css';
 
 import { useDapplookerStats } from 'hooks/useDapplookerStats';
+import { useDocumentTitle } from 'hooks/useDocumentTitle';
 import HeroGlobe from 'components/Home/HeroGlobe';
 import { GlobalSearch } from 'components/Dashboard/GlobalSearch';
 import { HomeCarousel } from 'components/Dashboard/HomeCarousel';
@@ -221,34 +222,25 @@ const TrustedBySection = styled.div`
 
   ${landscapeStyle(
     () => css`
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
       margin-bottom: 64px;
       padding-bottom: 32px;
     `
   )}
 `;
 
-
-
+// Wraps and stays centred at every width: on narrow desktops the row no longer runs off the
+// screen (cutting Routescan and Openscan), and on wide ones it sits under the centred caption.
 const LogosContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 24px 48px;
   flex-wrap: wrap;
   justify-content: center;
-  flex-shrink: 0;
   width: 100%;
 
-  ${landscapeStyle(
-    () => css`
-      width: auto;
-      gap: 72px;
-      flex-wrap: nowrap;
-    `
-  )}
+  @media (min-width: 1300px) {
+    gap: 24px 72px;
+  }
 `;
 
 const PartnerLogo = styled.img<{ $smaller?: boolean; $bigger?: boolean }>`
@@ -299,7 +291,9 @@ const BASE_VERIFIED_CONTRACTS = 2_655_057;
 const COUNTER_FORMATTER = new Intl.NumberFormat('en-US');
 
 const Home: React.FC<IHome> = () => {
-  const { data: stats, isLoading } = useDapplookerStats();
+  // The home page is the site itself: the tab reads "Scout · Kleros".
+  useDocumentTitle(undefined);
+  const { data: stats, isLoading, isError, refetch, isFetching } = useDapplookerStats();
   const totalVerifiedContracts = BASE_VERIFIED_CONTRACTS + (stats?.totalSubmissions || 0);
   const animatedCountRef = useRef(0);
   const counterValueRef = useRef<HTMLSpanElement>(null);
@@ -410,11 +404,11 @@ const Home: React.FC<IHome> = () => {
         </CounterStack>
         <HeroGlobe />
         <Description>
-          Verified, human-readable names for safe interactions
+          Verified, human-readable names for safe interactions.
           <br />
           With one submission, smart contracts can be verified and linked to a trusted project.
         </Description>
-        <SubmitButton onClick={handleSubmitNowClick}>
+        <SubmitButton type="button" onClick={handleSubmitNowClick}>
           Submit Now
         </SubmitButton>
       </HeaderSection>
@@ -424,7 +418,7 @@ const Home: React.FC<IHome> = () => {
       </SearchSection>
 
       <PartnersIntro>
-        Verified information are visible on major block explorers, wallets, and data providers.
+        Verified information is visible on major block explorers, wallets, and data providers.
       </PartnersIntro>
       <TrustedBySection>
         <LogosContainer>
@@ -442,6 +436,9 @@ const Home: React.FC<IHome> = () => {
         <HomeCarousel
           stats={stats}
           isLoading={isLoading}
+          isError={isError}
+          onRetry={() => refetch()}
+          isRetrying={isFetching}
           chartData={chartData}
         />
       </CarouselSection>

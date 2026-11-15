@@ -86,14 +86,16 @@ const Header = styled.div`
         height: 32px;
       `
     )}
-
-    path, circle {
-      fill: ${({ theme }) => theme.primary};
-    }
   }
 `;
 
-const Title = styled.h3`
+const IconSlot = styled.span`
+  display: flex;
+  flex-shrink: 0;
+`;
+
+// A label for the value below it, not a heading: the slide's "Statistics" is the heading.
+const Title = styled.p`
   color: ${({ theme }) => theme.secondaryText};
   font-size: 14px;
   font-style: normal;
@@ -208,7 +210,8 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <Card className={className} style={style}>
       <Header>
-        {icon}
+        {/* Decorative: the label says what the number is. */}
+        <IconSlot aria-hidden="true">{icon}</IconSlot>
         <Title>{title}</Title>
       </Header>
       <MainValue>

@@ -118,7 +118,13 @@ export const SubmissionsChart: React.FC<SubmissionsChartProps> = ({ data, title 
       <ChartTitle>{title}</ChartTitle>
       <ChartWrapper>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={CHART_CONFIG.margin}>
+          <AreaChart
+            data={data}
+            margin={CHART_CONFIG.margin}
+            // The chart is a keyboard stop (recharts' accessibility layer): give it a name.
+            title="Submissions per day, last 30 days (UTC)"
+            desc="Use the left and right arrow keys to read the number of submissions on each day."
+          >
             <defs>
               <linearGradient id="submissionsGradientHome" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={chartPrimary} stopOpacity={CHART_CONFIG.opacity.gradientStart}/>

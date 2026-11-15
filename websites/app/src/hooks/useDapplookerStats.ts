@@ -1,17 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
 import { useGraphqlBatcher } from './queries/useGraphqlBatcher'
-import { registryMap } from 'utils/items'
+import { registryMap, getChainId } from 'utils/items'
+import { chains } from 'utils/chains'
 import {
   DAPPLOOKER_API_KEY,
   SUBGRAPH_GNOSIS_ENDPOINT,
   SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT,
-  XDAI_CURATION_COURT_ID,
   CURATORS_CHART_ID,
   TOTAL_SUBMISSIONS_CHART_ID,
 } from 'consts'
-
-type ChainName = 'ethereum' | 'polygon' | 'arbitrum' | 'optimism' | 'base'
 
 interface RegistryData {
   id: string
@@ -32,27 +30,15 @@ interface ItemData {
   key0?: string
   key1?: string
   key2?: string
-  key3?: string
-  key4?: string
-  requests: Array<{
-    submissionTime: string
-    requester: string
-    challenger?: string
-    disputed: boolean
-    deposit: string
-  }>
-}
-
-interface SubgraphResponse {
-  lregistries: RegistryData[]
-  litems: ItemData[]
 }
 
 interface DapplookerStatsData {
   totalAssetsVerified: number
   totalSubmissions: number
-  totalCurators: number
-  totalSolvedDisputes: number
+  /** null when neither DappLooker nor the indexer answered. */
+  totalCurators: number | null
+  /** null when the Kleros court data service did not answer. */
+  totalSolvedDisputes: number | null
   tokens: {
     assetsVerified: number
     assetsVerifiedChange: number
@@ -76,17 +62,10 @@ interface DapplookerStatsData {
   }
   chainRanking: {
     rank: number
-    chain: string
+    /** Chain reference as in utils/chains ("1", "137", ...). */
+    chainId: string
     items: number
   }[]
-}
-
-const CHAIN_PREFIXES: Record<string, ChainName> = {
-  'eip155:1:': 'ethereum',
-  'eip155:137:': 'polygon',
-  'eip155:42161:': 'arbitrum',
-  'eip155:10:': 'optimism',
-  'eip155:8453:': 'base',
 }
 
 const CACHE_CONFIG = {
@@ -95,24 +74,23 @@ const CACHE_CONFIG = {
   retry: 2,
 } as const
 
-const EMPTY_STATS: DapplookerStatsData = {
-  totalAssetsVerified: 0,
-  totalSubmissions: 0,
-  totalCurators: 0,
-  totalSolvedDisputes: 0,
-  tokens: { assetsVerified: 0, assetsVerifiedChange: 0 },
-  cdn: { assetsVerified: 0, assetsVerifiedChange: 0 },
-  singleTags: { assetsVerified: 0, assetsVerifiedChange: 0 },
-  tagQueries: { assetsVerified: 0, assetsVerifiedChange: 0 },
-  submissionsVsDisputes: { submissions: [], disputes: [], dates: [] },
-  chainRanking: [],
-}
-
-
 const REGISTRY_ADDRESSES = Object.values(registryMap)
 
-// Fetch curators count: DappLooker chart API (primary) → Curate subgraph unique requesters/challengers (fallback)
-const fetchCuratorsCount = async (): Promise<number> => {
+const DAY_MS = 24 * 60 * 60 * 1000
+const WINDOW_DAYS = 30
+const PAGE_SIZE = 1000
+// A safety stop for the paging loops (100,000 rows), far above today's volume.
+const MAX_PAGES = 100
+
+// Two references for Solana mainnet are in use; count them as one chain.
+const CHAIN_ALIASES: Record<string, string> = {
+  '4sGjMW1sUnHzSxGspuhpqLDx6wiyjNtZ': '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+}
+const KNOWN_CHAIN_IDS = new Set(chains.map((c) => c.id))
+
+// Fetch curators count: DappLooker chart API (primary) → Curate subgraph unique requesters/challengers (fallback).
+// Returns null when neither answers, so the page can say so instead of showing 0 or a partial count.
+const fetchCuratorsCount = async (): Promise<number | null> => {
   // Try DappLooker chart API first
   if (DAPPLOOKER_API_KEY) {
     try {
@@ -138,9 +116,8 @@ const fetchCuratorsCount = async (): Promise<number> => {
   try {
     const uniqueAddresses = new Set<string>()
     let offset = 0
-    let hasMore = true
 
-    while (hasMore) {
+    for (let page = 0; page < MAX_PAGES; page++) {
       const response = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -163,10 +140,11 @@ const fetchCuratorsCount = async (): Promise<number> => {
         }),
       })
 
-      if (!response.ok) break
-
+      // A page that fails makes the count wrong: report "unknown", not a partial number.
+      if (!response.ok) return null
       const result = await response.json()
-      const items = result.data?.LItem || []
+      if (!result.data) return null
+      const items = result.data.LItem || []
 
       for (const item of items) {
         for (const req of (item.requests || [])) {
@@ -175,13 +153,13 @@ const fetchCuratorsCount = async (): Promise<number> => {
         }
       }
 
-      if (items.length < 1000) hasMore = false
-      else offset += 1000
+      if (items.length < 1000) break
+      offset += 1000
     }
 
     return uniqueAddresses.size
   } catch {
-    return 0
+    return null
   }
 }
 
@@ -208,109 +186,87 @@ const fetchTotalSubmissions = async (): Promise<number | null> => {
   return null
 }
 
-// Fetch total solved disputes from Kleros Display subgraph (xDAI Curation Court)
-const fetchTotalSolvedDisputes = async (): Promise<number> => {
+// Fetch total solved disputes from the Kleros Display subgraph: the ruled disputes raised by Scout's
+// four registries, in whichever court they were judged. Returns null when the service does not answer.
+const fetchTotalSolvedDisputes = async (): Promise<number | null> => {
   try {
     let total = 0
     let skip = 0
-    let hasMore = true
 
-    while (hasMore) {
+    for (let page = 0; page < MAX_PAGES; page++) {
       const response = await fetch(SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: `
-            query SolvedDisputes($first: Int!, $skip: Int!, $court: String!) {
+            query SolvedDisputes($first: Int!, $skip: Int!, $arbitrated: [String!]!) {
               disputes(
                 first: $first,
                 skip: $skip,
-                where: { court: $court, ruled: true }
+                where: { arbitrated_in: $arbitrated, ruled: true }
               ) {
                 id
               }
             }
           `,
-          variables: { first: 1000, skip, court: XDAI_CURATION_COURT_ID },
+          variables: { first: 1000, skip, arbitrated: REGISTRY_ADDRESSES },
         }),
       })
 
-      if (!response.ok) break
-
+      if (!response.ok) return null
       const result = await response.json()
-      const disputes = result.data?.disputes || []
+      if (!result.data) return null
+      const disputes = result.data.disputes || []
       total += disputes.length
 
-      if (disputes.length < 1000) hasMore = false
-      else skip += 1000
+      if (disputes.length < 1000) break
+      skip += 1000
     }
 
     return total
   } catch {
-    return 0
+    return null
   }
 }
 
-const getCurateStatsQuery = () => {
-  const thirtyDaysAgo = Math.floor(
-    (Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000,
-  )
+const REGISTRIES_QUERY = gql`
+  query CurateRegistryStats($registries: [String!]!) {
+    lregistries: LRegistry(where: { id: { _in: $registries } }) {
+      id
+      numberOfRegistered
+      numberOfAbsent
+      numberOfRegistrationRequested
+      numberOfClearingRequested
+      numberOfChallengedRegistrations
+      numberOfChallengedClearing
+    }
+  }
+`
 
-  return gql`
-    query CurateStats {
-      lregistries: LRegistry(
-        where: { id:{
-          _in: [
-          "0x66260c69d03837016d88c9877e61e08ef74c59f2",
-          "0xae6aaed5434244be3699c56e7ebc828194f26dc3",
-          "0x957a53a994860be4750810131d9c876b2f52d6e1",
-          "0xee1502e29795ef6c2d60f8d7120596abe3bad990"
-        ]}}
-      ) {
-        id
-        numberOfRegistered
-        numberOfAbsent
-        numberOfRegistrationRequested
-        numberOfClearingRequested
-        numberOfChallengedRegistrations
-        numberOfChallengedClearing
+// Only what the chart and the chain ranking use. The offset and the start time are integers this
+// file computes, so they can be written into the query.
+const getRecentItemsQuery = (sinceSeconds: number, offset: number) => gql`
+  query CurateRecentItems($registries: [String!]!) {
+    litems: LItem(
+      limit: ${PAGE_SIZE},
+      offset: ${offset},
+      order_by: [{ latestRequestSubmissionTime: desc }, { id: asc }],
+      where: {
+        latestRequestSubmissionTime: { _gt: "${sinceSeconds}" },
+        registryAddress: { _in: $registries }
       }
-      litems: LItem(
-        limit: 1000,
-        order_by: {latestRequestSubmissionTime : desc }
-        where: { latestRequestSubmissionTime: {_gt: "${thirtyDaysAgo}"} }
-      ) {
+    ) {
       id
       status
       disputed
       latestRequestSubmissionTime
       registryAddress
-      requests(limit: 1, order_by: {submissionTime: desc}) {
-        submissionTime
-        requester
-        challenger
-        disputed
-        deposit
-      }
       key0
       key1
       key2
-      key3
-      key4
     }
   }
-  `
-}
-
-
-const getChainFromKey = (key0: string): ChainName | null => {
-  for (const [prefix, chain] of Object.entries(CHAIN_PREFIXES)) {
-    if (key0.startsWith(prefix)) {
-      return chain
-    }
-  }
-  return null
-}
+`
 
 const calculateRegistryStats = (
   registries: RegistryData[],
@@ -380,74 +336,102 @@ const calculateRegistryStats = (
   }
 }
 
-const generateDateRange = (days: number): Date[] => {
-  const now = new Date()
-  return Array.from({ length: days }, (_, i) => {
-    const date = new Date(now)
-    date.setDate(date.getDate() - (days - 1 - i))
-    return date
-  })
-}
+/** Counts per UTC day, oldest first, for the WINDOW_DAYS days ending today (UTC). */
+const bucketByUtcDay = (items: ItemData[], now: number) => {
+  const todayStart = Math.floor(now / DAY_MS) * DAY_MS
+  const windowStart = todayStart - (WINDOW_DAYS - 1) * DAY_MS
+  const submissions = new Array<number>(WINDOW_DAYS).fill(0)
+  const disputes = new Array<number>(WINDOW_DAYS).fill(0)
 
-const filterItemsByDate = (
-  items: ItemData[],
-  targetDate: Date,
-  includeDisputed = false,
-): number => {
-  const dayStart = new Date(targetDate)
-  dayStart.setHours(0, 0, 0, 0)
-  const dayEnd = new Date(targetDate)
-  dayEnd.setHours(23, 59, 59, 999)
+  for (const item of items) {
+    const time = parseInt(item.latestRequestSubmissionTime, 10) * 1000
+    const index = Math.floor((time - windowStart) / DAY_MS)
+    if (index < 0 || index >= WINDOW_DAYS) continue
+    submissions[index] += 1
+    if (item.disputed) disputes[index] += 1
+  }
 
-  return items.filter((item) => {
-    const submissionTime = new Date(
-      parseInt(item.latestRequestSubmissionTime, 10) * 1000,
-    )
-    const isInDateRange = submissionTime >= dayStart && submissionTime <= dayEnd
-    return includeDisputed ? isInDateRange && item.disputed : isInDateRange
-  }).length
+  const dates = Array.from({ length: WINDOW_DAYS }, (_, i) =>
+    new Date(windowStart + i * DAY_MS).toLocaleDateString('en', {
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    }),
+  )
+
+  return { submissions, disputes, dates }
 }
 
 const calculateChainRanking = (items: ItemData[]) => {
-  const chainCounts = new Map<ChainName, number>()
+  const chainCounts = new Map<string, number>()
 
   items.forEach((item) => {
-    const key0 = item?.key0
-    if (!key0) return
-
-    const chain = getChainFromKey(key0)
-    if (chain) {
-      chainCounts.set(chain, (chainCounts.get(chain) || 0) + 1)
-    }
+    const rawId = getChainId(item)
+    if (!rawId) return
+    const chainId = CHAIN_ALIASES[rawId] ?? rawId
+    if (!KNOWN_CHAIN_IDS.has(chainId)) return
+    chainCounts.set(chainId, (chainCounts.get(chainId) || 0) + 1)
   })
 
   return Array.from(chainCounts.entries())
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5)
-    .map(([chain, count], index) => ({
+    .map(([chainId, count], index) => ({
       rank: index + 1,
-      chain,
+      chainId,
       items: count,
     }))
+}
+
+// Pages asked together leave in the same batched request (the indexer counts requests, not queries),
+// and 30 days are about 1,100 items today: two pages per round cover them in one request.
+const PAGES_PER_ROUND = 2
+
+const fetchRecentItems = async (graphqlBatcher: any, sinceSeconds: number): Promise<ItemData[]> => {
+  const items: ItemData[] = []
+  for (let first = 0; first < MAX_PAGES; first += PAGES_PER_ROUND) {
+    const pages = (await Promise.all(
+      Array.from({ length: PAGES_PER_ROUND }, (_, i) =>
+        graphqlBatcher.request(
+          `stats-items-${first + i}`,
+          getRecentItemsQuery(sinceSeconds, (first + i) * PAGE_SIZE),
+          { registries: REGISTRY_ADDRESSES },
+        ),
+      ),
+    )) as Array<{ litems?: ItemData[] }>
+    const pageItems = pages.map((page) => page?.litems ?? [])
+    pageItems.forEach((page) => items.push(...page))
+    if (pageItems[pageItems.length - 1].length < PAGE_SIZE) break
+  }
+  return items
 }
 
 const fetchKlerosSubgraphData = async (
   graphqlBatcher: any,
 ): Promise<DapplookerStatsData> => {
-  const statsRequestId = `stats-${Date.now()}-${Math.random()}`
+  const now = Date.now()
+  // The chain ranking covers the last 30 days; the chart buckets the same items by UTC day.
+  const sinceSeconds = Math.floor((now - WINDOW_DAYS * DAY_MS) / 1000)
 
-  const [statsResult, totalCurators, totalSolvedDisputes, dapplookerSubmissions] = await Promise.all([
+  // The registry counters and the recent items are this card's core: if the indexer does not answer,
+  // the query fails (and is retried) rather than showing zeros. Curators and solved disputes come from
+  // other services and are shown as unavailable on their own when those fail.
+  const [registriesResult, items, totalCurators, totalSolvedDisputes, dapplookerSubmissions] = await Promise.all([
     graphqlBatcher.request(
-      statsRequestId,
-      getCurateStatsQuery(),
-    ) as Promise<SubgraphResponse>,
+      `stats-registries-${now}-${Math.random()}`,
+      REGISTRIES_QUERY,
+      { registries: REGISTRY_ADDRESSES },
+    ) as Promise<{ lregistries?: RegistryData[] }>,
+    fetchRecentItems(graphqlBatcher, sinceSeconds),
     fetchCuratorsCount(),
     fetchTotalSolvedDisputes(),
     fetchTotalSubmissions(),
   ])
 
-  const registries = statsResult.lregistries || []
-  const items = statsResult.litems || []
+  const registries = registriesResult?.lregistries ?? []
+  if (registries.length === 0) {
+    throw new Error('The registry statistics did not load.')
+  }
 
   // Calculate totals — prefer DappLooker chart data
   const subgraphSubmissions = registries.reduce((total, reg) => {
@@ -460,14 +444,7 @@ const fetchKlerosSubgraphData = async (
   }, 0)
   const totalSubmissions = dapplookerSubmissions ?? subgraphSubmissions
 
-  // Generate time series data
-  const last7Days = generateDateRange(30)
-  const submissionsData = last7Days.map((date) =>
-    filterItemsByDate(items, date),
-  )
-  const disputesData = last7Days.map((date) =>
-    filterItemsByDate(items, date, true),
-  )
+  const submissionsVsDisputes = bucketByUtcDay(items, now)
   const chainRanking = calculateChainRanking(items)
 
   const tokensStats = calculateRegistryStats(
@@ -492,8 +469,6 @@ const fetchKlerosSubgraphData = async (
     return total + (parseInt(reg.numberOfRegistered, 10) || 0)
   }, 0)
 
-  // Curators: DappLooker chart API → Curate subgraph unique requesters/challengers
-
   return {
     totalAssetsVerified,
     totalSubmissions,
@@ -503,13 +478,7 @@ const fetchKlerosSubgraphData = async (
     cdn: cdnStats,
     singleTags: singleTagsStats,
     tagQueries: tagQueriesStats,
-    submissionsVsDisputes: {
-      submissions: submissionsData,
-      disputes: disputesData,
-      dates: last7Days.map((d) =>
-        d.toLocaleDateString('en', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
-      ),
-    },
+    submissionsVsDisputes,
     chainRanking,
   }
 }
@@ -519,13 +488,9 @@ export const useDapplookerStats = () => {
 
   return useQuery({
     queryKey: ['dapplooker-stats'],
-    queryFn: async (): Promise<DapplookerStatsData> => {
-      try {
-        return await fetchKlerosSubgraphData(graphqlBatcher)
-      } catch (error) {
-        return EMPTY_STATS
-      }
-    },
+    // Errors propagate: react-query retries, then reports isError so the page can say the
+    // statistics did not load instead of showing zeros.
+    queryFn: (): Promise<DapplookerStatsData> => fetchKlerosSubgraphData(graphqlBatcher),
     ...CACHE_CONFIG,
   })
 }

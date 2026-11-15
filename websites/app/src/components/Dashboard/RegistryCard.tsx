@@ -29,7 +29,7 @@ const Header = styled.div`
   margin-bottom: 12px;
 `;
 
-const Title = styled.h4`
+const Title = styled.h3`
   font-size: 18px;
   font-weight: 600;
   margin: 0;
@@ -117,9 +117,9 @@ export const RegistryCard: React.FC<RegistryCardProps> = ({
       </Header>
       <MainValue>{formattedMainValue}</MainValue>
       <SecondaryValue>{secondaryValue}</SecondaryValue>
-      <OpenButton to={`/${registryKey}`}>
+      <OpenButton to={`/${registryKey}`} aria-label={`Open ${title} registry`}>
         Open
-        <ArrowRightIcon />
+        <ArrowRightIcon aria-hidden="true" />
       </OpenButton>
     </Card>
   );

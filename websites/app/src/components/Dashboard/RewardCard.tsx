@@ -31,7 +31,7 @@ export const RewardCard = styled(Link)`
 
   &:hover {
     transform: scale(1.02);
-    border-color: ${({ theme }) => theme.primary};
+    border-color: ${({ theme }) => theme.secondaryBlue};
     box-shadow: ${({ theme }) => theme.shadowDropdown};
   }
 `;
@@ -41,7 +41,8 @@ export const RewardCardNewBadge = styled.div`
   top: -12px;
   right: 8px;
   background: ${({ theme }) => theme.gradientBadge};
-  color: ${({ theme }) => theme.secondaryBlue};
+  /* primaryBlue keeps the badge blue and reads at 5.9:1 or more on its gradient (secondaryBlue was 3.5:1). */
+  color: ${({ theme }) => theme.primaryBlue};
   font-family: "Manrope";
   font-size: 14px;
   font-style: normal;

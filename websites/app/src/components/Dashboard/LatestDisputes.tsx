@@ -75,7 +75,7 @@ const DisputeCard = styled.a`
   &:hover {
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadowTooltip};
-    border-color: ${({ theme }) => theme.primary};
+    border-color: ${({ theme }) => theme.secondaryBlue};
   }
 `;
 
