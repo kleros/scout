@@ -31,6 +31,8 @@ const SectionTitle = styled.h2`
 `
 
 const Paragraph = styled.p`
+  /* About 80 characters a line: long lines are hard to follow back to their start. */
+  max-width: 60ch;
   font-size: 15px;
   margin-bottom: 16px;
   color: ${({ theme }) => theme.secondaryText};
@@ -39,6 +41,7 @@ const Paragraph = styled.p`
 // Bullets and the paragraph colour, as on the landing site (a reset removes the bullets and the
 // global list style makes items white).
 const List = styled.ul`
+  max-width: 60ch;
   margin: 0 0 16px 24px;
   padding: 0;
   font-size: 15px;
