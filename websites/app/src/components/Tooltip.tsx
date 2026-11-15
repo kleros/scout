@@ -138,15 +138,13 @@ const Tooltip: React.FC<TooltipProps> = ({
       >
         {children}
       </Trigger>
-      {/* Kept outside the trigger so it never becomes part of a label's accessible name. */}
-      {text
-        ? createPortal(
-            <span id={descriptionId} className="visually-hidden">
-              {text}
-            </span>,
-            document.body,
-          )
-        : null}
+      {/* A hidden element is still read when aria-describedby points at it, but it is never part
+          of a label's accessible name nor of the page outside its landmarks. */}
+      {text ? (
+        <span id={descriptionId} hidden>
+          {text}
+        </span>
+      ) : null}
       {visible &&
         text &&
         createPortal(

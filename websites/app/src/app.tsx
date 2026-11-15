@@ -13,6 +13,7 @@ import ErrorFallback from "./components/ErrorFallback";
 import Registries from './pages/Registries/';
 import ItemDetails from './pages/ItemDetails/';
 import NotFound from './pages/NotFound';
+import RefreshAfterTransactions from './components/RefreshAfterTransactions';
 import { buildItemPath, registryMap } from 'utils/items';
 
 const Home = lazy(() => import('pages/Home'));
@@ -80,6 +81,7 @@ const App: React.FC = () => {
       <ErrorBoundary FallbackComponent={ErrorFallback}>
         <Web3Provider>
           <QueryClientProvider client={queryClient}>
+            <RefreshAfterTransactions />
             <AtlasProvider>
               <FilterProvider>
                 <Routes>

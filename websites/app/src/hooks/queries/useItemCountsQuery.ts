@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
-import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts'
+import { queryKeys, COUNTS_REFETCH_INTERVAL, COUNTS_STALE_TIME } from './consts'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
 import { ItemCounts } from '../../utils/itemCounts'
 import { registryMap } from 'utils/items'
@@ -194,7 +194,8 @@ export const useItemCountsQuery = (enabled: boolean = true) => {
       return itemCounts
     },
     enabled,
-    refetchInterval: REFETCH_INTERVAL,
-    staleTime: STALE_TIME,
+    refetchInterval: COUNTS_REFETCH_INTERVAL,
+    staleTime: COUNTS_STALE_TIME,
+    refetchOnWindowFocus: true,
   })
 }

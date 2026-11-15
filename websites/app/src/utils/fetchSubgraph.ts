@@ -1,15 +1,14 @@
-import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts'
+import { indexerRequest } from 'hooks/queries/useGraphqlBatcher'
 
-/** Executes a GraphQL query against the Gnosis subgraph endpoint. */
+/**
+ * Executes a GraphQL query against the Scout indexer (batched with other reads asked at the same
+ * moment) and returns `{ data }`. A failed read throws: callers must show an error with a way to
+ * retry, never treat it as an empty answer.
+ */
 export const fetchSubgraph = async <T = any>(
   query: string,
   variables: Record<string, any>,
 ): Promise<T> => {
-  const response = await fetch(SUBGRAPH_GNOSIS_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
-  })
-  const json = await response.json()
-  return json
+  const data = await indexerRequest(query, variables)
+  return { data } as T
 }

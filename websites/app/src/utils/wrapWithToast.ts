@@ -5,6 +5,7 @@ import { PublicClient, TransactionReceipt } from "viem";
 import { TransactionToast } from "components/TransactionToast";
 import { GNOSIS_CHAIN_ID, getTxExplorerUrl } from "./chains";
 import { isUserRejection, parseWagmiError } from "./parseWagmiError";
+import { emitTxConfirmed } from "./txEvents";
 
 export const OPTIONS = {
   position: "top-center" as ToastPosition,
@@ -93,6 +94,8 @@ export async function wrapWithToast(
 
     if (status) {
       toast.update(id, { ...DONE_OPTIONS, render: txBody("Transaction confirmed.", hash), type: "success" });
+      // Pages showing data this transaction changes read it again while the indexer catches up.
+      emitTxConfirmed();
     } else {
       toast.update(id, {
         ...DONE_ERROR_OPTIONS,
