@@ -55,7 +55,7 @@ const registries: readonly RegistryConfig[] = [
     key: 'tags-queries',
     address: '0xae6aaed5434244be3699c56e7ebc828194f26dc3',
     displayName: 'Tag Queries',
-    navLabel: 'Address Tags - Query Tags',
+    navLabel: 'Address Tags - Tag Queries',
   },
 ]
 

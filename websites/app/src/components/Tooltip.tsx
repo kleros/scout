@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useLayoutEffect } from 'react'
+import React, { useState, useRef, useCallback, useLayoutEffect, useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 import styled from 'styled-components'
 
@@ -24,6 +24,8 @@ const TooltipBox = styled.div`
   border: 1px solid ${({ theme }) => theme.stroke};
 `
 
+const FOCUSABLE_CHILD = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+
 interface TooltipProps {
   'data-tooltip': string
   children: React.ReactNode
@@ -31,6 +33,12 @@ interface TooltipProps {
   placement?: 'top' | 'bottom'
 }
 
+/**
+ * Shows `data-tooltip` next to its children on hover, on keyboard focus and on tap, and hides it
+ * on Escape. The text is also tied to the trigger with aria-describedby, so screen readers
+ * announce it. When the children contain no focusable element, the trigger itself becomes
+ * focusable so keyboard users can reach the explanation.
+ */
 const Tooltip: React.FC<TooltipProps> = ({
   'data-tooltip': text,
   children,
@@ -39,8 +47,28 @@ const Tooltip: React.FC<TooltipProps> = ({
 }) => {
   const [visible, setVisible] = useState(false)
   const [style, setStyle] = useState<React.CSSProperties>({})
+  const [needsTabStop, setNeedsTabStop] = useState(false)
   const triggerRef = useRef<HTMLSpanElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
+  const descriptionId = `tooltip-${useId().replace(/:/g, '')}`
+
+  // Only add a tab stop when there is nothing focusable inside already; otherwise describe the
+  // focusable child, which is what assistive technology announces on focus.
+  useLayoutEffect(() => {
+    const node = triggerRef.current
+    if (!node) return
+    const child = node.querySelector<HTMLElement>(FOCUSABLE_CHILD)
+    setNeedsTabStop(!child)
+    if (!child || !text) return
+    const previous = child.getAttribute('aria-describedby')
+    const ids = new Set((previous ?? '').split(' ').filter(Boolean))
+    ids.add(descriptionId)
+    child.setAttribute('aria-describedby', Array.from(ids).join(' '))
+    return () => {
+      if (previous === null) child.removeAttribute('aria-describedby')
+      else child.setAttribute('aria-describedby', previous)
+    }
+  }, [children, text, descriptionId])
 
   // Measure and position after the tooltip is in the DOM but before paint.
   useLayoutEffect(() => {
@@ -50,11 +78,15 @@ const Tooltip: React.FC<TooltipProps> = ({
     const tooltipRect = tooltipRef.current.getBoundingClientRect()
     const padding = 8
 
-    // Vertical
+    // Vertical: flip below when there is no room above.
+    const above = triggerRect.top - 6 - tooltipRect.height
+    const below = triggerRect.bottom + 6
     const top =
       placement === 'bottom'
-        ? triggerRect.bottom + 6
-        : triggerRect.top - 6 - tooltipRect.height
+        ? below
+        : above < padding
+          ? below
+          : above
 
     // Horizontal: center on trigger, then clamp within viewport
     let left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2
@@ -73,20 +105,52 @@ const Tooltip: React.FC<TooltipProps> = ({
 
   const hide = useCallback(() => setVisible(false), [])
 
+  useEffect(() => {
+    if (!visible) return
+    // Capture phase, and the key is consumed: Escape dismisses an open tooltip first, without
+    // also closing a dialog it sits in.
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setVisible(false)
+    }
+    const onScroll = () => setVisible(false)
+    document.addEventListener('keydown', onKeyDown, true)
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
+      window.removeEventListener('scroll', onScroll, { capture: true })
+    }
+  }, [visible])
+
   return (
     <>
       <Trigger
         ref={triggerRef}
         className={className}
+        tabIndex={needsTabStop && text ? 0 : undefined}
+        aria-describedby={needsTabStop && text ? descriptionId : undefined}
         onMouseEnter={show}
         onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        onTouchStart={show}
       >
         {children}
       </Trigger>
+      {/* Kept outside the trigger so it never becomes part of a label's accessible name. */}
+      {text
+        ? createPortal(
+            <span id={descriptionId} className="visually-hidden">
+              {text}
+            </span>,
+            document.body,
+          )
+        : null}
       {visible &&
         text &&
         createPortal(
-          <TooltipBox ref={tooltipRef} style={style}>
+          <TooltipBox ref={tooltipRef} style={style} aria-hidden="true">
             {text}
           </TooltipBox>,
           document.body,

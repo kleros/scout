@@ -51,13 +51,20 @@ export const ModalTitle = styled.h2`
   margin: 0;
 `;
 
-export const CloseButton = styled.button`
+export const CloseButton = styled.button.attrs((props: { 'aria-label'?: string }) => ({
+  type: 'button',
+  'aria-label': props['aria-label'] ?? 'Close',
+}))`
   background: none;
   border: none;
   color: ${({ theme }) => theme.secondaryText};
   font-size: 24px;
+  line-height: 1;
   cursor: pointer;
   padding: 4px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 6px;
   transition: color 0.2s;
 
   &:hover {
@@ -100,7 +107,7 @@ export const FilterGroupTitle = styled.h4`
   }
 `;
 
-export const ActionButton = styled.button`
+export const ActionButton = styled.button.attrs({ type: 'button' })`
   background: none;
   border: none;
   color: ${({ theme }) => theme.accent};
@@ -108,9 +115,10 @@ export const ActionButton = styled.button`
   font-weight: 500;
   cursor: pointer;
   padding: 2px 6px;
+  min-height: 24px;
+  min-width: 24px;
   border-radius: 4px;
   transition: all 0.2s;
-  opacity: 0.7;
 
   &:hover {
     background: ${({ theme }) => theme.lightGrey};
@@ -156,7 +164,7 @@ export const CheckboxLabel = styled.label`
   margin: -8px 0;
 `;
 
-export const OnlyButton = styled.button`
+export const OnlyButton = styled.button.attrs({ type: 'button' })`
   background: none;
   border: none;
   color: ${({ theme }) => theme.accent};
@@ -164,9 +172,19 @@ export const OnlyButton = styled.button`
   font-weight: 500;
   cursor: pointer;
   padding: 2px 6px;
+  min-height: 24px;
   border-radius: 4px;
   transition: all 0.2s;
-  opacity: 0;
+
+  /* Revealed on hover where there is a mouse. On touch screens and for keyboard focus it is always
+     visible, because a control nobody can see must not be tappable. */
+  @media (hover: hover) {
+    opacity: 0;
+  }
+
+  &:focus-visible {
+    opacity: 1;
+  }
 
   &:hover {
     background: ${({ theme }) => theme.lightGrey};

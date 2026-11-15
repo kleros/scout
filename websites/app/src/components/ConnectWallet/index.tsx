@@ -7,6 +7,8 @@ import { useAccount, useSwitchChain } from "wagmi";
 import Button from "components/Button";
 
 import { SUPPORTED_CHAINS, DEFAULT_CHAIN } from "consts/chains";
+import { isUserRejection } from "utils/parseWagmiError";
+import { errorToast } from "utils/wrapWithToast";
 
 import AccountDisplay from "./AccountDisplay";
 
@@ -22,26 +24,29 @@ const StyledButton = styled(Button)`
 `;
 
 export const SwitchChainButton: React.FC<{ className?: string }> = ({ className }) => {
-  // TODO isLoading is not documented, but exists in the type, might have changed to isPending
-  const { switchChain, isLoading } = useSwitchChain();
+  const { switchChain, isPending } = useSwitchChain();
+  const chainName = SUPPORTED_CHAINS[DEFAULT_CHAIN].name;
   const handleSwitch = useCallback(() => {
-    if (!switchChain) {
-      console.error("Cannot switch network. Please do it manually.");
-      return;
-    }
-    try {
-      switchChain({ chainId: DEFAULT_CHAIN });
-    } catch (err) {
-      console.error(err);
-    }
-  }, [switchChain]);
+    switchChain(
+      { chainId: DEFAULT_CHAIN },
+      {
+        onError: (error) => {
+          console.error(error);
+          // Declining in the wallet is a choice; anything else gets a way forward.
+          if (!isUserRejection(error))
+            errorToast(`Could not switch to ${chainName}. Switch the network in your wallet, then try again.`);
+        },
+      }
+    );
+  }, [switchChain, chainName]);
   return (
     <StyledButton
+      type="button"
       className={className}
-      disabled={isLoading}
+      disabled={isPending}
       onClick={handleSwitch}
     >
-      {isLoading ? "Switching..." : `Switch to ${SUPPORTED_CHAINS[DEFAULT_CHAIN].name}`}
+      {isPending ? "Switching..." : `Switch to ${chainName}`}
     </StyledButton>
   );
 };

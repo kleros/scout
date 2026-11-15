@@ -5,14 +5,15 @@ const RadioButton = styled.input.attrs({ type: 'radio' })`
   height: 16px;
   cursor: pointer;
   appearance: none;
-  border: 1.5px solid ${({ theme }) => theme.stroke};
+  flex-shrink: 0;
+  border: 1.5px solid ${({ theme }) => theme.tertiaryText};
   border-radius: 50%;
   background: transparent;
   position: relative;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: ${({ theme }) => theme.borderHover};
+    border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:checked {

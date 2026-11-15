@@ -79,16 +79,21 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
   return (
     <Container>
       {ChainIcon ? (
-        <IconWrapper>
-          <ChainIcon />
+        <IconWrapper
+          role="img"
+          aria-label={reference?.name ?? reference?.label ?? 'Unknown chain'}
+          title={reference?.name ?? reference?.label}
+        >
+          <ChainIcon aria-hidden="true" focusable="false" />
         </IconWrapper>
       ) : (
         <StyledSpan bgColor={bgColor}>{reference?.label}</StyledSpan>
       )}
       {parts?.[2] && (
         <StyledCopyable
-          copyableContent={parts[2].toLowerCase()}
-          info="Copy Address"
+          // Keep the original case: Solana and Bitcoin addresses are case-sensitive.
+          copyableContent={parts[2]}
+          info="Copy address"
         >
           <StyledExternalLink
             href={getAddressExplorerUrl(reference?.id ?? '', parts[2])}

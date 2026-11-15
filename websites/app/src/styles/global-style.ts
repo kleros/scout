@@ -14,6 +14,11 @@ export const GlobalStyle = createGlobalStyle`
     --highlight-color: ${({ theme }) => theme.klerosUIComponentsSkeletonHighlight}; !important;
   }
 
+  :root {
+    /* The app is dark only: native scrollbars, select popups and autofill follow. */
+    color-scheme: dark;
+  }
+
   body {
     font-family: "Manrope", sans-serif;
     margin: 0px;
@@ -26,14 +31,43 @@ export const GlobalStyle = createGlobalStyle`
 
   html {
     box-sizing: border-box;
+    /* Keeps anchors and keyboard focus clear of the 64px header. */
+    scroll-padding-top: 80px;
   }
 
   *, *:before, *:after {
     box-sizing: inherit;
   }
 
-  *:focus {
+  /* Keyboard users get a visible ring on every focusable element; mouse and touch users do not. */
+  :focus:not(:focus-visible) {
     outline: none;
+  }
+
+  :focus-visible {
+    outline: 2px solid ${({ theme }) => theme.klerosUIComponentsPrimaryBlue};
+    outline-offset: 2px;
+  }
+
+  .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   .ReactModal__Overlay {
@@ -113,12 +147,6 @@ export const GlobalStyle = createGlobalStyle`
     li {
       color: ${({ theme }) => theme.klerosUIComponentsPrimaryText};
     }
-  }
-
-  .os-theme-dark {
-    --os-handle-bg: ${({ theme }) => theme.klerosUIComponentsVioletPurple};
-    --os-handle-bg-hover: ${({ theme }) => theme.klerosUIComponentsSecondaryPurple};
-    --os-handle-bg-active: ${({ theme }) => theme.klerosUIComponentsLavenderPurple};
   }
 
   [role="tooltip"] {

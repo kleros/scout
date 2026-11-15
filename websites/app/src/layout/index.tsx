@@ -27,8 +27,32 @@ const Notifications = styled(ToastContainer)`
   padding-top: 70px;
   pointer-events: none;
 
+  /* Black text on the coloured fills (6.5:1 to 13:1); in-progress toasts are dark. */
+  --toastify-font-family: "Manrope", sans-serif;
+  --toastify-text-color-info: #000000;
+  --toastify-text-color-success: #000000;
+  --toastify-text-color-warning: #000000;
+  --toastify-text-color-error: #000000;
+  --toastify-color-light: ${({ theme }) => theme.backgroundFour};
+  --toastify-text-color-light: ${({ theme }) => theme.primaryText};
+  --toastify-spinner-color: ${({ theme }) => theme.primaryBlue};
+  --toastify-spinner-color-empty-area: ${({ theme }) => theme.whiteLowOpacityStrong};
+
   .Toastify__toast {
     pointer-events: auto;
+    font-family: "Manrope", sans-serif;
+  }
+
+  .Toastify__toast--default {
+    border: 1px solid ${({ theme }) => theme.stroke};
+  }
+
+  .Toastify__toast--info .Toastify__close-button,
+  .Toastify__toast--success .Toastify__close-button,
+  .Toastify__toast--warning .Toastify__close-button,
+  .Toastify__toast--error .Toastify__close-button {
+    color: #000000;
+    opacity: 0.7;
   }
 
   .Toastify__toast--info {

@@ -5,14 +5,16 @@ const Checkbox = styled.input.attrs({ type: 'checkbox' })`
   height: 16px;
   cursor: pointer;
   appearance: none;
-  border: 1.5px solid ${({ theme }) => theme.stroke};
+  flex-shrink: 0;
+  /* The unticked box must be visible (3:1 for a control boundary): #989AA0 is about 7:1 on black. */
+  border: 1.5px solid ${({ theme }) => theme.tertiaryText};
   border-radius: 3px;
   background: ${({ theme }) => theme.subtleBackground};
   position: relative;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: ${({ theme }) => theme.borderHover};
+    border-color: ${({ theme }) => theme.primaryText};
   }
 
   &:checked {
