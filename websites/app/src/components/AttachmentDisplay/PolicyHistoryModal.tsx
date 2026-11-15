@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from 'react';
-import styled from 'styled-components';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import React, { useEffect, useId, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import styled, { css } from 'styled-components';
+import { useLocation, useParams, useSearchParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import Skeleton from 'react-loading-skeleton';
 import { registryAddresses, RegistryType } from 'consts/contracts';
@@ -9,8 +10,12 @@ import { getAllowedAttachmentUrl } from 'utils/url-validation';
 import { PolicyHistoryEntry } from 'utils/fetchPolicyHistory';
 import { usePolicyHistory } from 'hooks/usePolicyHistory';
 import { useFocusOutside } from 'hooks/useFocusOutside';
+import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll';
+import { useDialog } from 'hooks/useDialog';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
+import { landscapeStyle } from 'styles/landscapeStyle';
 import { ModalButton } from 'components/ModalButtons';
+import ErrorState from 'components/ErrorState';
 import {
   ModalOverlay,
   ModalWrapper,
@@ -98,8 +103,9 @@ const PolicyLink = styled.a`
   font-size: 13px;
   color: ${({ theme }) => theme.secondaryBlue};
   text-decoration: none;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  min-height: 24px;
   gap: 4px;
   ${hoverShortTransitionTiming}
 
@@ -129,6 +135,7 @@ const ViewButton = styled.button`
   border: none;
   cursor: pointer;
   padding: 0;
+  min-height: 24px;
   ${hoverShortTransitionTiming}
 
   &:hover {
@@ -138,6 +145,9 @@ const ViewButton = styled.button`
 `;
 
 const TxLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   font-size: 12px;
   color: ${({ theme }) => theme.secondaryText};
   text-decoration: none;
@@ -149,9 +159,18 @@ const TxLink = styled(Link)`
   }
 `;
 
+// On narrow screens the links wrap, and a separator would be left hanging at the end of a line:
+// the row gap separates them there.
 const Separator = styled.span`
+  display: none;
   color: ${({ theme }) => theme.secondaryText};
   font-size: 12px;
+
+  ${landscapeStyle(
+    () => css`
+      display: inline;
+    `
+  )}
 `;
 
 const EmptyState = styled.div`
@@ -180,11 +199,14 @@ interface PolicyHistoryModalProps {
 }
 
 const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
+  const { ref: modalRef, dialogProps } = useDialog<HTMLDivElement>(true, onClose);
+  const titleId = useId();
   const { registryName } = useParams<{ registryName: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   useFocusOutside(modalRef, onClose);
+  useLockOverlayScroll(true);
 
   const currentPolicyTx = searchParams.get('policyTx');
   const currentAttachmentUrl = searchParams.get('attachment');
@@ -196,7 +218,20 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
     ? registryAddresses[registryName as RegistryType]
     : undefined;
 
-  const { data: historyData, isLoading, isError } = usePolicyHistory(registryAddress);
+  const { data: historyData, isLoading, isError, isFetching, refetch } =
+    usePolicyHistory(registryAddress);
+
+  // "Try again" disappears when it is pressed (the list reloads); keep keyboard focus in the dialog,
+  // not on the page behind it.
+  const showsError = isError && !historyData?.length;
+  const showedErrorRef = useRef(false);
+  useEffect(() => {
+    const node = modalRef.current;
+    if (showedErrorRef.current && !showsError && node && !node.contains(document.activeElement)) {
+      node.focus({ preventScroll: true });
+    }
+    showedErrorRef.current = showsError;
+  }, [showsError, modalRef]);
 
   const history = useMemo(() => {
     if (!historyData) return [];
@@ -206,22 +241,26 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
 
   const handleViewPolicy = (entry: PolicyHistoryEntry) => {
     const url = `${KLEROS_CDN_BASE}${entry.policyURI}`;
+    // Replaces the viewer's entry but keeps its router state, so Return still knows whether the
+    // viewer was opened in the app.
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', url);
       newParams.set('policyTx', entry.txHash);
       newParams.set('isPolicy', 'true');
       return newParams;
-    }, { replace: true });
+    }, { replace: true, state: location.state });
     onClose();
   };
 
-  return (
+  // Rendered at the top of the document so it covers the site header like the other modals
+  // (inside the page it was trapped under the header's stacking order).
+  return createPortal(
     <ModalOverlay>
       <StyledModalWrapper>
-        <ModalContainer ref={modalRef}>
+        <ModalContainer {...dialogProps} aria-labelledby={titleId}>
           <ModalHeader>
-            <ModalTitle>
+            <ModalTitle id={titleId}>
               Policy History
               {registryName && REGISTRY_DISPLAY_NAMES[registryName]
                 ? ` - ${REGISTRY_DISPLAY_NAMES[registryName]}`
@@ -230,7 +269,7 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
             <CloseButton onClick={onClose}>×</CloseButton>
           </ModalHeader>
 
-          <HistoryList>
+          <HistoryList aria-busy={isLoading && history.length === 0 ? true : undefined}>
             {isLoading && history.length === 0
               ? Array.from({ length: 4 }).map((_, i) => (
                   <HistoryItem key={i} $isCurrent={false} $isViewing={false}>
@@ -240,7 +279,13 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
                 ))
               : null}
             {isError && history.length === 0 ? (
-              <EmptyState>Failed to load policy history. Please try again later.</EmptyState>
+              <ErrorState
+                compact
+                title="The policy history did not load."
+                message="Gnosis Chain or IPFS did not answer. Check your connection and try again."
+                onRetry={() => refetch()}
+                retrying={isFetching}
+              />
             ) : null}
             {!isLoading && !isError && history.length === 0 ? (
               <EmptyState>No policy history found for this registry.</EmptyState>
@@ -269,12 +314,12 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
                     </BadgesContainer>
                   </ItemHeader>
                   <ItemLinks>
-                    <ViewButton onClick={() => handleViewPolicy(entry)}>
+                    <ViewButton type="button" onClick={() => handleViewPolicy(entry)}>
                       View Policy
                     </ViewButton>
                     {policyHref && (
                       <>
-                        <Separator>|</Separator>
+                        <Separator aria-hidden="true">|</Separator>
                         <PolicyLink
                           href={policyHref}
                           target="_blank"
@@ -285,7 +330,7 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
                         </PolicyLink>
                       </>
                     )}
-                    <Separator>|</Separator>
+                    <Separator aria-hidden="true">|</Separator>
                     <TxLink to={`/tx/${entry.txHash}`}>
                       tx: {truncateHash(entry.txHash)}
                     </TxLink>
@@ -296,13 +341,14 @@ const PolicyHistoryModal: React.FC<PolicyHistoryModalProps> = ({ onClose }) => {
           </HistoryList>
 
           <FooterButtons>
-            <ModalButton variant="secondary" onClick={onClose}>
+            <ModalButton type="button" variant="secondary" onClick={onClose}>
               Close
             </ModalButton>
           </FooterButtons>
         </ModalContainer>
       </StyledModalWrapper>
-    </ModalOverlay>
+    </ModalOverlay>,
+    document.body,
   );
 };
 

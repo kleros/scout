@@ -1,14 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { useExportItems, ExportFilters } from 'hooks/queries/useExportItems'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
+import { useDialog } from 'hooks/useDialog'
 import { json2csv } from 'json-2-csv'
-import { revRegistryMap } from 'utils/items'
+import { GraphItem, revRegistryMap } from 'utils/items'
 import { chains } from 'utils/chains'
 import { ModalButton } from 'components/ModalButtons'
 import Checkbox from 'components/Checkbox'
 import DateRangeCalendar from 'components/DateRangeCalendar'
+import ErrorState from 'components/ErrorState'
 import ExportIcon from 'svgs/icons/export.svg'
 import FiltersIcon from 'svgs/icons/filters.svg'
 import CalendarIcon from 'svgs/icons/calendar.svg'
@@ -76,21 +78,16 @@ const StatusAndDateRow = styled.div`
   )}
 `
 
-const ExportButton = styled(ModalButton)<{ disabled: boolean }>`
+// The button keeps its normal look while an export runs (it only ignores clicks), so its progress
+// label stays readable; the disabled look is kept for "no status selected".
+const ExportButton = styled(ModalButton)<{ $busy: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
-  opacity: ${({ disabled }) => (disabled ? 0.7 : 1)};
-  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+  cursor: ${({ $busy }) => ($busy ? 'progress' : 'pointer')};
 
-  &:hover {
-    background: ${({ disabled, theme }) =>
-      disabled ? theme.buttonWhite : theme.buttonWhiteHover};
-  }
-
-  &:active {
-    background: ${({ disabled, theme }) =>
-      disabled ? theme.buttonWhite : theme.buttonWhiteActive};
+  &:disabled {
+    cursor: not-allowed;
   }
 
   svg {
@@ -100,12 +97,35 @@ const ExportButton = styled(ModalButton)<{ disabled: boolean }>`
   }
 `
 
+// Groups the filters so they can all be locked while an export runs (a change mid-export would
+// otherwise produce a file that does not match what the modal shows).
+const FiltersFieldset = styled.fieldset`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+`
+
+const EmptyResult = styled.p`
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  color: ${({ theme }) => theme.secondaryText};
+`
+
+// Same labels as the Filters modal and the list.
 const STATUS_OPTIONS = [
-  { value: 'Registered', label: 'Registered' },
+  { value: 'Registered', label: 'Included' },
   { value: 'RegistrationRequested', label: 'Registration Requested' },
   { value: 'ClearingRequested', label: 'Removal Requested' },
-  { value: 'Absent', label: 'Removed' },
+  { value: 'Absent', label: 'Removed / Rejected' },
 ]
+
+type ExportPhase = 'idle' | 'fetching' | 'preparing' | 'empty' | 'error'
 
 const NETWORK_OPTIONS = chains
   .filter((chain) => !chain.deprecated)
@@ -121,9 +141,20 @@ const ExportModal: React.FC<ExportModalProps> = ({
   onClose,
 }) => {
   useLockOverlayScroll(true)
-  const [hasClickedExport, setHasClickedExport] = useState(false)
-  const [isButtonLoading, setIsButtonLoading] = useState(false)
+  const { ref: dialogRef, dialogProps } = useDialog<HTMLDivElement>(true, onClose)
+  const titleId = useId()
+  const subtitleId = useId()
+  const [phase, setPhase] = useState<ExportPhase>('idle')
+  const isExporting = phase === 'fetching' || phase === 'preparing'
   const ref = useRef<HTMLAnchorElement>(null)
+  // The fetch can outlive the modal (Cancel while fetching): never download after it closed.
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([
     'Registered',
@@ -155,7 +186,24 @@ const ExportModal: React.FC<ExportModalProps> = ({
     toDate: toDate || undefined,
   }
 
-  const { data: items, refetch, isRefetching } = useExportItems(exportFilters)
+  const { refetch } = useExportItems(exportFilters)
+
+  // A message about the last attempt ("no items match", "could not fetch") no longer applies once
+  // the filters change.
+  useEffect(() => {
+    setPhase((current) =>
+      current === 'empty' || current === 'error' ? 'idle' : current,
+    )
+  }, [selectedStatuses, selectedNetworks, fromDate, toDate])
+
+  // The message appears above the footer and can push it below the modal's scroll edge: keep the
+  // message and the Export button in view.
+  useEffect(() => {
+    const panel = dialogRef.current
+    if (panel && (phase === 'empty' || phase === 'error')) {
+      panel.scrollTop = panel.scrollHeight
+    }
+  }, [phase, dialogRef])
 
   const handleStatusChange = (status: string, checked: boolean) => {
     if (checked) {
@@ -177,7 +225,8 @@ const ExportModal: React.FC<ExportModalProps> = ({
     setSelectedNetworks([selectedNetwork])
   }
 
-  const handleNetworkAll = () => {
+  // No network ticked means every network, so this action clears the selection.
+  const handleNetworkClear = () => {
     setSelectedNetworks([])
   }
 
@@ -192,12 +241,6 @@ const ExportModal: React.FC<ExportModalProps> = ({
       'ClearingRequested',
       'Absent',
     ])
-  }
-
-  const handleExport = () => {
-    setIsButtonLoading(true)
-    setHasClickedExport(true)
-    refetch()
   }
 
   /**
@@ -253,255 +296,312 @@ const ExportModal: React.FC<ExportModalProps> = ({
     return { chain: '', address: caip10 }
   }
 
-  useEffect(() => {
-    if (!items || !ref.current || !hasClickedExport) return
+  const downloadCsv = (items: GraphItem[]) => {
+    const flattenedItems = items.map((item) => {
+      const latestRequest = item.requests?.[0]
 
-    try {
-      const flattenedItems = items.map((item) => {
-        const latestRequest = item.requests?.[0]
-
-        // Determine the appropriate date based on status
-        // For Registered: find the successful registration request (may not be requests[0] if a removal was challenged)
-        // For Absent: requests[0] is always the clearing request
-        // For pending: use submissionTime
-        let eventTime = item.latestRequestSubmissionTime
-        if (item.status === 'Registered') {
-          const registrationRequest = (item.requests || []).find(
-            req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved && req.resolutionTime
-          )
-          eventTime = registrationRequest?.resolutionTime || latestRequest?.resolutionTime || item.latestRequestSubmissionTime
-        } else if (item.status === 'Absent') {
-          eventTime = latestRequest?.resolutionTime || item.latestRequestSubmissionTime
-        }
-
-        // Helper to filter out zero addresses
-        const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-        const filterZeroAddress = (addr: string | undefined) =>
-          addr && addr !== ZERO_ADDRESS ? addr : ''
-
-        // Get submitter address (from original submission - oldest request)
-        const originalRequest = item.requests?.[item.requests.length - 1]
-        const submitter = filterZeroAddress(originalRequest?.requester)
-
-        // Build row with reorganized columns
-        // Order: status, key columns (with Address split into Chain + Address), disputed, registry, submitter, itemID, eventDate
-        const row: any = {
-          status: item.status,
-        }
-
-        if (item?.props) {
-          // Group props by normalized label to handle description variations
-          // This ensures items with same field label but different descriptions
-          // get merged into a single CSV column
-          const propsByLabel = new Map<string, string>()
-
-          item.props.forEach((prop) => {
-            const normalizedLabel = normalizeFieldLabel(prop.label)
-            // Use the first non-empty value for each normalized label
-            // This handles cases where old items might have empty values
-            if (!propsByLabel.has(normalizedLabel) || !propsByLabel.get(normalizedLabel)) {
-              propsByLabel.set(normalizedLabel, prop.value || '')
-            }
-          })
-
-          // Add normalized fields to the row using clean labels (no descriptions)
-          // Split Address into Chain and Address columns
-          propsByLabel.forEach((value, label) => {
-            if (label === 'Address') {
-              const { chain, address } = parseCAIP10Address(value)
-              row['Chain'] = chain
-              row['Address'] = address
-            } else {
-              row[label] = value
-            }
-          })
-        }
-
-        // Add remaining columns at the end
-        row['disputed'] = item.disputed
-        row['registry'] = revRegistryMap[item.registryAddress] || item.registryAddress
-        row['submitter'] = submitter
-        // Get challenger if item was disputed
-        row['challenger'] = filterZeroAddress(latestRequest?.challenger)
-        row['itemID'] = item.itemID
-        // Format date, handle edge case of 0 or invalid timestamp
-        const timestamp = parseInt(eventTime) * 1000
-        row['eventDate'] = timestamp > 0 ? new Date(timestamp).toISOString() : ''
-
-        return row
-      })
-
-      const csvData = json2csv(flattenedItems)
-      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' })
-      const link = ref.current
-
-      if (link) {
-        const url = URL.createObjectURL(blob)
-        link.setAttribute('href', url)
-        const registryName = revRegistryMap[registryAddress] || 'Items'
-        const dateRangeSuffix =
-          fromDate || toDate ? `_${fromDate || 'start'}-${toDate || 'today'}` : ''
-        const statusSuffix =
-          selectedStatuses.length === 1 ? `_${selectedStatuses[0]}` : ''
-        link.setAttribute(
-          'download',
-          `Kleros-Curate-${registryName}${statusSuffix}${dateRangeSuffix}.csv`,
+      // Determine the appropriate date based on status
+      // For Registered: find the successful registration request (may not be requests[0] if a removal was challenged)
+      // For Absent: requests[0] is always the clearing request
+      // For pending: use submissionTime
+      let eventTime = item.latestRequestSubmissionTime
+      if (item.status === 'Registered') {
+        const registrationRequest = (item.requests || []).find(
+          req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved && req.resolutionTime
         )
-        link.click()
-        URL.revokeObjectURL(url)
-
-        // Close modal after successful export
-        setHasClickedExport(false) // Reset for next time
-        onClose()
+        eventTime = registrationRequest?.resolutionTime || latestRequest?.resolutionTime || item.latestRequestSubmissionTime
+      } else if (item.status === 'Absent') {
+        eventTime = latestRequest?.resolutionTime || item.latestRequestSubmissionTime
       }
-    } catch (error) {
-      console.error('Error preparing CSV:', error)
-    } finally {
-      setIsButtonLoading(false)
-    }
-  }, [
-    items,
-    registryAddress,
-    selectedStatuses,
-    fromDate,
-    toDate,
-    onClose,
-    hasClickedExport,
-  ])
+
+      // Helper to filter out zero addresses
+      const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+      const filterZeroAddress = (addr: string | undefined) =>
+        addr && addr !== ZERO_ADDRESS ? addr : ''
+
+      // Get submitter address (from original submission - oldest request)
+      const originalRequest = item.requests?.[item.requests.length - 1]
+      const submitter = filterZeroAddress(originalRequest?.requester)
+
+      // Build row with reorganized columns
+      // Order: status, key columns (with Address split into Chain + Address), disputed, registry, submitter, itemID, eventDate
+      const row: any = {
+        status: item.status,
+      }
+
+      if (item?.props) {
+        // Group props by normalized label to handle description variations
+        // This ensures items with same field label but different descriptions
+        // get merged into a single CSV column
+        const propsByLabel = new Map<string, string>()
+
+        item.props.forEach((prop) => {
+          const normalizedLabel = normalizeFieldLabel(prop.label)
+          // Use the first non-empty value for each normalized label
+          // This handles cases where old items might have empty values
+          if (!propsByLabel.has(normalizedLabel) || !propsByLabel.get(normalizedLabel)) {
+            propsByLabel.set(normalizedLabel, prop.value || '')
+          }
+        })
+
+        // Add normalized fields to the row using clean labels (no descriptions)
+        // Split Address into Chain and Address columns
+        propsByLabel.forEach((value, label) => {
+          if (label === 'Address') {
+            const { chain, address } = parseCAIP10Address(value)
+            row['Chain'] = chain
+            row['Address'] = address
+          } else {
+            row[label] = value
+          }
+        })
+      }
+
+      // Add remaining columns at the end
+      row['disputed'] = item.disputed
+      row['registry'] = revRegistryMap[item.registryAddress] || item.registryAddress
+      row['submitter'] = submitter
+      // Get challenger if item was disputed
+      row['challenger'] = filterZeroAddress(latestRequest?.challenger)
+      row['itemID'] = item.itemID
+      // Format date, handle edge case of 0 or invalid timestamp
+      const timestamp = parseInt(eventTime) * 1000
+      row['eventDate'] = timestamp > 0 ? new Date(timestamp).toISOString() : ''
+
+      return row
+    })
+
+    const csvData = json2csv(flattenedItems)
+    const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' })
+    const link = ref.current
+    if (!link) throw new Error('Download link is not mounted')
+
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    const registryName = revRegistryMap[registryAddress] || 'Items'
+    const dateRangeSuffix =
+      fromDate || toDate ? `_${fromDate || 'start'}-${toDate || 'today'}` : ''
+    const statusSuffix =
+      selectedStatuses.length === 1 ? `_${selectedStatuses[0]}` : ''
+    link.setAttribute(
+      'download',
+      `Kleros-Curate-${registryName}${statusSuffix}${dateRangeSuffix}.csv`,
+    )
+    link.click()
+    URL.revokeObjectURL(url)
+  }
 
   const canExport = selectedStatuses.length > 0
+
+  const exportingRef = useRef(false)
+  const handleExport = async () => {
+    if (!canExport || exportingRef.current) return
+    exportingRef.current = true
+    try {
+      setPhase('fetching')
+      const result = await refetch()
+      if (!mountedRef.current) return
+      if (result.isError || !result.data) {
+        setPhase('error')
+        return
+      }
+      // Nothing to export: say so and keep the selection, instead of saving an empty file.
+      if (result.data.length === 0) {
+        setPhase('empty')
+        return
+      }
+      setPhase('preparing')
+      // Let "Preparing CSV..." paint before the synchronous CSV work.
+      await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)))
+      if (!mountedRef.current) return
+      downloadCsv(result.data)
+      onClose()
+    } catch (error) {
+      console.error('Error preparing CSV:', error)
+      if (mountedRef.current) setPhase('error')
+    } finally {
+      exportingRef.current = false
+    }
+  }
+
+  const statusMessage =
+    phase === 'fetching'
+      ? 'Fetching items...'
+      : phase === 'preparing'
+        ? 'Preparing CSV...'
+        : phase === 'empty'
+          ? 'No items match these filters. Change the status, date range or networks and try again.'
+          : ''
 
   return (
     <ModalOverlay onClick={onClose}>
       <ModalWrapper>
-        <ModalContainer onClick={(e) => e.stopPropagation()}>
+        <ModalContainer
+          {...dialogProps}
+          aria-labelledby={titleId}
+          aria-describedby={subtitleId}
+          onClick={(e) => e.stopPropagation()}
+        >
           <ModalHeader>
             <HeaderContent>
-              <ModalTitle>Export Registry Data</ModalTitle>
-              <ModalSubtitle>
+              <ModalTitle id={titleId}>Export Registry Data</ModalTitle>
+              <ModalSubtitle id={subtitleId}>
                 Export filtered items as CSV with custom options.
               </ModalSubtitle>
             </HeaderContent>
             <CloseButton onClick={onClose}>×</CloseButton>
           </ModalHeader>
 
-          <FilterSection>
-            <StatusAndDateRow>
-              <FilterGroup style={{ flex: 1 }}>
-                <GroupHeader>
-                  <FilterGroupTitle>
-                    <FiltersIcon />
-                    Status (select at least one)
-                  </FilterGroupTitle>
-                  <ActionButton onClick={handleStatusAll}>All</ActionButton>
-                </GroupHeader>
-                <CheckboxGroup>
-                  {STATUS_OPTIONS.map((option) => (
-                    <CheckboxItem key={option.value}>
-                      <CheckboxLabel>
+          <FiltersFieldset disabled={isExporting}>
+            <FilterSection>
+              <StatusAndDateRow>
+                <FilterGroup style={{ flex: 1 }}>
+                  <GroupHeader>
+                    <FilterGroupTitle>
+                      <FiltersIcon />
+                      Status (select at least one)
+                    </FilterGroupTitle>
+                    <ActionButton onClick={handleStatusAll} aria-label="Select all statuses">
+                      All
+                    </ActionButton>
+                  </GroupHeader>
+                  <CheckboxGroup>
+                    {STATUS_OPTIONS.map((option) => (
+                      <CheckboxItem key={option.value}>
+                        <CheckboxLabel>
+                          <Checkbox
+                            checked={selectedStatuses.includes(option.value)}
+                            onChange={(e) =>
+                              handleStatusChange(option.value, e.target.checked)
+                            }
+                          />
+                          {option.label}
+                        </CheckboxLabel>
+                        <OnlyButton
+                          className="only-button"
+                          onClick={() => handleStatusOnly(option.value)}
+                          type="button"
+                          aria-label={`Only ${option.label}`}
+                        >
+                          Only
+                        </OnlyButton>
+                      </CheckboxItem>
+                    ))}
+                  </CheckboxGroup>
+                </FilterGroup>
+
+                <FilterGroup style={{ flex: 1 }}>
+                  <GroupHeader>
+                    <FilterGroupTitle>
+                      <CalendarIcon />
+                      Date Range
+                    </FilterGroupTitle>
+                    {dateRange !== 'all' && (
+                      <ActionButton
+                        onClick={() => handlePresetChange('all')}
+                        aria-label="Reset date range"
+                      >
+                        Reset
+                      </ActionButton>
+                    )}
+                  </GroupHeader>
+                  <DateRangeOptions>
+                    {DATE_RANGE_PRESETS.map((preset) => (
+                      <DateRangeChip
+                        key={preset.value}
+                        type="button"
+                        $isSelected={dateRange === preset.value}
+                        aria-pressed={dateRange === preset.value}
+                        onClick={() => handlePresetChange(preset.value)}
+                      >
+                        {preset.label}
+                      </DateRangeChip>
+                    ))}
+                  </DateRangeOptions>
+                  {dateRange === 'custom' && (
+                    <DateRangeCalendar
+                      from={fromDate}
+                      to={toDate}
+                      onChange={handleCustomDateChange}
+                    />
+                  )}
+                </FilterGroup>
+              </StatusAndDateRow>
+            </FilterSection>
+
+            <FilterSection>
+              <GroupHeader>
+                <FilterGroupTitle>
+                  <FiltersIcon />
+                  Networks (leave empty for all)
+                </FilterGroupTitle>
+                {selectedNetworks.length > 0 && (
+                  <ActionButton onClick={handleNetworkClear} aria-label="Clear networks">
+                    Clear
+                  </ActionButton>
+                )}
+              </GroupHeader>
+              <NetworkGrid>
+                {NETWORK_OPTIONS.map((option) => {
+                  const ChainIcon = getChainIcon(option.value)
+                  return (
+                    <NetworkItem key={option.value}>
+                      <NetworkLabel>
                         <Checkbox
-                          checked={selectedStatuses.includes(option.value)}
+                          checked={selectedNetworks.includes(option.value)}
                           onChange={(e) =>
-                            handleStatusChange(option.value, e.target.checked)
+                            handleNetworkChange(option.value, e.target.checked)
                           }
                         />
+                        {ChainIcon && <ChainIcon />}
                         {option.label}
-                      </CheckboxLabel>
+                      </NetworkLabel>
                       <OnlyButton
                         className="only-button"
-                        onClick={() => handleStatusOnly(option.value)}
+                        onClick={() => handleNetworkOnly(option.value)}
                         type="button"
+                        aria-label={`Only ${option.label}`}
                       >
                         Only
                       </OnlyButton>
-                    </CheckboxItem>
-                  ))}
-                </CheckboxGroup>
-              </FilterGroup>
+                    </NetworkItem>
+                  )
+                })}
+              </NetworkGrid>
+            </FilterSection>
+          </FiltersFieldset>
 
-              <FilterGroup style={{ flex: 1 }}>
-                <GroupHeader>
-                  <FilterGroupTitle>
-                    <CalendarIcon />
-                    Date Range
-                  </FilterGroupTitle>
-                  {dateRange !== 'all' && (
-                    <ActionButton onClick={() => handlePresetChange('all')}>
-                      Reset
-                    </ActionButton>
-                  )}
-                </GroupHeader>
-                <DateRangeOptions>
-                  {DATE_RANGE_PRESETS.map((preset) => (
-                    <DateRangeChip
-                      key={preset.value}
-                      $isSelected={dateRange === preset.value}
-                      onClick={() => handlePresetChange(preset.value)}
-                    >
-                      {preset.label}
-                    </DateRangeChip>
-                  ))}
-                </DateRangeOptions>
-                {dateRange === 'custom' && (
-                  <DateRangeCalendar
-                    from={fromDate}
-                    to={toDate}
-                    onChange={handleCustomDateChange}
-                  />
-                )}
-              </FilterGroup>
-            </StatusAndDateRow>
-          </FilterSection>
-
-          <FilterSection>
-            <GroupHeader>
-              <FilterGroupTitle>
-                <FiltersIcon />
-                Networks (leave empty for all)
-              </FilterGroupTitle>
-              <ActionButton onClick={handleNetworkAll}>All</ActionButton>
-            </GroupHeader>
-            <NetworkGrid>
-              {NETWORK_OPTIONS.map((option) => {
-                const ChainIcon = getChainIcon(option.value)
-                return (
-                  <NetworkItem key={option.value}>
-                    <NetworkLabel>
-                      <Checkbox
-                        checked={selectedNetworks.includes(option.value)}
-                        onChange={(e) =>
-                          handleNetworkChange(option.value, e.target.checked)
-                        }
-                      />
-                      {ChainIcon && <ChainIcon />}
-                      {option.label}
-                    </NetworkLabel>
-                    <OnlyButton
-                      className="only-button"
-                      onClick={() => handleNetworkOnly(option.value)}
-                      type="button"
-                    >
-                      Only
-                    </OnlyButton>
-                  </NetworkItem>
-                )
-              })}
-            </NetworkGrid>
-          </FilterSection>
+          {/* Read out by the status region below; hidden here so it is not read twice. */}
+          {phase === 'empty' && <EmptyResult aria-hidden="true">{statusMessage}</EmptyResult>}
+          {phase === 'error' && (
+            <ErrorState
+              compact
+              title="The items could not be fetched."
+              message="The data service did not answer. Check your connection, then press Export CSV to try again."
+            />
+          )}
+          {/* Announces progress and an empty result; the error state announces itself. */}
+          <span className="visually-hidden" role="status">
+            {statusMessage}
+          </span>
 
           <FooterButtons>
-            <ModalButton variant="secondary" onClick={onClose}>Cancel</ModalButton>
+            <ModalButton type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </ModalButton>
             <ExportButton
+              type="button"
               variant="primary"
-              disabled={!canExport || isButtonLoading}
+              disabled={!canExport}
+              aria-disabled={isExporting || undefined}
+              aria-busy={isExporting || undefined}
+              $busy={isExporting}
               onClick={handleExport}
             >
-              {isButtonLoading ? (
-                isRefetching ? (
-                  'Fetching data...'
-                ) : (
-                  'Preparing CSV...'
-                )
+              {phase === 'fetching' ? (
+                'Fetching items...'
+              ) : phase === 'preparing' ? (
+                'Preparing CSV...'
               ) : (
                 <>
                   Export CSV <ExportIcon />

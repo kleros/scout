@@ -2,8 +2,15 @@ import React from 'react';
 import styled from 'styled-components';
 import { hoverShortTransitionTiming } from 'styles/commonStyles';
 
-const StyledLabel = styled.label`
+// A real button (keyboard and screen readers reach it) that keeps the toolbar's text-link look.
+const StyledButton = styled.button`
   ${hoverShortTransitionTiming}
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
   cursor: pointer;
   color: ${({ theme }) => theme.secondaryText};
   font-family: "Manrope", sans-serif;
@@ -27,9 +34,9 @@ const ExportButton: React.FC<ExportButtonProps> = ({ onClick, registryName }) =>
   }
 
   return (
-    <StyledLabel onClick={onClick}>
+    <StyledButton type="button" aria-haspopup="dialog" onClick={onClick}>
       Export List
-    </StyledLabel>
+    </StyledButton>
   );
 };
 

@@ -27,14 +27,21 @@ const CHUNK_SIZE = 100_000
  * Public Gnosis RPC endpoints used to parallelize the 'full' scan.
  * The first entry is primary — used for one-off calls (getBlockNumber,
  * getBlock) and the 'latest' backward scan. Additional entries let us
- * fan log-fetch chunks across providers, roughly tripling throughput
- * without overloading any single endpoint's rate limit.
+ * fan log-fetch chunks across providers without overloading any single
+ * endpoint's rate limit. (gnosis-mainnet.public.blastapi.io was removed:
+ * Blast API shut down and answers every call with HTTP 403.)
  */
-const GNOSIS_RPC_URLS = [
-  GNOSIS_RPC_URL,
-  'https://rpc.gnosis.gateway.fm',
-  'https://gnosis-mainnet.public.blastapi.io',
-]
+const GNOSIS_RPC_URLS = [GNOSIS_RPC_URL, 'https://rpc.gnosis.gateway.fm']
+
+/**
+ * The chain is known, so skip ethers' network detection: without `staticNetwork`
+ * a provider whose endpoint is down retries detection every second for ever.
+ */
+const createProvider = (url: string) =>
+  new JsonRpcProvider(url, 100, { staticNetwork: true })
+
+// Hard timeout for reading a MetaEvidence JSON file from IPFS.
+const METAEVIDENCE_TIMEOUT_MS = 15_000
 
 // Concurrency budget per provider — matches the single-provider limit the
 // original implementation ran at safely. Total budget is this × providers.
@@ -63,7 +70,58 @@ const withTimeout = <T>(p: Promise<T>, ms: number, label: string): Promise<T> =>
       ms,
     )
   })
+  // A request abandoned after the timeout may still fail later; that is not an unhandled rejection.
+  p.catch(() => undefined)
   return Promise.race([p, timeout]).finally(() => clearTimeout(timer))
+}
+
+const abiCoder = AbiCoder.defaultAbiCoder()
+
+/**
+ * Reads the policy file a registration MetaEvidence log points to (the `fileURI` of its JSON).
+ *
+ * Returns undefined when the log can never yield a policy (undecodable data, a URI outside IPFS,
+ * a file the gateway reports missing, invalid JSON, no usable `fileURI`): such logs are skipped.
+ * Throws when IPFS did not answer (network error, timeout, 5xx, 408, 429), so a temporary
+ * outage ends in an error the user can retry, instead of a history with silent gaps (or an
+ * empty one) that would then be cached for a day.
+ */
+const fetchPolicyFileURI = async (log: Log): Promise<string | undefined> => {
+  let metaEvidenceURI: string
+  try {
+    metaEvidenceURI = abiCoder.decode(['string'], log.data)[0]
+  } catch {
+    return undefined
+  }
+  if (typeof metaEvidenceURI !== 'string' || !metaEvidenceURI.startsWith('/ipfs/')) {
+    return undefined
+  }
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), METAEVIDENCE_TIMEOUT_MS)
+  try {
+    const response = await fetch(`${KLEROS_CDN_BASE}${metaEvidenceURI}`, {
+      signal: controller.signal,
+    })
+    if (!response.ok) {
+      const temporary =
+        response.status >= 500 || response.status === 408 || response.status === 429
+      if (temporary) throw new Error(`IPFS gateway answered HTTP ${response.status}`)
+      return undefined
+    }
+    let json: { fileURI?: unknown }
+    try {
+      json = await response.json()
+    } catch (error) {
+      if (error instanceof SyntaxError) return undefined
+      throw error
+    }
+    return typeof json?.fileURI === 'string' && json.fileURI.startsWith('/ipfs/')
+      ? json.fileURI
+      : undefined
+  } finally {
+    clearTimeout(timer)
+  }
 }
 
 /**
@@ -144,21 +202,45 @@ const fetchAllRegistrationLogs = async (
   return allLogs.filter(isRegistrationLog)
 }
 
+// Newest first: by block, then by position in the block.
+const newestFirst = (a: Log, b: Log): number =>
+  b.blockNumber - a.blockNumber || b.index - a.index
+
 /**
- * Backward scan from chain head in exponentially growing windows. Stops as
- * soon as a registration event is found — typically 1-2 windows (<2s) on
- * Gnosis since most policies have been updated within the last few months.
- * Used by 'latest' mode to avoid scanning the full history when the badge
- * only needs the newest entry.
+ * Backward scan from chain head in exponentially growing windows, for the
+ * current policy only. A registration event that re-registers the file
+ * already in force is not a policy change (the full history merges such
+ * events, see buildEntries), so the scan continues past them until it meets
+ * an event with a different policy file, and dates the current policy from
+ * the earliest event of that unchanged run. That keeps the "updated X ago"
+ * badge in agreement with the history modal. Usually a handful of windows
+ * and IPFS reads. Used by 'latest' mode.
  */
-const fetchLatestRegistrationLog = async (
+const fetchCurrentPolicy = async (
   providers: JsonRpcProvider[],
   address: string,
   deployBlock: number,
   latestBlock: number,
-): Promise<Log[]> => {
+): Promise<PolicyHistoryEntry[]> => {
   let toBlock = latestBlock
   let windowSize = BACKWARD_SCAN_INITIAL_WINDOW
+  let currentFile: string | undefined
+  // The oldest event (so far) that registered the current file.
+  let earliest: Log | undefined
+
+  const toEntry = async (): Promise<PolicyHistoryEntry[]> => {
+    if (!earliest || !currentFile) return []
+    const block = await providers[0].getBlock(earliest.blockNumber)
+    if (!block) throw new Error(`Block ${earliest.blockNumber} not found`)
+    return [
+      {
+        startDate: new Date(block.timestamp * 1000).toISOString(),
+        endDate: null,
+        policyURI: currentFile,
+        txHash: earliest.transactionHash,
+      },
+    ]
+  }
 
   for (let i = 0; i < BACKWARD_SCAN_MAX_ITERATIONS; i++) {
     const fromBlock = Math.max(deployBlock, toBlock - windowSize + 1)
@@ -170,22 +252,25 @@ const fetchLatestRegistrationLog = async (
       fromBlock,
       toBlock,
     )
-    const registrationLogs = logs.filter(isRegistrationLog)
+    const registrationLogs = logs.filter(isRegistrationLog).sort(newestFirst)
 
-    if (registrationLogs.length > 0) {
-      const latest = registrationLogs.reduce((a, b) =>
-        a.blockNumber > b.blockNumber ? a : b,
-      )
-      return [latest]
+    for (const log of registrationLogs) {
+      const fileURI = await fetchPolicyFileURI(log)
+      // Same rule as the full history: an event without a usable policy file is skipped.
+      if (!fileURI) continue
+      if (currentFile === undefined) currentFile = fileURI
+      // The previous real change: the current policy started with the run after it.
+      else if (fileURI !== currentFile) return toEntry()
+      earliest = log
     }
 
-    if (fromBlock <= deployBlock) return []
+    if (fromBlock <= deployBlock) break
 
     toBlock = fromBlock - 1
     windowSize *= 2
   }
 
-  return []
+  return toEntry()
 }
 
 /**
@@ -210,32 +295,13 @@ const buildEntries = async (
     }),
   )
 
-  const abiCoder = AbiCoder.defaultAbiCoder()
+  // Throws if IPFS does not answer for one of them (see fetchPolicyFileURI).
   const ipfsResults = await Promise.all(
-    logs.map(async (log) => {
-      try {
-        const decoded = abiCoder.decode(['string'], log.data)
-        const metaEvidenceURI: string = decoded[0]
-        const response = await fetch(`${KLEROS_CDN_BASE}${metaEvidenceURI}`)
-        if (!response.ok) throw new Error(`HTTP ${response.status}`)
-        const json = await response.json()
-        const fileURI =
-          typeof json.fileURI === 'string' && json.fileURI.startsWith('/ipfs/')
-            ? json.fileURI
-            : undefined
-        return {
-          txHash: log.transactionHash,
-          blockNumber: log.blockNumber,
-          fileURI,
-        }
-      } catch {
-        return {
-          txHash: log.transactionHash,
-          blockNumber: log.blockNumber,
-          fileURI: undefined,
-        }
-      }
-    }),
+    logs.map(async (log) => ({
+      txHash: log.transactionHash,
+      blockNumber: log.blockNumber,
+      fileURI: await fetchPolicyFileURI(log),
+    })),
   )
 
   const entries: PolicyHistoryEntry[] = []
@@ -294,33 +360,34 @@ const buildEntries = async (
  *     registry has ever had, chained by date ranges. ~3-8s typical (was
  *     8-24s pre-parallelization). Necessary for the "Previous Policies"
  *     timeline.
- *   - `'latest'`: scans backward from the chain head, stops at the first
- *     registration event. Returns a single-entry array with the current
- *     active policy. ~1-2s typical.
+ *   - `'latest'`: scans backward from the chain head to the last real policy
+ *     change. Returns a single-entry array with the current active policy,
+ *     dated as in the full history. A few seconds at most.
  */
 export const fetchPolicyHistory = async (
   registryAddress: string,
   mode: PolicyFetchMode = 'full',
 ): Promise<PolicyHistoryEntry[]> => {
-  const providers = GNOSIS_RPC_URLS.map((url) => new JsonRpcProvider(url, 100))
+  const providers = GNOSIS_RPC_URLS.map(createProvider)
   const deployBlock =
     REGISTRY_START_BLOCKS[registryAddress] ?? DEFAULT_START_BLOCK
   const latestBlock = await providers[0].getBlockNumber()
 
-  const logs =
-    mode === 'latest'
-      ? await fetchLatestRegistrationLog(
-          providers,
-          registryAddress,
-          deployBlock,
-          latestBlock,
-        )
-      : await fetchAllRegistrationLogs(
-          providers,
-          registryAddress,
-          deployBlock,
-          latestBlock,
-        )
+  if (mode === 'latest') {
+    return fetchCurrentPolicy(
+      providers,
+      registryAddress,
+      deployBlock,
+      latestBlock,
+    )
+  }
+
+  const logs = await fetchAllRegistrationLogs(
+    providers,
+    registryAddress,
+    deployBlock,
+    latestBlock,
+  )
 
   return buildEntries(providers[0], logs)
 }

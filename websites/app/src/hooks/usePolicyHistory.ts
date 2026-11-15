@@ -17,12 +17,17 @@ interface CachedEntry {
 /**
  * Kept in sync with the historical key so existing localStorage entries from
  * earlier app versions still hit on first load after deploy. New modes get
- * their own suffix.
+ * their own suffix. The 'latest' entry is versioned: v1 entries could date the
+ * current policy from a re-registration of the same file (see
+ * fetchCurrentPolicy), so they are not reused.
  */
 const cacheKey = (address: string, mode: PolicyFetchMode): string =>
   mode === 'full'
     ? `${CACHE_KEY_PREFIX}-${address}`
-    : `${CACHE_KEY_PREFIX}-${mode}-${address}`
+    : `${CACHE_KEY_PREFIX}-${mode}-v2-${address}`
+
+const legacyLatestKey = (address: string): string =>
+  `${CACHE_KEY_PREFIX}-latest-${address}`
 
 const getCachedEntry = (
   address: string,
@@ -33,7 +38,13 @@ const getCachedEntry = (
     const raw = localStorage.getItem(key)
     if (!raw) return null
     const parsed: CachedEntry = JSON.parse(raw)
-    if (Date.now() - parsed.timestamp > CACHE_EXPIRY) {
+    // Every registry has at least one policy: an empty list is a failed read
+    // that older versions cached, never an answer to reuse.
+    if (
+      Date.now() - parsed.timestamp > CACHE_EXPIRY ||
+      !Array.isArray(parsed.data) ||
+      parsed.data.length === 0
+    ) {
       localStorage.removeItem(key)
       return null
     }
@@ -48,9 +59,12 @@ const setCachedEntry = (
   mode: PolicyFetchMode,
   data: PolicyHistoryEntry[],
 ) => {
+  // Never remember an empty result for a day (see getCachedEntry).
+  if (data.length === 0) return
   try {
     const entry: CachedEntry = { data, timestamp: Date.now() }
     localStorage.setItem(cacheKey(address, mode), JSON.stringify(entry))
+    if (mode === 'latest') localStorage.removeItem(legacyLatestKey(address))
   } catch (e) {
     console.error('Error caching policy history:', e)
   }
@@ -63,8 +77,8 @@ const setCachedEntry = (
  *   - `'full'` (default): every policy ever. Used by the Previous Policies
  *     modal and attachment display.
  *   - `'latest'`: a single-entry array with the current active policy. Used
- *     by the "updated X ago" badge — backward-scans the chain and stops on
- *     the first hit (~1-2s vs ~8-24s for a full scan).
+ *     by the "updated X ago" badge — backward-scans the chain back to the
+ *     last real policy change (a few seconds, vs ~8-24s for a full scan).
  *
  * When `'latest'` is requested and a fresh `'full'` cache exists, the current
  * entry is derived from it without any network call — so a user who has

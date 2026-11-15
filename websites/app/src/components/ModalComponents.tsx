@@ -91,10 +91,11 @@ export const GroupHeader = styled.div`
   align-items: center;
 `;
 
-export const FilterGroupTitle = styled.h4`
+export const FilterGroupTitle = styled.h3`
   color: ${({ theme }) => theme.secondaryBlue};
   font-size: 14px;
   font-weight: 600;
+  line-height: normal;
   margin: 0;
   display: flex;
   align-items: center;

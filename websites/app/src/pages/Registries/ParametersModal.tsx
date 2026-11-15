@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useEffect, useId, useMemo, useRef } from 'react'
 import styled, { css } from 'styled-components'
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { formatEther } from 'ethers'
@@ -9,7 +9,9 @@ import { GNOSIS_CHAIN_ID, getAddressExplorerUrl } from 'utils/chains'
 import { useItemCountsQuery } from 'hooks/queries'
 import { useFocusOutside } from 'hooks/useFocusOutside'
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll'
+import { useDialog } from 'hooks/useDialog'
 import BaseTooltip from 'components/Tooltip'
+import ErrorState from 'components/ErrorState'
 import { ModalButton } from 'components/ModalButtons'
 import {
   ModalOverlay,
@@ -63,7 +65,10 @@ const ParamLink = styled.a`
   }
 `
 
+// As wide as its label (not the whole grid cell), so the dotted underline marks the label and the
+// tooltip opens next to it instead of over the neighbouring value.
 const Tooltip = styled(BaseTooltip)`
+  align-self: flex-start;
   border-bottom: 1px dotted ${({ theme }) => theme.secondaryText};
 `
 
@@ -96,8 +101,9 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   registryName,
   onClose,
 }) => {
-  const modalRef = useRef<HTMLDivElement>(null)
-  const { data: countsData, isLoading } = useItemCountsQuery()
+  const { data: countsData, isLoading, isFetching, refetch } = useItemCountsQuery()
+  const { ref: modalRef, dialogProps } = useDialog<HTMLDivElement>(true, onClose)
+  const titleId = useId()
 
   useFocusOutside(modalRef, onClose)
   useLockOverlayScroll(true)
@@ -108,6 +114,18 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   }, [registryName, countsData])
 
   const deposits = registry?.deposits
+
+  // "Try again" disappears when the parameters load; keep keyboard focus in the dialog, not on the
+  // page behind it.
+  const showsError = !deposits && !isLoading
+  const showedErrorRef = useRef(false)
+  useEffect(() => {
+    const node = modalRef.current
+    if (showedErrorRef.current && !showsError && node && !node.contains(document.activeElement)) {
+      node.focus({ preventScroll: true })
+    }
+    showedErrorRef.current = showsError
+  }, [showsError, modalRef])
 
   const disputeDuration =
     deposits?.timesPerPeriod
@@ -120,9 +138,9 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   return (
     <ModalOverlay>
       <ModalWrapper>
-        <ModalContainer ref={modalRef}>
+        <ModalContainer {...dialogProps} aria-labelledby={titleId}>
           <ModalHeader>
-            <ModalTitle>
+            <ModalTitle id={titleId}>
               List Parameters{registryName && REGISTRY_DISPLAY_NAMES[registryName]
                 ? ` - ${REGISTRY_DISPLAY_NAMES[registryName]}`
                 : ''}
@@ -130,15 +148,24 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
             <CloseButton onClick={onClose}>×</CloseButton>
           </ModalHeader>
 
-          {isLoading || !deposits ? (
-            <ParamsGrid>
-              {Array.from({ length: 10 }).map((_, i) => (
+          {!deposits && isLoading ? (
+            <ParamsGrid aria-busy="true">
+              {Array.from({ length: 11 }).map((_, i) => (
                 <ParamItem key={i}>
                   <Skeleton width={120} height={12} />
                   <Skeleton width={90} height={16} />
                 </ParamItem>
               ))}
             </ParamsGrid>
+          ) : !deposits ? (
+            // The read settled without the registry's settings (data service or chain RPC failed).
+            <ErrorState
+              compact
+              title="This registry's parameters did not load."
+              message="Gnosis Chain or the data service did not answer. Check your connection and try again."
+              onRetry={() => refetch()}
+              retrying={isFetching}
+            />
           ) : (
             <ParamsGrid>
               <ParamItem>
@@ -182,7 +209,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 </ParamValue>
               </ParamItem>
               <ParamItem>
-                <Tooltip data-tooltip="Time available to fund an appeal after each round. The losing side gets the full period; the winning side gets half.">
+                <Tooltip data-tooltip="Time available to fund an appeal after each round. The losing side must be fully funded in the first half of this period; the winning side can be funded until the end. If the jurors refuse to arbitrate, both sides have the whole period.">
                   <ParamLabel>Appeal Duration</ParamLabel>
                 </Tooltip>
                 <ParamValue>
@@ -202,7 +229,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
               </ParamItem>
               <ParamItem>
                 <Tooltip data-tooltip="Deposit needed to challenge a submission. Fully refunded if the challenger wins the dispute.">
-                  <ParamLabel>Challenge Deposit</ParamLabel>
+                  <ParamLabel>Submission Challenge Deposit</ParamLabel>
                 </Tooltip>
                 <ParamValue>
                   {formatDeposit(
@@ -230,11 +257,22 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                   )}
                 </ParamValue>
               </ParamItem>
+              <ParamItem>
+                <Tooltip data-tooltip="Deposit needed to challenge a removal request. Fully refunded if the challenger wins the dispute.">
+                  <ParamLabel>Removal Challenge Deposit</ParamLabel>
+                </Tooltip>
+                <ParamValue>
+                  {formatDeposit(
+                    deposits.removalChallengeBaseDeposit,
+                    deposits.arbitrationCost,
+                  )}
+                </ParamValue>
+              </ParamItem>
             </ParamsGrid>
           )}
 
           <FooterButtons>
-            <ModalButton variant="secondary" onClick={onClose}>
+            <ModalButton type="button" variant="secondary" onClick={onClose}>
               Close
             </ModalButton>
           </FooterButtons>

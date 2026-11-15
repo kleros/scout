@@ -1,9 +1,10 @@
-import React, { lazy, Suspense, useMemo } from "react";
+import React, { lazy, Suspense, useLayoutEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
+import { useQuery } from "@tanstack/react-query";
 
 import { MAX_WIDTH_LANDSCAPE } from "styles/landscapeStyle";
 
-import { useSearchParams, useParams } from "react-router-dom";
+import { useSearchParams, useParams, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 
 import NewTabIcon from "svgs/icons/new-tab.svg";
@@ -15,8 +16,41 @@ import { registryAddresses, RegistryType } from "consts/contracts";
 import { KLEROS_CDN_BASE } from "consts/index";
 import { getAllowedAttachmentUrl } from "utils/url-validation";
 import { usePolicyHistory } from "hooks/usePolicyHistory";
+import ErrorState from "components/ErrorState";
 
 import Header from "./Header";
+
+const PROBE_TIMEOUT_MS = 15_000;
+
+/**
+ * Checks that the gateway serves the file (a HEAD request, as the viewer itself makes). The
+ * viewer spins for ever when that request fails, so a failure here replaces it with an error.
+ */
+const useFileReachable = (url: string | undefined) =>
+  useQuery({
+    queryKey: ["attachmentReachable", url],
+    queryFn: async ({ signal }) => {
+      const controller = new AbortController();
+      const abort = () => controller.abort();
+      signal.addEventListener("abort", abort);
+      const timer = setTimeout(abort, PROBE_TIMEOUT_MS);
+      try {
+        const response = await fetch(url!, { method: "HEAD", signal: controller.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return true;
+      } finally {
+        clearTimeout(timer);
+        signal.removeEventListener("abort", abort);
+      }
+    },
+    enabled: !!url,
+    retry: 1,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+// Below this width the PDF is fitted to the column (see viewerConfig).
+const PDF_FIT_MAX_WIDTH = 600;
 
 const FileViewer = lazy(() =>
   import("@kleros/ui-components-library").then((m) => ({ default: m.FileViewer }))
@@ -112,6 +146,7 @@ const ViewCurrentButton = styled.button`
   border: none;
   cursor: pointer;
   padding: 0;
+  min-height: 24px;
   margin-left: auto;
   font-weight: 600;
   white-space: nowrap;
@@ -150,17 +185,37 @@ const UnsafeUrlBox = styled.div`
 
 const EvidenceAttachmentDisplay: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { registryName } = useParams<{ registryName: string }>();
 
   const url = searchParams.get("attachment");
   const safeUrl = getAllowedAttachmentUrl(url);
+  const reachable = useFileReachable(safeUrl);
 
   const policyTx = searchParams.get("policyTx");
 
   const registryAddress = registryName
     ? registryAddresses[registryName as RegistryType]
     : undefined;
-  const { data: historyData } = usePolicyHistory(registryAddress);
+  // The full history is a scan of the chain (dozens of public RPC calls). Only the past-policy
+  // banner needs it here (a past policy is opened from the history modal, so it is cached by then);
+  // "Previous Policies" loads it on demand. Evidence files, images and the current policy do not.
+  const { data: historyData } = usePolicyHistory(policyTx ? registryAddress : undefined);
+
+  // On a phone the bundled PDF renderer draws a page (column width - 100px) x zoom wide, which
+  // with the library's default zoom (0.8) is about 200px: text a few pixels high. Fit the page to
+  // the column instead (12px each side). Measured before the viewer mounts, which reads it once.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>();
+  useLayoutEffect(() => {
+    const node = containerRef.current;
+    if (node) setContainerWidth(node.getBoundingClientRect().width);
+  }, []);
+  const viewerConfig = useMemo(() => {
+    if (!containerWidth || containerWidth >= PDF_FIT_MAX_WIDTH || containerWidth <= 200) return undefined;
+    const fitZoom = (containerWidth - 24) / (containerWidth - 100);
+    return { pdfZoom: { defaultZoom: Math.floor(fitZoom * 100) / 100, zoomJump: 0.1 } };
+  }, [containerWidth]);
 
   const pastPolicyInfo = useMemo(() => {
     if (!url || !policyTx || !historyData) return null;
@@ -181,17 +236,19 @@ const EvidenceAttachmentDisplay: React.FC = () => {
 
   const handleViewCurrent = () => {
     if (!pastPolicyInfo?.currentPolicyURI) return;
+    // Replaces the viewer's entry but keeps its router state, so Return still knows whether the
+    // viewer was opened in the app.
     setSearchParams((prev) => {
       const newParams = new URLSearchParams(prev);
       newParams.set('attachment', pastPolicyInfo.currentPolicyURI!);
       newParams.delete('policyTx');
       newParams.set('isPolicy', 'true');
       return newParams;
-    }, { replace: true });
+    }, { replace: true, state: location.state });
   };
 
   return (
-    <Container>
+    <Container ref={containerRef}>
       <Header />
       {pastPolicyInfo && (
         <PastPolicyBanner>
@@ -204,7 +261,7 @@ const EvidenceAttachmentDisplay: React.FC = () => {
             </BannerDateRange>
           </div>
           {pastPolicyInfo.currentPolicyURI && (
-            <ViewCurrentButton onClick={handleViewCurrent}>
+            <ViewCurrentButton type="button" onClick={handleViewCurrent}>
               View Current Policy
             </ViewCurrentButton>
           )}
@@ -216,17 +273,27 @@ const EvidenceAttachmentDisplay: React.FC = () => {
             Open in new tab
             <StyledNewTabIcon />
           </NewTabInfo>
-          <Suspense
-            fallback={
-              <LoaderContainer>
-                <LoadingImage src={LoadingGif} />
-              </LoaderContainer>
-            }
-          >
-            <FileViewerSurface>
-              <FileViewer url={safeUrl} />
-            </FileViewerSurface>
-          </Suspense>
+          {reachable.isError ? (
+            <ErrorState
+              compact
+              title="This file could not be loaded from IPFS."
+              message="The IPFS gateway did not serve it. Try again, or open the file in a new tab."
+              onRetry={() => reachable.refetch()}
+              retrying={reachable.isFetching}
+            />
+          ) : containerWidth !== undefined ? (
+            <Suspense
+              fallback={
+                <LoaderContainer role="status">
+                  <LoadingImage src={LoadingGif} alt="Loading the file" />
+                </LoaderContainer>
+              }
+            >
+              <FileViewerSurface>
+                <FileViewer url={safeUrl} config={viewerConfig} />
+              </FileViewerSurface>
+            </Suspense>
+          ) : null}
         </>
       ) : null}
       {url && !safeUrl ? (
