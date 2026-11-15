@@ -15,6 +15,7 @@ const Container = styled.div<{ hide?: boolean }>`
   flex-shrink: 0;
 `
 
+// The current view is the bright one, on a raised background; the other is dimmer until hovered.
 const ViewButton = styled.button<{ isActive: boolean; disabled?: boolean }>`
   display: ${({ disabled }) => (disabled ? 'none' : 'flex')};
   align-items: center;
@@ -25,12 +26,12 @@ const ViewButton = styled.button<{ isActive: boolean; disabled?: boolean }>`
   border-radius: 0;
   border: none;
   background: ${({ isActive, theme }) =>
-    isActive ? theme.backgroundFour : 'transparent'};
+    isActive ? theme.activeBackground : 'transparent'};
   cursor: ${({ isActive, disabled }) =>
-    disabled ? 'not-allowed' : isActive ? 'not-allowed' : 'pointer'};
+    disabled ? 'not-allowed' : isActive ? 'default' : 'pointer'};
   transition: all 0.2s ease;
   color: ${({ isActive, theme }) =>
-    isActive ? theme.buttonDisabledText : theme.secondaryText};
+    isActive ? theme.primaryText : theme.tertiaryText};
   opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 
   &:first-child {
@@ -58,14 +59,15 @@ const ViewButton = styled.button<{ isActive: boolean; disabled?: boolean }>`
       disabled
         ? 'transparent'
         : isActive
-          ? theme.backgroundFour
+          ? theme.activeBackground
           : theme.hoverBackground};
-    color: ${({ isActive, disabled, theme }) =>
-      disabled
-        ? theme.secondaryText
-        : isActive
-          ? theme.buttonDisabledText
-          : theme.primaryText};
+    color: ${({ disabled, theme }) =>
+      disabled ? theme.secondaryText : theme.primaryText};
+  }
+
+  /* Inside the pill, so the ring is drawn within the button. */
+  &:focus-visible {
+    outline-offset: -2px;
   }
 `
 
@@ -86,18 +88,22 @@ const ViewSwitcher: React.FC<ViewSwitcherProps> = ({
   const shouldHide = disableListView
 
   return (
-    <Container hide={shouldHide}>
+    <Container hide={shouldHide} role="group" aria-label="View">
       <ViewButton
+        type="button"
         isActive={viewMode === 'cards'}
         onClick={() => onViewModeChange('cards')}
         aria-label="Card view"
+        aria-pressed={viewMode === 'cards'}
       >
         <CardsIcon />
       </ViewButton>
       <ViewButton
+        type="button"
         isActive={viewMode === 'list'}
         onClick={() => !disableListView && onViewModeChange('list')}
         aria-label="List view"
+        aria-pressed={viewMode === 'list'}
         disabled={disableListView}
       >
         <ListsIcon />

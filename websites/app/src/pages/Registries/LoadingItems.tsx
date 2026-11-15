@@ -12,10 +12,15 @@ const LoadingImage = styled.img`
   height: 90px;
 `
 
-const LoadingItems: React.FC = () => {
+interface LoadingItemsProps {
+  /** What is loading, read by screen readers, e.g. "Loading items". */
+  label?: string
+}
+
+const LoadingItems: React.FC<LoadingItemsProps> = ({ label = 'Loading' }) => {
   return (
-    <Container>
-      <LoadingImage src={LoadingGif} />
+    <Container role="status">
+      <LoadingImage src={LoadingGif} alt={label} />
     </Container>
   )
 }

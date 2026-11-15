@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+import React, { createContext, useContext, useState, useCallback, useMemo, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { chains } from 'utils/chains'
 
 export type DateRangeOption = 'all' | '7d' | '30d' | '90d' | '1y' | 'custom'
 
@@ -12,6 +14,8 @@ export interface FilterState {
   dateRange: DateRangeOption
   customDateFrom: string | null
   customDateTo: string | null
+  /** Chain ids to show, plus 'unknown' for addresses on chains Scout does not list. */
+  chainFilters: string[]
 }
 
 export interface FilterActions {
@@ -26,9 +30,18 @@ export interface FilterActions {
   setText: (text: string) => void
   setDateRange: (range: DateRangeOption) => void
   setCustomDateRange: (from: string | null, to: string | null) => void
+  setChainFilters: (chainFilters: string[]) => void
+  /** Restores every filter, the sort and the networks to their defaults. Keeps the search text. */
+  resetFilters: () => void
 }
 
 export type FilterSlice = FilterState & FilterActions
+
+/** Every network the Filters dialog offers: the chains in use, and "Unknown chains". */
+export const ALL_NETWORK_FILTERS: string[] = [
+  ...chains.filter((c) => !c.deprecated).map((c) => c.id),
+  'unknown',
+]
 
 const REGISTRY_DEFAULTS: FilterState = {
   status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
@@ -40,6 +53,7 @@ const REGISTRY_DEFAULTS: FilterState = {
   dateRange: 'all',
   customDateFrom: null,
   customDateTo: null,
+  chainFilters: ALL_NETWORK_FILTERS,
 }
 
 const PROFILE_DEFAULTS: FilterState = {
@@ -52,25 +66,26 @@ const PROFILE_DEFAULTS: FilterState = {
   dateRange: 'all',
   customDateFrom: null,
   customDateTo: null,
+  chainFilters: ALL_NETWORK_FILTERS,
 }
 
-function useFilterSlice(defaults: FilterState): FilterSlice {
-  const [state, setState] = useState<FilterState>(defaults)
+type Update = (fn: (prev: FilterState) => FilterState) => void
 
+function useFilterActions(update: Update, defaults: FilterState): FilterActions {
   const setStatus = useCallback((status: string[]) => {
-    setState(prev => ({ ...prev, status, page: 1 }))
-  }, [])
+    update(prev => ({ ...prev, status, page: 1 }))
+  }, [update])
 
   const toggleStatus = useCallback((s: string) => {
-    setState(prev => ({
+    update(prev => ({
       ...prev,
       status: prev.status.includes(s) ? prev.status.filter(x => x !== s) : [...prev.status, s],
       page: 1,
     }))
-  }, [])
+  }, [update])
 
   const setDisputed = useCallback((disputed: string[]) => {
-    setState(prev => ({
+    update(prev => ({
       ...prev,
       // Prevent removing 'false' (Unchallenged) while "Previously Disputed" is active
       disputed: prev.hasEverBeenDisputed && !disputed.includes('false')
@@ -78,10 +93,10 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
         : disputed,
       page: 1,
     }))
-  }, [])
+  }, [update])
 
   const toggleDisputed = useCallback((d: string) => {
-    setState(prev => {
+    update(prev => {
       // Prevent unchecking 'false' (Unchallenged) while "Previously Disputed" is active
       if (d === 'false' && prev.hasEverBeenDisputed && prev.disputed.includes('false')) {
         return prev
@@ -92,10 +107,10 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
         page: 1,
       }
     })
-  }, [])
+  }, [update])
 
   const toggleHasEverBeenDisputed = useCallback(() => {
-    setState(prev => {
+    update(prev => {
       const next = !prev.hasEverBeenDisputed
       return {
         ...prev,
@@ -113,10 +128,10 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
         page: 1,
       }
     })
-  }, [])
+  }, [update])
 
   const setChallengeFilters = useCallback((disputed: string[], hasEverBeenDisputed: boolean) => {
-    setState(prev => ({
+    update(prev => ({
       ...prev,
       disputed: hasEverBeenDisputed && !disputed.includes('false')
         ? [...disputed, 'false']
@@ -128,22 +143,22 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
         : prev.status,
       page: 1,
     }))
-  }, [])
+  }, [update])
 
   const setPage = useCallback((page: number) => {
-    setState(prev => ({ ...prev, page }))
-  }, [])
+    update(prev => ({ ...prev, page }))
+  }, [update])
 
   const setOrderDirection = useCallback((orderDirection: string) => {
-    setState(prev => ({ ...prev, orderDirection, page: 1 }))
-  }, [])
+    update(prev => ({ ...prev, orderDirection, page: 1 }))
+  }, [update])
 
   const setText = useCallback((text: string) => {
-    setState(prev => ({ ...prev, text, page: 1 }))
-  }, [])
+    update(prev => ({ ...prev, text, page: 1 }))
+  }, [update])
 
   const setDateRange = useCallback((dateRange: DateRangeOption) => {
-    setState(prev => ({
+    update(prev => ({
       ...prev,
       dateRange,
       // Clear custom dates when switching to a preset
@@ -151,20 +166,165 @@ function useFilterSlice(defaults: FilterState): FilterSlice {
       customDateTo: dateRange === 'custom' ? prev.customDateTo : null,
       page: 1,
     }))
-  }, [])
+  }, [update])
 
   const setCustomDateRange = useCallback((from: string | null, to: string | null) => {
-    setState(prev => ({ ...prev, dateRange: 'custom' as DateRangeOption, customDateFrom: from, customDateTo: to, page: 1 }))
-  }, [])
+    update(prev => ({ ...prev, dateRange: 'custom' as DateRangeOption, customDateFrom: from, customDateTo: to, page: 1 }))
+  }, [update])
 
-  return {
-    ...state,
+  const setChainFilters = useCallback((chainFilters: string[]) => {
+    update(prev => ({ ...prev, chainFilters, page: 1 }))
+  }, [update])
+
+  const resetFilters = useCallback(() => {
+    update(prev => ({ ...defaults, text: prev.text }))
+  }, [update, defaults])
+
+  return useMemo(() => ({
     setStatus, toggleStatus,
     setDisputed, toggleDisputed,
     toggleHasEverBeenDisputed, setChallengeFilters,
     setPage, setOrderDirection, setText,
     setDateRange, setCustomDateRange,
+    setChainFilters, resetFilters,
+  }), [
+    setStatus, toggleStatus, setDisputed, toggleDisputed, toggleHasEverBeenDisputed,
+    setChallengeFilters, setPage, setOrderDirection, setText, setDateRange,
+    setCustomDateRange, setChainFilters, resetFilters,
+  ])
+}
+
+/** Filters kept in component state (the profile page). */
+function useLocalFilterSlice(defaults: FilterState): FilterSlice {
+  const [state, setState] = useState<FilterState>(defaults)
+  const actions = useFilterActions(setState, defaults)
+  return useMemo(() => ({ ...state, ...actions }), [state, actions])
+}
+
+/*
+ * Registry list filters live in the address bar, so a reload keeps them, a filtered view can be
+ * shared, and Back from an item returns to the same page. The names are the ones the app used
+ * before the filters moved into memory (status, disputed, text, page, orderDirection), so links
+ * made then still work; defaults are left out, so /tokens stays /tokens. Other parameters
+ * (attachment, isPolicy, policyTx...) are kept as they are.
+ */
+const STATUS_VALUES = ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent']
+const DISPUTED_VALUES = ['true', 'false']
+const DATE_RANGE_VALUES: DateRangeOption[] = ['all', '7d', '30d', '90d', '1y', 'custom']
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+const FILTER_PARAMS = [
+  'text', 'status', 'disputed', 'hasEverBeenDisputed', 'orderDirection',
+  'dateRange', 'dateFrom', 'dateTo', 'network', 'page',
+]
+
+/** The allowed values a repeated (or comma-separated) parameter names, in their usual order. */
+const readList = (params: URLSearchParams, key: string, allowed: string[], fallback: string[]): string[] => {
+  if (!params.has(key)) return fallback
+  const given = params
+    .getAll(key)
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+  return allowed.filter((value) => given.includes(value.toLowerCase()))
+}
+
+const sameSet = (a: string[], b: string[]) =>
+  a.length === b.length && a.every((value) => b.includes(value))
+
+export const readFilterParams = (params: URLSearchParams, defaults: FilterState = REGISTRY_DEFAULTS): FilterState => {
+  const hasEverBeenDisputed = params.get('hasEverBeenDisputed') === 'true'
+  const disputed = readList(params, 'disputed', DISPUTED_VALUES, defaults.disputed)
+  const requestedRange = params.get('dateRange') as DateRangeOption | null
+  const dateRange = requestedRange && DATE_RANGE_VALUES.includes(requestedRange) ? requestedRange : defaults.dateRange
+  const dateFrom = params.get('dateFrom')
+  const dateTo = params.get('dateTo')
+  const page = Number(params.get('page'))
+
+  return {
+    text: params.get('text') ?? defaults.text,
+    status: readList(params, 'status', STATUS_VALUES, defaults.status),
+    // "Previously challenged" items are unchallenged now, so that box stays ticked with it.
+    disputed: hasEverBeenDisputed && !disputed.includes('false') ? [...disputed, 'false'] : disputed,
+    hasEverBeenDisputed,
+    orderDirection: params.get('orderDirection') === 'asc' ? 'asc' : 'desc',
+    dateRange,
+    customDateFrom: dateRange === 'custom' && dateFrom && ISO_DATE.test(dateFrom) ? dateFrom : null,
+    customDateTo: dateRange === 'custom' && dateTo && ISO_DATE.test(dateTo) ? dateTo : null,
+    chainFilters: readList(params, 'network', ALL_NETWORK_FILTERS, defaults.chainFilters),
+    page: Number.isInteger(page) && page > 0 ? page : 1,
   }
+}
+
+export const writeFilterParams = (
+  current: URLSearchParams,
+  state: FilterState,
+  defaults: FilterState = REGISTRY_DEFAULTS,
+): URLSearchParams => {
+  const next = new URLSearchParams(current)
+  FILTER_PARAMS.forEach((key) => next.delete(key))
+
+  // An empty selection is kept as "status=" so it survives a reload (absent means the default).
+  const writeList = (key: string, values: string[], fallback: string[]) => {
+    if (sameSet(values, fallback)) return
+    if (values.length === 0) next.set(key, '')
+    else values.forEach((value) => next.append(key, value))
+  }
+
+  if (state.text) next.set('text', state.text)
+  writeList('status', state.status, defaults.status)
+  writeList('disputed', state.disputed, defaults.disputed)
+  if (state.hasEverBeenDisputed) next.set('hasEverBeenDisputed', 'true')
+  if (state.orderDirection === 'asc') next.set('orderDirection', 'asc')
+  if (state.dateRange !== 'all') next.set('dateRange', state.dateRange)
+  if (state.dateRange === 'custom' && state.customDateFrom) next.set('dateFrom', state.customDateFrom)
+  if (state.dateRange === 'custom' && state.customDateTo) next.set('dateTo', state.customDateTo)
+  writeList('network', state.chainFilters, defaults.chainFilters)
+  if (state.page > 1) next.set('page', String(state.page))
+  return next
+}
+
+/** Filters kept in the URL query string (the registry lists). */
+function useUrlFilterSlice(defaults: FilterState): FilterSlice {
+  const { search } = useLocation()
+  const navigate = useNavigate()
+  const navigateRef = useRef(navigate)
+  navigateRef.current = navigate
+
+  const state = useMemo(
+    () => readFilterParams(new URLSearchParams(search), defaults),
+    [search, defaults],
+  )
+
+  const update = useCallback<Update>((fn) => {
+    // Read the address bar, not the last render: several changes made in one event (Reset, then
+    // the networks) then build on each other instead of the last one winning.
+    const current = new URLSearchParams(window.location.search)
+    const next = writeFilterParams(current, fn(readFilterParams(current, defaults)), defaults)
+    const nextSearch = next.toString()
+    if (nextSearch === current.toString()) return
+    // Replace, so Back leaves the list instead of stepping through every tick of a checkbox.
+    navigateRef.current({ search: nextSearch ? `?${nextSearch}` : '' }, { replace: true })
+  }, [defaults])
+
+  const actions = useFilterActions(update, defaults)
+  return useMemo(() => ({ ...state, ...actions }), [state, actions])
+}
+
+/**
+ * How many groups of the Filters dialog narrow the list compared with their defaults (statuses,
+ * challenge, date, networks), for the count on the Filters button. The sort order is not a filter.
+ */
+export const getActiveFilterCount = (
+  filters: Pick<FilterState, 'status' | 'disputed' | 'hasEverBeenDisputed' | 'dateRange'>,
+  chainFilters: string[],
+): number => {
+  const defaults = REGISTRY_DEFAULTS
+  return [
+    !sameSet(filters.status, defaults.status),
+    !sameSet(filters.disputed, defaults.disputed) || filters.hasEverBeenDisputed !== defaults.hasEverBeenDisputed,
+    filters.dateRange !== defaults.dateRange,
+    !sameSet(chainFilters, defaults.chainFilters),
+  ].filter(Boolean).length
 }
 
 interface FilterContextValue {
@@ -175,11 +335,12 @@ interface FilterContextValue {
 const FilterContext = createContext<FilterContextValue | null>(null)
 
 export const FilterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const registry = useFilterSlice(REGISTRY_DEFAULTS)
-  const profile = useFilterSlice(PROFILE_DEFAULTS)
+  const registry = useUrlFilterSlice(REGISTRY_DEFAULTS)
+  const profile = useLocalFilterSlice(PROFILE_DEFAULTS)
+  const value = useMemo(() => ({ registry, profile }), [registry, profile])
 
   return (
-    <FilterContext.Provider value={{ registry, profile }}>
+    <FilterContext.Provider value={value}>
       {children}
     </FilterContext.Provider>
   )

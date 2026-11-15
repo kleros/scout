@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useId, useMemo, useRef } from 'react';
 import styled, { css } from 'styled-components';
-import { useFilters, DateRangeOption, DATE_RANGE_PRESETS } from 'context/FilterContext';
+import { useFilters, DateRangeOption, DATE_RANGE_PRESETS, ALL_NETWORK_FILTERS, getActiveFilterCount } from 'context/FilterContext';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { chains } from 'utils/chains';
 import { useFocusOutside } from 'hooks/useFocusOutside';
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll';
+import { useDialog } from 'hooks/useDialog';
 import { ModalButton } from './ModalButtons';
 import Checkbox from './Checkbox';
 import RadioButton from './RadioButton';
@@ -87,9 +88,14 @@ const SortOption = styled.label`
   display: flex;
   align-items: center;
   gap: 8px;
+  min-height: 24px;
   color: ${({ theme }) => theme.secondaryText};
   font-size: 14px;
   cursor: pointer;
+`;
+
+const ResetButton = styled(ModalButton)`
+  margin-right: auto;
 `;
 
 const STATUS_LABELS: Record<string, string> = {
@@ -105,6 +111,9 @@ const CHALLENGE_STATUSES = [
   { value: 'true', label: 'Challenged' },
   { value: 'false', label: 'Unchallenged' }
 ];
+
+/** The registry lists order and filter by resolution time when only resolved statuses are shown. */
+const RESOLVED_STATUSES = ['Registered', 'Absent'];
 
 interface FilterModalProps {
   isOpen: boolean;
@@ -122,9 +131,18 @@ const FilterModal: React.FC<FilterModalProps> = ({
   scope,
 }) => {
   const filters = useFilters(scope);
-  const modalRef = useRef<HTMLDivElement>(null);
+  const { ref: modalRef, dialogProps } = useDialog<HTMLDivElement>(isOpen, onClose);
+  const idPrefix = useId().replace(/:/g, '');
+  const ids = {
+    title: `${idPrefix}-title`,
+    status: `${idPrefix}-status`,
+    challenge: `${idPrefix}-challenge`,
+    sort: `${idPrefix}-sort`,
+    date: `${idPrefix}-date`,
+    networks: `${idPrefix}-networks`,
+  };
 
-  useFocusOutside(modalRef, () => onClose());
+  useFocusOutside(modalRef, onClose);
   useLockOverlayScroll(isOpen);
 
   const handleStatusChange = useCallback((status: string) => {
@@ -183,19 +201,37 @@ const FilterModal: React.FC<FilterModalProps> = ({
   }, []);
 
   const handleNetworkAll = useCallback(() => {
-    const allChainIds = [...availableChains.map(chain => chain.id), 'unknown'];
-    onChainFiltersChange(allChainIds);
-  }, [onChainFiltersChange, availableChains]);
+    onChainFiltersChange(ALL_NETWORK_FILTERS);
+  }, [onChainFiltersChange]);
+
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const handleReset = useCallback(() => {
+    filters.resetFilters();
+    onChainFiltersChange(ALL_NETWORK_FILTERS);
+    // The Reset button goes away with nothing left to reset: keep focus in the footer.
+    closeButtonRef.current?.focus();
+  }, [filters, onChainFiltersChange]);
 
   if (!isOpen) return null;
+
+  // Say which date the sort and the date range use (useItemsQuery picks it the same way).
+  const usesResolutionDate =
+    scope === 'registry' &&
+    filters.status.length > 0 &&
+    filters.status.every((s) => RESOLVED_STATUSES.includes(s));
+  const dateKind = usesResolutionDate ? 'resolution' : 'submission';
+  const hasChangedFilters =
+    getActiveFilterCount(filters, chainFilters) > 0 || filters.orderDirection !== 'desc';
 
   return (
     <ModalOverlay>
       <ModalWrapper>
-        <ModalContainer ref={modalRef}>
+        <ModalContainer {...dialogProps} aria-labelledby={ids.title}>
         <ModalHeader>
-          <ModalTitle>Filters</ModalTitle>
-          <CloseButton onClick={onClose}>×</CloseButton>
+          <ModalTitle id={ids.title}>Filters</ModalTitle>
+          <CloseButton aria-label="Close filters" onClick={onClose}>
+            <span aria-hidden="true">×</span>
+          </CloseButton>
         </ModalHeader>
 
         <FilterSection>
@@ -203,15 +239,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
             <FilterColumn>
               <FilterGroup>
                 <GroupHeader>
-                  <FilterGroupTitle>
+                  <FilterGroupTitle as="h3" id={ids.status}>
                     <FiltersIcon />
-                    Verification Status
+                    Verification status
                   </FilterGroupTitle>
-                  <ActionButton onClick={handleStatusAll}>
+                  <ActionButton aria-label="All verification statuses" onClick={handleStatusAll}>
                     All
                   </ActionButton>
                 </GroupHeader>
-                <CheckboxGroup>
+                <CheckboxGroup role="group" aria-labelledby={ids.status}>
                   {REGISTRATION_STATUSES.map((status) => (
                     <CheckboxItem key={status}>
                       <CheckboxLabel>
@@ -219,13 +255,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
                           checked={filters.status.includes(status)}
                           onChange={() => handleStatusChange(status)}
                         />
-                        <StatusCircle status={status} />
+                        <StatusCircle status={status} aria-hidden="true" />
                         {STATUS_LABELS[status]}
                       </CheckboxLabel>
                       <OnlyButton
                         className="only-button"
                         onClick={() => handleStatusOnly(status)}
                         type="button"
+                        aria-label={`Only ${STATUS_LABELS[status]}`}
                       >
                         Only
                       </OnlyButton>
@@ -238,15 +275,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
             <FilterColumn>
               <FilterGroup>
                 <GroupHeader>
-                  <FilterGroupTitle>
+                  <FilterGroupTitle as="h3" id={ids.challenge}>
                     <FiltersIcon />
-                    Challenge Status
+                    Challenge status
                   </FilterGroupTitle>
-                  <ActionButton onClick={handleDisputedAll}>
+                  <ActionButton aria-label="All challenge statuses" onClick={handleDisputedAll}>
                     All
                   </ActionButton>
                 </GroupHeader>
-                <CheckboxGroup>
+                <CheckboxGroup role="group" aria-labelledby={ids.challenge}>
                   {CHALLENGE_STATUSES.map((challenge) => {
                     const isLockedOn = challenge.value === 'false' && filters.hasEverBeenDisputed;
                     return (
@@ -257,7 +294,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                             onChange={() => handleDisputedChange(challenge.value)}
                             disabled={isLockedOn}
                           />
-                          <StatusCircle status={challenge.value} />
+                          <StatusCircle status={challenge.value} aria-hidden="true" />
                           {challenge.label}
                         </CheckboxLabel>
                         {!isLockedOn && (
@@ -265,6 +302,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                             className="only-button"
                             onClick={() => handleDisputedOnly(challenge.value)}
                             type="button"
+                            aria-label={`Only ${challenge.label}`}
                           >
                             Only
                           </OnlyButton>
@@ -278,13 +316,14 @@ const FilterModal: React.FC<FilterModalProps> = ({
                         checked={filters.hasEverBeenDisputed}
                         onChange={() => filters.toggleHasEverBeenDisputed()}
                       />
-                      <StatusCircle status="previously-disputed" />
+                      <StatusCircle status="previously-disputed" aria-hidden="true" />
                       Previously Challenged
                     </CheckboxLabel>
                     <OnlyButton
                       className="only-button"
                       onClick={() => handlePreviouslyDisputedOnly()}
                       type="button"
+                      aria-label="Only Previously Challenged"
                     >
                       Only
                     </OnlyButton>
@@ -293,11 +332,11 @@ const FilterModal: React.FC<FilterModalProps> = ({
               </FilterGroup>
 
               <FilterGroup style={{ marginTop: '8px' }}>
-                <SortBySectionTitle>
+                <SortBySectionTitle as="h3" id={ids.sort}>
                   <SortIcon />
-                  Sort by
+                  {`Sort by ${dateKind} date`}
                 </SortBySectionTitle>
-                <SortOptions>
+                <SortOptions role="radiogroup" aria-labelledby={ids.sort}>
                   <SortOption>
                     <RadioButton
                       name="sort"
@@ -324,20 +363,22 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
         <FilterSection>
           <GroupHeader>
-            <FilterGroupTitle>
+            <FilterGroupTitle as="h3" id={ids.date}>
               <CalendarIcon />
-              Date Range
+              {usesResolutionDate ? 'Resolution date' : 'Submission date'}
             </FilterGroupTitle>
             {filters.dateRange !== 'all' && (
-              <ActionButton onClick={() => filters.setDateRange('all')}>
+              <ActionButton aria-label="Reset date range" onClick={() => filters.setDateRange('all')}>
                 Reset
               </ActionButton>
             )}
           </GroupHeader>
-          <DateRangeOptions>
+          <DateRangeOptions role="group" aria-labelledby={ids.date}>
             {DATE_RANGE_PRESETS.map((preset) => (
               <DateRangeChip
                 key={preset.value}
+                type="button"
+                aria-pressed={filters.dateRange === preset.value}
                 $isSelected={filters.dateRange === preset.value}
                 onClick={() => handleDateRangeChange(preset.value)}
               >
@@ -356,15 +397,15 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
         <FilterSection>
           <GroupHeader>
-            <FilterGroupTitle>
+            <FilterGroupTitle as="h3" id={ids.networks}>
               <FiltersIcon />
               Networks
             </FilterGroupTitle>
-            <ActionButton onClick={handleNetworkAll}>
+            <ActionButton aria-label="All networks" onClick={handleNetworkAll}>
               All
             </ActionButton>
           </GroupHeader>
-          <NetworkGrid>
+          <NetworkGrid role="group" aria-labelledby={ids.networks}>
             {availableChains.map((chain) => {
               const ChainIcon = getChainIcon(chain.id);
               return (
@@ -381,6 +422,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                     className="only-button"
                     onClick={() => handleNetworkOnly(chain.id)}
                     type="button"
+                    aria-label={`Only ${chain.name}`}
                   >
                     Only
                   </OnlyButton>
@@ -399,6 +441,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 className="only-button"
                 onClick={() => handleNetworkOnly('unknown')}
                 type="button"
+                aria-label="Only Unknown chains"
               >
                 Only
               </OnlyButton>
@@ -407,7 +450,12 @@ const FilterModal: React.FC<FilterModalProps> = ({
         </FilterSection>
 
         <FooterButtons>
-          <ModalButton variant="secondary" onClick={onClose}>Close</ModalButton>
+          {hasChangedFilters && (
+            <ResetButton type="button" variant="secondary" onClick={handleReset}>
+              Reset filters
+            </ResetButton>
+          )}
+          <ModalButton ref={closeButtonRef} type="button" variant="secondary" onClick={onClose}>Close</ModalButton>
         </FooterButtons>
         </ModalContainer>
       </ModalWrapper>

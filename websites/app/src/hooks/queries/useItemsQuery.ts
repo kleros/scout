@@ -27,6 +27,8 @@ interface UseItemsQueryParams {
 export interface ItemsQueryResult {
   items: GraphItem[]
   totalCount: number
+  /** The indexer has more matches after this page (the query asks for one row more than a page). */
+  hasMore: boolean
 }
 
 export const useItemsQuery = ({
@@ -50,6 +52,8 @@ export const useItemsQuery = ({
 
   const registry = registryNames ?? (registryName ? [registryName] : [])
   const network = chainFilters
+  // A pasted address often carries a space or a line break; the field keeps what was typed.
+  const searchText = text.trim()
 
   const shouldFetch =
     enabled &&
@@ -66,7 +70,7 @@ export const useItemsQuery = ({
     disputed.slice().sort().join(','),
     hasEverBeenDisputed,
     chainFilters.slice().sort().join(','),
-    text,
+    searchText,
     orderDirection,
     page,
     dateRange,
@@ -78,7 +82,7 @@ export const useItemsQuery = ({
   return useQuery<ItemsQueryResult>({
     queryKey,
     queryFn: async (): Promise<ItemsQueryResult> => {
-      if (!shouldFetch) return { items: [], totalCount: 0 }
+      if (!shouldFetch) return { items: [], totalCount: 0, hasMore: false }
 
       const isTagsQueriesRegistry = registry.includes('tags-queries')
 
@@ -142,7 +146,7 @@ export const useItemsQuery = ({
         if (ts > 0) dateFilterObject = `{${orderField}: {_gte: "${ts}"}}`
       }
 
-      const textFilterObject = text
+      const textFilterObject = searchText
         ? `{_or: [
         {key0: {_ilike: $text}},
         {key1: {_ilike: $text}},
@@ -246,8 +250,8 @@ export const useItemsQuery = ({
         orderDirection,
       }
 
-      if (text) {
-        variables.text = `%${text}%`
+      if (searchText) {
+        variables.text = `%${searchText}%`
       }
 
       if (includeUnknown && isTagsQueriesRegistry) {
@@ -263,6 +267,7 @@ export const useItemsQuery = ({
 
       const rawItems: GraphItem[] = result.litems
       const totalCount: number = includeCount ? (result.countItems?.length ?? 0) : 0
+      const hasMore = rawItems.length > ITEMS_PER_PAGE
 
       // Client-side chain filter — reused for both initial render and background patch
       const applyChainFilter = (itemsToFilter: GraphItem[]): GraphItem[] => {
@@ -312,10 +317,10 @@ export const useItemsQuery = ({
       // Runs on unfiltered items so key0 can be populated, then re-filters.
       patchQueryWithIpfs<ItemsQueryResult>(queryClient, queryKey, rawItems, async () => {
         const patched = await fetchItemPropsFromIpfs(rawItems, KLEROS_CDN_BASE)
-        return { items: applyChainFilter(patched), totalCount }
+        return { items: applyChainFilter(patched), totalCount, hasMore }
       })
 
-      return { items, totalCount }
+      return { items, totalCount, hasMore }
     },
     enabled: shouldFetch,
     refetchInterval: false,

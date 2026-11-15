@@ -3,22 +3,32 @@ import styled, { css } from 'styled-components';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { getRegistryKey } from 'utils/items';
 
-const HeaderRow = styled.div<{ registryType?: string }>`
+// The status column keeps room for its longest value with the bounty ("Registration Requested
+// 30 xDAI"), the address column for a chip with its copy button, and the last column for its
+// header and a date; the others share the rest.
+const STATUS_COLUMN = 'minmax(210px, 1.2fr)';
+const ADDRESS_COLUMN = 'minmax(160px, 1.2fr)';
+const EVENT_COLUMN = 'minmax(116px, 1fr)';
+
+/** Grid columns of the desktop list, shared by the header and the rows. */
+export const getListColumns = (registryType?: string) => {
+  switch (registryType) {
+    case 'tokens':
+      return `${STATUS_COLUMN} 0.3fr 0.5fr 0.6fr 1fr ${ADDRESS_COLUMN} ${EVENT_COLUMN}`; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
+    case 'single-tags':
+      return `${STATUS_COLUMN} 0.8fr 1fr 1fr ${ADDRESS_COLUMN} ${EVENT_COLUMN}`; // Status, Project, Tag, Website, Address, Next/Last event
+    case 'cdn':
+      return `${STATUS_COLUMN} 0.3fr 2fr ${ADDRESS_COLUMN} ${EVENT_COLUMN}`; // Status, Proof, Domain, Address, Next/Last event
+    case 'tags-queries':
+      return `${STATUS_COLUMN} 1.3fr 1fr 0.4fr 0.9fr ${EVENT_COLUMN}`; // Status, Description, Repository, Commit, Chain, Next/Last event
+    default:
+      return '200px 280px 180px 200px 100px 180px';
+  }
+};
+
+const HeaderRow = styled.div<{ $registryType?: string }>`
   display: grid;
-  grid-template-columns: ${({ registryType }) => {
-    switch (registryType) {
-      case 'tokens':
-        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
-      case 'single-tags':
-        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
-      case 'cdn':
-        return '1.2fr 0.3fr 1fr 1fr 1.2fr 1fr'; // Status, Proof, Domain, Website, Address, Next/Last event
-      case 'tags-queries':
-        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
-      default:
-        return '200px 280px 180px 200px 100px 180px';
-    }
-  }};
+  grid-template-columns: ${({ $registryType }) => getListColumns($registryType)};
   gap: 16px;
   align-items: center;
   padding: 12px 0 8px 0;
@@ -68,7 +78,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   // Tokens registry columns
   if (registryType === 'tokens') {
     return (
-      <HeaderRow registryType={registryType}>
+      <HeaderRow $registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Logo</HeaderCell>
         <HeaderCell>Symbol</HeaderCell>
@@ -85,7 +95,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   // Single Tags registry columns
   if (registryType === 'single-tags') {
     return (
-      <HeaderRow registryType={registryType}>
+      <HeaderRow $registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Project</HeaderCell>
         <HeaderCell>Tag</HeaderCell>
@@ -100,11 +110,10 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   // CDN registry columns
   if (registryType === 'cdn') {
     return (
-      <HeaderRow registryType={registryType}>
+      <HeaderRow $registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Proof</HeaderCell>
         <HeaderCell>Domain</HeaderCell>
-        <HeaderCell>Website</HeaderCell>
         <HeaderCell>Address</HeaderCell>
         {/* <HeaderCell>Submitted by</HeaderCell> */}
         <HeaderCell>Next/Last event</HeaderCell>
@@ -115,7 +124,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
   // Tags Queries registry columns
   if (registryType === 'tags-queries') {
     return (
-      <HeaderRow registryType={registryType}>
+      <HeaderRow $registryType={registryType}>
         <HeaderCell>Status</HeaderCell>
         <HeaderCell>Description</HeaderCell>
         <HeaderCell>Repository</HeaderCell>
@@ -129,7 +138,7 @@ const ListHeader: React.FC<ListHeaderProps> = ({ registryAddress }) => {
 
   // Default fallback
   return (
-    <HeaderRow registryType={registryType}>
+    <HeaderRow $registryType={registryType}>
       <HeaderCell>Name</HeaderCell>
       <HeaderCell>Website</HeaderCell>
       <HeaderCell>Address</HeaderCell>

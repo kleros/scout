@@ -1,5 +1,5 @@
 import React from 'react';
-import styled, { useTheme } from 'styled-components';
+import styled, { css, useTheme } from 'styled-components';
 import { Link } from 'react-router-dom';
 import { formatEther } from 'ethers';
 import {
@@ -7,8 +7,11 @@ import {
   buildItemPath,
   getItemDisplayStatus,
   getItemDisplayName,
+  getItemLinkLabel,
+  getItemAddress,
   getChainId,
   getItemThumbnailUrl,
+  getPropValue,
   registryMap,
   revRegistryMap,
   statusDescriptionMap,
@@ -18,15 +21,20 @@ import { getChainIcon } from 'utils/chainIcons';
 import { chains } from 'utils/chains';
 import { chainColorMap } from 'utils/colorMappings';
 import Tooltip from 'components/Tooltip';
-import useHumanizedCountdown, { useChallengeRemainingTime } from 'hooks/countdown';
+import AddressDisplay from 'components/AddressDisplay';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
-import { formatTimestamp } from 'utils/formatTimestamp';
 import HourglassIcon from 'svgs/icons/hourglass.svg';
 import ArrowIcon from 'assets/svgs/icons/arrow.svg';
 import Skeleton from 'react-loading-skeleton';
+import { useItemEvent, toIsoString } from './itemEvent';
 
+/*
+ * The whole row opens the item: one link is stretched over it (RowLink). The address link, the
+ * copy button, the tooltips and the countdown sit above it and keep working on their own.
+ */
 const CompactRow = styled.div`
   ${hoverLongTransitionTiming}
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -49,6 +57,31 @@ const CompactRow = styled.div`
     margin-right: -8px;
     border-radius: 8px;
   }
+
+  a:not([data-row-link]),
+  button,
+  time,
+  [role='img'] {
+    position: relative;
+    z-index: 2;
+  }
+`;
+
+const RowLink = styled(Link)`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 8px;
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.primaryBlue};
+    outline-offset: -2px;
+  }
+`;
+
+const RowTooltip = styled(Tooltip)`
+  position: relative;
+  z-index: 2;
 `;
 
 const TopRow = styled.div`
@@ -65,7 +98,10 @@ const BottomRow = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  row-gap: 6px;
   flex: 0 0 100%;
+  min-width: 0;
+  flex-wrap: wrap;
 `;
 
 const StatusBadge = styled.div<{ status: string }>`
@@ -105,15 +141,32 @@ const BountyBadge = styled.span`
   margin-left: 2px;
 `;
 
-const ItemName = styled.span`
+// Takes the rest of the line (or a line of its own when the status leaves too little room).
+// Tag Queries descriptions are long sentences: they get two lines.
+const ItemName = styled.span<{ $twoLines?: boolean }>`
   font-size: 14px;
   font-weight: 600;
   color: ${({ theme }) => theme.primaryText};
+  flex: 1 1 140px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex-shrink: 1;
-  max-width: 180px;
+
+  ${({ $twoLines }) =>
+    $twoLines &&
+    css`
+      white-space: normal;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow-wrap: anywhere;
+    `}
+`;
+
+const SecondaryName = styled.span`
+  color: ${({ theme }) => theme.secondaryText};
+  font-weight: 400;
 `;
 
 const EventInfo = styled.div`
@@ -125,11 +178,27 @@ const EventInfo = styled.div`
   flex-shrink: 0;
   white-space: nowrap;
 
+  time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
   svg {
     width: 12px;
     height: 12px;
     flex-shrink: 0;
     opacity: 0.8;
+  }
+`;
+
+const AddressWrapper = styled.div`
+  min-width: 0;
+  font-family: monospace;
+  font-size: 13px;
+
+  > div {
+    margin-bottom: 0;
   }
 `;
 
@@ -164,7 +233,8 @@ const ChainPill = styled.span<{ bgColor: string }>`
   white-space: nowrap;
 `;
 
-const ViewButton = styled(Link)`
+// Looks like a button and shows where to tap; the row's link underneath is what opens the item.
+const ViewButton = styled.span`
   display: flex;
   align-items: center;
   gap: 4px;
@@ -172,7 +242,6 @@ const ViewButton = styled(Link)`
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 600;
-  cursor: pointer;
   border: 1px solid;
   margin-left: auto;
   transition: all 0.2s;
@@ -182,7 +251,6 @@ const ViewButton = styled(Link)`
   border-color: ${({ theme }) => theme.buttonSecondaryBorder};
   flex-shrink: 0;
   white-space: nowrap;
-  text-decoration: none;
 
   svg {
     width: 10px;
@@ -193,7 +261,7 @@ const ViewButton = styled(Link)`
     }
   }
 
-  &:hover {
+  ${CompactRow}:hover & {
     background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
@@ -206,16 +274,15 @@ interface ItemCompactViewProps {
 
 const ItemCompactView = React.memo(({ item, challengePeriodDuration }: ItemCompactViewProps) => {
   const theme = useTheme();
-  const challengeRemainingTime = useChallengeRemainingTime(
-    item.requests?.[0]?.submissionTime,
-    item.disputed,
-    challengePeriodDuration,
-  );
-  const formattedChallengeRemainingTime = useHumanizedCountdown(challengeRemainingTime, 2);
+  const event = useItemEvent(item, challengePeriodDuration);
 
   const itemUrl = buildItemPath(item.id);
   const registryKey = revRegistryMap[item.registryAddress] || '';
   const displayName = getItemDisplayName(item, registryKey);
+  // Several Single Tags share a project name: the tag tells them apart.
+  const secondaryName = registryKey === 'single-tags' ? getPropValue(item, 'Public Name Tag') : '';
+  const linkLabel = getItemLinkLabel(item, registryKey);
+  const address = getItemAddress(item, registryKey);
   const status = getItemDisplayStatus(item);
   const chainId = getChainId(item);
   const ChainIcon = chainId ? getChainIcon(chainId) : null;
@@ -226,63 +293,65 @@ const ItemCompactView = React.memo(({ item, challengePeriodDuration }: ItemCompa
   const thumbnailUrl = getItemThumbnailUrl(item);
   const isTokenLogo = item.registryAddress === registryMap['tokens'];
 
+  // A bounty can only be won while the request can still be challenged.
   const readableBounty =
-    (item.status === 'ClearingRequested' || item.status === 'RegistrationRequested') && !item.disputed
+    (item.status === 'ClearingRequested' || item.status === 'RegistrationRequested') && !item.disputed && event.kind !== 'over'
       ? Number(formatEther(item.requests?.[0]?.deposit || '0'))
       : null;
 
-  const isLoadingCountdown =
-    challengePeriodDuration === null && item.status !== 'Registered' && item.status !== 'Absent' && !item.disputed;
-
-  const getEventDisplay = () => {
-    if (item.status === 'Registered') {
-      const registrationRequest = (item.requests || []).find(
-        (req) => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved,
-      );
-      return formatTimestamp(Number(registrationRequest?.resolutionTime || 0), false);
-    } else if (item.status === 'Absent') {
-      return formatTimestamp(Number(item.requests?.[0]?.resolutionTime || 0), false);
-    }
-    return isLoadingCountdown ? null : formattedChallengeRemainingTime || '';
-  };
-  const eventDisplay = getEventDisplay();
-
-  const isPending =
-    (item.status === 'RegistrationRequested' || item.status === 'ClearingRequested') && !item.disputed;
-
   return (
     <CompactRow>
+      <RowLink to={itemUrl} state={{ fromApp: true }} title={linkLabel} data-row-link="" />
       <TopRow>
-        <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>
+        <RowTooltip data-tooltip={statusDescriptionMap[status] || ''}>
           <StatusBadge status={status}>{status}</StatusBadge>
-        </Tooltip>
-        {readableBounty && (
-          <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
-            <BountyBadge>${readableBounty}</BountyBadge>
-          </Tooltip>
-        )}
-        <ItemName>{displayName}</ItemName>
+        </RowTooltip>
+        {readableBounty ? (
+          <RowTooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
+            <BountyBadge>{readableBounty} xDAI</BountyBadge>
+          </RowTooltip>
+        ) : null}
+        <ItemName $twoLines={registryKey === 'tags-queries'}>
+          {displayName}
+          {secondaryName && secondaryName !== displayName ? <SecondaryName>{` · ${secondaryName}`}</SecondaryName> : null}
+        </ItemName>
       </TopRow>
       <BottomRow>
         {thumbnailUrl && <TokenLogo src={thumbnailUrl} alt={isTokenLogo ? 'Token logo' : 'Visual proof'} style={isTokenLogo ? undefined : { borderRadius: '4px' }} />}
-        {ChainIcon ? (
-          <ChainIconWrapper><ChainIcon /></ChainIconWrapper>
+        {address ? (
+          <AddressWrapper>
+            <AddressDisplay address={address} />
+          </AddressWrapper>
+        ) : ChainIcon ? (
+          <ChainIconWrapper
+            role="img"
+            aria-label={chainData?.name ?? `Chain ${chainId}`}
+            title={chainData?.name ?? `Chain ${chainId}`}
+          >
+            <ChainIcon />
+          </ChainIconWrapper>
         ) : chainLabel ? (
-          <ChainPill bgColor={chainColor}>{chainLabel}</ChainPill>
+          <ChainPill bgColor={chainColor} title={chainData?.name}>{chainLabel}</ChainPill>
         ) : null}
         <EventInfo>
-          {isLoadingCountdown ? (
+          {event.kind === 'loading' ? (
             <Skeleton width={80} height={12} />
-          ) : isPending && eventDisplay ? (
-            <>
+          ) : (event.kind === 'countdown' || event.kind === 'over') && event.text ? (
+            <time dateTime={toIsoString(event.timestamp!)} title={event.title}>
               <HourglassIcon />
-              <span>{eventDisplay}</span>
-            </>
-          ) : eventDisplay ? (
-            <span>{eventDisplay}</span>
+              {event.srPrefix ? <span className="visually-hidden">{`${event.srPrefix} `}</span> : null}
+              <span>{event.text}</span>
+            </time>
+          ) : event.kind === 'date' ? (
+            <span>
+              <span className="visually-hidden">{`${event.srPrefix} `}</span>
+              {event.text}
+            </span>
+          ) : event.text ? (
+            <span>{event.text}</span>
           ) : null}
         </EventInfo>
-        <ViewButton to={itemUrl} state={{ fromApp: true }}>
+        <ViewButton aria-hidden="true">
           View <ArrowIcon />
         </ViewButton>
       </BottomRow>

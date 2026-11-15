@@ -6,6 +6,11 @@ interface Props {
   currentPage: number;
   numPages: number;
   callback: (page: number) => void;
+  /**
+   * The total is not known exactly and more pages may follow `numPages` (for example when a
+   * count stops at its limit): the last page reads "50+".
+   */
+  moreBeyondLast?: boolean;
 }
 
 const PaginationWrapper = styled.nav`
@@ -40,23 +45,31 @@ const pageButtonStyles = css<{ selected?: boolean }>`
     border-color: ${theme.primaryText};
   `}
 
-  &:hover:not(:disabled):not([aria-current="true"]) {
+  &:hover:not(:disabled):not([aria-current="page"]) {
     background: ${({ theme }) => theme.hoverBackground};
     border-color: ${({ theme }) => theme.primaryText};
   }
 `;
 
-const PageButton = styled.button<{ selected?: boolean }>`
-  ${pageButtonStyles}
-`;
-
-const PageButtonDisabled = styled.span`
-  ${pageButtonStyles}
+const disabledStyles = css`
   background: transparent;
   color: ${({ theme }) => theme.buttonDisabledText};
   border-color: ${({ theme }) => theme.buttonDisabled};
   cursor: not-allowed;
   opacity: 0.5;
+`;
+
+const PageButton = styled.button.attrs({ type: 'button' })<{ selected?: boolean }>`
+  ${pageButtonStyles}
+
+  &:disabled {
+    ${disabledStyles}
+  }
+`;
+
+const PageButtonDisabled = styled.span`
+  ${pageButtonStyles}
+  ${disabledStyles}
 `;
 
 const PageJumpInput = styled.input`
@@ -73,7 +86,7 @@ const PageJumpInput = styled.input`
   }
 `;
 
-const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) => {
+const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback, moreBeyondLast = false }) => {
   const pages: (number | string)[] = [];
   const [pageJumpValue, setPageJumpValue] = useState<string>("");
 
@@ -85,13 +98,14 @@ const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) 
     }
   };
 
-  // Handle page jump navigation
+  // Handle page jump navigation. A number past either end goes to that end, so "9999" opens the
+  // last page instead of being silently ignored.
   const handleJumpToPage = () => {
     const pageNum = parseInt(pageJumpValue, 10);
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= numPages) {
-      callback(pageNum);
-      setPageJumpValue("");
-    }
+    if (isNaN(pageNum)) return;
+    const target = Math.min(Math.max(pageNum, 1), Math.max(numPages, 1));
+    setPageJumpValue("");
+    if (target !== currentPage) callback(target);
   };
 
   // Handle Enter key press
@@ -131,44 +145,49 @@ const StyledPagination: React.FC<Props> = ({ currentPage, numPages, callback }) 
     pages.push(numPages);
   }
 
+  const isLastListed = (p: number) => moreBeyondLast && p === numPages;
+  const atLastPage = currentPage >= numPages && !moreBeyondLast;
+
   return (
-    <PaginationWrapper>
-      {currentPage === 1 ? (
-        <PageButtonDisabled>❮</PageButtonDisabled>
-      ) : (
-        <PageButton onClick={() => callback(currentPage - 1)}>
-          ❮
-        </PageButton>
-      )}
+    <PaginationWrapper aria-label="Pagination">
+      <PageButton
+        aria-label="Previous page"
+        disabled={currentPage <= 1}
+        onClick={() => callback(currentPage - 1)}
+      >
+        <span aria-hidden="true">❮</span>
+      </PageButton>
       {pages.map((p, i) =>
         typeof p === "number" ? (
           <PageButton
             key={i}
             selected={p === currentPage}
-            aria-current={p === currentPage ? "true" : undefined}
+            aria-current={p === currentPage ? "page" : undefined}
+            aria-label={isLastListed(p) ? `Page ${p}, more pages may follow` : `Page ${p}`}
             onClick={() => callback(p)}
           >
-            {p}
+            {isLastListed(p) ? `${p}+` : p}
           </PageButton>
         ) : (
-          <PageButtonDisabled key={i}>{p}</PageButtonDisabled>
+          <PageButtonDisabled key={i} aria-hidden="true">{p}</PageButtonDisabled>
         )
       )}
-      {currentPage === numPages ? (
-        <PageButtonDisabled>❯</PageButtonDisabled>
-      ) : (
-        <PageButton onClick={() => callback(currentPage + 1)}>
-          ❯
-        </PageButton>
-      )}
+      <PageButton
+        aria-label="Next page"
+        disabled={atLastPage}
+        onClick={() => callback(currentPage + 1)}
+      >
+        <span aria-hidden="true">❯</span>
+      </PageButton>
       <PageJumpInput
         type="text"
+        inputMode="numeric"
         placeholder="Go to..."
         value={pageJumpValue}
         onChange={handlePageJumpChange}
         onKeyDown={handlePageJumpKeyDown}
         onBlur={handleJumpToPage}
-        aria-label="Go to page"
+        aria-label={`Go to page (1 to ${numPages}${moreBeyondLast ? ' or more' : ''})`}
       />
     </PaginationWrapper>
   );

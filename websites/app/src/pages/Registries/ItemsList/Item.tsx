@@ -23,6 +23,8 @@ import HourglassIcon from 'svgs/icons/hourglass.svg'
 import CalendarIcon from 'svgs/icons/calendar.svg'
 import { itemToStatusCode, STATUS_CODE } from 'utils/itemStatus'
 import { useMemo } from 'react'
+import { getChainName } from 'utils/chains'
+import { toIsoString } from './itemEvent'
 
 const Card = styled.div<{ seamlessBottom?: boolean }>`
   color: ${({ theme }) => theme.primaryText};
@@ -139,7 +141,7 @@ const VisualProofWrapper = styled.img`
   ${hoverShortTransitionTiming}
   object-fit: cover;
   align-self: stretch;
-  max-width: 240px;
+  max-width: min(240px, 100%);
   max-height: 160px;
   margin-top: 8px;
   cursor: pointer;
@@ -182,6 +184,7 @@ const TransparentButton = styled.button`
   background: none;
   border: none;
   padding: 0;
+  max-width: 100%;
 `
 
 const LabelAndValue = styled.div`
@@ -251,25 +254,28 @@ interface StatusProps {
   disputed: boolean
   bounty: string
   requests?: Array<{ requestType?: string }>
+  /** The challenge period is over: the request can no longer be challenged, so no bounty. */
+  challengeClosed?: boolean
 }
 
-const Status = React.memo(({ status, disputed, bounty, requests }: StatusProps) => {
+const Status = React.memo(({ status, disputed, bounty, requests, challengeClosed = false }: StatusProps) => {
   const label = getItemDisplayStatus({ status, disputed, requests })
 
   const readableBounty =
     (status === 'ClearingRequested' || status === 'RegistrationRequested') &&
-    !disputed
+    !disputed &&
+    !challengeClosed
       ? Number(formatEther(bounty))
       : null
 
   return (
     <CardStatus status={label}>
       <Tooltip data-tooltip={statusDescriptionMap[label] || ''}>{label}</Tooltip>
-      {readableBounty && (
+      {readableBounty ? (
         <Tooltip data-tooltip={bountyDescriptionMap[status] || ''}>
-          <BountyText> ${readableBounty}</BountyText>
+          <BountyText>{readableBounty} xDAI</BountyText>
         </Tooltip>
-      )}
+      ) : null}
     </CardStatus>
   )
 })
@@ -320,6 +326,16 @@ const Item = React.memo(
 
     const isPendingExecution = statusCode === STATUS_CODE.PENDING_SUBMISSION || statusCode === STATUS_CODE.PENDING_REMOVAL
 
+    // The date the card's bottom line names: inclusion, removal or rejection, else submission.
+    const cardDate = item?.status === 'Registered'
+      ? Number((item.requests || []).find(req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved)?.resolutionTime || 0)
+      : item?.status === 'Absent'
+        ? Number(item.requests?.[0]?.resolutionTime || 0)
+        : Number(item?.requests?.[0]?.submissionTime || 0)
+    const challengeDeadline = challengePeriodDuration && item.requests?.[0]?.submissionTime
+      ? Number(item.requests[0].submissionTime) + challengePeriodDuration
+      : null
+
     const getPropValue = (label: string) => getItemProp(item, label)
 
     return (
@@ -329,6 +345,7 @@ const Item = React.memo(
           disputed={item.disputed}
           bounty={item.requests?.[0]?.deposit || '0'}
           requests={item.requests}
+          challengeClosed={isPendingExecution}
         />
         <CardContent>
           <UpperCardContent>
@@ -336,7 +353,7 @@ const Item = React.memo(
               <>
                 <LabelAndValue>
                   <ChainIdLabel>
-                    Chain: {getPropValue('EVM Chain ID')}{' '}
+                    Chain: {getChainName(getPropValue('EVM Chain ID')) ?? getPropValue('EVM Chain ID')}{' '}
                   </ChainIdLabel>
                   <AddressDisplay
                     address={`eip155:${getPropValue('EVM Chain ID')}`}
@@ -455,17 +472,29 @@ const Item = React.memo(
                 <TimersContainer>
                   <SubmittedLabel>
                     <CalendarIcon />
-                    {item?.status === 'Absent' ? 'Removed on: ' : item?.status === 'Registered' ? 'Included on: ' : 'Submitted on: '}
-                    {item?.status === 'Registered'
-                      ? formatTimestamp(Number((item.requests || []).find(req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved)?.resolutionTime || 0), false)
-                      : item?.status === 'Absent'
-                        ? formatTimestamp(Number(item.requests?.[0]?.resolutionTime || 0), false)
-                        : formatTimestamp(Number(item?.requests?.[0]?.submissionTime || 0), false)}
+                    {item?.status === 'Absent'
+                      ? `${getItemDisplayStatus(item) === 'Rejected' ? 'Rejected' : 'Removed'} on: `
+                      : item?.status === 'Registered' ? 'Included on: ' : 'Submitted on: '}
+                    <time dateTime={toIsoString(cardDate)} title={formatTimestamp(cardDate, true)}>
+                      {formatTimestamp(cardDate, false)}
+                    </time>
                   </SubmittedLabel>
                   {(isCountdownLoading || formattedChallengeRemainingTime) && (
                     <SubmittedLabel>
                       <HourglassIcon />
-                      {item.status === 'ClearingRequested' ? 'Will be removed in' : 'Will be included in'}: {isCountdownLoading ? <Skeleton width={60} /> : formattedChallengeRemainingTime}
+                      {item.status === 'ClearingRequested' ? 'Will be removed in' : 'Will be included in'}:{' '}
+                      {isCountdownLoading ? (
+                        <Skeleton width={60} />
+                      ) : challengeDeadline ? (
+                        <time
+                          dateTime={toIsoString(challengeDeadline)}
+                          title={`Challenge period ends ${formatTimestamp(challengeDeadline, true)}`}
+                        >
+                          {formattedChallengeRemainingTime}
+                        </time>
+                      ) : (
+                        formattedChallengeRemainingTime
+                      )}
                     </SubmittedLabel>
                   )}
                 </TimersContainer>

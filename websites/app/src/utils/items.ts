@@ -173,6 +173,26 @@ export const getItemDisplayName = (item: { props?: Array<{ label: string; value:
   return 'Unnamed'
 }
 
+/**
+ * A name that tells the items of one list apart, for the link that opens each one (several Single
+ * Tags share a project name, so the tag is added; a token's name follows its symbol).
+ */
+export const getItemLinkLabel = (item: { props?: Array<{ label: string; value: string }>; itemID?: string }, registryKey: string): string => {
+  if (registryKey === 'tokens') {
+    const symbol = getPropValue(item, 'Symbol')
+    const name = getPropValue(item, 'Name')
+    if (symbol && name && symbol !== name) return `${symbol} (${name})`
+    return symbol || name || 'Unnamed'
+  }
+  if (registryKey === 'single-tags') {
+    const project = getPropValue(item, 'Project Name')
+    const tag = getPropValue(item, 'Public Name Tag')
+    if (project && tag) return `${project}: ${tag}`
+    return project || tag || 'Unnamed'
+  }
+  return getItemDisplayName(item, registryKey)
+}
+
 /** Extracts the chain ID from an item's key fields.
  *  For most registries: key0 format is "eip155:chainId:0x..." or "solana:..."
  *  For tags-queries: the Github repo / commit hash / EVM chain ID identifiers

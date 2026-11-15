@@ -5,6 +5,10 @@ export const getNamespaceForChainId = (chainId: string) => {
 
 export const GNOSIS_CHAIN_ID = '100';
 
+/** The chain's name ("Avalanche C-Chain") for a chain id, or undefined when Scout does not list it. */
+export const getChainName = (chainId?: string) =>
+  chainId ? chains.find((c) => c.id === chainId)?.name : undefined;
+
 export const getExplorerBaseUrl = (chainId: string) => {
   const chain = chains.find((c) => c.id === chainId);
   return `https://${chain?.explorer}`;

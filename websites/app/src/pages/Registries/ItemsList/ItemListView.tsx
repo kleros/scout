@@ -2,37 +2,31 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { formatEther } from 'ethers';
-import { GraphItem, registryMap, buildItemPath, getRegistryKey, getItemThumbnailUrl, getItemDisplayStatus, statusDescriptionMap, bountyDescriptionMap, getPropValue as getItemProp } from 'utils/items';
+import { GraphItem, registryMap, buildItemPath, getRegistryKey, getItemThumbnailUrl, getItemDisplayStatus, getItemLinkLabel, statusDescriptionMap, bountyDescriptionMap, getPropValue as getItemProp } from 'utils/items';
 import Tooltip from 'components/Tooltip';
 import AddressDisplay from 'components/AddressDisplay';
 import SafeLink from 'components/SafeLink';
 // import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'; // UNUSED: Only needed for submitter display which is commented out
-import { formatTimestamp } from 'utils/formatTimestamp';
-import useHumanizedCountdown, {
-  useChallengeRemainingTime,
-} from 'hooks/countdown';
 import { hoverLongTransitionTiming } from 'styles/commonStyles';
 // import ArrowIcon from 'assets/svgs/icons/arrow.svg'; // UNUSED: Only needed for submitter links which are commented out
 import Skeleton from 'react-loading-skeleton';
 import { getChainIcon } from 'utils/chainIcons';
+import { getChainName } from 'utils/chains';
+import HourglassIcon from 'svgs/icons/hourglass.svg';
+import NewTabIcon from 'svgs/icons/new-tab.svg';
+import { getListColumns } from './ListHeader';
+import { useItemEvent, toIsoString } from './itemEvent';
 
-const ListRow = styled(Link)<{ registryType?: string; }>`
+/*
+ * A row is one link stretched over the whole row (RowLink), so a click anywhere opens the item,
+ * a middle or Cmd/Ctrl click opens it in a new tab, and screen readers hear one short link per
+ * row. The links, buttons, tooltips and countdown inside the row sit above it and keep working.
+ */
+const ListRow = styled.div<{ $registryType?: string; }>`
   ${hoverLongTransitionTiming}
+  position: relative;
   display: grid;
-  grid-template-columns: ${({ registryType }) => {
-    switch (registryType) {
-      case 'tokens':
-        return '1.2fr 0.3fr 0.5fr 0.6fr 1fr 1.2fr 1fr'; // Status, Logo, Symbol, Name, Website, Address, Next/Last event
-      case 'single-tags':
-        return '1.2fr 0.8fr 1fr 1fr 1.2fr 1fr'; // Status, Project, Tag, Website, Address, Next/Last event
-      case 'cdn':
-        return '1.2fr 0.3fr 1fr 1fr 1.2fr 1fr'; // Status, Proof, Domain, Website, Address, Next/Last event
-      case 'tags-queries':
-        return '1.2fr 1.3fr 1fr 0.4fr 0.9fr 1fr'; // Status, Description, Repository, Commit, Chain, Next/Last event
-      default:
-        return '200px 280px 180px 200px 100px 180px';
-    }
-  }};
+  grid-template-columns: ${({ $registryType }) => getListColumns($registryType)};
   gap: 16px;
   align-items: center;
   padding: 8px 0;
@@ -58,6 +52,31 @@ const ListRow = styled(Link)<{ registryType?: string; }>`
   &:last-child {
     border-bottom: none;
   }
+
+  a:not([data-row-link]),
+  button,
+  time,
+  [role='img'] {
+    position: relative;
+    z-index: 2;
+  }
+`;
+
+const RowLink = styled(Link)`
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  /* Drawn inside the row: the list clips anything wider. */
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.primaryBlue};
+    outline-offset: -2px;
+  }
+`;
+
+const RowTooltip = styled(Tooltip)`
+  position: relative;
+  z-index: 2;
 `;
 
 const Cell = styled.div`
@@ -276,6 +295,73 @@ const ChainCell = styled.div`
     height: 20px;
     flex-shrink: 0;
   }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
+const EventTime = styled.time`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  /* "Challenge period over" may take two lines in a narrow column rather than be cut. */
+  white-space: normal;
+
+  svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+`;
+
+// Shows a link's full address on hover (a native title, found on the link's parent).
+const TitleWrap = styled.span`
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+`;
+
+const IconTitleWrap = styled.span`
+  display: inline-flex;
+  flex-shrink: 0;
+`;
+
+const DomainCell = styled(Cell)`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  /* A long domain is cut with an ellipsis; the link to the site stays visible. */
+  > div {
+    min-width: 0;
+  }
+`;
+
+const ExternalLink = styled(SafeLink)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: ${({ theme }) => theme.secondaryText};
+  transition: color 0.2s ease, background 0.2s ease;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryText};
+    background: ${({ theme }) => theme.hoverBackground};
+  }
 `;
 
 
@@ -286,15 +372,7 @@ interface ItemListViewProps {
 
 const ItemListView = React.memo(
   ({ item, challengePeriodDuration }: ItemListViewProps) => {
-    const challengeRemainingTime = useChallengeRemainingTime(
-      item.requests?.[0]?.submissionTime,
-      item.disputed,
-      challengePeriodDuration,
-    );
-    const formattedChallengeRemainingTime = useHumanizedCountdown(
-      challengeRemainingTime,
-      2,
-    );
+    const event = useItemEvent(item, challengePeriodDuration);
 
     const itemUrl = buildItemPath(item.id);
 
@@ -302,10 +380,12 @@ const ItemListView = React.memo(
 
     const status = getItemDisplayStatus(item);
 
+    // A bounty can only be won while the request can still be challenged.
     const readableBounty =
       (item.status === 'ClearingRequested' ||
         item.status === 'RegistrationRequested') &&
-        !item.disputed
+        !item.disputed &&
+        event.kind !== 'over'
         ? Number(formatEther(item.requests?.[0]?.deposit || '0'))
         : null;
 
@@ -316,23 +396,39 @@ const ItemListView = React.memo(
       //   true, // Show full timestamp with time
       // );
 
-      const isLoading = challengePeriodDuration === null && item.status !== 'Registered' && item.status !== 'Absent' && !item.disputed;
+      const statusCell = (
+        <StatusCell status={status}>
+          <RowTooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</RowTooltip>
+          {readableBounty ? (
+            <RowTooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
+              <BountyBadge>{readableBounty} xDAI</BountyBadge>
+            </RowTooltip>
+          ) : null}
+        </StatusCell>
+      );
 
-      // Get the event display: resolution date for Registered/Absent, countdown for pending
-      // For Registered: find the successful registration request (may not be requests[0] if a removal was challenged)
-      // For Absent: requests[0] is always the clearing request
-      const getEventDisplay = () => {
-        if (item.status === 'Registered') {
-          const registrationRequest = (item.requests || []).find(
-            req => req.requestType?.toLowerCase() === 'registrationrequested' && req.resolved
-          )
-          return formatTimestamp(Number(registrationRequest?.resolutionTime || 0), false)
-        } else if (item.status === 'Absent') {
-          return formatTimestamp(Number(item.requests?.[0]?.resolutionTime || 0), false)
-        }
-        return isLoading ? <Skeleton width={100} /> : formattedChallengeRemainingTime || ''
-      }
-      const eventDisplay = getEventDisplay();
+      // Resolution date once included, removed or rejected; for a pending request, the time left
+      // in its challenge period, with the exact end on hover.
+      const eventCell = (
+        <DateCell>
+          {event.kind === 'loading' ? (
+            <Skeleton width={100} />
+          ) : event.kind === 'countdown' || event.kind === 'over' ? (
+            <EventTime dateTime={toIsoString(event.timestamp!)} title={event.title}>
+              <HourglassIcon />
+              {event.srPrefix ? <span className="visually-hidden">{`${event.srPrefix} `}</span> : null}
+              {event.text}
+            </EventTime>
+          ) : event.kind === 'date' ? (
+            <>
+              <span className="visually-hidden">{`${event.srPrefix} `}</span>
+              {event.text}
+            </>
+          ) : (
+            event.text
+          )}
+        </DateCell>
+      );
 
       // UNUSED: submitterAddress is only used in commented-out SubmitterCell sections
       // const submitterAddress = item.requests[0]?.requester as `0x${string}` | undefined;
@@ -343,14 +439,7 @@ const ItemListView = React.memo(
 
         return (
           <>
-            <StatusCell status={status}>
-              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
-              {readableBounty && (
-                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
-                  <BountyBadge> ${readableBounty}</BountyBadge>
-                </Tooltip>
-              )}
-            </StatusCell>
+            {statusCell}
             <LogoCell>
               {logoUrl ? (
                 <>
@@ -386,12 +475,14 @@ const ItemListView = React.memo(
             </Cell>
             <Cell>
               {website ? (
-                <WebsiteLink
-                  url={website}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {website}
-                </WebsiteLink>
+                <TitleWrap title={website}>
+                  <WebsiteLink
+                    url={website}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {website}
+                  </WebsiteLink>
+                </TitleWrap>
               ) : (
                 ''
               )}
@@ -422,7 +513,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{eventDisplay}</DateCell>
+            {eventCell}
           </>
         );
       }
@@ -432,14 +523,7 @@ const ItemListView = React.memo(
 
         return (
           <>
-            <StatusCell status={status}>
-              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
-              {readableBounty && (
-                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
-                  <BountyBadge> ${readableBounty}</BountyBadge>
-                </Tooltip>
-              )}
-            </StatusCell>
+            {statusCell}
             <Cell>
               <SymbolText>{getPropValue('Project Name') || '-'}</SymbolText>
             </Cell>
@@ -448,12 +532,14 @@ const ItemListView = React.memo(
             </Cell>
             <Cell>
               {website ? (
-                <WebsiteLink
-                  url={website}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {website}
-                </WebsiteLink>
+                <TitleWrap title={website}>
+                  <WebsiteLink
+                    url={website}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {website}
+                  </WebsiteLink>
+                </TitleWrap>
               ) : (
                 '-'
               )}
@@ -483,7 +569,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{eventDisplay}</DateCell>
+            {eventCell}
           </>
         );
       }
@@ -495,14 +581,7 @@ const ItemListView = React.memo(
 
         return (
           <>
-            <StatusCell status={status}>
-              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
-              {readableBounty && (
-                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
-                  <BountyBadge> ${readableBounty}</BountyBadge>
-                </Tooltip>
-              )}
-            </StatusCell>
+            {statusCell}
             <LogoCell>
               {proofUrl ? (
                 <>
@@ -530,21 +609,20 @@ const ItemListView = React.memo(
                 </>
               ) : '-'}
             </LogoCell>
-            <Cell>
+            <DomainCell>
               <SymbolText>{domainName || '-'}</SymbolText>
-            </Cell>
-            <Cell>
               {website ? (
-                <WebsiteLink
-                  url={website}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {website}
-                </WebsiteLink>
-              ) : (
-                '-'
-              )}
-            </Cell>
+                <IconTitleWrap title={`Open ${website}`}>
+                  <ExternalLink
+                    url={website}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <NewTabIcon />
+                    <span className="visually-hidden">{`Open ${website} in a new tab`}</span>
+                  </ExternalLink>
+                </IconTitleWrap>
+              ) : null}
+            </DomainCell>
             <AddressCell>
               <AddressDisplay address={getPropValue('Contract address')} />
             </AddressCell>
@@ -570,7 +648,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{eventDisplay}</DateCell>
+            {eventCell}
           </>
         );
       }
@@ -580,28 +658,24 @@ const ItemListView = React.memo(
         const commitHash = getPropValue('Commit hash');
         const chainId = getPropValue('EVM Chain ID');
         const ChainIcon = getChainIcon(chainId);
+        const chainName = getChainName(chainId) ?? (chainId ? `Chain ${chainId}` : '-');
 
         return (
           <>
-            <StatusCell status={status}>
-              <Tooltip data-tooltip={statusDescriptionMap[status] || ''}>{status}</Tooltip>
-              {readableBounty && (
-                <Tooltip data-tooltip={bountyDescriptionMap[item.status] || ''}>
-                  <BountyBadge> ${readableBounty}</BountyBadge>
-                </Tooltip>
-              )}
-            </StatusCell>
+            {statusCell}
             <Cell>
               <NameText>{getPropValue('Description') || '-'}</NameText>
             </Cell>
             <Cell>
               {repository ? (
-                <WebsiteLink
-                  url={repository}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {repository}
-                </WebsiteLink>
+                <TitleWrap title={repository}>
+                  <WebsiteLink
+                    url={repository}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {repository}
+                  </WebsiteLink>
+                </TitleWrap>
               ) : (
                 '-'
               )}
@@ -611,7 +685,7 @@ const ItemListView = React.memo(
             </Cell>
             <ChainCell>
               {ChainIcon && <ChainIcon />}
-              <span>Chain {chainId}</span>
+              <span>{chainName}</span>
             </ChainCell>
             {/* <SubmitterCell>
               {submitterAddress ? (
@@ -635,7 +709,7 @@ const ItemListView = React.memo(
                 '-'
               )}
             </SubmitterCell> */}
-            <DateCell>{eventDisplay}</DateCell>
+            {eventCell}
           </>
         );
       }
@@ -644,9 +718,12 @@ const ItemListView = React.memo(
     };
 
     const registryType = getRegistryKey(item.registryAddress);
+    // Names the row's link, and on hover shows the full name or tag the cells may cut off.
+    const linkLabel = getItemLinkLabel(item, registryType ?? '');
 
     return (
-      <ListRow registryType={registryType} to={itemUrl} state={{ fromApp: true }}>
+      <ListRow $registryType={registryType}>
+        <RowLink to={itemUrl} state={{ fromApp: true }} title={linkLabel} data-row-link="" />
         {renderContent()}
       </ListRow>
     );
