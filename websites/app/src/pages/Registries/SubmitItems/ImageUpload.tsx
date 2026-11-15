@@ -1,14 +1,21 @@
-import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 import styled from 'styled-components'
 import { Roles, useAtlasProvider } from '@kleros/kleros-app'
 import { isPngFile } from 'utils/pngValidation'
 import {
+  formatMb,
   getRoleRestriction,
   validateFileAgainstRestriction,
 } from 'utils/atlasUploadRestrictions'
 import UploadIcon from 'svgs/icons/upload.svg'
 import { FieldLabel } from './index'
-import Tooltip from 'components/Tooltip'
 
 const StyledLabel = styled.label`
   cursor: pointer;
@@ -33,6 +40,12 @@ const StyledLabel = styled.label`
   &:active {
     background: ${({ theme }) => theme.backgroundFour};
   }
+
+  /* The file input itself is invisible: show the keyboard focus ring on the button around it. */
+  &:has(input:focus-visible) {
+    outline: 2px solid ${({ theme }) => theme.klerosUIComponentsPrimaryBlue};
+    outline-offset: 2px;
+  }
 `
 
 const StyledInput = styled.input`
@@ -49,6 +62,13 @@ const StyledUploadIcon = styled(UploadIcon)`
   path {
     fill: ${({ theme }) => theme.primaryText};
   }
+`
+
+const Hint = styled.p`
+  margin: -6px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: ${({ theme }) => theme.secondaryText};
 `
 
 const getImageDimensions = (
@@ -68,19 +88,48 @@ const getImageDimensions = (
     img.src = url
   })
 
+type Restriction = ReturnType<typeof getRoleRestriction>
+
 const ImageUpload: React.FC<{
   value: File | null
   onChange: (value: File | null) => void
   setImageError: Dispatch<SetStateAction<string | null>>
   registry: string
   role: Roles
+  /** What the field is, e.g. "Logo". */
+  label: string
+  /** The button text, e.g. "Upload logo". */
+  buttonLabel: string
+  /** The requirements, always visible under the label. */
+  hint?: string
+  /** Append the upload service's size limit for this kind of file to the hint ("Max 5 MB."). */
+  withSizeLimit?: boolean
   tooltip?: string
-}> = ({ value, onChange, setImageError, registry, role, tooltip }) => {
+  /** Id of the message that explains what is wrong with the file, when there is one. */
+  errorId?: string
+}> = ({
+  value,
+  onChange,
+  setImageError,
+  registry,
+  role,
+  label,
+  buttonLabel,
+  hint,
+  withSizeLimit = false,
+  tooltip,
+  errorId,
+}) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewFailed, setPreviewFailed] = useState(false)
   const { roleRestrictions } = useAtlasProvider()
   const restriction = getRoleRestriction(role, roleRestrictions)
+  const hintId = `${useId()}-hint`
+  /** The file (and the rules it was checked against) whose result is already shown. */
+  const checked = useRef<{ file: File; restriction: Restriction } | null>(null)
 
   useEffect(() => {
+    setPreviewFailed(false)
     if (!value) {
       setPreviewUrl(null)
       return
@@ -90,7 +139,10 @@ const ImageUpload: React.FC<{
     return () => URL.revokeObjectURL(url)
   }, [value])
 
-  const validateImage = async (image: File): Promise<string | null> => {
+  const validateImage = async (
+    image: File,
+    rules: Restriction,
+  ): Promise<string | null> => {
     if (registry === 'tokens') {
       if (image.size > 1024 * 1024) {
         return 'Logo must not exceed 1MB for Tokens registry.'
@@ -115,27 +167,63 @@ const ImageUpload: React.FC<{
       }
       return null
     }
-    return validateFileAgainstRestriction(image, restriction)
+    return validateFileAgainstRestriction(image, rules)
   }
+
+  // A file restored from an earlier visit (or checked before the upload rules had loaded) is
+  // checked again, so a file that breaks the rules keeps blocking Submit after a reload.
+  useEffect(() => {
+    if (!value) {
+      checked.current = null
+      setImageError(null)
+      return
+    }
+    if (
+      checked.current?.file === value &&
+      checked.current.restriction === restriction
+    )
+      return
+    let cancelled = false
+    validateImage(value, restriction).then((error) => {
+      if (cancelled) return
+      checked.current = { file: value, restriction }
+      setImageError(error)
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, restriction])
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const picked = e.target.files?.[0]
     if (!picked) return
-    onChange(picked)
-    const error = await validateImage(picked)
+    // Check first, so the file and its result appear together.
+    const error = await validateImage(picked, restriction)
+    checked.current = { file: picked, restriction }
     setImageError(error)
+    onChange(picked)
   }
+
+  const fullHint =
+    withSizeLimit && restriction
+      ? `${hint ?? ''} Max ${formatMb(restriction.maxSize)} MB.`.trim()
+      : hint
+  const describedBy = [fullHint ? hintId : null, errorId]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <>
-      <FieldLabel>
-        {tooltip ? <Tooltip data-tooltip={tooltip}>Image</Tooltip> : 'Image'}
-      </FieldLabel>
+      <FieldLabel help={tooltip}>{label}</FieldLabel>
+      {fullHint ? <Hint id={hintId}>{fullHint}</Hint> : null}
       <StyledLabel>
-        Upload Image <StyledUploadIcon />
+        {buttonLabel} <StyledUploadIcon aria-hidden="true" />
         <StyledInput
           type="file"
           onChange={handleFileChange}
+          aria-describedby={describedBy || undefined}
+          aria-invalid={errorId ? true : undefined}
           accept={
             registry === 'tokens'
               ? '.png'
@@ -143,8 +231,14 @@ const ImageUpload: React.FC<{
           }
         />
       </StyledLabel>
-      {previewUrl && (
-        <img width={200} height={200} src={previewUrl} alt="preview" />
+      {previewUrl && !previewFailed && (
+        <img
+          width={200}
+          height={200}
+          src={previewUrl}
+          alt={`Selected ${label.toLowerCase()}`}
+          onError={() => setPreviewFailed(true)}
+        />
       )}
     </>
   )

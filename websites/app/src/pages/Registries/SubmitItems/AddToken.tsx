@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useId, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
@@ -16,8 +16,13 @@ import {
   ErrorMessage,
   StyledTextInput,
   FieldLabel,
+  describeIssue,
 } from './index'
-import Tooltip from 'components/Tooltip'
+
+// Help shown next to the address label. The `columns` descriptions are uploaded with the entry,
+// so they are left as they are.
+const ADDRESS_HELP =
+  "The token's contract address. It is stored in CAIP-10 format with the chain you select."
 
 const columns = [
   {
@@ -61,7 +66,7 @@ const columns = [
 ]
 
 const DEFAULT_FORM = {
-  network: { value: 'eip155:1', label: 'Mainnet' } as NetworkOption,
+  network: { value: 'eip155:1', label: 'Ethereum Mainnet' } as NetworkOption,
   address: '',
   decimals: '',
   name: '',
@@ -87,6 +92,7 @@ const AddToken: React.FC = () => {
   const [website, setWebsite] = useState<string>(formData.website)
   const [imageError, setImageError] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
+  const id = useId()
 
   useEffect(() => {
     const caip10 = searchParams.get('caip10Address')
@@ -118,7 +124,14 @@ const AddToken: React.FC = () => {
     symbol,
   })
 
-  const { submit, isSubmitting, deposits } = useCurateSubmit({
+  const {
+    submit,
+    isSubmitting,
+    deposits,
+    depositsStatus,
+    retryDeposits,
+    retryingDeposits,
+  } = useCurateSubmit({
     registryKey: 'tokens',
     localStorageKey: 'addTokenForm',
     columns,
@@ -170,63 +183,109 @@ const AddToken: React.FC = () => {
         address={address}
         setAddress={setAddress}
         registry="tokens"
-        tooltip={columns[0].description}
+        tooltip={ADDRESS_HELP}
+        inputId={`${id}-address`}
+        errorId={
+          issues?.address
+            ? `${id}-address-error`
+            : issues?.duplicate
+              ? `${id}-duplicate-error`
+              : undefined
+        }
       />
-      {issues?.address && <ErrorMessage>{issues.address.message}</ErrorMessage>}
-      {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
+      {issues?.address && (
+        <ErrorMessage id={`${id}-address-error`}>
+          {issues.address.message}
+        </ErrorMessage>
       )}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[3].description}>Decimals</Tooltip>
+      {issues?.duplicate && (
+        <ErrorMessage id={`${id}-duplicate-error`}>
+          {issues.duplicate.message}
+        </ErrorMessage>
+      )}
+      <FieldLabel htmlFor={`${id}-decimals`} help={columns[3].description}>
+        Decimals
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-decimals`}
         placeholder="e.g. 18"
+        inputMode="numeric"
         value={decimals}
         onChange={(e) => {
           const value = e.target.value
           if (/^\d*$/.test(value)) setDecimals(value)
         }}
       />
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[1].description}>Name</Tooltip>
+      <FieldLabel htmlFor={`${id}-name`} help={columns[1].description}>
+        Name
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-name`}
         placeholder="e.g. Pinakion"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        {...describeIssue(`${id}-name-error`, !!issues?.projectName)}
       />
       {issues?.projectName && (
-        <ErrorMessage>{issues.projectName.message}</ErrorMessage>
+        <ErrorMessage id={`${id}-name-error`}>
+          {issues.projectName.message}
+        </ErrorMessage>
       )}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[2].description}>Symbol</Tooltip>
+      <FieldLabel htmlFor={`${id}-symbol`} help={columns[2].description}>
+        Symbol
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-symbol`}
         placeholder="e.g. PNK"
+        autoCorrect="off"
+        spellCheck={false}
         value={symbol}
         onChange={(e) => setSymbol(e.target.value)}
+        {...describeIssue(`${id}-symbol-error`, !!issues?.symbol)}
       />
-      {issues?.symbol && <ErrorMessage>{issues.symbol.message}</ErrorMessage>}
+      {issues?.symbol && (
+        <ErrorMessage id={`${id}-symbol-error`}>
+          {issues.symbol.message}
+        </ErrorMessage>
+      )}
       <ImageUpload
         value={image}
         onChange={setImage}
         registry="tokens"
         role={Roles.Logo}
-        tooltip={columns[4].description}
+        label="Logo"
+        buttonLabel="Upload logo"
+        hint="PNG, at least 128 × 128 px, max 1 MB."
         setImageError={setImageError}
+        errorId={imageError ? `${id}-image-error` : undefined}
       />
-      {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[5].description}>Website</Tooltip>
+      {imageError && (
+        <ErrorMessage id={`${id}-image-error`}>{imageError}</ErrorMessage>
+      )}
+      <FieldLabel htmlFor={`${id}-website`} help={columns[5].description}>
+        Website
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-website`}
         placeholder="e.g. https://kleros.io"
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
+        {...describeIssue(`${id}-website-error`, !!issues?.link)}
       />
-      {issues?.link && <ErrorMessage>{issues.link.message}</ErrorMessage>}
+      {issues?.link && (
+        <ErrorMessage id={`${id}-website-error`}>
+          {issues.link.message}
+        </ErrorMessage>
+      )}
       <SubmitFooter
         deposits={deposits}
+        depositsStatus={depositsStatus}
+        onRetryDeposits={retryDeposits}
+        retryingDeposits={retryingDeposits}
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}

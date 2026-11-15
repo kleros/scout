@@ -56,6 +56,7 @@ const ConfirmLabel = styled.label`
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 24px;
   cursor: pointer;
   font-size: 14px;
   color: ${({ theme }) => theme.primaryText};

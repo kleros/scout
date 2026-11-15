@@ -83,6 +83,38 @@ const FETCH_ITEM_COUNTS_QUERY = gql`
   }
 `
 
+/**
+ * The deposits are read from the Gnosis RPC. When it cannot be reached, the read waits for it
+ * indefinitely, so the submit form would show neither a deposit nor an error. After this long the
+ * deposit is reported as unavailable (undefined) and the form offers "Try again".
+ */
+const DEPOSITS_TIMEOUT_MS = 15_000
+
+/** Reads still waiting for an answer, by registry: a refetch joins them instead of starting more. */
+const pendingDeposits = new Map<string, Promise<DepositParams | undefined>>()
+/** The last deposits read for each registry, kept when a later read fails (as a pending one would be). */
+const lastDeposits = new Map<string, DepositParams>()
+
+const readDeposits = async (
+  registry: string,
+): Promise<DepositParams | undefined> => {
+  let pending = pendingDeposits.get(registry)
+  if (!pending) {
+    pending = fetchRegistryDeposits(registry).finally(() => {
+      pendingDeposits.delete(registry)
+    })
+    pendingDeposits.set(registry, pending)
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timedOut = new Promise<undefined>((resolve) => {
+    timer = setTimeout(() => resolve(undefined), DEPOSITS_TIMEOUT_MS)
+  })
+  const deposits = await Promise.race([pending, timedOut])
+  clearTimeout(timer)
+  if (deposits) lastDeposits.set(registry, deposits)
+  return deposits ?? lastDeposits.get(registry)
+}
+
 const convertStringFieldsToNumber = (obj: any): any => {
   let result: any = Array.isArray(obj) ? [] : {}
 
@@ -146,12 +178,12 @@ export const useItemCountsQuery = (enabled: boolean = true) => {
         }
       })
 
-      // Fetch registry deposits
+      // Fetch registry deposits. A registry whose deposits could not be read gets `undefined`.
       const regDs = await Promise.all([
-        fetchRegistryDeposits(registryMap['single-tags']),
-        fetchRegistryDeposits(registryMap['tags-queries']),
-        fetchRegistryDeposits(registryMap['cdn']),
-        fetchRegistryDeposits(registryMap['tokens']),
+        readDeposits(registryMap['single-tags']),
+        readDeposits(registryMap['tags-queries']),
+        readDeposits(registryMap['cdn']),
+        readDeposits(registryMap['tokens']),
       ])
 
       itemCounts['single-tags'].deposits = regDs[0] as DepositParams

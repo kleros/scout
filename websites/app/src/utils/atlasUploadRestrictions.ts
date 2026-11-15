@@ -29,7 +29,7 @@ const matchesMime = (fileType: string, allowed: string[]): boolean =>
     return false
   })
 
-const formatMb = (bytes: number): string =>
+export const formatMb = (bytes: number): string =>
   (bytes / 1024 / 1024).toFixed(2).replace(/\.?0+$/, '')
 
 export const validateFileAgainstRestriction = (

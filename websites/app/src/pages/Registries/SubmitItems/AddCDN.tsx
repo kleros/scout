@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useId, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Roles } from '@kleros/kleros-app'
 import { useLocalStorage } from 'hooks/useLocalStorage'
@@ -16,8 +16,8 @@ import {
   ErrorMessage,
   StyledTextInput,
   FieldLabel,
+  describeIssue,
 } from './index'
-import Tooltip from 'components/Tooltip'
 
 const columns = [
   {
@@ -44,7 +44,7 @@ const columns = [
 ]
 
 const DEFAULT_FORM = {
-  network: { value: 'eip155:1', label: 'Mainnet' } as NetworkOption,
+  network: { value: 'eip155:1', label: 'Ethereum Mainnet' } as NetworkOption,
   address: '',
   domain: '',
 }
@@ -64,6 +64,7 @@ const AddCDN: React.FC = () => {
   const [domain, setDomain] = useState<string>(formData.domain)
   const [imageError, setImageError] = useState<string | null>(null)
   const [searchParams] = useSearchParams()
+  const id = useId()
 
   useEffect(() => {
     const caip10 = searchParams.get('caip10Address')
@@ -87,7 +88,14 @@ const AddCDN: React.FC = () => {
     domain,
   })
 
-  const { submit, isSubmitting, deposits } = useCurateSubmit({
+  const {
+    submit,
+    isSubmitting,
+    deposits,
+    depositsStatus,
+    retryDeposits,
+    retryingDeposits,
+  } = useCurateSubmit({
     registryKey: 'cdn',
     localStorageKey: 'addCDNForm',
     columns,
@@ -133,31 +141,62 @@ const AddCDN: React.FC = () => {
         setAddress={setAddress}
         registry="cdn"
         tooltip={columns[0].description}
+        inputId={`${id}-address`}
+        errorId={issues?.address ? `${id}-address-error` : undefined}
       />
-      {issues?.address && <ErrorMessage>{issues.address.message}</ErrorMessage>}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[1].description}>Domain</Tooltip>
+      {issues?.address && (
+        <ErrorMessage id={`${id}-address-error`}>
+          {issues.address.message}
+        </ErrorMessage>
+      )}
+      <FieldLabel htmlFor={`${id}-domain`} help={columns[1].description}>
+        Domain
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-domain`}
         placeholder="e.g. kleros.io"
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
+        {...describeIssue(
+          issues?.domain ? `${id}-domain-error` : `${id}-duplicate-error`,
+          !!(issues?.domain || issues?.duplicate),
+        )}
       />
-      {issues?.domain && <ErrorMessage>{issues.domain.message}</ErrorMessage>}
+      {issues?.domain && (
+        <ErrorMessage id={`${id}-domain-error`}>
+          {issues.domain.message}
+        </ErrorMessage>
+      )}
       {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
+        <ErrorMessage id={`${id}-duplicate-error`}>
+          {issues.duplicate.message}
+        </ErrorMessage>
       )}
       <ImageUpload
         value={image}
         onChange={setImage}
         registry="cdn"
         role={Roles.CurateItemImage}
+        label="Visual proof"
+        buttonLabel="Upload screenshot"
+        hint="A screenshot of the page on this domain where the contract is used."
+        withSizeLimit
         tooltip={columns[2].description}
         setImageError={setImageError}
+        errorId={imageError ? `${id}-image-error` : undefined}
       />
-      {imageError && <ErrorMessage>{imageError}</ErrorMessage>}
+      {imageError && (
+        <ErrorMessage id={`${id}-image-error`}>{imageError}</ErrorMessage>
+      )}
       <SubmitFooter
         deposits={deposits}
+        depositsStatus={depositsStatus}
+        onRetryDeposits={retryDeposits}
+        retryingDeposits={retryingDeposits}
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}

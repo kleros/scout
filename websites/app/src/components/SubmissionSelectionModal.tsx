@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useId, useRef } from 'react';
 import styled, { css } from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   ModalOverlay,
   ModalWrapper,
@@ -11,6 +11,7 @@ import {
 } from './ModalComponents';
 import { landscapeStyle } from 'styles/landscapeStyle';
 import { useLockOverlayScroll } from 'hooks/useLockOverlayScroll';
+import { useDialog } from 'hooks/useDialog';
 
 import TokensIcon from 'assets/svgs/registries/tokens.svg';
 import CDNIcon from 'assets/svgs/registries/cdn.svg';
@@ -45,7 +46,8 @@ const OptionDescription = styled.p`
   )}
 `;
 
-const OptionCard = styled.div`
+/** Each option is a link to that registry's submit page, so it works with the keyboard too. */
+const OptionCard = styled(Link)`
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -58,6 +60,7 @@ const OptionCard = styled.div`
   transition: all 0.4s ease;
   opacity: 0.7;
   min-height: 100px;
+  text-decoration: none;
 
   ${landscapeStyle(
     () => css`
@@ -70,13 +73,14 @@ const OptionCard = styled.div`
     `
   )}
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     opacity: 1;
     background: ${({ theme }) => theme.gradientHover};
     transform: translateX(2px);
   }
 
-  &:hover ${OptionDescription} {
+  &:hover ${OptionDescription}, &:focus-visible ${OptionDescription} {
     color: ${({ theme }) => theme.primaryText};
   }
 `;
@@ -170,7 +174,7 @@ const SUBMISSION_OPTIONS: SubmissionOption[] = [
   },
   {
     title: 'Tag Queries',
-    description: 'Bulk-submit address tags stored in a decentralized domain.',
+    description: 'Submit a GitHub repository whose code returns address tags in bulk for one chain.',
     registryKey: 'tags-queries',
     icon: QueryTagsIcon,
   },
@@ -185,15 +189,13 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
   isOpen,
   onClose,
 }) => {
-  const navigate = useNavigate();
   useLockOverlayScroll(isOpen);
+  const titleId = useId();
+  const firstOption = useRef<HTMLAnchorElement>(null);
+  // Focus moves to the first option, Tab stays inside, Escape closes, focus goes back to the opener.
+  const { dialogProps } = useDialog(isOpen, onClose, { initialFocus: firstOption });
 
   if (!isOpen) return null;
-
-  const handleOptionClick = (registryKey: string) => {
-    navigate(`/${registryKey}/submit`);
-    onClose();
-  };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -204,10 +206,10 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
   return (
     <ModalOverlay onClick={handleOverlayClick}>
       <ModalWrapper>
-        <ModalContainer>
+        <ModalContainer {...dialogProps} aria-labelledby={titleId}>
           <ModalHeader>
             <div>
-              <ModalTitle>Submit to Scout</ModalTitle>
+              <ModalTitle id={titleId}>Submit to Scout</ModalTitle>
               <ModalDescription>
                 Select what you would like to add to the registry.
               </ModalDescription>
@@ -216,16 +218,18 @@ export const SubmissionSelectionModal: React.FC<SubmissionSelectionModalProps> =
           </ModalHeader>
 
           <OptionsContainer>
-            {SUBMISSION_OPTIONS.map((option) => {
+            {SUBMISSION_OPTIONS.map((option, index) => {
               const Icon = option.icon;
               return (
                 <OptionCard
                   key={option.registryKey}
-                  onClick={() => handleOptionClick(option.registryKey)}
+                  to={`/${option.registryKey}/submit`}
+                  ref={index === 0 ? firstOption : undefined}
+                  onClick={onClose}
                 >
                   <OptionLeft>
                     <OptionTitle>{option.title}</OptionTitle>
-                    <OptionIcon>
+                    <OptionIcon aria-hidden="true">
                       <Icon />
                     </OptionIcon>
                   </OptionLeft>

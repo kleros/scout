@@ -24,8 +24,9 @@ const FormHeader: React.FC<Props> = ({ title, googleFormUrl }) => (
             target="_blank"
             rel="noopener noreferrer"
           >
-            Click here
+            Use the suggestion form
           </StyledGoogleFormAnchor>
+          .
         </AddSubtitle>
       )}
     </AddHeader>

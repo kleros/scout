@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useId, useState } from 'react'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useValidationIssues } from 'hooks/useValidationIssues'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
@@ -7,10 +7,12 @@ import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
   ErrorMessage,
+  StyledTextArea,
   StyledTextInput,
   FieldLabel,
+  describeIssue,
+  singleLineTextAreaProps,
 } from './index'
-import Tooltip from 'components/Tooltip'
 
 const columns = [
   {
@@ -56,6 +58,7 @@ const AddTagsQueries: React.FC = () => {
   const [commitHash, setCommitHash] = useState<string>(formData.commitHash)
   const [evmChainId, setEvmChainId] = useState<string>(formData.evmChainId)
   const [description, setDescription] = useState<string>(formData.description)
+  const id = useId()
 
   useEffect(() => {
     setFormData({ githubRepository, commitHash, evmChainId, description })
@@ -68,7 +71,14 @@ const AddTagsQueries: React.FC = () => {
     commitHash,
   })
 
-  const { submit, isSubmitting, deposits } = useCurateSubmit({
+  const {
+    submit,
+    isSubmitting,
+    deposits,
+    depositsStatus,
+    retryDeposits,
+    retryingDeposits,
+  } = useCurateSubmit({
     registryKey: 'tags-queries',
     localStorageKey: 'addTagsQueriesForm',
     columns,
@@ -100,50 +110,82 @@ const AddTagsQueries: React.FC = () => {
   return (
     <AddContainer>
       <FormHeader title="Submit Address Tags Query" />
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[0].description}>Github Repository</Tooltip>
+      <FieldLabel htmlFor={`${id}-repository`} help={columns[0].description}>
+        GitHub Repository
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-repository`}
         placeholder="e.g. https://github.com/kleros/scout-snap.git"
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         value={githubRepository}
         onChange={(e) => setGithubRepository(e.target.value)}
+        {...describeIssue(`${id}-repository-error`, !!issues?.link)}
       />
-      {issues?.link && <ErrorMessage>{issues.link.message}</ErrorMessage>}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[1].description}>Commit Hash</Tooltip>
+      {issues?.link && (
+        <ErrorMessage id={`${id}-repository-error`}>
+          {issues.link.message}
+        </ErrorMessage>
+      )}
+      <FieldLabel htmlFor={`${id}-commit`} help={columns[1].description}>
+        Commit Hash
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-commit`}
         placeholder="e.g. c8baafd"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         value={commitHash}
         onChange={(e) => setCommitHash(e.target.value)}
+        {...describeIssue(`${id}-commit-error`, !!issues?.commitHash)}
       />
       {issues?.commitHash && (
-        <ErrorMessage>{issues.commitHash.message}</ErrorMessage>
+        <ErrorMessage id={`${id}-commit-error`}>
+          {issues.commitHash.message}
+        </ErrorMessage>
       )}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[2].description}>EVM Chain ID</Tooltip>
+      <FieldLabel htmlFor={`${id}-chain`} help={columns[2].description}>
+        EVM Chain ID
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-chain`}
         placeholder="e.g. 1 (for Ethereum Mainnet)"
+        inputMode="numeric"
         value={evmChainId}
         onChange={(e) => setEvmChainId(e.target.value)}
+        {...describeIssue(
+          issues?.chainId ? `${id}-chain-error` : `${id}-duplicate-error`,
+          !!(issues?.chainId || issues?.duplicate),
+        )}
       />
       {issues?.chainId && (
-        <ErrorMessage>{issues.chainId.message}</ErrorMessage>
+        <ErrorMessage id={`${id}-chain-error`}>
+          {issues.chainId.message}
+        </ErrorMessage>
       )}
       {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
+        <ErrorMessage id={`${id}-duplicate-error`}>
+          {issues.duplicate.message}
+        </ErrorMessage>
       )}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[3].description}>Description</Tooltip>
+      <FieldLabel htmlFor={`${id}-description`} help={columns[3].description}>
+        Description
       </FieldLabel>
-      <StyledTextInput
+      <StyledTextArea
+        id={`${id}-description`}
+        rows={3}
         placeholder="e.g. An item for retrieving SushiSwap v3 tags on..."
         value={description}
-        onChange={(e) => setDescription(e.target.value)}
+        {...singleLineTextAreaProps(setDescription)}
       />
       <SubmitFooter
         deposits={deposits}
+        depositsStatus={depositsStatus}
+        onRetryDeposits={retryDeposits}
+        retryingDeposits={retryingDeposits}
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}

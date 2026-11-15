@@ -13,7 +13,8 @@ export const parseCaip10 = (
   )
 
   return {
-    network: { value: networkIdentifier, label: match?.label ?? '' },
+    // The chain's full name, as the network list shows it ("Polygon", not the ticker "MATIC").
+    network: { value: networkIdentifier, label: match?.name ?? '' },
     address,
   }
 }

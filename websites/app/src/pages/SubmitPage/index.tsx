@@ -9,6 +9,8 @@ import AddTagsQueries from 'pages/Registries/SubmitItems/AddTagsQueries'
 import AddToken from 'pages/Registries/SubmitItems/AddToken'
 import AddCDN from 'pages/Registries/SubmitItems/AddCDN'
 import ScrollTop from 'components/ScrollTop'
+import { useDocumentTitle } from 'hooks/useDocumentTitle'
+import { registryDisplayNames } from 'utils/items'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
 
 const Container = styled.div`
@@ -99,6 +101,10 @@ const NotFound = styled.div`
 
 const SubmitPage: React.FC = () => {
   const { registryName } = useParams<{ registryName: string }>()
+  const displayName = registryName
+    ? registryDisplayNames[registryName]
+    : undefined
+  useDocumentTitle(displayName ? `Submit to ${displayName}` : undefined)
 
   const form =
     registryName === 'single-tags' ? (

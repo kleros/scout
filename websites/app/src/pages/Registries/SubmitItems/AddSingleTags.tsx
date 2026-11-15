@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useId, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLocalStorage } from 'hooks/useLocalStorage'
 import { useValidationIssues } from 'hooks/useValidationIssues'
@@ -10,10 +10,19 @@ import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
   ErrorMessage,
+  StyledTextArea,
   StyledTextInput,
   FieldLabel,
+  describeIssue,
+  singleLineTextAreaProps,
 } from './index'
-import Tooltip from 'components/Tooltip'
+
+// Help shown next to the labels. The `columns` descriptions are uploaded with the entry, so they
+// are left as they are.
+const ADDRESS_HELP =
+  'The address of the contract being tagged. It is stored in CAIP-10 format with the chain you select.'
+const PUBLIC_NOTE_HELP =
+  'The Public Note is a short, mandatory comment field used to add a comment/information about the contract that could not fit in the public name tag (e.g. Official Ethereum 2.0 Beacon Chain deposit contract address).'
 
 const columns = [
   {
@@ -53,7 +62,7 @@ const columns = [
 ]
 
 const DEFAULT_FORM = {
-  network: { value: 'eip155:1', label: 'Mainnet' } as NetworkOption,
+  network: { value: 'eip155:1', label: 'Ethereum Mainnet' } as NetworkOption,
   address: '',
   projectName: '',
   publicNameTag: '',
@@ -71,6 +80,7 @@ const AddAddressTag: React.FC = () => {
   const [publicNote, setPublicNote] = useState<string>(formData.publicNote)
   const [website, setWebsite] = useState<string>(formData.website)
   const [searchParams] = useSearchParams()
+  const id = useId()
 
   useEffect(() => {
     const caip10 = searchParams.get('caip10Address')
@@ -102,7 +112,14 @@ const AddAddressTag: React.FC = () => {
     link: website,
   })
 
-  const { submit, isSubmitting, deposits } = useCurateSubmit({
+  const {
+    submit,
+    isSubmitting,
+    deposits,
+    depositsStatus,
+    retryDeposits,
+    retryingDeposits,
+  } = useCurateSubmit({
     registryKey: 'single-tags',
     localStorageKey: 'addTagForm',
     columns,
@@ -147,53 +164,90 @@ const AddAddressTag: React.FC = () => {
         address={address}
         setAddress={setAddress}
         registry="single-tags"
-        tooltip={columns[0].description}
+        tooltip={ADDRESS_HELP}
+        inputId={`${id}-address`}
+        errorId={
+          issues?.address
+            ? `${id}-address-error`
+            : issues?.duplicate
+              ? `${id}-duplicate-error`
+              : undefined
+        }
       />
-      {issues?.address && <ErrorMessage>{issues.address.message}</ErrorMessage>}
-      {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
+      {issues?.address && (
+        <ErrorMessage id={`${id}-address-error`}>
+          {issues.address.message}
+        </ErrorMessage>
       )}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[2].description}>Project name</Tooltip>
+      {issues?.duplicate && (
+        <ErrorMessage id={`${id}-duplicate-error`}>
+          {issues.duplicate.message}
+        </ErrorMessage>
+      )}
+      <FieldLabel htmlFor={`${id}-project`} help={columns[2].description}>
+        Project name
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-project`}
         placeholder="e.g. Kleros"
         value={projectName}
         onChange={(e) => setProjectName(e.target.value)}
+        {...describeIssue(`${id}-project-error`, !!issues?.projectName)}
       />
       {issues?.projectName && (
-        <ErrorMessage>{issues.projectName.message}</ErrorMessage>
+        <ErrorMessage id={`${id}-project-error`}>
+          {issues.projectName.message}
+        </ErrorMessage>
       )}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[1].description}>Public Name Tag</Tooltip>
+      <FieldLabel htmlFor={`${id}-name-tag`} help={columns[1].description}>
+        Public Name Tag
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-name-tag`}
         placeholder="e.g. PNK Merkle Drop"
         value={publicNameTag}
         onChange={(e) => setPublicNameTag(e.target.value)}
+        {...describeIssue(`${id}-name-tag-error`, !!issues?.publicNameTag)}
       />
       {issues?.publicNameTag && (
-        <ErrorMessage>{issues.publicNameTag.message}</ErrorMessage>
+        <ErrorMessage id={`${id}-name-tag-error`}>
+          {issues.publicNameTag.message}
+        </ErrorMessage>
       )}
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[4].description}>Public note</Tooltip>
+      <FieldLabel htmlFor={`${id}-note`} help={PUBLIC_NOTE_HELP}>
+        Public note
       </FieldLabel>
-      <StyledTextInput
+      <StyledTextArea
+        id={`${id}-note`}
+        rows={2}
         placeholder="e.g. This contract is used for..."
         value={publicNote}
-        onChange={(e) => setPublicNote(e.target.value)}
+        {...singleLineTextAreaProps(setPublicNote)}
       />
-      <FieldLabel>
-        <Tooltip data-tooltip={columns[3].description}>UI/Website link</Tooltip>
+      <FieldLabel htmlFor={`${id}-website`} help={columns[3].description}>
+        UI/Website link
       </FieldLabel>
       <StyledTextInput
+        id={`${id}-website`}
         placeholder="e.g. https://kleros.io"
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         value={website}
         onChange={(e) => setWebsite(e.target.value)}
+        {...describeIssue(`${id}-website-error`, !!issues?.link)}
       />
-      {issues?.link && <ErrorMessage>{issues.link.message}</ErrorMessage>}
+      {issues?.link && (
+        <ErrorMessage id={`${id}-website-error`}>
+          {issues.link.message}
+        </ErrorMessage>
+      )}
       <SubmitFooter
         deposits={deposits}
+        depositsStatus={depositsStatus}
+        onRetryDeposits={retryDeposits}
+        retryingDeposits={retryingDeposits}
         disabled={submittingDisabled}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}

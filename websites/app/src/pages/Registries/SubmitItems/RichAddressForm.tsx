@@ -5,7 +5,6 @@ import Select, { components } from 'react-select'
 import { chains } from 'utils/chains'
 import { getChainIcon } from 'utils/chainIcons'
 import { StyledWholeField, FieldLabel } from './index'
-import Tooltip from 'components/Tooltip'
 
 const StyledAddressDiv = styled.div`
   display: flex;
@@ -29,12 +28,12 @@ const StyledNetworkSelect = styled(Select)`
   }
 `
 
+// No local `outline: none`: the app-wide :focus-visible ring shows when the field has focus.
 export const StyledAddressInput = styled.input`
   display: flex;
   width: 100%;
   background: ${({ theme }) => theme.modalInputBackground};
   padding: 12px 16px;
-  outline: none;
   border: 1px solid ${({ theme }) => theme.stroke};
   color: ${({ theme }) => theme.primaryText};
   border-radius: 0 12px 12px 12px;
@@ -167,7 +166,11 @@ const getCustomSelectStyles = (theme: any) => ({
     border: `1px solid ${theme.stroke}`,
     borderBottom: 'none',
     borderRadius: '12px 12px 0 0',
+    // The search input inside has no outline of its own: ring the control while it has focus,
+    // like the app-wide focus ring on the other fields.
     boxShadow: 'none',
+    outline: state.isFocused ? `2px solid ${theme.klerosUIComponentsPrimaryBlue}` : 'none',
+    outlineOffset: '2px',
     minHeight: '48px',
     height: '48px',
     cursor: 'pointer',
@@ -181,6 +184,11 @@ const getCustomSelectStyles = (theme: any) => ({
     color: theme.secondaryText,
     margin: 0,
     padding: 0,
+  }),
+  // What is typed to search the chains (react-select's default is a dark grey).
+  input: (provided: any) => ({
+    ...provided,
+    color: theme.primaryText,
   }),
   valueContainer: (provided: any) => ({
     ...provided,
@@ -208,31 +216,47 @@ const RichAddressForm: React.FC<{
   registry: string
   domain?: string // checks for dupe richAddress - domain pairs, in domains.
   tooltip?: string
+  /** Id for the address input, so its label (and error message) can point at it. */
+  inputId: string
+  /** Id of the message that explains what is wrong with the address, when there is one. */
+  errorId?: string
 }> = (p) => {
   const theme = useTheme()
+  // Always show the chain under the name the list uses ("Ethereum Mainnet"), whichever label a
+  // saved draft or a ?caip10Address= link carried. Only `value` is submitted.
+  const selected =
+    networkOptions.find((option) => option.value === p.networkOption.value) ??
+    p.networkOption
 
   return (
     <StyledWholeField>
-      <FieldLabel>
-        {p.tooltip ? <Tooltip data-tooltip={p.tooltip}>Address</Tooltip> : 'Address'}
+      <FieldLabel htmlFor={p.inputId} help={p.tooltip}>
+        Address
       </FieldLabel>
       <StyledAddressDiv>
         <StyledNetworkSelect
           onChange={p.setNetwork}
-          value={p.networkOption}
+          value={selected}
           options={networkOptions}
           menuPortalTarget={document.body}
           styles={getCustomSelectStyles(theme)}
           classNamePrefix="select"
+          aria-label="Network"
           components={{
             Option: CustomOption,
             SingleValue: CustomSingleValue,
           }}
         />
         <StyledAddressInput
+          id={p.inputId}
           onChange={(e) => p.setAddress(e.target.value)}
           value={p.address}
           placeholder="e.g. 0x93ed3fbe..."
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-invalid={p.errorId ? true : undefined}
+          aria-describedby={p.errorId}
         />
       </StyledAddressDiv>
     </StyledWholeField>
