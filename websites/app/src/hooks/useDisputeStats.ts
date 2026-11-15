@@ -63,6 +63,8 @@ const DISPUTE_STATS_QUERY = `
       id
       status
       requests(where: {disputed: {_eq: true}, resolved: {_eq: true}, requester: {_eq: $userAddress}}, order_by: {submissionTime: desc}, limit: 100) {
+        requestType
+        challenger
         disputeOutcome
       }
     }
@@ -81,6 +83,7 @@ const DISPUTE_STATS_QUERY = `
       id
       status
       requests(where: {disputed: {_eq: true}, resolved: {_eq: true}, challenger: {_eq: $userAddress}}, order_by: {submissionTime: desc}, limit: 100) {
+        requester
         disputeOutcome
         deposit
       }
@@ -93,9 +96,13 @@ export interface DisputeStats {
   activeAsRequester: number;
   activeAsChallenger: number;
   resolvedDisputes: number;
-  // Win/loss as requester (defending submissions)
+  // Win/loss as requester: of registrations (submitter) and of removals (remover)
   winsAsRequester: number;
   lossesAsRequester: number;
+  winsAsSubmitter: number;
+  lossesAsSubmitter: number;
+  winsAsRemover: number;
+  lossesAsRemover: number;
   // Win/loss as challenger
   winsAsChallenger: number;
   lossesAsChallenger: number;
@@ -127,6 +134,7 @@ export const useDisputeStats = (address?: string) => {
     queryKey: ["refetchOnBlock", "useDisputeStats", userAddress],
     enabled: !!userAddress,
     queryFn: async (): Promise<{ disputeStats: DisputeStats }> => {
+      // Throws when the indexer fails: the profile then shows "—" (did not load), never 0.
       const json = await fetchSubgraph(DISPUTE_STATS_QUERY, { userAddress, registryAddresses: REGISTRY_ADDRESSES });
 
       const activeAsRequester = json.data?.activeAsRequester || [];
@@ -139,17 +147,33 @@ export const useDisputeStats = (address?: string) => {
       const activeChallengerIds = new Set(activeAsChallenger.map((i: any) => i.id));
       const allActiveIds = new Set([...activeRequesterIds, ...activeChallengerIds]);
 
+      // An address that challenged its own request was on both sides: whatever the ruling, it
+      // neither won nor lost, and the deposit it "collected" was its own. Such requests count in
+      // neither wins, losses nor bounties.
+      const isUser = (party?: string | null) => !!party && party.toLowerCase() === userAddress;
+
       // Calculate wins/losses for requester role, counting every disputed
       // request the user was a party to (an item can have several)
-      let winsAsRequester = 0;
-      let lossesAsRequester = 0;
+      let winsAsSubmitter = 0;
+      let lossesAsSubmitter = 0;
+      let winsAsRemover = 0;
+      let lossesAsRemover = 0;
       for (const item of resolvedAsRequester) {
         for (const request of item.requests ?? []) {
+          if (isUser(request.challenger)) continue;
           const won = didRequesterWin(request.disputeOutcome);
-          if (won === true) winsAsRequester++;
-          else if (won === false) lossesAsRequester++;
+          const isRemoval = request.requestType === 'ClearingRequested';
+          if (won === true) {
+            if (isRemoval) winsAsRemover++;
+            else winsAsSubmitter++;
+          } else if (won === false) {
+            if (isRemoval) lossesAsRemover++;
+            else lossesAsSubmitter++;
+          }
         }
       }
+      const winsAsRequester = winsAsSubmitter + winsAsRemover;
+      const lossesAsRequester = lossesAsSubmitter + lossesAsRemover;
 
       // Calculate wins/losses for challenger role
       let winsAsChallenger = 0;
@@ -157,6 +181,7 @@ export const useDisputeStats = (address?: string) => {
       let bountiesWonWei = 0n;
       for (const item of resolvedAsChallenger) {
         for (const request of item.requests ?? []) {
+          if (isUser(request.requester)) continue;
           const won = didRequesterWin(request.disputeOutcome);
           // Challenger wins when requester loses
           if (won === false) {
@@ -183,6 +208,10 @@ export const useDisputeStats = (address?: string) => {
           resolvedDisputes: allResolvedIds.size,
           winsAsRequester,
           lossesAsRequester,
+          winsAsSubmitter,
+          lossesAsSubmitter,
+          winsAsRemover,
+          lossesAsRemover,
           winsAsChallenger,
           lossesAsChallenger,
           bountiesWonWei,

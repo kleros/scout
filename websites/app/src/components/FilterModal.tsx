@@ -121,6 +121,8 @@ interface FilterModalProps {
   chainFilters: string[];
   onChainFiltersChange: (chains: string[]) => void;
   scope: 'registry' | 'profile';
+  /** Hides the verification and challenge status groups, for lists they do not apply to (profile disputes). */
+  hideStatusFilters?: boolean;
 }
 
 const FilterModal: React.FC<FilterModalProps> = ({
@@ -129,6 +131,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
   chainFilters,
   onChainFiltersChange,
   scope,
+  hideStatusFilters = false,
 }) => {
   const filters = useFilters(scope);
   const { ref: modalRef, dialogProps } = useDialog<HTMLDivElement>(isOpen, onClose);
@@ -221,7 +224,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
     filters.status.every((s) => RESOLVED_STATUSES.includes(s));
   const dateKind = usesResolutionDate ? 'resolution' : 'submission';
   const hasChangedFilters =
-    getActiveFilterCount(filters, chainFilters) > 0 || filters.orderDirection !== 'desc';
+    getActiveFilterCount(filters, chainFilters, scope) > 0 || filters.orderDirection !== 'desc';
 
   return (
     <ModalOverlay>
@@ -236,6 +239,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
 
         <FilterSection>
           <SectionGrid>
+            {!hideStatusFilters && (
             <FilterColumn>
               <FilterGroup>
                 <GroupHeader>
@@ -271,8 +275,10 @@ const FilterModal: React.FC<FilterModalProps> = ({
                 </CheckboxGroup>
               </FilterGroup>
             </FilterColumn>
+            )}
 
             <FilterColumn>
+              {!hideStatusFilters && (
               <FilterGroup>
                 <GroupHeader>
                   <FilterGroupTitle as="h3" id={ids.challenge}>
@@ -330,6 +336,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
                   </CheckboxItem>
                 </CheckboxGroup>
               </FilterGroup>
+              )}
 
               <FilterGroup style={{ marginTop: '8px' }}>
                 <SortBySectionTitle as="h3" id={ids.sort}>

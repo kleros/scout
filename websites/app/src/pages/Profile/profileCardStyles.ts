@@ -1,6 +1,7 @@
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import { Link } from 'react-router-dom'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
+import { landscapeStyle } from 'styles/landscapeStyle'
 
 export const Card = styled.div`
   width: 100%;
@@ -83,6 +84,11 @@ export const LabelValue = styled.span`
   white-space: nowrap;
 `
 
+/** A date on a card; its title gives the exact time (UTC). */
+export const DateValue = styled.time`
+  color: inherit;
+`
+
 export const StyledChainLabel = styled.span`
   margin-bottom: 8px;
 `
@@ -91,10 +97,23 @@ export const StyledChainContainer = styled(LabelValue)`
   margin-bottom: -8px;
 `
 
+/**
+ * A card's buttons. Below the landscape breakpoint they take a row of their own: beside them, the
+ * details (which do not wrap) would run underneath them.
+ */
 export const ActionsGroup = styled.div`
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 12px;
+  width: 100%;
+
+  ${landscapeStyle(
+    () => css`
+      width: auto;
+    `
+  )}
 `
 
 export const RewardedBadge = styled.span`

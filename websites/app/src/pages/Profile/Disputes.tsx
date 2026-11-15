@@ -1,34 +1,30 @@
 import React, { useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import Skeleton from 'react-loading-skeleton'
-import DisputeCard from './DisputeCard'
+import DisputeCard, { DisputeRole } from './DisputeCard'
 import { useProfileFilters } from 'context/FilterContext'
 import { useScrollTop } from 'hooks/useScrollTop'
 import { StyledPagination } from 'components/StyledPagination'
 import { registryMap, fetchItemPropsFromIpfs, patchQueryWithIpfs } from 'utils/items'
 import { KLEROS_CDN_BASE } from 'consts/index'
-import { filterItemsByChain, filterItemsByDateRange, filterItemsBySearchTerm, paginateItems, useFilterChangeEffect } from 'utils/profileFilters'
-import { fetchSubgraph } from 'utils/fetchSubgraph'
-import { EmptyState } from 'styles/commonStyles'
+import { applyProfileFilters, fetchAllRows, paginateItems, ProfileListFilters } from 'utils/profileFilters'
+import { ListSkeleton, ListError, ListEmpty, CappedNote, ListCount } from './ListStates'
 
 // Only query disputes from our 4 registries
 const REGISTRY_ADDRESSES = Object.values(registryMap)
 
-// Query to fetch all disputes where user is involved (as requester or challenger)
-const QUERY = `
-query Disputes($userAddress: String!, $registryAddresses: [String!]!, $first: Int!, $skip: Int!, $orderDirection: order_by!) {
-  # Disputes where user is the requester
-  asRequester: LItem(
+// The items with a disputed request the address made (as requester) or challenged, with the
+// latest such request. Each list is read once per address, 1,000 rows at a time; the sub-tab,
+// filters, search, sorting and pages are applied in memory.
+const disputesQuery = (party: 'requester' | 'challenger') => `
+query ProfileDisputesAs_${party}($userAddress: String!, $registryAddresses: [String!]!, $first: Int!, $skip: Int!) {
+  litems: LItem(
     where: {
       registryAddress: {_in: $registryAddresses}
-      requests: {
-        disputed: {_eq: true}
-        requester: {_eq: $userAddress}
-      }
+      requests: {disputed: {_eq: true}, ${party}: {_eq: $userAddress}}
     }
     limit: $first
     offset: $skip
-    order_by: {latestRequestSubmissionTime: $orderDirection}
+    order_by: [{latestRequestSubmissionTime: desc}, {id: asc}]
   ) {
     id
     itemID
@@ -46,234 +42,193 @@ query Disputes($userAddress: String!, $registryAddresses: [String!]!, $first: In
       value
       label
     }
-    requests(where: {disputed: {_eq: true}}, order_by: {submissionTime: desc}, limit: 1) {
+    requests(where: {disputed: {_eq: true}, ${party}: {_eq: $userAddress}}, order_by: {submissionTime: desc}, limit: 1) {
       requestType
       requester
       challenger
       deposit
       submissionTime
+      challengeTime
       disputed
       disputeID
       disputeOutcome
       resolved
       resolutionTime
-    }
-  }
-  # Disputes where user is the challenger
-  asChallenger: LItem(
-    where: {
-      registryAddress: {_in: $registryAddresses}
-      requests: {
-        disputed: {_eq: true}
-        challenger: {_eq: $userAddress}
+      rounds(order_by: [{creationTime: asc}, {id: asc}], limit: 1) {
+        amountPaidChallenger
       }
-    }
-    limit: $first
-    offset: $skip
-    order_by: {latestRequestSubmissionTime: $orderDirection}
-  ) {
-    id
-    itemID
-    registryAddress
-    latestRequestSubmissionTime
-    status
-    disputed
-    data
-    key0
-    key1
-    key2
-    key3
-    key4
-    props {
-      value
-      label
-    }
-    requests(where: {disputed: {_eq: true}}, order_by: {submissionTime: desc}, limit: 1) {
-      requestType
-      requester
-      challenger
-      deposit
-      submissionTime
-      disputed
-      disputeID
-      disputeOutcome
-      resolved
-      resolutionTime
     }
   }
 }
 `
+const AS_REQUESTER_QUERY = disputesQuery('requester')
+const AS_CHALLENGER_QUERY = disputesQuery('challenger')
+
+/**
+ * One card per item: its latest dispute involving the address, and the address's role in it
+ * (requester, challenger, or both when it challenged its own request).
+ */
+const mergeDisputes = (asRequester: any[], asChallenger: any[], userAddress: string): any[] => {
+  const latest = new Map<string, any>()
+  for (const item of [...asRequester, ...asChallenger]) {
+    const request = item.requests?.[0]
+    if (!request) continue
+    const kept = latest.get(item.id)
+    if (!kept || Number(request.submissionTime) > Number(kept.requests[0].submissionTime)) {
+      latest.set(item.id, item)
+    }
+  }
+  return Array.from(latest.values()).map((item) => {
+    const request = item.requests[0]
+    const isRequester = request.requester?.toLowerCase() === userAddress
+    const isChallenger = request.challenger?.toLowerCase() === userAddress
+    const userRole: DisputeRole = isRequester && isChallenger ? 'both' : isChallenger ? 'challenger' : 'requester'
+    return { ...item, userRole }
+  })
+}
+
+const isResolved = (item: any) => item.requests?.[0]?.resolved === true
+
+export type DisputeListReport = { active: ListCount; resolved: ListCount } | 'failed' | null
 
 interface Props {
-  totalItems: number
-  address?: string
-  chainFilters?: string[]
-  isFilterChanging: boolean
-  setIsFilterChanging: (value: boolean) => void
+  address: string
+  isOwnProfile: boolean
   showResolved: boolean
-  onFilteredCountsChange?: (counts: { active: number; resolved: number }) => void
+  page: number
+  onPageChange: (page: number) => void
+  onReport: (report: DisputeListReport) => void
+  onRetryCounts: () => void
 }
 
 const Disputes: React.FC<Props> = ({
-  totalItems,
   address,
-  chainFilters = [],
-  isFilterChanging,
-  setIsFilterChanging,
+  isOwnProfile,
   showResolved,
-  onFilteredCountsChange,
+  page,
+  onPageChange,
+  onReport,
+  onRetryCounts,
 }) => {
   const filters = useProfileFilters()
   const queryClient = useQueryClient()
-  const currentPage = filters.page
-  const itemsPerPage = 10
   const scrollTop = useScrollTop()
-  const queryAddress = address?.toLowerCase()
+  const itemsPerPage = 10
 
-  const orderDirection = filters.orderDirection
-  const searchTerm = filters.text
-  const dateRange = filters.dateRange
-  const customDateFrom = filters.customDateFrom
-  const customDateTo = filters.customDateTo
-
-  const queryKey = [
-    'disputes',
-    queryAddress,
-    currentPage,
-    orderDirection,
-    chainFilters.slice().sort().join(','),
-    searchTerm,
-    dateRange,
-    customDateFrom,
-    customDateTo,
-    showResolved,
-  ]
-
-  const processItems = (asRequester: any[], asChallenger: any[]) => {
-    // Merge and deduplicate
-    const itemMap = new Map<string, any>()
-
-    for (const item of asRequester) {
-      itemMap.set(item.id, { ...item, userRole: 'requester' })
-    }
-
-    for (const item of asChallenger) {
-      const existing = itemMap.get(item.id)
-      if (existing) {
-        // User is both requester and challenger (rare) - mark as both
-        itemMap.set(item.id, { ...item, userRole: 'both' })
-      } else {
-        itemMap.set(item.id, { ...item, userRole: 'challenger' })
-      }
-    }
-
-    let allItems = Array.from(itemMap.values())
-
-    // Apply filters to all items first (before splitting by active/resolved)
-    allItems = filterItemsByChain(allItems, chainFilters)
-    allItems = filterItemsByDateRange(allItems, dateRange, customDateFrom, customDateTo)
-    allItems = filterItemsBySearchTerm(allItems, searchTerm)
-
-    // Split into active and resolved
-    const activeItems = allItems.filter((item) => {
-      const request = item.requests?.[0]
-      return request?.resolved !== true
-    })
-    const resolvedItems = allItems.filter((item) => {
-      const request = item.requests?.[0]
-      return request?.resolved === true
-    })
-
-    // Pick the set for the current sub-tab
-    const visibleItems = showResolved ? resolvedItems : activeItems
-
-    // Sort by submission time
-    visibleItems.sort((a, b) => {
-      const timeA = Number(a.latestRequestSubmissionTime || 0)
-      const timeB = Number(b.latestRequestSubmissionTime || 0)
-      return orderDirection === 'desc' ? timeB - timeA : timeA - timeB
-    })
-
-    return {
-      ...paginateItems(visibleItems, currentPage, itemsPerPage),
-      activeCount: activeItems.length,
-      resolvedCount: resolvedItems.length,
-    }
-  }
-
-  const { data, isLoading, isFetching } = useQuery({
+  // The query key prefix is refreshed after the user's own transactions (RefreshAfterTransactions).
+  const queryKey = useMemo(() => ['disputes', address], [address])
+  const query = useQuery({
     queryKey,
-    enabled: !!queryAddress,
+    enabled: !!address,
     queryFn: async () => {
-      // Fetch more items to properly calculate filtered totals
-      const fetchSize = Math.max(1000, currentPage * itemsPerPage)
-      const json = await fetchSubgraph(QUERY, {
-        userAddress: queryAddress,
-        registryAddresses: REGISTRY_ADDRESSES,
-        first: fetchSize,
-        skip: 0,
-        orderDirection,
-      })
-      if (json.errors) return { items: [], totalFiltered: 0, activeCount: 0, resolvedCount: 0 }
-
-      const rawRequester = (json.data.asRequester as any[]) || []
-      const rawChallenger = (json.data.asChallenger as any[]) || []
-      const result = processItems(rawRequester, rawChallenger)
-
-      patchQueryWithIpfs(queryClient, queryKey, [...rawRequester, ...rawChallenger], async () => {
-        const [patchedRequester, patchedChallenger] = await Promise.all([
-          fetchItemPropsFromIpfs(rawRequester, KLEROS_CDN_BASE),
-          fetchItemPropsFromIpfs(rawChallenger, KLEROS_CDN_BASE),
-        ])
-        return processItems(patchedRequester, patchedChallenger)
-      })
-
-      return result
+      const variables = { userAddress: address, registryAddresses: REGISTRY_ADDRESSES }
+      // Both first pages leave in one request (the reads are batched).
+      const [asRequester, asChallenger] = await Promise.all([
+        fetchAllRows(AS_REQUESTER_QUERY, variables),
+        fetchAllRows(AS_CHALLENGER_QUERY, variables),
+      ])
+      const items = mergeDisputes(asRequester.rows, asChallenger.rows, address)
+      const capped = asRequester.capped || asChallenger.capped
+      patchQueryWithIpfs(queryClient, queryKey, items, async () => ({
+        items: await fetchItemPropsFromIpfs(items, KLEROS_CDN_BASE),
+        capped,
+      }))
+      return { items, capped }
     },
   })
 
-  useEffect(() => {
-    if (data && onFilteredCountsChange) {
-      onFilteredCountsChange({ active: data.activeCount, resolved: data.resolvedCount })
+  // Item statuses and challenge states do not apply to disputes: the date, networks and search do.
+  const listFilters: ProfileListFilters = useMemo(
+    () => ({
+      chainFilters: filters.chainFilters,
+      dateRange: filters.dateRange,
+      customDateFrom: filters.customDateFrom,
+      customDateTo: filters.customDateTo,
+      searchTerm: filters.text,
+      orderDirection: filters.orderDirection,
+    }),
+    [
+      filters.chainFilters,
+      filters.dateRange,
+      filters.customDateFrom,
+      filters.customDateTo,
+      filters.text,
+      filters.orderDirection,
+    ],
+  )
+
+  const items = query.data?.items
+  const shown = useMemo(() => (items ? applyProfileFilters(items, listFilters) : []), [items, listFilters])
+
+  const counts = useMemo(() => {
+    if (!items) return null
+    const totalResolved = items.filter(isResolved).length
+    const shownResolved = shown.filter(isResolved).length
+    return {
+      active: { shown: shown.length - shownResolved, total: items.length - totalResolved },
+      resolved: { shown: shownResolved, total: totalResolved },
     }
-  }, [data?.activeCount, data?.resolvedCount, onFilteredCountsChange])
+  }, [items, shown])
 
-  const totalPages = useMemo(() => {
-    if (!data) return 1
-    return Math.max(1, Math.ceil(data.totalFiltered / itemsPerPage))
-  }, [data])
+  const failed = !items && query.isError
+  useEffect(() => {
+    onReport(counts ?? (failed ? 'failed' : null))
+  }, [counts, failed, onReport])
+  useEffect(() => () => onReport(null), [onReport])
 
-  const handlePageChange = (newPage: number) => {
-    scrollTop(true)
-    filters.setPage(newPage)
+  if (!items) {
+    if (query.isError) {
+      return (
+        <ListError
+          title="The disputes did not load."
+          onRetry={() => {
+            query.refetch()
+            onRetryCounts()
+          }}
+          retrying={query.isFetching}
+        />
+      )
+    }
+    return <ListSkeleton />
   }
 
-  useFilterChangeEffect(isFilterChanging, isFetching, setIsFilterChanging)
+  const visible = shown.filter((item) => isResolved(item) === showResolved)
+  const noun = showResolved ? 'resolved disputes' : 'active disputes'
 
-  if (isLoading || isFilterChanging)
+  if (visible.length === 0) {
+    const inSubTab = items.filter((item) => isResolved(item) === showResolved)
+    const filtersExcludeAll =
+      inSubTab.length > 0 && applyProfileFilters(inSubTab, { ...listFilters, searchTerm: '' }).length === 0
     return (
-      <>
-        <Skeleton height={100} style={{ marginBottom: 16 }} count={3} />
-      </>
+      <ListEmpty
+        noun={noun}
+        noRows={inSubTab.length === 0}
+        noRowsText={isOwnProfile ? `You have no ${noun}.` : `This address has no ${noun}.`}
+        isOwnProfile={isOwnProfile}
+        searchText={filters.text}
+        filtersExcludeAll={filtersExcludeAll}
+        onClearSearch={() => filters.setText('')}
+        onResetFilters={filters.resetFilters}
+      />
     )
+  }
 
-  if (!data || data.items.length === 0)
-    return (
-      <EmptyState>
-        {showResolved ? 'No resolved disputes.' : 'No active disputes.'}
-      </EmptyState>
-    )
+  const current = paginateItems(visible, page, itemsPerPage)
 
   return (
     <>
-      {data.items.map((item) => (
-        <DisputeCard key={item.id} item={item} userAddress={queryAddress || ''} />
+      {query.data?.capped ? <CappedNote count={items.length} noun="disputes" /> : null}
+      {current.items.map((item) => (
+        <DisputeCard key={item.id} item={item} />
       ))}
-      {totalPages > 1 && (
+      {current.totalPages > 1 && (
         <StyledPagination
-          currentPage={currentPage}
-          numPages={totalPages}
-          callback={handlePageChange}
+          currentPage={current.page}
+          numPages={current.totalPages}
+          callback={(newPage: number) => {
+            scrollTop(true)
+            onPageChange(newPage)
+          }}
         />
       )}
     </>

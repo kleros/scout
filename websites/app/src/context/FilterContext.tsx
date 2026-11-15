@@ -56,8 +56,10 @@ const REGISTRY_DEFAULTS: FilterState = {
   chainFilters: ALL_NETWORK_FILTERS,
 }
 
+// The profile shows everything a person did by default, rejected and removed entries included
+// (the Resolved tab's count includes them).
 const PROFILE_DEFAULTS: FilterState = {
-  status: ['Registered', 'RegistrationRequested', 'ClearingRequested'],
+  status: ['Registered', 'RegistrationRequested', 'ClearingRequested', 'Absent'],
   disputed: ['true', 'false'],
   hasEverBeenDisputed: false,
   page: 1,
@@ -317,8 +319,9 @@ function useUrlFilterSlice(defaults: FilterState): FilterSlice {
 export const getActiveFilterCount = (
   filters: Pick<FilterState, 'status' | 'disputed' | 'hasEverBeenDisputed' | 'dateRange'>,
   chainFilters: string[],
+  scope: 'registry' | 'profile' = 'registry',
 ): number => {
-  const defaults = REGISTRY_DEFAULTS
+  const defaults = scope === 'profile' ? PROFILE_DEFAULTS : REGISTRY_DEFAULTS
   return [
     !sameSet(filters.status, defaults.status),
     !sameSet(filters.disputed, defaults.disputed) || filters.hasEverBeenDisputed !== defaults.hasEverBeenDisputed,
