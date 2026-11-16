@@ -18,7 +18,7 @@ import {
 import { withDeadline } from './deadline'
 import { decodePng, logoFile } from './logoFixtures'
 import { cdnDomainPatterns } from './duplicates'
-import { readCodeSnapshot } from './evm'
+import { readCodeSnapshot, readPayoutAcceptance } from './evm'
 import { inspectPng } from './png'
 import { PUBLIC_RPC_URLS, readWithQuorum } from './rpc'
 import {
@@ -902,6 +902,52 @@ describe('request deadlines', () => {
     }
     const results = await pending
     assert.equal(byId(results, 'address.deployed')?.outcome, 'inconclusive')
+  })
+})
+
+describe('payout acceptance', () => {
+  const REGISTRY = '0xee1502e29795ef6c2d60f8d7120596abe3bad990'
+
+  it('simulates the 2300-gas transfer the registry pays out with', async () => {
+    const calls: unknown[][] = []
+    mockRpc((method, params) => {
+      calls.push(params)
+      return '0x'
+    })
+    const read = await readPayoutAcceptance(REGISTRY, `0x${'a1'.repeat(20)}`)
+    assert.deepEqual(read.status === 'agreed' && read.value, true)
+    const [tx, block] = calls[0] as [Record<string, string>, string]
+    assert.deepEqual(
+      [tx.from, tx.value, parseInt(tx.gas, 16), tx.data, block],
+      [REGISTRY, '0x1', 23_300, '0x', 'latest'],
+    )
+  })
+
+  it('reports wallets that run out of gas or revert as unable to receive', async () => {
+    mockRpc(() => new Error('out of gas: gas required exceeds: 23300'))
+    const safe = await readPayoutAcceptance(REGISTRY, `0x${'b2'.repeat(20)}`)
+    assert.deepEqual(safe.status === 'agreed' && safe.value, false)
+    mockRpc(() => new Error('execution reverted'))
+    const token = await readPayoutAcceptance(REGISTRY, `0x${'c3'.repeat(20)}`)
+    assert.deepEqual(token.status === 'agreed' && token.value, false)
+  })
+
+  it('treats provider errors as no answer, never as a failed transfer', async () => {
+    mockRpc(() => new Error('rate limit exceeded'))
+    const read = await readPayoutAcceptance(REGISTRY, `0x${'d4'.repeat(20)}`)
+    assert.equal(read.status, 'unavailable')
+  })
+
+  it('rejects a cancelled probe instead of answering "unavailable"', async () => {
+    mockRpc(() => '0x', { hangs: () => true })
+    const caller = new AbortController()
+    const pending = readPayoutAcceptance(
+      REGISTRY,
+      `0x${'e5'.repeat(20)}`,
+      caller.signal,
+    )
+    caller.abort()
+    await assert.rejects(pending, { name: 'AbortError' })
   })
 })
 

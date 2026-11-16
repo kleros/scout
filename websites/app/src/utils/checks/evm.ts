@@ -13,6 +13,7 @@ export interface CodeSnapshot {
 const DELEGATION_DESIGNATOR = /^0xef0100[0-9a-fA-F]{40}$/
 
 const RPC_TIMEOUT_MS = 8_000
+const GNOSIS = 100
 
 // Nothing here is cached or shared between callers: every read runs under its
 // own caller's AbortSignal, and React Query keeps the answers per input. (A
@@ -99,6 +100,58 @@ export const readCodeSnapshot = (
           a.finalized === b.finalized),
       signal,
     },
+  )
+
+// Light Curate pays deposits, refunds and rewards with Solidity's `.send`: the
+// recipient gets 2300 gas and a failed transfer leaves the xDAI in the
+// registry for good. A 1 wei call from the registry with that much gas for
+// the recipient reproduces it exactly (a transaction's own cost is 21000).
+const SEND_CALL_GAS = `0x${(21_000 + 2_300).toString(16)}`
+const EVM_FAILURE =
+  /out of gas|revert|invalid opcode|stack (?:underflow|overflow)|invalid jump|write protection/i
+
+/**
+ * Whether `address` can receive a payout from `registry` on Gnosis, from two
+ * independent providers. Wallets (EOAs) always can; many contract wallets,
+ * such as a Safe, cannot.
+ */
+export const readPayoutAcceptance = (
+  registry: string,
+  address: string,
+  signal?: AbortSignal,
+) =>
+  readWithQuorum<boolean>(
+    GNOSIS,
+    async (url) => {
+      const body = await post(
+        url,
+        {
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_call',
+          params: [
+            {
+              from: registry,
+              to: address,
+              gas: SEND_CALL_GAS,
+              value: '0x1',
+              data: '0x',
+            },
+            'latest',
+          ],
+        },
+        signal,
+      )
+      if (isHex(body?.result)) return true
+      // Running out of gas or reverting is the answer; anything else is the provider's problem.
+      const message = String(body?.error?.message ?? '')
+      if (EVM_FAILURE.test(message)) return false
+      throw new RpcError(
+        message || 'eth_call returned nothing',
+        body?.error?.code,
+      )
+    },
+    { signal },
   )
 
 const DECIMALS_SELECTOR = '0x313ce567'
