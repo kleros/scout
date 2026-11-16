@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { act, createElement } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, settle } from '../test/renderHook'
-import { useTelegramLink } from './useNotifications'
+import { useNotifyActions, useTelegramLink } from './useNotifications'
 
 const ACCOUNT = `0x${'aa'.repeat(20)}`
 const LINK = 'https://t.me/scout_bot?start=test-link-code-0123456789'
@@ -101,4 +101,100 @@ it('stops waiting once the link has expired unused', async (t) => {
   await settled()
   assert.equal(state.profileReads, reads)
   await done()
+})
+
+/** A browser with push on: the notification worker registered, one subscription. */
+const browserWithPush = (t: TestContext) => {
+  const steps: string[] = []
+  let registered = true
+  const subscription = {
+    endpoint: 'https://fcm.googleapis.com/fcm/send/this-browser',
+    unsubscribe: async () => {
+      steps.push('unsubscribe')
+      return true
+    },
+  }
+  const registration = {
+    active: { scriptURL: 'https://scout.test/notify-sw.js' },
+    pushManager: {
+      getSubscription: async () => (registered ? subscription : null),
+    },
+    unregister: async () => {
+      steps.push('unregister')
+      registered = false
+      return true
+    },
+  }
+  const serviceWorker = {
+    getRegistration: async () => (registered ? registration : undefined),
+  }
+  Object.defineProperty(navigator, 'serviceWorker', {
+    value: serviceWorker,
+    configurable: true,
+  })
+  Object.assign(window, { PushManager: class {}, Notification: class {} })
+  t.after(() => {
+    delete (navigator as { serviceWorker?: unknown }).serviceWorker
+    delete (window as { PushManager?: unknown }).PushManager
+    delete (window as { Notification?: unknown }).Notification
+  })
+  return steps
+}
+
+it('turns push off in this browser on sign-out, delete and turn-off', async (t) => {
+  for (const action of ['signOut', 'deleteAccount', 'disablePush'] as const) {
+    const steps = browserWithPush(t)
+    const requests: string[] = []
+    t.mock.method(
+      globalThis,
+      'fetch',
+      async (input: string | URL | Request, init?: RequestInit) => {
+        requests.push(`${init?.method ?? 'GET'} ${String(input)}`)
+        steps.push('server')
+        return new Response('{"ok":true}', {
+          headers: { 'Content-Type': 'application/json' },
+        })
+      },
+    )
+    // No garbage-collection timers, which would keep the test process running.
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { gcTime: Infinity, retry: false },
+        mutations: { gcTime: Infinity },
+      },
+    })
+    queryClient.setQueryData(['notify', 'me'], {
+      signedIn: true,
+      address: ACCOUNT,
+    })
+    const { result, unmount } = await renderHook(
+      () => useNotifyActions(),
+      (children) =>
+        createElement(QueryClientProvider, { client: queryClient }, children),
+    )
+    await act(async () => {
+      await result.current[action].mutateAsync()
+    })
+    assert.deepEqual(
+      requests,
+      {
+        signOut: ['DELETE /api/notify/me/push', 'POST /api/notify/auth/logout'],
+        deleteAccount: ['DELETE /api/notify/me'],
+        disablePush: ['DELETE /api/notify/me/push'],
+      }[action],
+      action,
+    )
+    // The browser drops the subscription and the worker once the server
+    // has forgotten it (or the account is gone), before signing out.
+    assert.deepEqual(
+      steps,
+      action === 'signOut'
+        ? ['server', 'unsubscribe', 'unregister', 'server']
+        : ['server', 'unsubscribe', 'unregister'],
+      action,
+    )
+    await unmount()
+    queryClient.clear()
+    t.mock.restoreAll()
+  }
 })

@@ -46,6 +46,27 @@ const ButtonContainer = styled.div`
   )}
 `;
 
+// Where only the bell's icon shows, its text stays for screen readers: it is
+// the button's name ("Notifications (3 unread)").
+const BellContainer = styled(ButtonContainer)`
+  ${landscapeStyle(
+    () => css`
+      .button-text {
+        display: block;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    `
+  )}
+`;
+
 const BadgeAnchor = styled.div`
   position: relative;
   display: flex;
@@ -87,7 +108,7 @@ const NotificationsButton: React.FC<{ toggleIsNotificationsOpen: () => void; isM
   if (!config.isSuccess) return null;
   const unread = inbox.data?.unread ?? profile.data?.unread ?? 0;
   return (
-    <ButtonContainer>
+    <BellContainer>
       <BadgeAnchor>
         <LightButton
           text={unread > 0 ? `Notifications (${unread} unread)` : "Notifications"}
@@ -97,7 +118,7 @@ const NotificationsButton: React.FC<{ toggleIsNotificationsOpen: () => void; isM
         />
         {unread > 0 ? <Badge aria-hidden>{unread > 99 ? "99+" : unread}</Badge> : null}
       </BadgeAnchor>
-    </ButtonContainer>
+    </BellContainer>
   );
 };
 

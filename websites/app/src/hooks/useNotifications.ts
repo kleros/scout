@@ -261,16 +261,23 @@ const useAction = <V = void, R = unknown>(
   })
 }
 
-/** Mutations on the signed-in profile; each refreshes the profile afterwards. */
+/**
+ * Mutations on the signed-in profile; each refreshes the profile afterwards.
+ * Signing out and deleting also turn push off in this browser, so a shared
+ * computer stops showing the account's alerts.
+ */
 export const useNotifyActions = () => {
   const queryClient = useQueryClient()
   return {
-    signOut: useAction(async () => {
+    signOut: useAction(async (_: void, call) => {
+      await unsubscribeFromPush(call).catch(() => undefined)
       await api('/auth/logout', { method: 'POST', json: {} })
       afterSignOut(queryClient)
     }),
     deleteAccount: useAction(async (_: void, call) => {
       await call('/me', { method: 'DELETE', json: {} })
+      // The server dropped its push subscriptions with the account.
+      await unsubscribeFromPush().catch(() => undefined)
       afterSignOut(queryClient)
     }),
     updatePreferences: useAction((update: Partial<NotifyPreferences>, call) =>
@@ -556,23 +563,41 @@ const subscribeToPush = async (publicKey: string, call: AccountCall) => {
   await call('/me/push', { method: 'POST', json: subscription.toJSON() })
 }
 
-const unsubscribeFromPush = async (call: AccountCall) => {
-  const registration = isPushSupported()
-    ? await navigator.serviceWorker.getRegistration(SERVICE_WORKER)
+/** This browser's registration of the notification worker, if it has one. */
+const notifyRegistration = async () => {
+  if (!isPushSupported()) return undefined
+  const registration =
+    await navigator.serviceWorker.getRegistration(SERVICE_WORKER)
+  const worker =
+    registration?.active ?? registration?.waiting ?? registration?.installing
+  return worker && new URL(worker.scriptURL).pathname === SERVICE_WORKER
+    ? registration
     : undefined
-  const subscription = await registration?.pushManager.getSubscription()
-  if (!subscription) return
-  await call('/me/push', {
-    method: 'DELETE',
-    json: { endpoint: subscription.endpoint },
-  })
-  await subscription.unsubscribe()
+}
+
+/**
+ * Turns push off in this browser: the server forgets the subscription (when
+ * `call` can reach the account), the browser drops it, and the worker is
+ * unregistered. A server that can't be reached doesn't keep it on here: its
+ * next push to the dropped subscription fails and removes it.
+ */
+const unsubscribeFromPush = async (call?: AccountCall) => {
+  const registration = await notifyRegistration()
+  if (!registration) return
+  const subscription = await registration.pushManager.getSubscription()
+  if (subscription) {
+    if (call)
+      await call('/me/push', {
+        method: 'DELETE',
+        json: { endpoint: subscription.endpoint },
+      }).catch(() => undefined)
+    await subscription.unsubscribe()
+  }
+  await registration.unregister()
 }
 
 /** Endpoint of this browser's push subscription, if any. */
 export const currentPushEndpoint = async (): Promise<string | null> => {
-  if (!isPushSupported()) return null
-  const registration =
-    await navigator.serviceWorker.getRegistration(SERVICE_WORKER)
+  const registration = await notifyRegistration()
   return (await registration?.pushManager.getSubscription())?.endpoint ?? null
 }

@@ -6,7 +6,8 @@ import { formatDistanceToNowStrict } from 'date-fns'
 
 import { landscapeStyle } from 'styles/landscapeStyle'
 import { StyledButton } from 'components/Button'
-import { localDeadline, timeLeft } from 'utils/timeLeft'
+import { sitePath } from 'utils/sitePath'
+import { timeLeft } from 'utils/timeLeft'
 import {
   useMarkRead,
   useNotificationsInbox,
@@ -87,18 +88,32 @@ const List = styled.ul`
   overflow-y: auto;
 `
 
-const Entry = styled.li<{ unread: boolean }>`
+const Entry = styled.li`
+  border-bottom: 1px solid ${({ theme }) => theme.stroke};
+`
+
+/** A whole entry is one button: it opens the item and marks the alert read. */
+const EntryButton = styled.button<{ unread: boolean }>`
   display: grid;
   grid-template-columns: 8px 1fr;
   gap: 10px;
+  width: 100%;
   padding: 12px 16px;
+  border: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
   cursor: pointer;
-  border-bottom: 1px solid ${({ theme }) => theme.stroke};
   background: ${({ theme, unread }) =>
     unread ? theme.subtleBackground : 'transparent'};
 
   &:hover {
     background: ${({ theme }) => theme.hoverBackground};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.secondaryBlue};
+    outline-offset: -2px;
   }
 `
 
@@ -111,14 +126,20 @@ const Dot = styled.span<{ unread: boolean; urgent: boolean }>`
     !unread ? 'transparent' : urgent ? theme.error : theme.secondaryBlue};
 `
 
-const EntryTitle = styled.div<{ unread: boolean }>`
+const EntryText = styled.span`
+  display: block;
+  min-width: 0;
+`
+
+const EntryTitle = styled.span<{ unread: boolean }>`
+  display: block;
   font-size: 14px;
   font-weight: ${({ unread }) => (unread ? 600 : 500)};
   line-height: 1.35;
   color: ${({ theme }) => theme.primaryText};
 `
 
-const EntryBody = styled.div`
+const EntryBody = styled.span`
   margin-top: 4px;
   font-size: 13px;
   line-height: 1.45;
@@ -129,7 +150,7 @@ const EntryBody = styled.div`
   overflow: hidden;
 `
 
-const EntryDetail = styled.div`
+const EntryDetail = styled.span`
   margin-top: 4px;
   font-size: 13px;
   font-style: italic;
@@ -142,7 +163,8 @@ const EntryDetail = styled.div`
   overflow: hidden;
 `
 
-const Meta = styled.div<{ urgent?: boolean }>`
+const Meta = styled.span<{ urgent?: boolean }>`
+  display: block;
   margin-top: 6px;
   font-size: 12px;
   color: ${({ theme, urgent }) => (urgent ? theme.error : theme.tertiaryText)};
@@ -159,21 +181,22 @@ const Empty = styled.div`
   color: ${({ theme }) => theme.secondaryText};
 `
 
-const sitePath = (url: string) => {
-  try {
-    const parsed = new URL(url, window.location.origin)
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`
-  } catch {
-    return null
-  }
-}
-
-/** Local-time deadline; time left is rounded down, like in the message text. */
+/**
+ * "Deadline Sep 27, 14:05 UTC (in 26 h)": in UTC, like the alert's own text,
+ * with seconds dropped and the time left rounded down, so it never shows more
+ * time than there is.
+ */
 const deadlineText = (deadline: string | null) => {
   if (!deadline) return null
-  const seconds = new Date(deadline).getTime() / 1000
-  const left = timeLeft(seconds)
-  return left ? `Deadline ${localDeadline(seconds)} (in ${left})` : null
+  const date = new Date(deadline)
+  const left = timeLeft(date.getTime() / 1000)
+  if (!left) return null
+  const day = date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
+  return `Deadline ${day}, ${date.toISOString().slice(11, 16)} UTC (in ${left})`
 }
 
 interface Props {
@@ -197,7 +220,9 @@ const NotificationsPanel: React.FC<Props> = ({
 
   const open = (notification: InboxNotification) => {
     if (!notification.read) markRead.mutate([notification.id])
-    const path = notification.url ? sitePath(notification.url) : null
+    const path = notification.url
+      ? sitePath(notification.url, window.location.origin)
+      : null
     toggleIsNotificationsOpen()
     if (path) navigate(path)
   }
@@ -242,25 +267,27 @@ const NotificationsPanel: React.FC<Props> = ({
             const urgent = notification.urgency === 'urgent'
             const deadline = deadlineText(notification.deadline)
             return (
-              <Entry
-                key={notification.id}
-                unread={!notification.read}
-                onClick={() => open(notification)}
-              >
-                <Dot unread={!notification.read} urgent={urgent} />
-                <div>
-                  <EntryTitle unread={!notification.read}>
-                    {notification.title}
-                  </EntryTitle>
-                  <EntryBody>{notification.body}</EntryBody>
-                  {notification.detail ? (
-                    <EntryDetail>{notification.detail}</EntryDetail>
-                  ) : null}
-                  <Meta urgent={urgent && Boolean(deadline)}>
-                    {deadline ??
-                      `${formatDistanceToNowStrict(new Date(notification.createdAt))} ago`}
-                  </Meta>
-                </div>
+              <Entry key={notification.id}>
+                <EntryButton
+                  type="button"
+                  unread={!notification.read}
+                  onClick={() => open(notification)}
+                >
+                  <Dot unread={!notification.read} urgent={urgent} />
+                  <EntryText>
+                    <EntryTitle unread={!notification.read}>
+                      {notification.title}
+                    </EntryTitle>
+                    <EntryBody>{notification.body}</EntryBody>
+                    {notification.detail ? (
+                      <EntryDetail>{notification.detail}</EntryDetail>
+                    ) : null}
+                    <Meta urgent={urgent && Boolean(deadline)}>
+                      {deadline ??
+                        `${formatDistanceToNowStrict(new Date(notification.createdAt))} ago`}
+                    </Meta>
+                  </EntryText>
+                </EntryButton>
               </Entry>
             )
           })}
