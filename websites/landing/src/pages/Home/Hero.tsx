@@ -4,7 +4,7 @@ import { landscapeStyle } from 'styles/landscapeStyle'
 import { responsiveSize } from 'styles/responsiveSize'
 import { SCOUT_APP_URL } from 'consts/urls'
 import SecuredByKleros from 'svgs/footer/secured-by-kleros.svg'
-import EtherscanAndMetamaskImage from 'pngs/hero/etherscan-and-metamask.png'
+import EtherscanAndMetamaskImage from 'pngs/hero/etherscan-and-metamask.webp'
 import { Button, ButtonAnchor } from 'components/Button'
 
 const Container = styled.div`

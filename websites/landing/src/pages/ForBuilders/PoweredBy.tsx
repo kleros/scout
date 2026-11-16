@@ -2,7 +2,7 @@ import React from 'react'
 import styled, { css } from 'styled-components'
 import { responsiveSize } from 'styles/responsiveSize'
 import { landscapeStyle } from 'styles/landscapeStyle'
-import CurateBackground from 'pngs/curate-background.png'
+import CurateBackground from 'pngs/curate-background.jpg'
 import { Button, ButtonAnchor } from 'components/Button'
 
 const Container = styled.div`
