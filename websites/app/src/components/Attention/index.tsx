@@ -4,6 +4,7 @@ import { formatDistanceToNowStrict } from 'date-fns'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import PayoutWarning from 'components/PayoutWarning'
+import { NOTIFY_ENABLED } from 'consts/notify'
 import { useNotifyConfig, useNotifyProfile } from 'hooks/useNotifications'
 import {
   useAppealFunding,
@@ -425,7 +426,7 @@ export const AttentionPanel: React.FC<{ address: string }> = ({ address }) => {
           ) : null}
         </>
       )}
-      <NotifyHint />
+      {NOTIFY_ENABLED ? <NotifyHint /> : null}
     </Panel>
   )
 }

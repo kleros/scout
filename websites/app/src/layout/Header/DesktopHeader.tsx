@@ -6,6 +6,7 @@ import { useToggle } from "react-use";
 import { useAccount } from "wagmi";
 
 import { DEFAULT_CHAIN } from "consts/chains";
+import { NOTIFY_ENABLED } from "consts/notify";
 import { useLockOverlayScroll } from "hooks/useLockOverlayScroll";
 
 import { BREAKPOINT_HEADER_DESKTOP } from "styles/landscapeStyle";
@@ -136,7 +137,7 @@ const DesktopHeader: React.FC = () => {
           <Overlay>
             {isDappListOpen && <DappList {...{ toggleIsDappListOpen, isDappListOpen }} />}
             {isHelpOpen && <Help {...{ toggleIsHelpOpen, isHelpOpen }} />}
-            {isNotificationsOpen && (
+            {NOTIFY_ENABLED && isNotificationsOpen && (
               <NotificationsPanel
                 toggleIsNotificationsOpen={toggleIsNotificationsOpen}
                 openSettings={openNotificationSettings}

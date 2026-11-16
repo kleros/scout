@@ -25,6 +25,7 @@ import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
 import FollowButton from 'components/FollowButton'
+import { NOTIFY_ENABLED } from 'consts/notify'
 import { AttentionBanner } from 'components/Attention'
 
 const Container = styled.div`
@@ -468,6 +469,13 @@ const ItemDetails: React.FC = () => {
     )
   }
 
+  const returnButton = (
+    <ReturnButton to={registryUrl} onClick={handleBackClick}>
+      <ArrowLeftIcon />
+      Return
+    </ReturnButton>
+  )
+
   return (
     <Container>
       <ScrollTop />
@@ -491,13 +499,14 @@ const ItemDetails: React.FC = () => {
 
           <TopBar>
             <Breadcrumb registryName={breadcrumbName} itemName={displayName} registryUrl={registryUrl} useHistoryBack={cameFromApp} />
-            <TopActions>
-              <FollowButton itemId={itemId} />
-              <ReturnButton to={registryUrl} onClick={handleBackClick}>
-                <ArrowLeftIcon />
-                Return
-              </ReturnButton>
-            </TopActions>
+            {NOTIFY_ENABLED ? (
+              <TopActions>
+                <FollowButton itemId={itemId} />
+                {returnButton}
+              </TopActions>
+            ) : (
+              returnButton
+            )}
           </TopBar>
 
           <AttentionSlot>

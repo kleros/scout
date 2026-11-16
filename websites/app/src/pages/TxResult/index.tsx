@@ -11,6 +11,7 @@ import { shortenAddress } from 'utils/shortenAddress'
 import { GNOSIS_CHAIN_ID, getAddressExplorerUrl, getTxExplorerUrl } from 'utils/chains'
 import Copyable from 'components/Copyable'
 import NotifyPrompt from 'components/NotifyPrompt'
+import { NOTIFY_ENABLED } from 'consts/notify'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import LoadingItems from 'pages/Registries/LoadingItems'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
@@ -571,8 +572,8 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
         )}
       </Hero>
 
-      {!reverted && NOTIFY_CONTEXT[operation.operationType] && (
-        <NotifyPrompt context={NOTIFY_CONTEXT[operation.operationType]} />
+      {NOTIFY_ENABLED && !reverted && NOTIFY_CONTEXT[operation.operationType] && (
+        <NotifyPrompt context={NOTIFY_CONTEXT[operation.operationType]} sender={from} />
       )}
 
       {showUnrelatedBanner && (

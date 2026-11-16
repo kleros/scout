@@ -5,7 +5,8 @@ evidence ("comments"), rulings, appeal funding and deadlines, court period
 changes and outcomes. Users sign in with their wallet (SIWE) and pick channels:
 the in-app bell, email, Telegram and browser push.
 
-It runs as Netlify Functions next to the app:
+It runs as Netlify Functions next to the app, once switched on (see
+[Switching it on](#switching-it-on)):
 
 | Function         | Trigger         | Job                                                |
 | ---------------- | --------------- | -------------------------------------------------- |
@@ -94,17 +95,47 @@ the registry with 23300 gas and 1 wei, confirmed by two providers) and shows
 a strong warning when it fails. It doesn't block: some smart wallets can
 receive it.
 
+## Switching it on
+
+The service ships dark: merged but off. Two build-time flags turn it on, each
+only when set to exactly `true`:
+
+| Flag                       | Netlify scope | What it does                                                                                                                                                                                               |
+| -------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NOTIFY_ENABLED`           | Builds        | Keeps the three functions in the deploy. Otherwise the build's last step (`scripts/notify-prune.mjs`) deletes them, so there is no `/api/notify` and nothing runs on a schedule.                           |
+| `REACT_APP_NOTIFY_ENABLED` | Builds        | Turns on the app's side: the bell, Settings → Notifications, prompts and follow buttons. Otherwise the app never calls `/api/notify`, never registers the service worker and looks as it did before. |
+
+Set both or neither. With only the app's flag, every page load asks a missing
+API for its configuration; with only the server's, the schedules run every
+minute with nobody using them. Set them for the Production context, plus any
+branch deploy used to try the service.
+
 ## Setup (Netlify)
 
-Set these environment variables for the site (Functions scope):
+Set these environment variables for the site:
 
-| Variable                             | Notes                                                                                                                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NOTIFY_DATABASE_URL`                | Postgres connection string. Use the **pooled** URL (Netlify DB / Neon, or Supabase transaction pooler). `NETLIFY_DATABASE_URL` is picked up automatically. Tables are created on first use. |
-| `NOTIFY_SESSION_SECRET`              | 32+ random characters (`openssl rand -hex 32`). Signs sessions and email links.                                                                                                             |
-| `NOTIFY_SITE_URL`                    | Canonical site origin, e.g. `https://scout-app.kleros.io` (defaults to Netlify's `URL`).                                                                                                    |
-| `REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT` | Already set for the app; reused as the indexer URL (or set `NOTIFY_INDEXER_URL`).                                                                                                           |
-| `NOTIFY_GNOSIS_RPC_URLS`             | Optional, comma-separated. Defaults to public endpoints.                                                                                                                                    |
+| Variable                             | Notes                                                                                                                                                                       |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NOTIFY_DATABASE_URL`                | Postgres connection string. Use the **pooled** URL (Netlify DB / Neon, or Supabase transaction pooler). Required: `NETLIFY_DATABASE_URL` and `DATABASE_URL` are not used. Tables are created on first use. |
+| `NOTIFY_SESSION_SECRET`              | 32+ random characters (`openssl rand -hex 32`). Signs sessions and email links.                                                                                             |
+| `NOTIFY_SITE_URL`                    | Canonical site origin, e.g. `https://scout-app.kleros.io` (defaults to Netlify's `URL`).                                                                                    |
+| `REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT` | Already set for the app; reused as the indexer URL (or set `NOTIFY_INDEXER_URL`).                                                                                           |
+| `NOTIFY_GNOSIS_RPC_URLS`             | Optional, comma-separated. Defaults to public endpoints.                                                                                                                    |
+
+**Secrets.** `NOTIFY_DATABASE_URL`, `NOTIFY_SESSION_SECRET`, `RESEND_API_KEY`,
+`TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` and `VAPID_PRIVATE_KEY` must
+be:
+
+- scoped to the **Production** deploy context only, and to the **Functions**
+  scope only (the build never needs them);
+- marked **Contains secret values**;
+- kept from deploy previews of pull requests from forks: set the site's
+  sensitive variable policy to **Require approval** (or deploy them without
+  sensitive variables).
+
+A deploy preview runs the pull request's own function code with every
+variable its context can read, and this repository takes pull requests from
+outside contributors.
 
 Channels are enabled only when all of their variables are set:
 
@@ -130,8 +161,8 @@ push services.
 ## Local development
 
 ```sh
-yarn notify:dev                                   # API on :8788, in-memory Postgres (PGlite)
-NOTIFY_API_URL=http://localhost:8788 yarn start   # app, proxying /api/notify
+yarn notify:dev    # API on 127.0.0.1:8788, in-memory Postgres (PGlite)
+REACT_APP_NOTIFY_ENABLED=true NOTIFY_API_URL=http://127.0.0.1:8788 yarn start   # app, proxying /api/notify
 ```
 
 Set `NOTIFY_DEV_WATCH=1` to also run the watcher and delivery loops against

@@ -10,6 +10,7 @@ import RewardsIcon from "svgs/navbar/rewards.svg";
 import BookIcon from "svgs/navbar/book.svg";
 import ArrowDown from "svgs/icons/arrow-down.svg";
 
+import { NOTIFY_ENABLED } from "consts/notify";
 import { useLockOverlayScroll } from "hooks/useLockOverlayScroll";
 import { registryNavOptions } from "utils/items";
 
@@ -278,7 +279,7 @@ const NavBar: React.FC = () => {
           <Overlay>
             {isDappListOpen && <DappList {...{ toggleIsDappListOpen }} />}
             {isHelpOpen && <Help {...{ toggleIsHelpOpen }} />}
-            {isNotificationsOpen && (
+            {NOTIFY_ENABLED && isNotificationsOpen && (
               <NotificationsPanel
                 toggleIsNotificationsOpen={toggleIsNotificationsOpen}
                 openSettings={() => {

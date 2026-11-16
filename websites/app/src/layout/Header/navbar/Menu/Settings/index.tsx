@@ -6,6 +6,9 @@ import { useClickAway } from "react-use";
 
 import { landscapeStyle } from "styles/landscapeStyle";
 
+import { NOTIFY_ENABLED } from "consts/notify";
+import { useNotifyConfig } from "hooks/useNotifications";
+
 import { ISettings } from "../../index";
 
 import General from "./General";
@@ -71,40 +74,76 @@ const Tab = styled.button<{ selected: boolean }>`
 
 const TABS = ["General", "Notifications"];
 
-const Settings: React.FC<ISettings> = ({ toggleIsSettingsOpen, initialTab }) => {
-  const containerRef = useRef(null);
-  const location = useLocation();
-  const navigate = useNavigate();
+/** General and Notifications, once the notification service has answered; General alone otherwise. */
+const SettingsTabs: React.FC<ISettings> = ({ toggleIsSettingsOpen, initialTab }) => {
+  const config = useNotifyConfig();
   const [tab, setTab] = useState(initialTab ?? 0);
-  useClickAway(containerRef, () => {
-    toggleIsSettingsOpen();
-    const search = new URLSearchParams(location.search);
-    const hadNotifyFlag = search.has("notify");
-    search.delete("notify");
-    if (location.hash.includes("#notifications") || hadNotifyFlag) {
-      const query = search.toString();
-      navigate(`${location.pathname}${query ? `?${query}` : ""}`, { replace: true });
-    }
-  });
+  const tabs = useRef<(HTMLButtonElement | null)[]>([]);
+  if (!config.isSuccess) return <General {...{ toggleIsSettingsOpen }} />;
+
+  // Arrow keys move between tabs, as in any tab list.
+  const onKeyDown = (event: React.KeyboardEvent, index: number) => {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+    event.preventDefault();
+    const next = (index + (event.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length;
+    setTab(next);
+    tabs.current[next]?.focus();
+  };
 
   return (
-    <Container ref={containerRef}>
-      <StyledSettingsText>Settings</StyledSettingsText>
-      <Tabs role="tablist">
+    <>
+      <Tabs role="tablist" aria-label="Settings">
         {TABS.map((label, index) => (
           <Tab
             key={label}
+            ref={(element) => {
+              tabs.current[index] = element;
+            }}
+            id={`settings-tab-${index}`}
             type="button"
             role="tab"
             aria-selected={tab === index}
+            aria-controls={`settings-panel-${index}`}
+            tabIndex={tab === index ? 0 : -1}
             selected={tab === index}
             onClick={() => setTab(index)}
+            onKeyDown={(event) => onKeyDown(event, index)}
           >
             {label}
           </Tab>
         ))}
       </Tabs>
-      {tab === 0 ? <General {...{ toggleIsSettingsOpen }} /> : <Notifications />}
+      <div role="tabpanel" id={`settings-panel-${tab}`} aria-labelledby={`settings-tab-${tab}`}>
+        {tab === 0 ? <General {...{ toggleIsSettingsOpen }} /> : <Notifications />}
+      </div>
+    </>
+  );
+};
+
+const Settings: React.FC<ISettings> = ({ toggleIsSettingsOpen, initialTab }) => {
+  const containerRef = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  useClickAway(containerRef, () => {
+    toggleIsSettingsOpen();
+    const search = new URLSearchParams(location.search);
+    // The email confirmation page sends people here with ?notify=…; it goes with #notifications.
+    if (NOTIFY_ENABLED && search.has("notify")) {
+      search.delete("notify");
+      const query = search.toString();
+      navigate(`${location.pathname}${query ? `?${query}` : ""}`, { replace: true });
+    } else if (location.hash.includes("#notifications"))
+      navigate(`${location.pathname}${location.search}`, { replace: true });
+  });
+
+  return (
+    <Container ref={containerRef}>
+      <StyledSettingsText>Settings</StyledSettingsText>
+      {NOTIFY_ENABLED ? (
+        <SettingsTabs {...{ toggleIsSettingsOpen, initialTab }} />
+      ) : (
+        <General {...{ toggleIsSettingsOpen }} />
+      )}
     </Container>
   );
 };

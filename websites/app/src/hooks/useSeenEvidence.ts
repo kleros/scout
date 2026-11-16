@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { NOTIFY_ENABLED } from 'consts/notify'
 import { isValidRead, readsAhead, uploadReads } from 'utils/cases/reads'
 import {
   useEvidenceReads,
@@ -58,9 +59,11 @@ export const markEvidenceSeen = (
 const useSyncedAccount = (viewer: string | undefined) => {
   const config = useNotifyConfig()
   const profile = useNotifyProfile()
+  // Without the service in this build, this browser is the only source.
   const known =
-    (config.isError || config.isSuccess) &&
-    (!config.isSuccess || profile.isError || profile.isSuccess)
+    !NOTIFY_ENABLED ||
+    ((config.isError || config.isSuccess) &&
+      (!config.isSuccess || profile.isError || profile.isSuccess))
   const account =
     viewer &&
     profile.data?.signedIn &&

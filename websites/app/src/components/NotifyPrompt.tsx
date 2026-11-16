@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useAccount } from 'wagmi'
 import NotificationsIcon from 'svgs/menu-icons/notifications.svg'
 import { StyledButton } from 'components/Button'
 import { useNotifyConfig, useNotifyProfile } from 'hooks/useNotifications'
@@ -37,13 +38,19 @@ const Muted = styled.div`
 
 /**
  * Shown right after a submission, challenge or appeal contribution: the moment
- * a user most needs to hear about what happens next.
+ * a user most needs to hear about what happens next. Only to whoever sent
+ * the transaction; anyone else looking at it has no stake in it.
  */
-const NotifyPrompt: React.FC<{ context: string }> = ({ context }) => {
+const NotifyPrompt: React.FC<{ context: string; sender: string }> = ({
+  context,
+  sender,
+}) => {
+  const { address } = useAccount()
   const config = useNotifyConfig()
   const profile = useNotifyProfile()
   const navigate = useNavigate()
   const location = useLocation()
+  if (!address || address.toLowerCase() !== sender.toLowerCase()) return null
   if (!config.isSuccess || profile.isLoading) return null
 
   const me = profile.data

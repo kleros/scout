@@ -7,11 +7,14 @@ import {
 } from '@tanstack/react-query'
 import { useAccount, useSignMessage } from 'wagmi'
 import { createSiweMessage } from 'viem/siwe'
+import { NOTIFY_ENABLED } from 'consts/notify'
 
 /**
  * Client for the Scout notification service (Netlify Functions under
- * /api/notify). Everything degrades to "unavailable" when the service is not
- * deployed (e.g. plain `vite` dev server) or not configured.
+ * /api/notify). Nothing here sends a request unless the app is built with
+ * the service enabled (consts/notify). Everything degrades to "unavailable"
+ * when the service is not deployed (e.g. plain `vite` dev server) or not
+ * configured.
  */
 
 const BASE = '/api/notify'
@@ -33,6 +36,9 @@ const api = async <T>(
     account?: string
   },
 ): Promise<T> => {
+  // The one place that talks to the service: a build without it never does.
+  if (!NOTIFY_ENABLED)
+    throw new NotifyApiError('Notifications are off in this build.', 404)
   const headers: Record<string, string> = {}
   if (init?.json !== undefined) headers['Content-Type'] = 'application/json'
   if (init?.account) headers['X-Notify-Account'] = init.account
@@ -168,12 +174,19 @@ const accountApi = async <T>(
   }
 }
 
+/**
+ * What the service offers here. Everything else waits for it, so with the
+ * service off in this build nothing else runs either.
+ */
 export const useNotifyConfig = () =>
   useQuery({
     queryKey: KEYS.config,
     queryFn: () => api<NotifyConfig>('/config'),
+    enabled: NOTIFY_ENABLED,
     staleTime: Infinity,
     retry: false,
+    // A service that isn't answering is asked again on focus, not by every component that mounts.
+    retryOnMount: false,
   })
 
 /**
@@ -511,6 +524,7 @@ const urlBase64ToUint8Array = (base64: string) => {
 }
 
 const subscribeToPush = async (publicKey: string, call: AccountCall) => {
+  if (!NOTIFY_ENABLED) throw new Error('Notifications are off in this build.')
   if (!isPushSupported())
     throw new Error('This browser does not support notifications.')
   const permission = await Notification.requestPermission()

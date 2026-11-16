@@ -1,6 +1,8 @@
 [build]
   publish = "dist"
-  command = "wagmi generate && yarn run build"
+  # The last step deletes the notification functions unless the build has
+  # NOTIFY_ENABLED=true, so they are not deployed (netlify/notify/README.md).
+  command = "wagmi generate && yarn run build && node scripts/notify-prune.mjs"
 
 [build.environment]
   NODE_VERSION = "20.18.3"
@@ -11,7 +13,8 @@
   NODE_OPTIONS = "--max-old-space-size=4096"
 
 # Notification service (netlify/notify): the /api/notify/* API plus two
-# scheduled functions (watcher, deliver). See netlify/notify/README.md.
+# scheduled functions (watcher, deliver), deployed only with
+# NOTIFY_ENABLED=true (see the build command). See netlify/notify/README.md.
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"

@@ -32,14 +32,15 @@ const list = (value: string | undefined, fallback: string[]) =>
 export const readEnv = (
   env: Record<string, string | undefined> = process.env,
 ): NotifyEnv => {
-  const databaseUrl =
-    env.NOTIFY_DATABASE_URL ?? env.NETLIFY_DATABASE_URL ?? env.DATABASE_URL
+  // Only its own variable: never a generic one (NETLIFY_DATABASE_URL,
+  // DATABASE_URL) that may point at a database meant for something else.
+  const databaseUrl = env.NOTIFY_DATABASE_URL
   const sessionSecret = env.NOTIFY_SESSION_SECRET
   const siteUrl = (env.NOTIFY_SITE_URL ?? env.URL ?? '').replace(/\/+$/, '')
   const indexerUrl =
     env.NOTIFY_INDEXER_URL ?? env.REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT
   const missing = [
-    !databaseUrl && 'NOTIFY_DATABASE_URL (or NETLIFY_DATABASE_URL)',
+    !databaseUrl && 'NOTIFY_DATABASE_URL',
     (!sessionSecret || sessionSecret.length < 32) &&
       'NOTIFY_SESSION_SECRET (32+ characters)',
     !siteUrl && 'NOTIFY_SITE_URL',

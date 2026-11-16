@@ -8,6 +8,7 @@ import SettingsIcon from "svgs/menu-icons/settings.svg";
 import { landscapeStyle } from "styles/landscapeStyle";
 
 import LightButton from "components/LightButton";
+import { NOTIFY_ENABLED } from "consts/notify";
 import { useNotificationsInbox, useNotifyConfig, useNotifyProfile } from "hooks/useNotifications";
 
 import { IHelp, ISettings } from "../index";
@@ -67,17 +68,37 @@ const Badge = styled.span`
   pointer-events: none;
 `;
 
+// svgr turns SVG imports into components; their type declarations still say string.
+const BellIcon = NotificationsIcon as unknown as React.FC<React.SVGAttributes<SVGElement>>;
+
 interface IMenu {
   isMobileNavbar?: boolean;
   toggleIsNotificationsOpen?: () => void;
 }
 
-/** Unread count for the bell; hidden where the notification service isn't deployed. */
-const useUnread = () => {
+/** The bell, with the unread count; hidden where the notification service isn't available. */
+const NotificationsButton: React.FC<{ toggleIsNotificationsOpen: () => void; isMobileNavbar?: boolean }> = ({
+  toggleIsNotificationsOpen,
+  isMobileNavbar,
+}) => {
   const config = useNotifyConfig();
   const profile = useNotifyProfile();
   const inbox = useNotificationsInbox(profile.data?.signedIn ? profile.data.address : undefined);
-  return { available: config.isSuccess, unread: inbox.data?.unread ?? profile.data?.unread ?? 0 };
+  if (!config.isSuccess) return null;
+  const unread = inbox.data?.unread ?? profile.data?.unread ?? 0;
+  return (
+    <ButtonContainer>
+      <BadgeAnchor>
+        <LightButton
+          text={unread > 0 ? `Notifications (${unread} unread)` : "Notifications"}
+          onClick={() => toggleIsNotificationsOpen()}
+          Icon={BellIcon}
+          isMobileNavbar={isMobileNavbar}
+        />
+        {unread > 0 ? <Badge aria-hidden>{unread > 99 ? "99+" : unread}</Badge> : null}
+      </BadgeAnchor>
+    </ButtonContainer>
+  );
 };
 
 const Menu: React.FC<ISettings & IHelp & IMenu> = ({
@@ -86,18 +107,7 @@ const Menu: React.FC<ISettings & IHelp & IMenu> = ({
   toggleIsNotificationsOpen,
   isMobileNavbar,
 }) => {
-  const { available, unread } = useUnread();
   const buttons = [
-    ...(available && toggleIsNotificationsOpen
-      ? [
-          {
-            text: unread > 0 ? `Notifications (${unread} unread)` : "Notifications",
-            Icon: NotificationsIcon,
-            onClick: () => toggleIsNotificationsOpen(),
-            badge: unread,
-          },
-        ]
-      : []),
     {
       text: "Settings",
       Icon: SettingsIcon,
@@ -114,17 +124,14 @@ const Menu: React.FC<ISettings & IHelp & IMenu> = ({
 
   return (
     <Container>
-      {buttons.map(({ text, Icon, onClick, ...rest }) => {
-        const badge = ("badge" in rest ? rest.badge : 0) ?? 0;
-        return (
-          <ButtonContainer key={text}>
-            <BadgeAnchor>
-              <LightButton {...{ text, onClick, Icon, isMobileNavbar }} />
-              {badge > 0 ? <Badge aria-hidden>{badge > 99 ? "99+" : badge}</Badge> : null}
-            </BadgeAnchor>
-          </ButtonContainer>
-        );
-      })}
+      {NOTIFY_ENABLED && toggleIsNotificationsOpen ? (
+        <NotificationsButton {...{ toggleIsNotificationsOpen, isMobileNavbar }} />
+      ) : null}
+      {buttons.map(({ text, Icon, onClick }) => (
+        <ButtonContainer key={Icon}>
+          <LightButton {...{ text, onClick, Icon, isMobileNavbar }} />
+        </ButtonContainer>
+      ))}
     </Container>
   );
 };
