@@ -355,7 +355,12 @@ const Notifications: React.FC = () => {
         </Muted>
         <LinkButton
           type="button"
-          onClick={() => run(actions.signOut.mutateAsync())}
+          onClick={() =>
+            run(
+              actions.signOut.mutateAsync(),
+              'Signed out of notifications on all your devices.',
+            )
+          }
         >
           Sign out
         </LinkButton>
