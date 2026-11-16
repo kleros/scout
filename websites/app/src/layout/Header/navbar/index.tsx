@@ -10,6 +10,7 @@ import RewardsIcon from "svgs/navbar/rewards.svg";
 import BookIcon from "svgs/navbar/book.svg";
 import ArrowDown from "svgs/icons/arrow-down.svg";
 
+import { NOTIFY_ENABLED } from "consts/notify";
 import { useLockOverlayScroll } from "hooks/useLockOverlayScroll";
 import { registryNavOptions } from "utils/items";
 
@@ -23,6 +24,7 @@ import { useOpenContext } from "../MobileHeader";
 import DappList from "./DappList";
 import Menu from "./Menu";
 import Help from "./Menu/Help";
+import NotificationsPanel from "./Menu/NotificationsPanel";
 import Settings from "./Menu/Settings";
 import { DisconnectWalletButton } from "./Menu/Settings/General";
 
@@ -164,6 +166,8 @@ const NavBar: React.FC = () => {
   const [isDappListOpen, toggleIsDappListOpen] = useToggle(false);
   const [isHelpOpen, toggleIsHelpOpen] = useToggle(false);
   const [isSettingsOpen, toggleIsSettingsOpen] = useToggle(false);
+  const [isNotificationsOpen, toggleIsNotificationsOpen] = useToggle(false);
+  const [settingsTab, setSettingsTab] = useState(0);
   const [isRegistriesExpanded, setIsRegistriesExpanded] = useState(false);
   const { isOpen, toggleIsOpen } = useOpenContext();
   useLockOverlayScroll(isOpen);
@@ -258,17 +262,34 @@ const NavBar: React.FC = () => {
               )}
             </WalletContainer>
             <hr />
-            <Menu {...{ toggleIsHelpOpen, toggleIsSettingsOpen }} isMobileNavbar={true} />
+            <Menu
+              {...{ toggleIsHelpOpen, toggleIsNotificationsOpen }}
+              toggleIsSettingsOpen={() => {
+                setSettingsTab(0);
+                toggleIsSettingsOpen();
+              }}
+              isMobileNavbar={true}
+            />
             <br />
           </Container>
         </StyledOverlay>
       </Wrapper>
-      {(isDappListOpen || isHelpOpen || isSettingsOpen) && (
+      {(isDappListOpen || isHelpOpen || isSettingsOpen || isNotificationsOpen) && (
         <OverlayPortal>
           <Overlay>
             {isDappListOpen && <DappList {...{ toggleIsDappListOpen }} />}
             {isHelpOpen && <Help {...{ toggleIsHelpOpen }} />}
-            {isSettingsOpen && <Settings {...{ toggleIsSettingsOpen }} />}
+            {NOTIFY_ENABLED && isNotificationsOpen && (
+              <NotificationsPanel
+                toggleIsNotificationsOpen={toggleIsNotificationsOpen}
+                openSettings={() => {
+                  toggleIsNotificationsOpen(false);
+                  setSettingsTab(1);
+                  toggleIsSettingsOpen(true);
+                }}
+              />
+            )}
+            {isSettingsOpen && <Settings {...{ toggleIsSettingsOpen }} initialTab={settingsTab} />}
           </Overlay>
         </OverlayPortal>
       )}

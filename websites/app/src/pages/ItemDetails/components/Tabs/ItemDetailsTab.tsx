@@ -6,6 +6,8 @@ import { responsiveSize } from 'styles/responsiveSize'
 import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
 import CrowdfundingCard from 'components/CrowdfundingCard'
 import { STATUS_CODE } from 'utils/itemStatus'
+import { appealDeadlineEvents, downloadCalendar } from 'utils/calendar'
+import { getItemDisplayName, revRegistryMap } from 'utils/items'
 import ItemTimeline from '../ItemTimeline'
 import ItemFieldsDisplay from '../ItemFieldsDisplay'
 import ScoutBigLogo from 'assets/svgs/backgrounds/scout-big-logo.svg'
@@ -159,6 +161,34 @@ const ScoutWatermark = styled.div`
   }
 `
 
+const CalendarButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ theme }) => theme.secondaryBlue};
+  cursor: pointer;
+
+  &:hover {
+    color: ${({ theme }) => theme.primaryBlue};
+  }
+`
+
+/** Downloads the open appeal round's deadlines as calendar events, with alarms. */
+const downloadAppealDeadlines = (detailsData: any, round: any, registryAddress: string) =>
+  downloadCalendar(
+    `scout-appeal-${detailsData.itemID.slice(0, 10)}.ics`,
+    appealDeadlineEvents({
+      itemID: detailsData.itemID,
+      name: getItemDisplayName(detailsData, revRegistryMap[registryAddress] ?? ''),
+      url: window.location.href.split('#')[0],
+      round,
+      removal: detailsData.requests?.[0]?.requestType === 'ClearingRequested',
+    }),
+  )
+
 interface ItemDetailsTabProps {
   detailsData: any
   statusCode: number | null
@@ -310,6 +340,17 @@ const ItemDetailsTab: React.FC<ItemDetailsTabProps> = ({
                         )}
                       </AppealInfoItem>
                     </>
+                  )}
+                  {currentRulingRound?.appealPeriodEnd && Number(currentRulingRound.appealPeriodEnd) * 1000 > Date.now() && (
+                    <AppealInfoItem>
+                      <AppealInfoLabel>Reminders</AppealInfoLabel>
+                      <CalendarButton
+                        type="button"
+                        onClick={() => downloadAppealDeadlines(detailsData, currentRulingRound, registryAddress)}
+                      >
+                        Add deadlines to calendar
+                      </CalendarButton>
+                    </AppealInfoItem>
                   )}
                 </>
               )}

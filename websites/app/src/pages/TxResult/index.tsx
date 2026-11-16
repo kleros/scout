@@ -10,6 +10,8 @@ import { useTxResultQuery, isTxHashValid } from 'hooks/queries/useTxResultQuery'
 import { shortenAddress } from 'utils/shortenAddress'
 import { GNOSIS_CHAIN_ID, getAddressExplorerUrl, getTxExplorerUrl } from 'utils/chains'
 import Copyable from 'components/Copyable'
+import NotifyPrompt from 'components/NotifyPrompt'
+import { NOTIFY_ENABLED } from 'consts/notify'
 import { IdenticonOrAvatar, AddressOrName } from 'components/ConnectWallet/AccountDisplay'
 import LoadingItems from 'pages/Registries/LoadingItems'
 import ArrowLeftIcon from 'assets/svgs/icons/arrow-left.svg'
@@ -505,6 +507,14 @@ const TxResult: React.FC = () => {
   )
 }
 
+/** Actions after which the user has a stake in what happens next. */
+const NOTIFY_CONTEXT: Record<string, string> = {
+  'Item Submission': 'this submission',
+  'Removal Request': 'this removal request',
+  'Request Challenge': 'this challenge',
+  'Appeal Contribution': 'this appeal',
+}
+
 interface BodyProps {
   data: NonNullable<ReturnType<typeof useTxResultQuery>['data']>
 }
@@ -561,6 +571,10 @@ const SuccessBody: React.FC<BodyProps> = ({ data }) => {
           </PrimaryButton>
         )}
       </Hero>
+
+      {NOTIFY_ENABLED && !reverted && NOTIFY_CONTEXT[operation.operationType] && (
+        <NotifyPrompt context={NOTIFY_CONTEXT[operation.operationType]} sender={from} />
+      )}
 
       {showUnrelatedBanner && (
         <InfoBanner>

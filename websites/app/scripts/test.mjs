@@ -60,6 +60,8 @@ await build({
   define: {
     'import.meta.env': JSON.stringify({
       REACT_APP_DAPPLOOKER_API_KEY: 'test',
+      // The notification client's tests run it as built with the service on.
+      REACT_APP_NOTIFY_ENABLED: 'true',
       REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT: 'http://localhost/graphql',
       REACT_APP_SUBGRAPH_KLEROS_DISPLAY_GNOSIS_ENDPOINT:
         'http://localhost/graphql',

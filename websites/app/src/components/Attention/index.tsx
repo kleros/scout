@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { formatDistanceToNowStrict } from 'date-fns'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import PayoutWarning from 'components/PayoutWarning'
+import { NOTIFY_ENABLED } from 'consts/notify'
+import { useNotifyConfig, useNotifyProfile } from 'hooks/useNotifications'
 import {
   useAppealFunding,
   useAttention,
@@ -353,6 +355,27 @@ const WaitingEntry: React.FC<{ entry: AttentionWithEvidence }> = ({
   )
 }
 
+const NotifyHint: React.FC = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const config = useNotifyConfig()
+  const profile = useNotifyProfile()
+  if (!config.data || profile.data?.signedIn) return null
+  return (
+    <Muted>
+      Want a heads-up when something lands here?{' '}
+      <TextButton
+        type="button"
+        onClick={() =>
+          navigate(`${location.pathname}${location.search}#notifications`)
+        }
+      >
+        Set up notifications
+      </TextButton>
+    </Muted>
+  )
+}
+
 const WAITING_PREVIEW = 3
 
 /**
@@ -418,6 +441,7 @@ export const AttentionPanel: React.FC<{ address: string }> = ({ address }) => {
           ) : null}
         </>
       )}
+      {NOTIFY_ENABLED ? <NotifyHint /> : null}
     </Panel>
   )
 }
