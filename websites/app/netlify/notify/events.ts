@@ -105,7 +105,9 @@ export const detectItemEvents = (
       })
     }
     // The challenge reason and removal reason arrive with their own events.
-    const pieces = (request.evidenceGroup?.evidences ?? [])
+    // Anyone can post evidence at any time, even on a request that is long
+    // settled: there it decides nothing, so it is not announced.
+    const pieces = (request.resolved ? [] : request.evidenceGroup?.evidences ?? [])
       .filter(
         (e) =>
           e.txHash !== request.txHashChallenge &&

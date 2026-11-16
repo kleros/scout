@@ -101,6 +101,8 @@ export interface InboxNotification {
   urgency: 'urgent' | 'important' | 'soft'
   title: string
   body: string
+  /** What someone wrote (evidence, a reason), quoted: shown here only, never emailed or pushed. */
+  detail: string | null
   url: string | null
   itemId: string | null
   deadline: string | null

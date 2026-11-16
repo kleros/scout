@@ -129,6 +129,19 @@ const EntryBody = styled.div`
   overflow: hidden;
 `
 
+const EntryDetail = styled.div`
+  margin-top: 4px;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.45;
+  color: ${({ theme }) => theme.secondaryText};
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`
+
 const Meta = styled.div<{ urgent?: boolean }>`
   margin-top: 6px;
   font-size: 12px;
@@ -240,6 +253,9 @@ const NotificationsPanel: React.FC<Props> = ({
                     {notification.title}
                   </EntryTitle>
                   <EntryBody>{notification.body}</EntryBody>
+                  {notification.detail ? (
+                    <EntryDetail>{notification.detail}</EntryDetail>
+                  ) : null}
                   <Meta urgent={urgent && Boolean(deadline)}>
                     {deadline ??
                       `${formatDistanceToNowStrict(new Date(notification.createdAt))} ago`}

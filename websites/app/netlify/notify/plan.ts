@@ -34,8 +34,15 @@ export type Role = Side | 'submitter' | 'participant' | 'follower'
 export interface Draft {
   kind: string
   urgency: Urgency
+  /** Fixed wording and the item's name only: it is sent by email, Telegram and push. */
   title: string
   body: string
+  /**
+   * What someone wrote (evidence, a challenge or removal reason), quoted.
+   * Anyone can post evidence, so this is shown in the app's bell only and
+   * never sent by email, Telegram or push.
+   */
+  detail?: string
   deadline?: number
   /** Soft categories a user can silence. */
   category?: Category
@@ -104,11 +111,28 @@ const sideOfRole = (role: Role, request: IndexedRequest): Side | null => {
   return null
 }
 
+/** The side an address takes in a request (as a party or a crowdfunder), if just one. */
+const sideOfAddress = (
+  address: string,
+  request: IndexedRequest,
+): Side | null => {
+  const sides = requestSides(request)
+  const who = address.toLowerCase()
+  const requester = sides.requester.has(who)
+  const challenger = sides.challenger.has(who)
+  if (requester === challenger) return null
+  return requester ? 'requester' : 'challenger'
+}
+
 const describePartyOf = (address: string, request: IndexedRequest) => {
   const who = address.toLowerCase()
-  if (who === request.requester.toLowerCase())
-    return isRemoval(request) ? 'The removal requester' : 'The submitter'
-  if (who === request.challenger.toLowerCase()) return 'The challenger'
+  const requester = isRemoval(request) ? 'removal requester' : 'submitter'
+  if (who === request.requester.toLowerCase()) return `The ${requester}`
+  if (request.disputed && who === request.challenger.toLowerCase())
+    return 'The challenger'
+  const side = sideOfAddress(who, request)
+  if (side)
+    return `Someone on the ${side === 'requester' ? requester : 'challenger'}'s side`
   return 'Someone'
 }
 
@@ -234,12 +258,14 @@ export const draftFor = async (
           (e) => e.txHash === request.creationTx,
         ),
       )
+      const given = reason ? `Reason given: ${period(reason)}` : undefined
       if (role === 'submitter') {
         return {
           kind: 'removal_requested',
           urgency: 'urgent',
           title: `Someone wants to remove your ${noun}`,
-          body: `A removal request was filed for ${label}.${reason ? ` Reason given: ${period(reason)}` : ''} If the entry still follows the policy, you can challenge the removal until ${formatDeadline(deadline, ctx.now)}.`,
+          body: `A removal request was filed for ${label}.${reason ? ' Read the reason given on Scout.' : ''} If the entry still follows the policy, you can challenge the removal until ${formatDeadline(deadline, ctx.now)}.`,
+          detail: given,
           deadline,
         }
       }
@@ -248,7 +274,8 @@ export const draftFor = async (
         urgency: 'important',
         category: followerCategory,
         title: `Removal requested: ${label}`,
-        body: `${reason ? `Reason given: ${period(reason)} ` : ''}It can be challenged until ${formatDeadline(deadline, ctx.now)}.`,
+        body: `It can be challenged until ${formatDeadline(deadline, ctx.now)}.`,
+        detail: given,
         deadline,
       }
     }
@@ -265,6 +292,7 @@ export const draftFor = async (
       const until = evidenceEnd
         ? ` The evidence period can end ${formatDeadline(evidenceEnd, ctx.now)}.`
         : ''
+      const says = reason ? `The challenger says: ${period(reason)}` : undefined
       if (role === 'requester') {
         return {
           kind: 'challenged',
@@ -272,7 +300,8 @@ export const draftFor = async (
           title: removal
             ? `Your removal request was challenged: ${label}`
             : `Your ${noun} was challenged: ${label}`,
-          body: `It's now dispute #${request.disputeID} in the Kleros court.${reason ? ` The challenger says: ${period(reason)}` : ''} Add your side's evidence on the item page.${until}`,
+          body: `It's now dispute #${request.disputeID} in the Kleros court. ${reason ? "Read the challenger's reason and add" : 'Add'} your side's evidence on the item page.${until}`,
+          detail: says,
           deadline: evidenceEnd,
         }
       }
@@ -299,7 +328,8 @@ export const draftFor = async (
         urgency: 'important',
         category: followerCategory,
         title: `Challenged: ${label}`,
-        body: `It's now dispute #${request.disputeID}.${reason ? ` The challenger says: ${period(reason)}` : ''}`,
+        body: `It's now dispute #${request.disputeID}.`,
+        detail: says,
       }
     }
 
@@ -307,24 +337,30 @@ export const draftFor = async (
       const who = describePartyOf(event.evidence.party, request)
       const pieces = event.pieces
       // What the other side argues is for the parties to answer while the
-      // dispute is open; for everyone else it is news.
-      const answer = party && request.disputed && !request.resolved
-      const reply = answer ? ' You can answer on the item page.' : ''
-      if (pieces.length > 1)
-        return {
-          kind: 'evidence',
-          urgency: answer ? 'urgent' : 'important',
-          category: followerCategory,
-          title: `${pieces.length} new pieces of evidence on ${label}`,
-          body: `${who} posted ${pieces.length} pieces of evidence: ${pieces.map(gistOf).join(', ')}.${reply}`,
-        }
-      const detail = reasonOf(event.evidence)
+      // dispute is open. Evidence from anyone else (anyone can post it) and
+      // everything for everyone else is news.
+      const authorSide = sideOfAddress(event.evidence.party, request)
+      const answer =
+        party &&
+        mySide !== null &&
+        authorSide !== null &&
+        authorSide !== mySide &&
+        request.disputed &&
+        !request.resolved
+      const quoted =
+        pieces.length > 1
+          ? pieces.map(gistOf).filter(Boolean).join(', ')
+          : reasonOf(event.evidence)
       return {
         kind: 'evidence',
         urgency: answer ? 'urgent' : 'important',
         category: followerCategory,
-        title: `New evidence on ${label}`,
-        body: `${who} posted evidence${detail ? `: ${period(detail)}` : '.'}${reply}`,
+        title:
+          pieces.length > 1
+            ? `${pieces.length} new pieces of evidence on ${label}`
+            : `New evidence on ${label}`,
+        body: `${who} posted ${pieces.length > 1 ? `${pieces.length} pieces of evidence` : 'evidence'}. ${answer ? 'Read it and answer on the item page.' : 'Read it on Scout.'}`,
+        detail: quoted ? period(quoted) : undefined,
       }
     }
 
@@ -760,6 +796,7 @@ export const plan = async (
       urgency: draft.urgency,
       title: draft.title,
       body: draft.body,
+      detail: draft.detail,
       url: `${itemUrl(ctx.siteUrl, item)}${EVIDENCE_TAB_KINDS.has(draft.kind) ? '?tab=evidence' : ''}`,
       itemId: item.id,
       deadline: draft.deadline ? new Date(draft.deadline * 1000) : undefined,

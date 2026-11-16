@@ -20,7 +20,7 @@ import type {
   IndexedRound,
   Indexer,
 } from './indexer'
-import { renderEmail, renderTelegram } from './messages'
+import { renderEmail, renderPush, renderTelegram } from './messages'
 import { migrate } from './migrations'
 import { pgliteDb } from './pglite'
 import { plan, reminderEvents } from './plan'
@@ -360,7 +360,10 @@ describe('notification planning', () => {
     const dave = notes.find((n) => n.userId === users.dave.id)
     assert.equal(alice?.urgency, 'urgent')
     assert.match(alice?.title ?? '', /was challenged/)
-    assert.match(alice?.body ?? '', /Not a contract/)
+    // The challenger's reason is quoted in the app only.
+    assert.match(alice?.body ?? '', /Read the challenger's reason/)
+    assert.doesNotMatch(alice?.body ?? '', /Not a contract/)
+    assert.match(alice?.detail ?? '', /^The challenger says: “Not a contract”/)
     assert.deepEqual(alice?.channels, ['email'])
     assert.equal(bob?.kind, 'challenge_live')
     assert.deepEqual(bob?.channels, []) // soft: in-app only by default
@@ -412,10 +415,10 @@ describe('notification planning', () => {
     )
     const alice = notes.find((n) => n.userId === users.alice.id)
     assert.match(
-      alice?.body ?? '',
+      alice?.detail ?? '',
       /The challenger says: “The contract is not deployed on Base\.”/,
     )
-    assert.doesNotMatch(alice?.body ?? '', /Challenge Justification/)
+    assert.doesNotMatch(alice?.detail ?? '', /Challenge Justification/)
   })
 
   it('tells everyone else involved about new evidence, but not its author', async () => {
@@ -537,6 +540,173 @@ describe('notification planning', () => {
     await store.addWatchedAddress(db, erin.id, ALICE)
     const notes = await planWindow(1500, 2500)
     assert.equal(notes.find((n) => n.userId === erin.id)?.kind, 'challenged')
+  })
+})
+
+describe('third-party text', () => {
+  const EVE = `0x${'77'.repeat(20)}` // a stranger to the item
+  const PHISH = 'Your deposit is frozen, recover it at https://kleros-refund.example'
+  const evidence = (id: string, party: string, timestamp: number, txHash = `0xe${id}`) => ({
+    id,
+    party,
+    number: id,
+    timestamp: String(timestamp),
+    title: PHISH,
+    description: PHISH,
+    txHash,
+  })
+  const withEvidence = (...evidences: ReturnType<typeof evidence>[]) =>
+    item(request({ evidenceGroup: { evidences } }))
+  const planFor = async (snapshot: IndexedItem, from: number, to: number) =>
+    plan(
+      detectItemEvents(snapshot, from, to),
+      [],
+      planContext(service(), to),
+    )
+
+  it('never goes out by email, Telegram or push: only in the bell', async () => {
+    const users = await seedUsers()
+    const snapshot = withEvidence(
+      evidence('c', BOB, 2000, '0xc1'), // the challenge reason
+      evidence('s', EVE, 3000),
+    )
+    const notes = [
+      ...(await planFor(snapshot, 1500, 2500)),
+      ...(await planFor(snapshot, 3500, 3700)),
+    ]
+    assert.ok(notes.length > 4)
+    for (const note of notes) {
+      assert.doesNotMatch(`${note.title} ${note.body}`, /kleros-refund|deposit is frozen/)
+      assert.ok(!note.url?.includes('kleros-refund'))
+    }
+    assert.ok(notes.some((note) => note.detail?.includes(PHISH)))
+
+    await store.insertNotifications(db, notes)
+    const sent: string[] = []
+    globalThis.fetch = (async (input: string | URL, init?: RequestInit) => {
+      sent.push(`${String(input)} ${String(init?.body)}`)
+      return new Response('{"id":"1","ok":true}', { status: 200 })
+    }) as typeof fetch
+    const totals = await deliverDue(service(), 5_000)
+    assert.ok(totals.sent >= 3, JSON.stringify(totals))
+    assert.ok(sent.some((request) => request.includes('resend')))
+    assert.ok(sent.some((request) => request.includes('telegram')))
+    for (const request of sent) assert.doesNotMatch(request, /kleros-refund|deposit is frozen/)
+
+    // The bell shows the quote.
+    const bell = await store.listNotifications(db, users.alice.id, { limit: 10 })
+    assert.ok(bell.some((n) => n.detail?.includes(PHISH)))
+
+    // Push renders what the delivery worker claims, which has no quote.
+    await store.insertNotifications(db, [
+      {
+        userId: users.alice.id,
+        dedupKey: 'push-check',
+        kind: 'challenged',
+        urgency: 'urgent',
+        title: 'Challenged',
+        body: 'Read it on Scout.',
+        detail: PHISH,
+        channels: ['push'],
+      },
+    ])
+    const [claimed] = await store.claimDueDeliveries(db, 10)
+    assert.equal(claimed.channel, 'push')
+    assert.ok(!('detail' in claimed))
+    assert.doesNotMatch(
+      JSON.stringify(renderPush({ ...claimed, id: claimed.notificationId })),
+      /kleros-refund/,
+    )
+  })
+
+  it('is not announced on a resolved request', () => {
+    const settled = item(
+      request({
+        resolved: true,
+        resolutionTime: '3100',
+        disputeOutcome: 'Reject',
+        evidenceGroup: {
+          evidences: [evidence('c', BOB, 2000, '0xc1'), evidence('s', EVE, 3000)],
+        },
+      }),
+    )
+    assert.deepEqual(
+      detectItemEvents(settled, 3500, 3700).map((e) => e.kind),
+      [],
+    )
+    assert.deepEqual(
+      detectItemEvents(withEvidence(evidence('s', EVE, 3000)), 3500, 3700).map(
+        (e) => e.kind,
+      ),
+      ['evidence'],
+    )
+  })
+
+  it('is urgent only for the parties, and only when the other side posted it', async () => {
+    const users = await seedUsers()
+    const urgency = async (author: string) => {
+      const notes = await planFor(
+        withEvidence(evidence('c', BOB, 2000, '0xc1'), evidence('x', author, 3000)),
+        3500,
+        3700,
+      )
+      const of = (userId: number) => notes.find((n) => n.userId === userId)
+      return {
+        alice: of(users.alice.id)?.urgency,
+        bob: of(users.bob.id)?.urgency,
+        dave: of(users.dave.id)?.urgency,
+        bobBody: of(users.bob.id)?.body,
+      }
+    }
+    // A stranger: news for everyone.
+    assert.deepEqual(await urgency(EVE), {
+      alice: 'important',
+      bob: 'important',
+      dave: 'important',
+      bobBody: 'Someone posted evidence. Read it on Scout.',
+    })
+    // Carol crowdfunds Alice's side: Bob, on the other side, can answer.
+    assert.deepEqual(await urgency(CAROL), {
+      alice: 'important',
+      bob: 'urgent',
+      dave: 'important',
+      bobBody:
+        "Someone on the submitter's side posted evidence. Read it and answer on the item page.",
+    })
+  })
+
+  it('goes out at most three times a day per item and recipient; the rest stays in the bell', async () => {
+    const { alice } = await seedUsers()
+    const itemId = `${ITEM_ID}@${REGISTRY}`
+    const alert = (dedupKey: string, kind = 'evidence', item = itemId) => ({
+      userId: alice.id,
+      dedupKey,
+      kind,
+      urgency: 'important' as const,
+      title: 'New evidence',
+      body: 'Someone posted evidence. Read it on Scout.',
+      itemId: item,
+      channels: ['email' as const],
+    })
+    await store.insertNotifications(db, [
+      alert('e1'),
+      alert('e2'),
+      alert('e3'),
+      alert('e4'),
+    ])
+    await store.insertNotifications(db, [
+      alert('e5'),
+      alert('other-item', 'evidence', `0x${'cd'.repeat(32)}@${REGISTRY}`),
+      alert('ruling', 'ruling'),
+    ])
+    const queued = await db.query<{ dedup_key: string }>(
+      `select n.dedup_key from notifications n join deliveries d on d.notification_id = n.id order by n.id`,
+    )
+    assert.deepEqual(
+      queued.map((row) => row.dedup_key),
+      ['e1', 'e2', 'e3', 'other-item', 'ruling'],
+    )
+    assert.equal(await store.unreadCount(db, alice.id), 7)
   })
 })
 
@@ -1118,6 +1288,7 @@ describe('API', () => {
         urgency: 'important',
         title: 'New evidence',
         body: 'b',
+        detail: '“It is a contract”',
         channels: [],
       },
     ])
@@ -1126,6 +1297,8 @@ describe('API', () => {
     })
     assert.equal(inbox.data.unread, 1)
     assert.equal(inbox.data.notifications[0].title, 'New evidence')
+    // The bell gets the quote.
+    assert.equal(inbox.data.notifications[0].detail, '“It is a contract”')
     const read = await call(
       handle,
       'POST',

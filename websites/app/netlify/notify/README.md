@@ -47,8 +47,8 @@ its parties get a reminder.
 | Jurors ruled for you: watch for an appeal                             | winning side                                          | important              |
 | **The other side fully funded its appeal: fund X by the end or lose** | side that won the vote                                | urgent                 |
 | Appeal deadline reminders                                             | side that still has to fund                           | urgent                 |
-| New evidence from the other side (one alert per burst, see below)     | the submitter and challenger themselves               | urgent                 |
-| New evidence                                                          | everyone else involved in the item, except the author | important              |
+| New evidence from the other side (one alert per burst, see below)     | the submitter and challenger themselves, while disputed | urgent               |
+| Any other new evidence (a stranger's, their own side's)               | everyone involved in the item, except the author      | important              |
 | Appealed, final outcome                                               | both sides and participants                           | important              |
 | Court moved to commit / vote                                          | both sides                                            | soft                   |
 | Crowdfunding progress, receipts, rewards paid                         | the relevant party                                    | soft                   |
@@ -57,6 +57,16 @@ its parties get a reminder.
 Channel levels ("urgent only", "important and urgent", "everything", "off")
 apply per channel; soft categories can be silenced entirely. Everything also
 lands in the in-app inbox.
+
+**Nobody else's words leave the app.** Anyone can post evidence on any item,
+for the price of gas. So emails, Telegram messages and push notifications
+carry only fixed wording, the item's name and a link to it on Scout; what
+someone wrote (evidence, a challenge or removal reason) is quoted only in the
+app's bell. "The other side" means the requester or challenger of the
+dispute, or someone who crowdfunded their side: evidence from anyone else is
+never urgent. Evidence posted on a request that is already resolved is not
+announced at all, and each recipient gets at most 3 evidence alerts a day
+per item by email, Telegram or push; later ones stay in the bell.
 
 Evidence is posted one piece per transaction, often several in a row. Each
 author's burst is announced once, 10 minutes after its last piece, with all

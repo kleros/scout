@@ -1,6 +1,11 @@
 import { escapeHtml } from './http'
 import type { Urgency } from './preferences'
 
+/**
+ * What email, Telegram and push carry: fixed wording, the item's name and a
+ * link to it on Scout. Never what anyone wrote (evidence, challenge and
+ * removal reasons): that is a notification's `detail`, shown in the app only.
+ */
 export interface Message {
   id: number
   kind: string

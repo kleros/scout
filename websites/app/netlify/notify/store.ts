@@ -473,6 +473,8 @@ export interface NewNotification {
   urgency: Urgency
   title: string
   body: string
+  /** Quoted third-party text: in the app's bell only, never delivered (see Draft.detail). */
+  detail?: string
   url?: string
   itemId?: string
   deadline?: Date
@@ -487,12 +489,20 @@ export interface NotificationRow {
   urgency: Urgency
   title: string
   body: string
+  detail: string | null
   url: string | null
   itemId: string | null
   deadline: string | null
   createdAt: string
   read: boolean
 }
+
+/**
+ * Alerts about an item's new evidence that go out by email, Telegram or push
+ * to one recipient in a day. Anyone can post evidence, from as many
+ * addresses as they like; past this, alerts about that item stay in the bell.
+ */
+export const EVIDENCE_ALERTS_PER_ITEM_PER_DAY = 3
 
 /**
  * Inserts notifications (skipping ones already recorded for the same user
@@ -508,8 +518,8 @@ export const insertNotifications = async (
     let created = 0
     for (const n of notifications) {
       const [row] = await tx.query<{ id: string }>(
-        `insert into notifications (user_id, dedup_key, kind, urgency, title, body, url, item_id, deadline, evidence_at)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `insert into notifications (user_id, dedup_key, kind, urgency, title, body, detail, url, item_id, deadline, evidence_at)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          on conflict (user_id, dedup_key) do nothing
          returning id`,
         [
@@ -519,6 +529,7 @@ export const insertNotifications = async (
           n.urgency,
           n.title,
           n.body,
+          n.detail ?? null,
           n.url ?? null,
           n.itemId ?? null,
           n.deadline ?? null,
@@ -527,6 +538,16 @@ export const insertNotifications = async (
       )
       if (!row) continue
       created += 1
+      if (n.channels.length > 0 && n.kind === 'evidence' && n.itemId) {
+        const [{ sent }] = await tx.query<{ sent: string }>(
+          `select count(*) as sent from notifications n
+            where n.user_id = $1 and n.item_id = $2 and n.kind = 'evidence' and n.id <> $3
+              and n.created_at > now() - interval '1 day'
+              and exists (select 1 from deliveries d where d.notification_id = n.id)`,
+          [n.userId, n.itemId, row.id],
+        )
+        if (Number(sent) >= EVIDENCE_ALERTS_PER_ITEM_PER_DAY) continue
+      }
       if (n.channels.length > 0)
         await tx.query(
           `insert into deliveries (notification_id, channel)
@@ -549,13 +570,14 @@ export const listNotifications = async (
     urgency: Urgency
     title: string
     body: string
+    detail: string | null
     url: string | null
     item_id: string | null
     deadline: Date | null
     created_at: Date
     read_at: Date | null
   }>(
-    `select id, kind, urgency, title, body, url, item_id, deadline, created_at, read_at
+    `select id, kind, urgency, title, body, detail, url, item_id, deadline, created_at, read_at
        from notifications
       where user_id = $1 and ($2::bigint is null or id < $2)
       order by id desc
@@ -568,6 +590,7 @@ export const listNotifications = async (
     urgency: row.urgency,
     title: row.title,
     body: row.body,
+    detail: row.detail,
     url: row.url,
     itemId: row.item_id,
     deadline: row.deadline ? new Date(row.deadline).toISOString() : null,
@@ -617,6 +640,7 @@ const LEASE_SECONDS = 120
 /**
  * Claims up to `limit` due deliveries, most urgent first. Claimed rows are
  * leased (their next attempt moves forward) so an overlapping run skips them.
+ * A notification's `detail` is not read here: it never leaves the app.
  */
 export const claimDueDeliveries = async (
   db: Db,

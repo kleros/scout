@@ -132,6 +132,14 @@ export const MIGRATIONS: { version: string; sql: string }[] = [
       );
     `,
   },
+  {
+    version: '002_notification_detail',
+    sql: `
+      -- What someone wrote (evidence, a challenge or removal reason), quoted
+      -- for the in-app bell only. Deliveries never read it.
+      alter table notifications add column detail text;
+    `,
+  },
 ]
 
 let ensured: Promise<void> | undefined
