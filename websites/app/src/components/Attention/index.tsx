@@ -20,7 +20,12 @@ import type {
 import { registryKeyOf } from 'utils/cases/indexer'
 import { itemLabel, xdai } from 'utils/cases/labels'
 import { CountText, DotText } from './AttentionCount'
-import { describeAttention, evidenceAuthor, evidenceSnippet } from './describe'
+import {
+  courtDeadline,
+  describeAttention,
+  evidenceAuthor,
+  evidenceSnippet,
+} from './describe'
 
 const levelColor = css<{ $level: AttentionLevel }>`
   color: ${({ theme, $level }) =>
@@ -228,11 +233,10 @@ const CTA: Partial<Record<Attention['kind'], string>> = {
   'removal-requested': 'Review the removal',
 }
 
-const PERIOD_ENDS: Record<string, string> = {
-  evidence: 'Evidence period ends',
-  commit: 'Commit period ends',
-  vote: 'Voting ends',
-  appeal: 'Appeal period ends',
+// Settled cases: their deadline is when the result takes effect.
+const DEADLINE_LABEL: Partial<Record<Attention['kind'], string>> = {
+  'ruling-final': 'Appeal period ends',
+  'funded-side-wins': 'Appeal period ends',
 }
 
 const TAG: Record<AttentionLevel, string> = {
@@ -255,14 +259,18 @@ const useDescription = (entry: Attention) => {
     total !== undefined
       ? xdai(total > (entry.raised ?? 0n) ? total - (entry.raised ?? 0n) : 0n)
       : undefined
+  // Before a ruling, the deadline that matters is the court period's, when
+  // it has one.
+  const court =
+    entry.deadline === undefined && periodData
+      ? courtDeadline(entry.request, periodData)
+      : undefined
   return {
     ...describeAttention(entry, { missing, period: periodData?.period }),
-    // Before a ruling, the deadline that matters is the court period's.
-    deadline: entry.deadline ?? periodData?.deadline,
-    deadlineLabel:
-      entry.deadline === undefined && periodData
-        ? (PERIOD_ENDS[periodData.period] ?? 'Period ends')
-        : 'Deadline',
+    deadline: entry.deadline ?? court?.at,
+    deadlineLabel: court?.label ?? DEADLINE_LABEL[entry.kind] ?? 'Deadline',
+    /** The date is the latest the period can end; it may end sooner. */
+    atTheLatest: court?.latest ?? false,
   }
 }
 
@@ -275,7 +283,8 @@ const AttentionCard: React.FC<{
   onItemPage?: boolean
 }> = ({ entry, onItemPage = false }) => {
   const now = useNow()
-  const { title, body, deadline, deadlineLabel } = useDescription(entry)
+  const { title, body, deadline, deadlineLabel, atTheLatest } =
+    useDescription(entry)
   const left = deadline ? timeLeft(deadline, now) : null
   const href = itemPath(entry)
   const evidenceHref = onItemPage
@@ -317,7 +326,9 @@ const AttentionCard: React.FC<{
       ) : null}
       {deadline && left ? (
         <Deadline $level={entry.level}>
-          {deadlineLabel} {localDeadline(deadline)} · {left} left
+          {atTheLatest
+            ? `${deadlineLabel} ${localDeadline(deadline)} at the latest · up to ${left} left`
+            : `${deadlineLabel} ${localDeadline(deadline)} · ${left} left`}
         </Deadline>
       ) : null}
       {showCta ? <Cta to={toEvidence ? evidenceHref : href}>{cta}</Cta> : null}
@@ -329,7 +340,7 @@ const WaitingEntry: React.FC<{ entry: AttentionWithEvidence }> = ({
   entry,
 }) => {
   const now = useNow()
-  const { title, deadline } = useDescription(entry)
+  const { title, deadline, atTheLatest } = useDescription(entry)
   const left = deadline ? timeLeft(deadline, now) : null
   return (
     <WaitingRow>
@@ -337,7 +348,7 @@ const WaitingEntry: React.FC<{ entry: AttentionWithEvidence }> = ({
         {title} ·{' '}
         <ItemLink to={itemPath(entry)}>{itemLabel(entry.item)}</ItemLink>
       </span>
-      <span>{left ? `${left} left` : ''}</span>
+      <span>{left ? `${atTheLatest ? 'up to ' : ''}${left} left` : ''}</span>
     </WaitingRow>
   )
 }

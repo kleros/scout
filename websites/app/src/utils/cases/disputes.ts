@@ -45,17 +45,33 @@ export const requestSides = (
   return sides
 }
 
-/** Accounts that submitted the item (registration requesters before `requestIndex`). */
+/**
+ * Whether a resolved request went through: executed unchallenged, or won by
+ * its requester in court (the indexer's outcome is the contract's final
+ * ruling).
+ */
+export const requestSucceeded = (request: IndexedRequest) =>
+  request.resolved && (!request.disputed || request.disputeOutcome === 'Accept')
+
+/**
+ * Who submitted the item as it is listed before `requestIndex`: the requester
+ * of the last registration, if it went through. Earlier submitters, and those
+ * whose registration failed, have nothing at stake in a request to remove it.
+ */
 export const itemSubmitters = (
   item: IndexedItem,
   requestIndex: number,
-): Set<string> =>
-  new Set(
-    item.requests
-      .slice(0, requestIndex)
-      .filter((request) => !isRemoval(request))
-      .map((request) => norm(request.requester)),
+): Set<string> => {
+  const registration = item.requests
+    .slice(0, requestIndex)
+    .filter((request) => !isRemoval(request))
+    .at(-1)
+  return new Set(
+    registration && requestSucceeded(registration)
+      ? [norm(registration.requester)]
+      : [],
   )
+}
 
 /** Which side the current ruling favors ("None" means refused or tied). */
 export const rulingWinner = (ruling: string): Side | null =>
@@ -82,6 +98,18 @@ export const appealDeadlines = (round: IndexedRound) => {
 
 export const sideFunded = (round: IndexedRound, side: Side) =>
   side === 'requester' ? round.hasPaidRequester : round.hasPaidChallenger
+
+/**
+ * The side fully funded alone in a round, if exactly one is. When the appeal
+ * period ends that way, the contract's `rule` gives it the case whatever the
+ * jurors ruled.
+ */
+export const fundedSide = (round: IndexedRound): Side | undefined =>
+  round.hasPaidRequester === round.hasPaidChallenger
+    ? undefined
+    : round.hasPaidRequester
+      ? 'requester'
+      : 'challenger'
 
 export const sidePaid = (round: IndexedRound, side: Side) =>
   BigInt(
@@ -121,3 +149,11 @@ export const appealObligations = (round: IndexedRound): AppealObligation[] => {
 /** The request's latest appeal round (round 0 only holds the deposits). */
 export const currentRound = (request: IndexedRequest) =>
   request.rounds.filter((round) => roundIndex(round) > 0).at(-1)
+
+/**
+ * Whether the dispute is in an appeal round. Kleros Liquid then lets anyone
+ * end the evidence period as soon as the jurors are drawn (`passPeriod`), so
+ * it has no set end.
+ */
+export const inAppealRound = (request: IndexedRequest) =>
+  request.rounds.some((round) => round.appealed)

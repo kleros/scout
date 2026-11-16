@@ -1,4 +1,6 @@
 import type { Attention, AttentionWithEvidence } from 'utils/cases/attention'
+import { inAppealRound, isRemoval, type Side } from 'utils/cases/disputes'
+import type { IndexedRequest } from 'utils/cases/indexer'
 import { GENERIC_EVIDENCE_TITLE, itemNoun } from 'utils/cases/labels'
 
 export interface AttentionContext {
@@ -12,9 +14,71 @@ const PERIOD_TEXT: Record<string, string> = {
   evidence: 'Both sides can add evidence.',
   commit: 'Jurors are committing their votes.',
   vote: 'Jurors are voting.',
-  appeal: 'The ruling is in; the appeal period is about to start.',
+  appeal: 'The ruling is in; the appeal period is open.',
   execution: 'The ruling is being enforced.',
 }
+
+export interface CourtDeadline {
+  label: string
+  at: number
+  /** The period can end earlier: once every juror has committed or voted. */
+  latest: boolean
+}
+
+/**
+ * When the dispute's court period ends, if a date can be given. Kleros
+ * Liquid (`passPeriod`): the first round's evidence period lasts at least its
+ * set time, but an appeal round's ends as soon as jurors are drawn; commit
+ * and vote end early once every juror has committed or voted; the appeal
+ * period ends on time.
+ */
+export const courtDeadline = (
+  request: IndexedRequest,
+  court: { period: string; deadline: number },
+): CourtDeadline | undefined => {
+  switch (court.period) {
+    case 'evidence':
+      return inAppealRound(request)
+        ? undefined
+        : { label: 'Evidence period ends', at: court.deadline, latest: false }
+    case 'commit':
+      return { label: 'Commit period ends', at: court.deadline, latest: true }
+    case 'vote':
+      return { label: 'Voting ends', at: court.deadline, latest: true }
+    case 'appeal':
+      return { label: 'Appeal period ends', at: court.deadline, latest: false }
+    default:
+      return undefined
+  }
+}
+
+/** A side of the request, as the entry's address sees it. */
+const sideName = (entry: Attention, side: Side) =>
+  entry.side === side
+    ? 'your side'
+    : entry.side
+      ? 'the other side'
+      : side === 'challenger'
+        ? 'the challenger'
+        : isRemoval(entry.request)
+          ? 'the removal requester'
+          : 'the submitter'
+
+/** What the contract's `rule` does to the item when `winner` wins (null: no one). */
+const itemOutcome = (entry: Attention, winner: Side | null | undefined) => {
+  const noun = itemNoun(entry.item)
+  const removal = isRemoval(entry.request)
+  if (winner === 'requester')
+    return `the ${noun} is ${removal ? 'removed from' : 'added to'} the list`
+  return `the ${noun} ${removal ? 'stays on' : 'is not added to'} the list`
+}
+
+// A settled case takes effect when the appeal period ends (the entry's
+// deadline), or, once it has, when someone executes the ruling.
+const takesEffect = (entry: Attention) =>
+  entry.deadline !== undefined
+    ? 'when the appeal period ends'
+    : 'once the ruling is executed'
 
 /** What to tell the user about an entry, in the same terms as the alerts. */
 export const describeAttention = (
@@ -44,7 +108,7 @@ export const describeAttention = (
           }
         : {
             title: 'Jurors could not decide',
-            body: `If only one side is fully funded when the appeal period ends, that side wins.${need}`,
+            body: `If only one side is fully funded when the appeal period ends, that side wins. If neither is, the request is rejected and the deposits are split between both sides.${need}`,
           }
     case 'appeal-funded':
       return {
@@ -56,23 +120,42 @@ export const describeAttention = (
         title: 'The ruling favors your side',
         body: 'The other side can appeal until the deadline. If it does, you will have to fund your side, and this will turn red.',
       }
-    case 'ruling-final':
+    case 'funded-side-wins':
       return {
-        title: 'The ruling is final',
-        body: 'The appeal period is over; the ruling will be enforced shortly.',
+        title: `Only ${sideName(entry, entry.winner ?? 'requester')} was fully funded, so it wins`,
+        body: `A side that alone funds its appeal wins whatever the jurors ruled: ${itemOutcome(entry, entry.winner)} ${takesEffect(entry)}.`,
       }
+    case 'ruling-final':
+      return entry.winner
+        ? {
+            title: 'The ruling is final',
+            body: `${entry.deadline !== undefined ? 'The losing side can no longer appeal' : 'The appeal period is over'}: ${itemOutcome(entry, entry.winner)} ${takesEffect(entry)}.`,
+          }
+        : {
+            title: 'Jurors could not decide',
+            body: `Neither side funded an appeal, so the request is rejected (${itemOutcome(entry, null)}) and the deposits are split between both sides ${takesEffect(entry)}.`,
+          }
+    // In an appeal round, Kleros Liquid lets anyone end the evidence period
+    // as soon as the jurors are drawn: there is no date to count on.
     case 'challenged':
       return {
         title: `Your ${removal ? 'removal request' : noun} was challenged`,
-        body: `It is ${dispute} in the Kleros court. Add your side's evidence on the item page before voting starts.`,
+        body: inAppealRound(entry.request)
+          ? `It is ${dispute} in the Kleros court, in an appeal round: voting can start as soon as jurors are drawn, so add your side's evidence on the item page now.`
+          : `It is ${dispute} in the Kleros court. Add your side's evidence on the item page before voting starts.`,
       }
-    case 'dispute':
+    case 'dispute': {
+      const text = period
+        ? (PERIOD_TEXT[period] ?? '')
+        : 'Jurors will rule after the evidence period.'
       return {
         title: `${dispute[0].toUpperCase()}${dispute.slice(1)} is in progress`,
-        body: period
-          ? (PERIOD_TEXT[period] ?? '')
-          : 'Jurors will rule after the evidence period.',
+        body:
+          period === 'evidence' && inAppealRound(entry.request)
+            ? `${text} Voting can start as soon as jurors are drawn.`
+            : text,
       }
+    }
     case 'removal-requested':
       return {
         title: `Someone asked to remove your ${noun}`,
