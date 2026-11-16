@@ -4,6 +4,7 @@ import { NavLink, Link, useLocation } from "react-router-dom";
 import { useAccount } from "wagmi";
 import ArrowDown from "svgs/icons/arrow-down.svg";
 import { registryNavOptions } from "utils/items";
+import { AttentionBadge } from "components/Attention";
 
 const Container = styled.div`
   display: flex;
@@ -182,6 +183,7 @@ const HeaderNav: React.FC = () => {
         $isActive={isMyProfile}
       >
         My Profile
+        <AttentionBadge />
       </StyledLink>
 
       <StyledNavLink to="/rewards">Active Rewards</StyledNavLink>

@@ -8,6 +8,7 @@ import HamburgerIcon from "svgs/header/hamburger.svg";
 import { BREAKPOINT_HEADER_DESKTOP } from "styles/landscapeStyle";
 
 import LightButton from "components/LightButton";
+import { AttentionDot } from "components/Attention";
 
 import Logo from "./Logo";
 import NavBar from "./navbar";
@@ -32,6 +33,11 @@ const StyledLightButton = styled(LightButton)`
   }
 `;
 
+const MenuButton = styled.div`
+  position: relative;
+  display: flex;
+`;
+
 const OpenContext = React.createContext({
   isOpen: false,
   toggleIsOpen: () => {
@@ -53,7 +59,10 @@ const MobileHeader = () => {
       <OpenContext.Provider value={memoizedContext}>
         <Logo />
         <NavBar />
-        <StyledLightButton text="" Icon={HamburgerIcon} onClick={toggleIsOpen} />
+        <MenuButton>
+          <StyledLightButton text="" Icon={HamburgerIcon} onClick={toggleIsOpen} />
+          <AttentionDot />
+        </MenuButton>
       </OpenContext.Provider>
     </Container>
   );

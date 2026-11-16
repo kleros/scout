@@ -10,6 +10,7 @@ import { formatValue } from 'utils/formatValue'
 import { hoverLongTransitionTiming } from 'styles/commonStyles'
 import useRegistryParameters from 'hooks/useRegistryParameters'
 import NewTabIcon from 'assets/svgs/icons/new-tab.svg'
+import { CaseStatusLine, EvidenceCount } from 'components/Attention/CaseStatus'
 import {
   Card, Header, Bullet, Title, Registry, StatusLabel, Divider, Body,
   MetaLine, InfoRow, LabelValue, StyledChainLabel, StyledChainContainer,
@@ -232,6 +233,12 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
           <StatusLabel>{statusText}</StatusLabel>
         </HeaderLeft>
         <HeaderRight>
+          <EvidenceCount
+            itemId={item.id}
+            itemPath={itemUrl}
+            evidences={request?.evidenceGroup?.evidences}
+            active={!request?.resolved}
+          />
           <RoleBadge role={userRole}>{roleLabel}</RoleBadge>
           {request?.resolved && (
             <OutcomeBadge outcome={outcome}>{outcome === 'won' ? 'Won' : outcome === 'lost' ? 'Lost' : 'Refused'}</OutcomeBadge>
@@ -242,6 +249,7 @@ const DisputeCard: React.FC<DisputeCardProps> = ({ item, userAddress }) => {
       <Divider />
 
       <Body>
+        {!request?.resolved ? <CaseStatusLine itemId={item.id} /> : null}
         <MetaLine>
           <InfoRow>
             <LabelValue>
