@@ -140,6 +140,14 @@ export const MIGRATIONS: { version: string; sql: string }[] = [
       alter table notifications add column detail text;
     `,
   },
+  {
+    version: '003_session_version',
+    sql: `
+      -- Carried by session cookies; signing out moves it on, which ends
+      -- every session issued before.
+      alter table users add column session_version int not null default 0;
+    `,
+  },
 ]
 
 let ensured: Promise<void> | undefined

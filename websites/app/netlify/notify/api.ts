@@ -37,6 +37,7 @@ import {
   consumeNonce,
   createTelegramLinkToken,
   deleteUser,
+  endSessions,
   follow,
   getEmail,
   getTelegram,
@@ -62,7 +63,7 @@ import {
   verifyEmailToken,
   MAX_WATCHED_ADDRESSES,
 } from './store'
-import { randomToken, sha256Hex, verifyToken } from './tokens'
+import { randomToken, safeEqual, sha256Hex, verifyToken } from './tokens'
 import {
   ITEM_ID,
   READS_PER_REQUEST,
@@ -114,10 +115,14 @@ export const createApi = (service: Service) => {
   const { env, db } = service
 
   // Sessions name the address too, so they can never resolve to another
-  // user, even if ids were reused (e.g. after restoring the database).
+  // user, even if ids were reused (e.g. after restoring the database), and
+  // the account's session version, which signing out moves on.
   const sessionUser = async (session: Session) => {
     const user = await getUser(db, session.userId)
-    return user?.address === session.address.toLowerCase() ? user : null
+    return user?.address === session.address.toLowerCase() &&
+      user.sessionVersion === session.v
+      ? user
+      : null
   }
 
   const currentUser = async (request: Request) => {
@@ -203,7 +208,11 @@ export const createApi = (service: Service) => {
         const user = await upsertUser(db, address)
         return json(await profile(user.id), {
           cookies: [
-            sessionCookie(env, request, { userId: user.id, address }),
+            sessionCookie(env, request, {
+              userId: user.id,
+              address,
+              v: user.sessionVersion,
+            }),
             clearNonceCookie(request),
           ],
         })
@@ -212,7 +221,14 @@ export const createApi = (service: Service) => {
     [
       'POST',
       '/api/notify/auth/logout',
-      async (request) => json({ ok: true }, { cookies: clearCookies(request) }),
+      async (request) => {
+        // Ends this account's sessions everywhere, so a copy of the cookie
+        // stops working too.
+        const session = readSession(env, request)
+        const user = session ? await sessionUser(session) : null
+        if (user) await endSessions(db, user.id)
+        return json({ ok: true }, { cookies: clearCookies(request) })
+      },
     ],
 
     // --- Profile and preferences ----------------------------------------------
@@ -396,8 +412,10 @@ ${
       async (request) => {
         if (
           !env.telegram ||
-          request.headers.get('x-telegram-bot-api-secret-token') !==
-            env.telegram.webhookSecret
+          !safeEqual(
+            request.headers.get('x-telegram-bot-api-secret-token') ?? '',
+            env.telegram.webhookSecret,
+          )
         ) {
           throw new HttpError(401, 'Unauthorized.')
         }
@@ -491,7 +509,14 @@ ${
       async (request) => {
         const user = await currentUser(request)
         const params = new URL(request.url).searchParams
-        const before = Number(params.get('before')) || undefined
+        // A notification id to page back from.
+        const cursor = params.get('before')
+        const before = cursor ? Number(cursor) : undefined
+        if (
+          before !== undefined &&
+          (!/^\d+$/.test(cursor ?? '') || !Number.isSafeInteger(before))
+        )
+          throw new HttpError(400, 'Invalid page cursor.')
         const limit = Math.min(
           Math.max(Number(params.get('limit')) || 20, 1),
           50,

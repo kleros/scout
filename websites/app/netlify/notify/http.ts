@@ -60,7 +60,12 @@ export const parseCookies = (request: Request): Record<string, string> => {
     const index = part.indexOf('=')
     if (index < 0) continue
     const name = part.slice(0, index).trim()
-    if (name) cookies[name] = decodeURIComponent(part.slice(index + 1).trim())
+    if (!name) continue
+    try {
+      cookies[name] = decodeURIComponent(part.slice(index + 1).trim())
+    } catch {
+      // Another cookie on this site that isn't URI-encoded: not ours, skip it.
+    }
   }
   return cookies
 }
@@ -83,15 +88,22 @@ export const serializeCookie = (
 
 const MAX_BODY_BYTES = 16 * 1024
 
-export const readJson = async <T>(request: Request): Promise<T> => {
+/** The request's JSON object body (`{}` when empty). */
+export const readJson = async <T extends object>(
+  request: Request,
+): Promise<T> => {
   const text = await request.text()
   if (text.length > MAX_BODY_BYTES)
     throw new HttpError(413, 'Request body too large.')
+  let body: unknown
   try {
-    return JSON.parse(text || '{}') as T
+    body = JSON.parse(text || '{}')
   } catch {
     throw new HttpError(400, 'Invalid JSON body.')
   }
+  if (!body || typeof body !== 'object' || Array.isArray(body))
+    throw new HttpError(400, 'The request body must be a JSON object.')
+  return body as T
 }
 
 /**
@@ -101,8 +113,14 @@ export const readJson = async <T>(request: Request): Promise<T> => {
 export const assertSameOrigin = (request: Request) => {
   if (request.method === 'GET' || request.method === 'HEAD') return
   const origin = request.headers.get('origin')
-  const host = new URL(request.url).host
-  if (!origin || new URL(origin).host !== host)
+  let host: string | null = null
+  try {
+    // "null" (sandboxed pages, some redirects) or garbage: not this site.
+    host = origin ? new URL(origin).host : null
+  } catch {
+    host = null
+  }
+  if (!host || host !== new URL(request.url).host)
     throw new HttpError(403, 'Cross-origin request refused.')
 }
 
@@ -140,9 +158,15 @@ export const createRouter = (
     )
     if (!route) return json({ error: 'Method not allowed.' }, { status: 405 })
     const values = route.pattern.exec(pathname)?.slice(1) ?? []
-    const params = Object.fromEntries(
-      route.keys.map((key, i) => [key, decodeURIComponent(values[i])]),
-    )
+    let params: Params
+    try {
+      params = Object.fromEntries(
+        route.keys.map((key, i) => [key, decodeURIComponent(values[i])]),
+      )
+    } catch {
+      // A malformed escape such as %E0%A4%A.
+      return json({ error: 'Invalid path.' }, { status: 400 })
+    }
     try {
       return await route.handler(request, params)
     } catch (error) {

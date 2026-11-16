@@ -16,6 +16,13 @@ export const randomNonce = () => randomBytes(16).toString('hex')
 export const sha256Hex = (value: string) =>
   createHash('sha256').update(value).digest('hex')
 
+/** Compares two secrets in constant time (their digests, so lengths don't leak either). */
+export const safeEqual = (given: string, expected: string) =>
+  timingSafeEqual(
+    createHash('sha256').update(given).digest(),
+    createHash('sha256').update(expected).digest(),
+  )
+
 const mac = (data: string, secret: string, purpose: string) =>
   createHmac('sha256', secret).update(`${purpose}.${data}`).digest()
 

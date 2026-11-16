@@ -12,10 +12,8 @@ export interface NotifyEnv {
   siteUrl: string
   /** Scout's Envio HyperIndex GraphQL endpoint. */
   indexerUrl: string
-  /** Gnosis JSON-RPC endpoints, tried in order. */
+  /** Gnosis JSON-RPC endpoints, tried in order (smart-account sign-ins use the first). */
   gnosisRpcUrls: string[]
-  /** Ethereum mainnet endpoints, used to verify smart-account (ERC-1271) sign-ins. */
-  mainnetRpcUrls: string[]
   email?: { resendApiKey: string; from: string }
   telegram?: { botToken: string; botUsername: string; webhookSecret: string }
   push?: { publicKey: string; privateKey: string; subject: string }
@@ -60,10 +58,6 @@ export const readEnv = (
     gnosisRpcUrls: list(env.NOTIFY_GNOSIS_RPC_URLS, [
       'https://gnosis-rpc.publicnode.com',
       'https://rpc.gnosischain.com',
-    ]),
-    mainnetRpcUrls: list(env.NOTIFY_MAINNET_RPC_URLS, [
-      'https://ethereum-rpc.publicnode.com',
-      'https://eth.drpc.org',
     ]),
   }
   if (env.RESEND_API_KEY && env.NOTIFY_EMAIL_FROM) {

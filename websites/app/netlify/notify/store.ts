@@ -34,27 +34,61 @@ export const MAX_FOLLOWS = 200
 // Users, watched addresses and follows
 // ---------------------------------------------------------------------------
 
-export const upsertUser = async (db: Db, address: string): Promise<UserRow> => {
+/** A user as their own requests see them: with the session version their cookie must carry. */
+export interface AccountRow extends UserRow {
+  sessionVersion: number
+}
+
+const toAccount = (row: {
+  id: string | number
+  address: string
+  preferences: unknown
+  session_version: string | number
+}): AccountRow => ({
+  ...toUser(row),
+  sessionVersion: Number(row.session_version),
+})
+
+export const upsertUser = async (
+  db: Db,
+  address: string,
+): Promise<AccountRow> => {
   const [row] = await db.query<{
     id: string
     address: string
     preferences: unknown
+    session_version: number
   }>(
     `insert into users (address) values ($1)
      on conflict (address) do update set last_seen_at = now()
-     returning id, address, preferences`,
+     returning id, address, preferences, session_version`,
     [address.toLowerCase()],
   )
-  return toUser(row)
+  return toAccount(row)
 }
 
-export const getUser = async (db: Db, id: number): Promise<UserRow | null> => {
+export const getUser = async (
+  db: Db,
+  id: number,
+): Promise<AccountRow | null> => {
   const [row] = await db.query<{
     id: string
     address: string
     preferences: unknown
-  }>(`select id, address, preferences from users where id = $1`, [id])
-  return row ? toUser(row) : null
+    session_version: number
+  }>(
+    `select id, address, preferences, session_version from users where id = $1`,
+    [id],
+  )
+  return row ? toAccount(row) : null
+}
+
+/** Signs the user out everywhere: sessions issued so far stop working. */
+export const endSessions = async (db: Db, userId: number) => {
+  await db.query(
+    `update users set session_version = session_version + 1 where id = $1`,
+    [userId],
+  )
 }
 
 export const setPreferences = async (

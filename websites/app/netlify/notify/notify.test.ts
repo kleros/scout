@@ -179,7 +179,6 @@ const env: NotifyEnv = {
   siteUrl: 'https://scout.test',
   indexerUrl: 'https://indexer.test/graphql',
   gnosisRpcUrls: ['https://rpc.test'],
-  mainnetRpcUrls: ['https://rpc.test'],
   email: { resendApiKey: 're_test', from: 'Scout <scout@test>' },
   telegram: {
     botToken: 'bot-token',
@@ -1499,6 +1498,140 @@ describe('API', () => {
     assert.equal(crossSite.response.status, 403)
   })
 
+  it('checks smart accounts on Gnosis only, with one RPC call and no retries', async () => {
+    const handle = api()
+    const rpc: string[] = []
+    globalThis.fetch = (async (input: string | URL) => {
+      rpc.push(String(input))
+      return new Response('{"jsonrpc":"2.0","id":0,"error":{"code":-32000,"message":"down"}}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }) as typeof fetch
+    // Signed by a key that isn't the address's own: only a smart account could pass.
+    const attempt = async (chainId: number) => {
+      const nonce = await call(handle, 'GET', '/api/notify/auth/nonce')
+      const message = createSiweMessage({
+        domain: 'scout.test',
+        address: `0x${'5a'.repeat(20)}`,
+        uri: 'https://scout.test',
+        version: '1',
+        chainId,
+        nonce: nonce.data.nonce,
+        issuedAt: new Date(),
+      })
+      return call(handle, 'POST', '/api/notify/auth/verify', {
+        body: { message, signature: await account.signMessage({ message }) },
+        cookie: cookieJar(nonce.setCookies),
+      })
+    }
+    const mainnet = await attempt(1)
+    assert.equal(mainnet.response.status, 401)
+    assert.match(mainnet.data.error, /switch your wallet to Gnosis/)
+    assert.deepEqual(rpc, [])
+    const gnosis = await attempt(100)
+    assert.equal(gnosis.response.status, 401)
+    assert.deepEqual(
+      rpc.map((url) => new URL(url).host),
+      ['rpc.test'],
+    )
+  })
+
+  it('refuses sign-in messages dated in the future, allowing for clock skew', async () => {
+    const handle = api()
+    const signAt = async (issuedAt: Date) => {
+      const nonce = await call(handle, 'GET', '/api/notify/auth/nonce')
+      const message = createSiweMessage({
+        domain: 'scout.test',
+        address: account.address,
+        uri: 'https://scout.test',
+        version: '1',
+        chainId: 100,
+        nonce: nonce.data.nonce,
+        issuedAt,
+      })
+      return call(handle, 'POST', '/api/notify/auth/verify', {
+        body: { message, signature: await account.signMessage({ message }) },
+        cookie: cookieJar(nonce.setCookies),
+      })
+    }
+    const future = await signAt(new Date(Date.now() + 24 * 3600_000))
+    assert.equal(future.response.status, 401)
+    assert.match(future.data.error, /dated in the future/)
+    const skewed = await signAt(new Date(Date.now() + 2 * 60_000))
+    assert.equal(skewed.response.status, 200)
+  })
+
+  it('ends every session of the account on sign-out', async () => {
+    const handle = api()
+    const first = await signIn(handle)
+    const second = await signIn(handle) // another device
+    const signedIn = async (cookie: string) =>
+      (await call(handle, 'GET', '/api/notify/me', { cookie })).data.signedIn
+    assert.equal(await signedIn(first.cookie), true)
+    const out = await call(handle, 'POST', '/api/notify/auth/logout', {
+      cookie: first.cookie,
+      body: {},
+    })
+    assert.match(out.setCookies.join(), /scout_notify_session=;[^,]*Max-Age=0/)
+    // A copy of the cookie no longer works, nor does the other device's.
+    assert.equal(await signedIn(first.cookie), false)
+    assert.equal(await signedIn(second.cookie), false)
+    assert.equal(
+      (
+        await call(handle, 'PUT', '/api/notify/me/preferences', {
+          cookie: first.cookie,
+          body: {},
+        })
+      ).response.status,
+      401,
+    )
+    // Signing in again works.
+    assert.equal(await signedIn((await signIn(handle)).cookie), true)
+  })
+
+  it('answers malformed requests with 4xx, not 5xx', async () => {
+    const handle = api()
+    const { cookie } = await signIn(handle)
+    const status = async (
+      method: string,
+      path: string,
+      options: Parameters<typeof call>[3] = {},
+    ) => (await call(handle, method, path, { cookie, ...options })).response.status
+    // A malformed escape in a path parameter, with or without a session.
+    assert.equal(await status('DELETE', '/api/notify/me/watched/%E0%A4%A'), 400)
+    assert.equal(
+      await status('DELETE', '/api/notify/me/watched/%E0%A4%A', { cookie: '' }),
+      400,
+    )
+    assert.equal(
+      await status('PUT', '/api/notify/me/preferences', { body: {}, origin: 'null' }),
+      403,
+    )
+    assert.equal(
+      await status('PUT', '/api/notify/me/preferences', { body: {}, origin: 'not a url' }),
+      403,
+    )
+    for (const body of [null, [], 'text', 42])
+      assert.equal(
+        await status('PUT', '/api/notify/me/preferences', { body }),
+        400,
+        JSON.stringify(body),
+      )
+    for (const before of ['1e300', '-1', '1.5', '99999999999999999999'])
+      assert.equal(
+        await status('GET', `/api/notify/me/notifications?before=${before}`),
+        400,
+        before,
+      )
+    assert.equal(await status('GET', '/api/notify/me/notifications?before=5'), 200)
+    // Someone else's malformed cookie on the same site doesn't break ours.
+    const me = await call(handle, 'GET', '/api/notify/me', {
+      cookie: `${cookie}; other=%E0%A4%A`,
+    })
+    assert.equal(me.data.signedIn, true)
+  })
+
   it('signs in once per signed message, even when it is replayed or raced', async () => {
     const handle = api()
     const signed = async () => {
@@ -1609,6 +1742,19 @@ describe('API', () => {
       { body: update, origin: '' },
     )
     assert.equal(unauthorized.response.status, 401)
+    for (const secret of ['hook-secreT', 'hook', 'hook-secret-and-more']) {
+      const wrong = await handle(
+        new Request('https://scout.test/api/notify/telegram/webhook', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Telegram-Bot-Api-Secret-Token': secret,
+          },
+          body: JSON.stringify(update),
+        }),
+      )
+      assert.equal(wrong.status, 401, secret)
+    }
     const webhook = await handle(
       new Request('https://scout.test/api/notify/telegram/webhook', {
         method: 'POST',

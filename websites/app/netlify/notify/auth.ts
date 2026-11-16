@@ -6,7 +6,7 @@ import {
   recoverMessageAddress,
   type Hex,
 } from 'viem'
-import { gnosis, mainnet } from 'viem/chains'
+import { gnosis } from 'viem/chains'
 import {
   parseSiweMessage,
   validateSiweMessage,
@@ -21,10 +21,16 @@ const SESSION_COOKIE = 'scout_notify_session'
 const NONCE_TTL = 10 * 60
 const SESSION_TTL = 30 * 24 * 60 * 60
 const MAX_MESSAGE_AGE_MS = 10 * 60 * 1000
+/** How far ahead of the server a wallet's clock may be. */
+const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000
+/** Smart-account checks are one eth_call: no retries, and a short wait. */
+const RPC_TIMEOUT_MS = 5_000
 
 export interface Session {
   userId: number
   address: string
+  /** The account's session version when it was issued: signing out bumps it, which ends every session. */
+  v: number
 }
 
 const isLocalhost = (request: Request) =>
@@ -54,7 +60,8 @@ export type ConsumeNonce = (
  * Verifies an EIP-4361 sign-in: the message must be for this host, carry the
  * nonce issued to this browser, be fresh, and be signed by its address.
  * EOAs are checked locally; contract accounts through ERC-1271 / ERC-6492
- * on Gnosis or Ethereum. Each nonce signs in once.
+ * on Gnosis only, where Scout's accounts live: the same address can belong
+ * to someone else on another chain. Each nonce signs in once.
  */
 export const verifySignIn = async (
   env: NotifyEnv,
@@ -88,9 +95,14 @@ export const verifySignIn = async (
   ) {
     throw new HttpError(400, 'Malformed sign-in message.')
   }
-  const fresh = Date.now() - parsed.issuedAt.getTime() < MAX_MESSAGE_AGE_MS
+  const age = Date.now() - parsed.issuedAt.getTime()
+  if (age < -MAX_CLOCK_SKEW_MS)
+    throw new HttpError(
+      401,
+      "The sign-in message is dated in the future. Check your device's clock.",
+    )
   if (
-    !fresh ||
+    age >= MAX_MESSAGE_AGE_MS ||
     !validateSiweMessage({ message: parsed, domain, nonce: nonceToken.nonce })
   ) {
     throw new HttpError(
@@ -105,17 +117,19 @@ export const verifySignIn = async (
     signature: signature as Hex,
   }).catch(() => null)
   if (signer !== address) {
-    const chain =
-      parsed.chainId === gnosis.id
-        ? gnosis
-        : parsed.chainId === mainnet.id
-          ? mainnet
-          : null
-    if (!chain) throw new HttpError(401, 'Invalid signature.')
-    const urls = chain.id === gnosis.id ? env.gnosisRpcUrls : env.mainnetRpcUrls
+    // Not the address's own key: maybe a smart account. Checked before any
+    // RPC call, so a sign-in for another chain costs nothing.
+    if (parsed.chainId !== gnosis.id)
+      throw new HttpError(
+        401,
+        'Invalid signature. To sign in with a smart account, switch your wallet to Gnosis.',
+      )
     const client = createPublicClient({
-      chain,
-      transport: http(urls[0], { timeout: 10_000 }),
+      chain: gnosis,
+      transport: http(env.gnosisRpcUrls[0], {
+        timeout: RPC_TIMEOUT_MS,
+        retryCount: 0,
+      }),
     })
     const valid = await verifySiweMessage(client, {
       message,
@@ -168,13 +182,16 @@ export const readSession = (
   env: NotifyEnv,
   request: Request,
 ): Session | null => {
-  const token = verifyToken<{ userId: number; address: string }>(
+  const token = verifyToken<{ userId: number; address: string; v: number }>(
     parseCookies(request)[SESSION_COOKIE],
     env.sessionSecret,
     'session',
   )
-  return token && typeof token.userId === 'number'
-    ? { userId: token.userId, address: token.address }
+  return token &&
+    typeof token.userId === 'number' &&
+    typeof token.address === 'string' &&
+    typeof token.v === 'number'
+    ? { userId: token.userId, address: token.address, v: token.v }
     : null
 }
 

@@ -32,31 +32,39 @@ export const startDevServer = async (
   const handle = createApi(service)
 
   const server = createServer(async (req, res) => {
-    const chunks: Buffer[] = []
-    for await (const chunk of req) chunks.push(chunk as Buffer)
-    const headers = new Headers()
-    for (const [key, value] of Object.entries(req.headers)) {
-      if (typeof value === 'string') headers.set(key, value)
-      else if (Array.isArray(value))
-        value.forEach((v) => headers.append(key, v))
+    // A request that breaks the API must not take the server down with it.
+    try {
+      const chunks: Buffer[] = []
+      for await (const chunk of req) chunks.push(chunk as Buffer)
+      const headers = new Headers()
+      for (const [key, value] of Object.entries(req.headers)) {
+        if (typeof value === 'string') headers.set(key, value)
+        else if (Array.isArray(value))
+          value.forEach((v) => headers.append(key, v))
+      }
+      const request = new Request(`http://${req.headers.host}${req.url}`, {
+        method: req.method,
+        headers,
+        body:
+          req.method === 'GET' || req.method === 'HEAD'
+            ? undefined
+            : Buffer.concat(chunks),
+      })
+      const response = await handle(request)
+      const outgoing: Record<string, string | string[]> = {}
+      response.headers.forEach((value, key) => {
+        if (key !== 'set-cookie') outgoing[key] = value
+      })
+      const cookies = response.headers.getSetCookie()
+      if (cookies.length > 0) outgoing['set-cookie'] = cookies
+      res.writeHead(response.status, outgoing)
+      res.end(Buffer.from(await response.arrayBuffer()))
+    } catch (error) {
+      console.error('[notify-dev]', error)
+      if (!res.headersSent)
+        res.writeHead(500, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Internal error.' }))
     }
-    const request = new Request(`http://${req.headers.host}${req.url}`, {
-      method: req.method,
-      headers,
-      body:
-        req.method === 'GET' || req.method === 'HEAD'
-          ? undefined
-          : Buffer.concat(chunks),
-    })
-    const response = await handle(request)
-    const outgoing: Record<string, string | string[]> = {}
-    response.headers.forEach((value, key) => {
-      if (key !== 'set-cookie') outgoing[key] = value
-    })
-    const cookies = response.headers.getSetCookie()
-    if (cookies.length > 0) outgoing['set-cookie'] = cookies
-    res.writeHead(response.status, outgoing)
-    res.end(Buffer.from(await response.arrayBuffer()))
   })
   await new Promise<void>((resolve) => server.listen(port, resolve))
   console.log(
