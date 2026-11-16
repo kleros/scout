@@ -18,6 +18,7 @@ import type {
 } from 'utils/cases/attention'
 import { registryKeyOf } from 'utils/cases/indexer'
 import { itemLabel, xdai } from 'utils/cases/labels'
+import { CountText, DotText } from './AttentionCount'
 import { describeAttention, evidenceAuthor, evidenceSnippet } from './describe'
 
 const levelColor = css<{ $level: AttentionLevel }>`
@@ -453,6 +454,18 @@ const Badge = styled.span<{ $urgent: boolean }>`
   line-height: 1;
 `
 
+const Dot = styled.span<{ $urgent: boolean }>`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: ${({ theme, $urgent }) =>
+    $urgent ? theme.error : theme.warning};
+  pointer-events: none;
+`
+
 /** Count of cases the connected wallet has to act on, for navigation links. */
 export const useAttentionCount = () => {
   const { address } = useAccount()
@@ -468,30 +481,19 @@ export const AttentionBadge: React.FC = () => {
   const { count, urgent } = useAttentionCount()
   if (count === 0) return null
   return (
-    <Badge
-      $urgent={urgent}
-      aria-label={`${count} case${count === 1 ? '' : 's'} need${count === 1 ? 's' : ''} your attention`}
-    >
-      {count > 9 ? '9+' : count}
+    <Badge $urgent={urgent}>
+      <CountText count={count} />
     </Badge>
   )
 }
-
-const Dot = styled.span<{ $urgent: boolean }>`
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: ${({ theme, $urgent }) =>
-    $urgent ? theme.error : theme.warning};
-  pointer-events: none;
-`
 
 /** A dot for places without room for a count, like the mobile menu button. */
 export const AttentionDot: React.FC = () => {
   const { count, urgent } = useAttentionCount()
   if (count === 0) return null
-  return <Dot $urgent={urgent} aria-hidden />
+  return (
+    <Dot $urgent={urgent}>
+      <DotText count={count} />
+    </Dot>
+  )
 }
