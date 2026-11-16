@@ -1,14 +1,18 @@
-import { useCallback, useMemo } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useDebouncedValue } from './useDebouncedValue'
 import {
   ADDRESS_FIELD,
-  checkAddressOnChain,
+  MIN_LOOKUP_COMMIT_LENGTH,
   checkAtqSource,
   checkDuplicates,
   checkTokenLogo,
+  compareDecimals,
   isBlocking,
+  parseGithubRepository,
+  readAddressOnChain,
   runLocalChecks,
+  type AddressOnChain,
   type CheckResult,
   type SubmissionDraft,
 } from 'utils/checks'
@@ -19,9 +23,45 @@ const loadTypeScript = () =>
 
 const QUERY_ROOT = 'submission-checks'
 
+/** Network checks run once the input has been still this long. */
+const SETTLE_MS = 600
+/** GitHub allows 60 lookups an hour, so it waits for a longer pause. */
+const GITHUB_SETTLE_MS = 1_500
+
+/**
+ * Network-backed rules whose answer can change while the form is open: a
+ * contract gets deployed or finalized, a commit pushed, an entry removed.
+ * When one fails or could not run, "Check again" is offered and the answer
+ * is not kept as fresh.
+ */
+const RECHECKABLE = new Set([
+  'address.deployed',
+  'tokens.decimals-onchain',
+  'tokens.solana-mint',
+  'duplicate',
+  'atq.source-resolves',
+])
+
+const needsRecheck = (results: readonly CheckResult[] | undefined) =>
+  Boolean(
+    results?.some(
+      (r) =>
+        RECHECKABLE.has(r.id) &&
+        !r.final &&
+        (r.outcome === 'fail' || r.outcome === 'inconclusive'),
+    ),
+  )
+
+/** Answers stay fresh for `ms`, except failed ones, which are re-read whenever needed again. */
+const freshFor =
+  (ms: number) =>
+  ({ state }: { state: { data?: CheckResult[] | AddressOnChain } }) =>
+    needsRecheck(Array.isArray(state.data) ? state.data : state.data?.results)
+      ? 0
+      : ms
+
 const NETWORK_OPTIONS = {
   retry: false,
-  staleTime: 60_000,
   refetchOnWindowFocus: false,
 } as const
 
@@ -32,10 +72,14 @@ const passed = (results: CheckResult[], id: string) =>
   results.some((r) => r.id === id && r.outcome === 'pass')
 
 interface NetworkCheck {
-  enabled: boolean
-  data?: CheckResult[]
+  /** The check applies to the current input. */
+  wanted: boolean
+  /** Its query may run (false while it waits for a longer pause). */
+  ready?: boolean
+  results?: CheckResult[]
   isFetching: boolean
   error: unknown
+  refetch: () => unknown
   placeholder: CheckResult
 }
 
@@ -47,9 +91,8 @@ interface NetworkCheck {
  * `draft` must be memoized by the caller.
  */
 export const useSubmissionChecks = (draft: SubmissionDraft) => {
-  const queryClient = useQueryClient()
   const local = useMemo(() => runLocalChecks(draft), [draft])
-  const settled = useDebouncedValue(draft, 600)
+  const settled = useDebouncedValue(draft, SETTLE_MS)
   const settledLocal = useMemo(() => runLocalChecks(settled), [settled])
   const { registry, values } = settled
 
@@ -57,19 +100,25 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
   const address = addressField ? (values[addressField] ?? '') : ''
   const addressValid = passed(settledLocal, 'address.format')
 
+  // Keyed by the address only: the Decimals field is compared in render, so
+  // editing it never cancels or repeats the on-chain read.
   const onchainEnabled = addressValid
   const onchain = useQuery({
-    queryKey: [
-      QUERY_ROOT,
-      'onchain',
-      registry,
-      address,
-      registry === 'tokens' ? values.Decimals : '',
-    ],
-    queryFn: ({ signal }) => checkAddressOnChain(settled, signal),
+    queryKey: [QUERY_ROOT, 'onchain', registry, address],
+    queryFn: ({ signal }) => readAddressOnChain(settled, signal),
     enabled: onchainEnabled,
     ...NETWORK_OPTIONS,
+    staleTime: freshFor(60_000),
   })
+  const enteredDecimals = registry === 'tokens' ? (values.Decimals ?? '') : ''
+  const onchainResults = useMemo(
+    () =>
+      onchain.data && [
+        ...onchain.data.results,
+        ...compareDecimals(onchain.data.decimals, enteredDecimals),
+      ],
+    [onchain.data, enteredDecimals],
+  )
 
   const duplicateInputs =
     registry === 'tags-queries'
@@ -92,6 +141,7 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
     queryFn: () => checkDuplicates(settled),
     enabled: duplicatesEnabled,
     ...NETWORK_OPTIONS,
+    staleTime: freshFor(60_000),
   })
 
   const logo =
@@ -105,24 +155,38 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
     staleTime: Infinity,
   })
 
-  const repository = values['Github Repository URL'] ?? ''
+  // One GitHub lookup per repository and commit, whatever the URL's spelling
+  // (.git, trailing slash, www.), and only for hashes long enough to be
+  // unambiguous: a lookup per keystroke would burn the hourly budget.
+  const repository = parseGithubRepository(values['Github Repository URL'])
   const commit = values['Commit hash'] ?? ''
-  const atqEnabled =
+  const atqTarget =
     registry === 'tags-queries' &&
+    repository &&
     passed(settledLocal, 'atq.repository-url') &&
-    passed(settledLocal, 'atq.commit-hash')
+    passed(settledLocal, 'atq.commit-hash') &&
+    commit.length >= MIN_LOOKUP_COMMIT_LENGTH
+      ? `${repository.owner}/${repository.repository}@${commit}`
+      : ''
+  const githubTarget = useDebouncedValue(
+    atqTarget,
+    GITHUB_SETTLE_MS - SETTLE_MS,
+  )
+  const atqWanted = atqTarget !== ''
+  const atqReady = atqWanted && githubTarget === atqTarget
   const atq = useQuery({
-    queryKey: [QUERY_ROOT, 'atq', repository, commit],
+    queryKey: [QUERY_ROOT, 'atq', atqTarget],
     queryFn: ({ signal }) => checkAtqSource(settled, loadTypeScript, signal),
-    enabled: atqEnabled,
+    enabled: atqReady,
     ...NETWORK_OPTIONS,
-    staleTime: 5 * 60_000,
+    staleTime: freshFor(5 * 60_000),
   })
 
   const network: NetworkCheck[] = [
     {
-      enabled: onchainEnabled,
+      wanted: onchainEnabled,
       ...onchain,
+      results: onchainResults,
       placeholder: {
         id: 'address.deployed',
         field: addressField,
@@ -132,8 +196,9 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
       },
     },
     {
-      enabled: duplicatesEnabled,
+      wanted: duplicatesEnabled,
       ...duplicates,
+      results: duplicates.data,
       placeholder: {
         id: 'duplicate',
         title: 'Checking the registry for duplicates…',
@@ -142,8 +207,9 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
       },
     },
     {
-      enabled: logoEnabled,
+      wanted: logoEnabled,
       ...logoChecks,
+      results: logoChecks.data,
       placeholder: {
         id: 'tokens.logo-png',
         field: 'Logo',
@@ -153,8 +219,10 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
       },
     },
     {
-      enabled: atqEnabled,
+      wanted: atqWanted,
+      ready: atqReady,
       ...atq,
+      results: atq.data,
       placeholder: {
         id: 'atq.source-resolves',
         field: 'Github Repository URL',
@@ -166,8 +234,16 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
   ]
 
   const networkResults = network.flatMap(
-    ({ enabled, data, isFetching, error, placeholder }): CheckResult[] => {
-      if (!enabled) return []
+    ({
+      wanted,
+      ready = true,
+      results,
+      isFetching,
+      error,
+      placeholder,
+    }): CheckResult[] => {
+      if (!wanted) return []
+      if (!ready) return [placeholder]
       if (error) {
         return [
           {
@@ -184,7 +260,7 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
           },
         ]
       }
-      return data && !isFetching ? data : [placeholder]
+      return results && !isFetching ? results : [placeholder]
     },
   )
 
@@ -200,17 +276,26 @@ export const useSubmissionChecks = (draft: SubmissionDraft) => {
       (r) => r.outcome === 'pending' && r.id !== 'tokens.decimals-onchain',
     )
 
-  const retry = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: [QUERY_ROOT] }),
-    [queryClient],
+  const failing = network.filter(
+    ({ wanted, ready = true, isFetching, results, error }) =>
+      wanted &&
+      ready &&
+      !isFetching &&
+      (Boolean(error) || needsRecheck(results)),
   )
 
   return {
     results,
-    /** A failing `violation` rule: submitting would get the item challenged. */
+    /** A failing `violation` rule: the item is very likely to be challenged. */
     blocking: results.some(isBlocking),
     /** Some checks have not produced an answer for the current input yet. */
     checking,
-    retry,
+    /** Re-runs the network checks that failed or could not run; undefined when none did. */
+    retry:
+      failing.length > 0
+        ? () => {
+            for (const check of failing) void check.refetch()
+          }
+        : undefined,
   }
 }

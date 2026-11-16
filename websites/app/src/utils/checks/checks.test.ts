@@ -8,20 +8,30 @@ import {
   isAllowedAtqSpecifier,
 } from './atqSource'
 import { parseCaip10 } from './caip10'
-import { isCommitHash, isKebabCase, parseGithubRepository } from './github'
+import {
+  isCommitHash,
+  isKebabCase,
+  lookupPinnedSource,
+  parseGithubRepository,
+  readTextUpTo,
+} from './github'
 import { withDeadline } from './deadline'
 import { decodePng, logoFile } from './logoFixtures'
+import { cdnDomainPatterns } from './duplicates'
 import { readCodeSnapshot, readPayoutAcceptance } from './evm'
 import { inspectPng } from './png'
-import { readWithQuorum } from './rpc'
+import { PUBLIC_RPC_URLS, readWithQuorum } from './rpc'
 import {
   cdnDomainHasForbiddenPattern,
   checkAddressOnChain,
   checkAtqSource,
   checkTokenLogo,
+  compareDecimals,
+  readAddressOnChain,
   runLocalChecks,
   suggestCdnDomain,
 } from './rules'
+import { chains } from 'utils/chains'
 import { lengthVerdict } from './text'
 import { isBlocking, type CheckResult, type SubmissionDraft } from './types'
 
@@ -76,6 +86,8 @@ describe('CDN domain pattern', () => {
       'a.com ',
       'example.com:8080',
       'localhost:3000',
+      // A port is not part of a domain, whatever the first character is.
+      '1inch.io:443',
     ]) {
       assert.equal(cdnDomainHasForbiddenPattern(domain), true, domain)
     }
@@ -89,7 +101,6 @@ describe('CDN domain pattern', () => {
       'münchen.de',
       'xn--mnchen-3ya.de',
       'example.com.',
-      '1inch.io:443',
     ]) {
       assert.equal(cdnDomainHasForbiddenPattern(domain), false, domain)
     }
@@ -100,7 +111,30 @@ describe('CDN domain pattern', () => {
       'app.uniswap.org',
     )
     assert.equal(suggestCdnDomain('example.com:8080'), 'example.com')
+    assert.equal(suggestCdnDomain('1inch.io:443'), '1inch.io')
+    assert.equal(
+      suggestCdnDomain('https://user@app.example.org/swap'),
+      'app.example.org',
+    )
+    assert.equal(
+      suggestCdnDomain('https://user:secret@app.example.org:8443/'),
+      'app.example.org',
+    )
     assert.equal(suggestCdnDomain('*'), undefined)
+  })
+  it('does not guess a domain for gateway links or non-web schemes', () => {
+    for (const value of [
+      'https://ipfs.io/ipns/app.uniswap.org/',
+      'https://gateway.pinata.cloud/ipfs/QmX/',
+      'ipfs.io/ipfs/QmX',
+      'ipfs://bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi',
+      'ipns://app.uniswap.org',
+      'ar://abc',
+      'https://arweave.net/abc123',
+      'ftp://files.example.org/app',
+    ]) {
+      assert.equal(suggestCdnDomain(value), undefined, value)
+    }
   })
 })
 
@@ -189,7 +223,47 @@ describe('ATQ source analysis', () => {
     const source =
       'export default async function returnTags(_a, _b) { return []; }\n'
     assert.equal(outcome(source, 'atq.return-tags-export'), 'fail:violation')
-    assert.equal(outcome(source, 'atq.no-extra-functions'), 'fail:violation')
+    assert.equal(outcome(source, 'atq.no-extra-functions'), 'fail:warning')
+  })
+  it("accepts the policy's reference pattern: an instance's returnTags exported by name", () => {
+    const reference = [
+      'import { ContractTag, ITagService } from "atq-types";',
+      'class TagService implements ITagService {',
+      '  returnTags = async (chainId: string, apiKey: string): Promise<ContractTag[]> => {',
+      '    return [];',
+      '  };',
+      '}',
+      'const tagService = new TagService();',
+      'export const returnTags = tagService.returnTags;',
+    ].join('\n')
+    assert.deepEqual(
+      analyze(reference).filter((r) => r.outcome !== 'pass'),
+      [],
+    )
+    // An async method works the same way.
+    assert.equal(
+      outcome(
+        'class S { async returnTags(chainId: string, apiKey: string) { return []; } }\nexport const returnTags = new S().returnTags;\n',
+        'atq.return-tags-export',
+      ),
+      'pass:violation',
+    )
+    // The class lives elsewhere: the pattern is accepted, not flagged.
+    assert.equal(
+      outcome(
+        'import { service } from "./service.mjs";\nexport const returnTags = service.returnTags;\n',
+        'atq.return-tags-export',
+      ),
+      'pass:violation',
+    )
+    // A member of the wrong shape breaks the rule like a direct function.
+    assert.equal(
+      outcome(
+        'class S { returnTags = (chainId: string) => []; }\nconst s = new S();\nexport const returnTags = s.returnTags;\n',
+        'atq.return-tags-export',
+      ),
+      'fail:violation',
+    )
   })
   it('sends star re-exports and indirect exports to review', () => {
     assert.equal(
@@ -230,10 +304,10 @@ describe('ATQ source analysis', () => {
       'fail:violation',
     )
   })
-  it('flags extra exported functions (violation) and values (review)', () => {
+  it('warns about extra exported functions and values (registered modules have them)', () => {
     assert.equal(
       outcome(`${GOOD}\nexport function helper() {}`, 'atq.no-extra-functions'),
-      'fail:violation',
+      'fail:warning',
     )
     assert.equal(
       outcome(`${GOOD}\nexport const LIMIT = 5;`, 'atq.no-extra-functions'),
@@ -324,6 +398,22 @@ describe('ATQ source analysis', () => {
       'fail:warning',
     )
   })
+  it("doesn't parse a source over the line limit or too large to analyze", () => {
+    const long = analyze(`${GOOD}\n${'// line\n'.repeat(600)}`)
+    assert.equal(byId(long, 'atq.source-lines')?.outcome, 'fail')
+    assert.equal(byId(long, 'atq.typescript-syntax'), undefined)
+    // Within 500 lines but over 256 KB (e.g. minified): not analyzed, not blocking.
+    const wide = analyze(`${GOOD}\nconst data = "${'x'.repeat(300 * 1024)}";\n`)
+    assert.equal(byId(wide, 'atq.source-lines')?.outcome, 'pass')
+    assert.equal(byId(wide, 'atq.typescript-syntax')?.outcome, 'inconclusive')
+    assert.equal(wide.some(isBlocking), false)
+    // Only the first MB was downloaded: over 500 lines in it is still a fail.
+    const cut = (source: string) =>
+      byId(analyzeAtqSource(TS, source, true), 'atq.source-lines')
+    assert.equal(cut('// x\n'.repeat(600))?.outcome, 'fail')
+    assert.match(cut('// x\n'.repeat(600))?.message ?? '', /more than 500/)
+    assert.equal(cut(GOOD)?.outcome, 'inconclusive')
+  })
   it('counts lines, ignoring a final newline', () => {
     assert.equal(countSourceLines(''), 0)
     assert.equal(countSourceLines('a'), 1)
@@ -374,16 +464,26 @@ describe('PNG structure', () => {
     )
     assert.deepEqual(integrityWarnings, [])
   })
-  it('rejects bytes after IEND, truncation, non-PNG files and a non-IHDR first chunk', () => {
-    assert.equal(
-      inspectPng(png(128, 128, [new Uint8Array([0])])).structure.valid,
-      false,
-    )
+  it('accepts bytes after IEND with a warning, as decoders ignore them', () => {
+    for (const extra of [1, 16]) {
+      const { structure, integrityWarnings } = inspectPng(
+        png(128, 128, [new Uint8Array(extra)]),
+      )
+      assert.equal(structure.valid, true)
+      assert.equal(integrityWarnings.length, 1)
+      assert.match(integrityWarnings[0], new RegExp(`^${extra} extra byte`))
+    }
+  })
+  it('rejects truncation, a missing IEND, non-PNG files and a non-IHDR first chunk', () => {
     const full = png(128, 128)
     assert.equal(
       inspectPng(full.subarray(0, full.length - 4)).structure.valid,
       false,
     )
+    // Cut right before IEND: every chunk is whole, but the end marker is gone.
+    const noEnd = inspectPng(full.subarray(0, full.length - 12)).structure
+    assert.equal(noEnd.valid, false)
+    assert.match(noEnd.valid ? '' : noEnd.reason, /IEND\) is missing/)
     assert.equal(
       inspectPng(new Uint8Array([0xff, 0xd8, 0xff, ...new Array(40).fill(0)]))
         .structure.valid,
@@ -415,6 +515,19 @@ describe('token logo', () => {
     const results = await checkTokenLogo(logoFile(128, 128))
     assert.equal(results.some(isBlocking), false)
     assert.equal(outcomes(results)['tokens.logo-decode'], 'violation:pass')
+  })
+
+  it('only warns about data after the end of the PNG', async () => {
+    withDecoder(decodePng)
+    const padded = new File(
+      [await logoFile(128, 128).arrayBuffer(), new Uint8Array(16)],
+      'logo.png',
+      { type: 'image/png' },
+    )
+    const results = await checkTokenLogo(padded)
+    assert.equal(results.some(isBlocking), false)
+    assert.equal(outcomes(results)['tokens.logo-png'], 'violation:pass')
+    assert.equal(outcomes(results)['tokens.logo-integrity'], 'warning:fail')
   })
 
   it('blocks a PNG without pixel data, even where nothing can decode it', async () => {
@@ -471,6 +584,16 @@ describe('token logo', () => {
     assert.equal(await size(1_000_001), 'warning:fail')
     assert.equal(await size(1_048_576), 'warning:fail')
     assert.equal(await size(1_048_577), 'violation:fail')
+    // The exact size, not a rounded "1024 KB" that reads as within 1 MB.
+    const over = (
+      await checkTokenLogo(logoFile(128, 128, { size: 1_048_577 }))
+    ).find((r) => r.id === 'tokens.logo-size')
+    assert.ok(
+      over?.message?.startsWith(
+        `The logo is ${(1_048_577).toLocaleString()} bytes.`,
+      ),
+      over?.message,
+    )
   })
 })
 
@@ -574,6 +697,12 @@ describe('local rules', () => {
       byId(cdn('localhost'), 'cdn.domain-hostname')?.severity,
       'warning',
     )
+    const gateway = byId(
+      cdn('https://ipfs.io/ipns/app.uniswap.org/'),
+      'cdn.domain-pattern',
+    )
+    assert.deepEqual([gateway?.outcome, gateway?.fix], ['fail', undefined])
+    assert.match(gateway?.message ?? '', /gateway/)
   })
   it('suggests the canonical GitHub URL', () => {
     const results = runLocalChecks({
@@ -588,6 +717,71 @@ describe('local rules', () => {
       'https://github.com/a/b',
     )
     assert.equal(byId(results, 'atq.commit-hash')?.outcome, 'fail')
+    // An organization page is not a repository.
+    const org = runLocalChecks({
+      registry: 'tags-queries',
+      values: {
+        'Github Repository URL': 'https://github.com/orgs/foo/repositories',
+      },
+    })
+    assert.equal(byId(org, 'atq.repository-url')?.fix, undefined)
+  })
+  it('warns that commit hashes under 7 characters are not looked up', () => {
+    const commit = (hash: string) =>
+      byId(
+        runLocalChecks({
+          registry: 'tags-queries',
+          values: { 'Commit hash': hash },
+        }),
+        'atq.commit-length',
+      )
+    assert.deepEqual(
+      [commit('abc12')?.outcome, commit('abc12')?.severity],
+      ['fail', 'warning'],
+    )
+    assert.equal(commit('abc1234'), undefined)
+    assert.equal(commit('a'.repeat(40)), undefined)
+  })
+})
+
+describe('CDN duplicate lookup', () => {
+  // Postgres ILIKE, as the indexer applies `_ilike`.
+  const ilike = (value: string, pattern: string) =>
+    new RegExp(
+      `^${pattern.replace(
+        /\\(.)|([%_])|([^\\%_]+)/g,
+        (_, escaped, wildcard, text) =>
+          escaped !== undefined
+            ? escaped.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            : wildcard === '%'
+              ? '.*'
+              : wildcard === '_'
+                ? '.'
+                : text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      )}$`,
+      'is',
+    ).test(value)
+  const matches = (stored: string, domain: string) => {
+    const { domain: exact, domainPath } = cdnDomainPatterns(domain)
+    return ilike(stored, exact) || ilike(stored, domainPath)
+  }
+
+  it('matches the same domain or a stored path under it, not a longer domain', () => {
+    assert.ok(matches('sushi.com', 'sushi.com'))
+    assert.ok(matches('SUSHI.com', 'sushi.com'))
+    assert.ok(matches('sushi.com/swap', 'sushi.com'))
+    assert.ok(!matches('sushi.com.au', 'sushi.com'))
+    assert.ok(!matches('sushi.community', 'sushi.com'))
+    assert.ok(matches('*.balancer.fi', '*.balancer.fi'))
+  })
+  it('treats LIKE wildcards in the domain literally', () => {
+    assert.deepEqual(cdnDomainPatterns('my_app.com'), {
+      domain: 'my\\_app.com',
+      domainPath: 'my\\_app.com/%',
+    })
+    assert.ok(!matches('myxapp.com', 'my_app.com'))
+    assert.ok(matches('my_app.com', 'my_app.com'))
+    assert.ok(!matches('anything.com', '%'))
   })
 })
 
@@ -610,11 +804,19 @@ const hang = (init?: RequestInit) =>
   })
 const mockRpc = (
   handler: RpcHandler,
-  { hangs }: { hangs?: (host: string) => boolean } = {},
+  {
+    hangs,
+    gate,
+  }: {
+    hangs?: (host: string) => boolean
+    /** Answers wait for this, unless their request is cancelled first. */
+    gate?: Promise<void>
+  } = {},
 ) => {
   globalThis.fetch = (async (input: string | URL, init?: RequestInit) => {
     const host = new URL(String(input)).hostname
     if (hangs?.(host)) return hang(init)
+    if (gate) await Promise.race([gate, hang(init)])
     const body = JSON.parse(String(init?.body))
     const answer = (call: {
       id: number
@@ -735,6 +937,74 @@ describe('payout acceptance', () => {
     const read = await readPayoutAcceptance(REGISTRY, `0x${'d4'.repeat(20)}`)
     assert.equal(read.status, 'unavailable')
   })
+
+  it('rejects a cancelled probe instead of answering "unavailable"', async () => {
+    mockRpc(() => '0x', { hangs: () => true })
+    const caller = new AbortController()
+    const pending = readPayoutAcceptance(
+      REGISTRY,
+      `0x${'e5'.repeat(20)}`,
+      caller.signal,
+    )
+    caller.abort()
+    await assert.rejects(pending, { name: 'AbortError' })
+  })
+})
+
+describe('cancellation', () => {
+  it('rejects a cancelled read instead of reporting the providers as unavailable', async () => {
+    mockRpc(() => '0x6080', { hangs: () => true })
+    const caller = new AbortController()
+    const pending = readCodeSnapshot(1, `0x${'a7'.repeat(20)}`, caller.signal)
+    caller.abort()
+    await assert.rejects(pending, { name: 'AbortError' })
+    await assert.rejects(
+      readWithQuorum(1, async () => 'same', { signal: caller.signal }),
+      { name: 'AbortError' },
+      'already cancelled',
+    )
+  })
+
+  it("never hands one caller's cancelled read to another", async () => {
+    let open!: () => void
+    mockRpc(() => '0x6080', {
+      gate: new Promise((resolve) => (open = resolve)),
+    })
+    const address = `0x${'b8'.repeat(20)}`
+    // Two readers of the same address (a remount, or a query whose key moved
+    // on); the first is cancelled while both are waiting for the providers.
+    const first = new AbortController()
+    const cancelled = readCodeSnapshot(1, address, first.signal)
+    const second = readCodeSnapshot(1, address, new AbortController().signal)
+    first.abort()
+    await assert.rejects(cancelled, { name: 'AbortError' })
+    open()
+    assert.equal((await second).status, 'agreed')
+    assert.equal((await readCodeSnapshot(1, address)).status, 'agreed')
+  })
+})
+
+describe('public RPC list', () => {
+  it('only lists https endpoints, for chains the registries support', () => {
+    for (const [chainId, urls] of Object.entries(PUBLIC_RPC_URLS)) {
+      assert.ok(
+        chains.some((c) => c.namespace === 'eip155' && c.id === chainId),
+        chainId,
+      )
+      assert.ok(urls.length > 0, chainId)
+      for (const url of urls) assert.equal(new URL(url).protocol, 'https:')
+    }
+  })
+  it('reports chains without a working public RPC as unchecked, not as failing', async () => {
+    // Blast: none of its public endpoints served eth_getCode when last probed.
+    const results = await checkAddressOnChain({
+      registry: 'single-tags',
+      values: { 'Contract Address': `eip155:81457:${USDC}` },
+    })
+    assert.equal(byId(results, 'address.deployed')?.outcome, 'inconclusive')
+    assert.equal(byId(results, 'address.deployed')?.final, true)
+    assert.equal(results.some(isBlocking), false)
+  })
 })
 
 describe('on-chain checks', () => {
@@ -744,6 +1014,66 @@ describe('on-chain checks', () => {
     assert.equal(read.status, 'disagreed')
     const agreed = await readWithQuorum(1, async () => 'same')
     assert.equal(agreed.status, 'agreed')
+  })
+
+  it('only blocks when two independent providers agree', async () => {
+    // Moonbeam has a single working public RPC operator.
+    mockRpc((method) => (method === 'eth_getCode' ? '0x' : uint(18)))
+    const single = byId(
+      await checkAddressOnChain({
+        registry: 'single-tags',
+        values: { 'Contract Address': `eip155:1284:${USDC}` },
+      }),
+      'address.deployed',
+    )
+    assert.deepEqual([single?.outcome, single?.severity], ['fail', 'warning'])
+    assert.match(single?.message ?? '', /only 1 provider/)
+    const two = byId(
+      await checkAddressOnChain({
+        registry: 'single-tags',
+        values: { 'Contract Address': `eip155:1:${USDC}` },
+      }),
+      'address.deployed',
+    )
+    assert.deepEqual([two?.outcome, two?.severity], ['fail', 'violation'])
+    assert.match(two?.message ?? '', /2 independent providers agree/)
+
+    mockRpc((method) => (method === 'eth_getCode' ? '0x6080' : uint(18)))
+    const decimals = byId(
+      await checkAddressOnChain(
+        tokensDraft({ Address: `eip155:1284:${USDC}`, Decimals: '6' }),
+      ),
+      'tokens.decimals-onchain',
+    )
+    assert.deepEqual(
+      [decimals?.outcome, decimals?.severity, decimals?.fix],
+      ['fail', 'warning', '18'],
+    )
+  })
+
+  it('reads the chain once per address and compares Decimals separately', async () => {
+    let calls = 0
+    mockRpc((method) => {
+      calls++
+      return method === 'eth_getCode' ? '0x6080' : uint(6)
+    })
+    const read = await readAddressOnChain(
+      tokensDraft({ Address: `eip155:10:${USDC}`, Decimals: '' }),
+    )
+    const asked = calls
+    assert.deepEqual(read.decimals, {
+      value: 6,
+      source: 'contract',
+      providers: 2,
+    })
+    const compare = (entered: string) => {
+      const [result] = compareDecimals(read.decimals, entered)
+      return [result.outcome, result.severity, result.fix]
+    }
+    assert.deepEqual(compare(''), ['pending', 'violation', '6'])
+    assert.deepEqual(compare('7'), ['fail', 'violation', '6'])
+    assert.deepEqual(compare('6'), ['pass', 'violation', undefined])
+    assert.equal(calls, asked, 'comparing reads nothing')
   })
 
   it('passes a deployed token whose decimals match, and suggests the right decimals otherwise', async () => {
@@ -915,5 +1245,90 @@ describe('ATQ GitHub checks', () => {
     )
     assert.equal(byId(results, 'atq.repository-name')?.outcome, 'fail')
     assert.equal(byId(results, 'atq.return-tags-export')?.outcome, 'pass')
+  })
+  it('asks GitHub about a repository once, and for a commit only its hash', async () => {
+    const requests: { url: string; accept: string }[] = []
+    globalThis.fetch = (async (input: string | URL, init?: RequestInit) => {
+      const url = String(input)
+      requests.push({
+        url,
+        accept: new Headers(init?.headers).get('accept') ?? '',
+      })
+      if (url.startsWith('https://raw.githubusercontent.com/'))
+        return new Response('export async function returnTags(a, b) {}\n')
+      if (url.includes('/commits/')) return new Response('f'.repeat(40))
+      return new Response(JSON.stringify({ name: 'cached-repo' }))
+    }) as typeof fetch
+    const ref = { owner: 'owner', repository: 'cached-repo' }
+    const first = await lookupPinnedSource(ref, 'aaaaaaa')
+    const second = await lookupPinnedSource(ref, 'bbbbbbb')
+    assert.equal(first.canonicalName, 'cached-repo')
+    assert.equal(second.canonicalName, 'cached-repo')
+    assert.equal(second.resolvedCommit, 'f'.repeat(40))
+    const api = requests.filter((r) =>
+      r.url.startsWith('https://api.github.com/'),
+    )
+    assert.deepEqual(
+      api.map((r) =>
+        r.url.replace('https://api.github.com/repos/owner/cached-repo', ''),
+      ),
+      ['', '/commits/aaaaaaa', '/commits/bbbbbbb'],
+    )
+    for (const r of api.filter((r) => r.url.includes('/commits/')))
+      assert.equal(r.accept, 'application/vnd.github.sha')
+  })
+  it("doesn't download or parse a source far over the line limit", async () => {
+    const huge = '// line\n'.repeat(200_000) // 1.6 MB
+    globalThis.fetch = (async (input: string | URL) => {
+      const url = String(input)
+      if (url.startsWith('https://raw.githubusercontent.com/'))
+        return new Response(huge)
+      if (url.includes('/commits/')) return new Response('e'.repeat(40))
+      return new Response(JSON.stringify({ name: 'huge-module' }))
+    }) as typeof fetch
+    let loaded = false
+    const results = await checkAtqSource(
+      {
+        ...draft,
+        values: {
+          ...draft.values,
+          'Github Repository URL': 'https://github.com/owner/huge-module',
+          'Commit hash': 'eeeeeee',
+        },
+      },
+      async () => {
+        loaded = true
+        return TS
+      },
+    )
+    assert.equal(byId(results, 'atq.source-lines')?.outcome, 'fail')
+    assert.equal(loaded, false, 'the parser is not even loaded')
+  })
+})
+
+describe('source download cap', () => {
+  it('reads at most the limit, from a stream or a declared length', async () => {
+    assert.deepEqual(await readTextUpTo(new Response('a'.repeat(100)), 1000), {
+      text: 'a'.repeat(100),
+      truncated: false,
+    })
+    const big = await readTextUpTo(new Response('a'.repeat(5000)), 1000)
+    assert.deepEqual([big.text.length, big.truncated], [1000, true])
+    // A body that never ends is not read to its end.
+    let pulled = 0
+    const endless = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled++
+        controller.enqueue(new Uint8Array(512).fill(0x61))
+      },
+    })
+    const capped = await readTextUpTo(new Response(endless), 2048)
+    assert.deepEqual([capped.text.length, capped.truncated], [2048, true])
+    assert.ok(pulled < 10, `pulled ${pulled} chunks`)
+    const declared = await readTextUpTo(
+      new Response('abc', { headers: { 'content-length': '5000000' } }),
+      1000,
+    )
+    assert.equal(declared.truncated, true)
   })
 })

@@ -23,7 +23,7 @@ const Box = styled.div`
 interface Props {
   /** Wallet that will receive the refunds and rewards (usually the connected one). */
   address?: string
-  /** Registry that pays out; any Scout registry gives the same answer. */
+  /** Address of the registry that pays out (the Tokens registry if omitted). */
   registry?: string
   /** What the xDAI at stake is, e.g. "The deposit refund and appeal rewards". */
   stake?: string
