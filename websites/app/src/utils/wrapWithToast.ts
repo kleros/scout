@@ -2,6 +2,7 @@ import { toast, ToastPosition, Theme } from "react-toastify";
 import { PublicClient, TransactionReceipt } from "viem";
 
 import { parseWagmiError } from "./parseWagmiError";
+import { emitTxConfirmed } from "./txEvents";
 
 export const OPTIONS = {
   position: "top-center" as ToastPosition,
@@ -40,8 +41,11 @@ export async function wrapWithToast(
         await publicClient.waitForTransactionReceipt({ hash, confirmations: 2 }).then((res: TransactionReceipt) => {
           const status = res.status === "success";
 
-          if (status) toast.success("Transaction mined!", OPTIONS);
-          else toast.error("Transaction reverted!", ERROR_OPTIONS);
+          if (status) {
+            toast.success("Transaction mined!", OPTIONS);
+            // Pages showing data this transaction changes read it again while the indexer catches up.
+            emitTxConfirmed();
+          } else toast.error("Transaction reverted!", ERROR_OPTIONS);
 
           return { status, result: res };
         })

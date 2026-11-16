@@ -27,14 +27,18 @@ const CHUNK_SIZE = 100_000
  * Public Gnosis RPC endpoints used to parallelize the 'full' scan.
  * The first entry is primary — used for one-off calls (getBlockNumber,
  * getBlock) and the 'latest' backward scan. Additional entries let us
- * fan log-fetch chunks across providers, roughly tripling throughput
- * without overloading any single endpoint's rate limit.
+ * fan log-fetch chunks across providers without overloading any single
+ * endpoint's rate limit. (gnosis-mainnet.public.blastapi.io was removed:
+ * Blast API shut down and answers every call with HTTP 403.)
  */
-const GNOSIS_RPC_URLS = [
-  GNOSIS_RPC_URL,
-  'https://rpc.gnosis.gateway.fm',
-  'https://gnosis-mainnet.public.blastapi.io',
-]
+const GNOSIS_RPC_URLS = [GNOSIS_RPC_URL, 'https://rpc.gnosis.gateway.fm']
+
+/**
+ * The chain is known, so skip ethers' network detection: without `staticNetwork`
+ * a provider whose endpoint is down retries detection every second for ever.
+ */
+const createProvider = (url: string) =>
+  new JsonRpcProvider(url, 100, { staticNetwork: true })
 
 // Concurrency budget per provider — matches the single-provider limit the
 // original implementation ran at safely. Total budget is this × providers.
@@ -302,7 +306,7 @@ export const fetchPolicyHistory = async (
   registryAddress: string,
   mode: PolicyFetchMode = 'full',
 ): Promise<PolicyHistoryEntry[]> => {
-  const providers = GNOSIS_RPC_URLS.map((url) => new JsonRpcProvider(url, 100))
+  const providers = GNOSIS_RPC_URLS.map(createProvider)
   const deployBlock =
     REGISTRY_START_BLOCKS[registryAddress] ?? DEFAULT_START_BLOCK
   const latestBlock = await providers[0].getBlockNumber()
