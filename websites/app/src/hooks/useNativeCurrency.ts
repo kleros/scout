@@ -1,25 +1,10 @@
-import { useChainId } from 'wagmi'
-
 /**
- * Returns the native currency symbol for the current chain
+ * Returns the symbol of the currency Scout's deposits, bounties and appeal fees are paid in.
+ * Every Scout registry lives on Gnosis, so this is xDAI whatever network the wallet is on:
+ * showing the wallet's own currency (ETH on Ethereum, for example) would misstate the amounts.
  */
 export function useNativeCurrency(): string {
-  const chainId = useChainId()
-
-  switch (chainId) {
-    case 1: // Ethereum Mainnet
-      return 'ETH'
-    case 100: // Gnosis Chain
-      return 'xDAI'
-    case 137: // Polygon
-      return 'MATIC'
-    case 42161: // Arbitrum One
-      return 'ETH'
-    case 10: // Optimism
-      return 'ETH'
-    default:
-      return 'xDAI' // Default to xDAI for Gnosis
-  }
+  return 'xDAI'
 }
 
 export default useNativeCurrency
