@@ -181,6 +181,52 @@ Abuse limits (anyone can make wallets, so none of these is per wallet only):
 The numbers are constants in `store.ts` (`SIGNUP_LIMITS`, `EMAIL_SEND_LIMITS`,
 `MAX_FOLLOWS`, …) and `src/utils/cases/reads.ts` (`READS_KEPT`).
 
+## Enabling: checklist
+
+The service is merged dark. Before setting the two flags in Production:
+
+1. **Decide to run it.** It needs an owner for abuse reports,
+   deliverability, privacy requests and incidents, and has a running cost:
+   the two scheduled functions (every minute: about 87,600 runs a month,
+   250-600 Netlify credits at 10 credits per GB-hour), one bell poll a
+   minute per signed-in tab, an always-on Postgres and the Resend volume.
+   Consider every 5 minutes instead (`schedule` in
+   `netlify/functions/notify-*.mts`; appeal windows last hours).
+2. **Secrets.** Scope every notification secret to Production and Functions
+   only, mark it secret, and set fork deploy previews to require approval
+   (see [Setup](#setup-netlify)). `NOTIFY_SESSION_SECRET`: 32+ random
+   characters; rotating it signs everyone out and voids every email link.
+3. **Database.** A dedicated, always-on Postgres (Neon's free tier is not
+   enough), through its pooled URL in `NOTIFY_DATABASE_URL`, with a
+   least-privilege role, backups and a size alert.
+4. **Email.** Resend on a dedicated subdomain (for example
+   `notify.kleros.io`) with SPF, DKIM and DMARC, so `kleros.io`'s reputation
+   is not at stake; `NOTIFY_EMAIL_FROM` on that subdomain.
+5. **Telegram.** A bot owned by a Kleros account; register its webhook once
+   with `scripts/notify-telegram-webhook.mjs`.
+6. **Push.** Generate the VAPID keys once and never rotate them silently:
+   new keys break every existing subscription.
+7. **Privacy policy.** Name the processors (Netlify, the Postgres host,
+   Resend, Telegram, the browsers' push services, the RPC providers), what
+   is stored, the retention ([Data and privacy](#data-and-privacy)), and
+   the upload of which items' evidence a wallet has read.
+8. **Monitoring.** Alert on function errors, send volumes and failure
+   rates, database size, and the warnings logged when verification emails
+   or new accounts reach their service-wide limits.
+9. **Try it first** on a branch deploy (both flags, its own database and
+   bot, secrets scoped to that branch) and check what could not be checked
+   locally: that Netlify enforces the API's `rateLimit`, that
+   `/api/notify/*` reaches the function before the SPA's `/*` redirect,
+   what an unhandled function error returns, that the scheduled runs stay
+   within 30 s, and real email, Telegram and push delivery (iPhone
+   included).
+10. **Roll out one channel at a time:** the in-app bell first (no channel
+    variables set), then push, Telegram and email.
+11. **Switch on:** `NOTIFY_ENABLED=true` and `REACT_APP_NOTIFY_ENABLED=true`
+    for Production (Builds scope), then redeploy. To switch off, remove both
+    and redeploy: the functions and their schedules go away, and the app
+    stops calling them.
+
 ## Local development
 
 ```sh
