@@ -1,11 +1,14 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { QueryClient } from '@tanstack/react-query'
+import { UserRejectedRequestError } from 'viem'
 import {
   accountKey,
   afterSignIn,
   afterSignOut,
+  offeredChannels,
   readsSaved,
+  signatureError,
 } from './useNotifications'
 
 const A = `0x${'aa'.repeat(20)}`
@@ -75,5 +78,40 @@ describe('notification caches', () => {
     queryClient.setQueryData(accountKey(A, 'inbox'), { notifications: [] })
     afterSignOut(queryClient)
     assert.equal(queryClient.getQueryData(accountKey(A, 'inbox')), undefined)
+  })
+})
+
+describe('notification wording', () => {
+  it("tells the user they cancelled, never the wallet library's error text", () => {
+    const rejected = new UserRejectedRequestError(new Error('User denied.'))
+    assert.equal(signatureError(rejected).message, 'You cancelled the sign-in.')
+    // Wrapped, as wagmi and some wallets do.
+    assert.equal(
+      signatureError(
+        Object.assign(new Error('Signing failed'), { cause: { code: 4001 } }),
+      ).message,
+      'You cancelled the sign-in.',
+    )
+    const other = signatureError(
+      new Error('Details: internal error. Version: viem@2.46.1'),
+    ).message
+    assert.doesNotMatch(other, /viem|Details/)
+    assert.match(other, /could not sign/)
+  })
+
+  it('promises only the channels this deployment offers', () => {
+    const channels = (email: boolean, telegram: boolean, push: boolean) =>
+      offeredChannels({
+        email,
+        telegram: telegram ? { bot: 'scout_bot' } : null,
+        push: push ? { publicKey: 'key' } : null,
+      })
+    assert.equal(
+      channels(true, true, true),
+      'email, Telegram or browser notifications',
+    )
+    assert.equal(channels(true, false, true), 'email or browser notifications')
+    assert.equal(channels(false, true, false), 'Telegram')
+    assert.equal(channels(false, false, false), null)
   })
 })

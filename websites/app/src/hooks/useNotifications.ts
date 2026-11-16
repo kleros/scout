@@ -84,6 +84,22 @@ export interface NotifyConfig {
   maxWatchedAddresses: number
 }
 
+/**
+ * The channels this deployment offers, for a sentence: "email, Telegram or
+ * browser notifications", or null when it offers only the in-app bell.
+ */
+export const offeredChannels = (channels: NotifyConfig['channels']) => {
+  const names = [
+    channels.email && 'email',
+    channels.telegram && 'Telegram',
+    channels.push && 'browser notifications',
+  ].filter((name): name is string => Boolean(name))
+  if (names.length === 0) return null
+  return names.length === 1
+    ? names[0]
+    : `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`
+}
+
 export interface NotifyProfile {
   signedIn: boolean
   address?: string
@@ -210,6 +226,24 @@ export const useNotifyProfile = () => {
 const SIGN_IN_STATEMENT =
   'Sign in to manage your Kleros Scout notifications. This is free: it sends no transaction and grants no permissions.'
 
+/** Whether the wallet's error means the user declined (EIP-1193 code 4001). */
+export const isRejection = (error: unknown) => {
+  for (let cause = error, depth = 0; cause && depth < 5; depth++) {
+    const { code, name } = cause as { code?: unknown; name?: unknown }
+    if (code === 4001 || name === 'UserRejectedRequestError') return true
+    cause = (cause as { cause?: unknown }).cause
+  }
+  return false
+}
+
+/** What to tell someone whose wallet didn't sign: never the library's error text. */
+export const signatureError = (error: unknown) =>
+  new Error(
+    isRejection(error)
+      ? 'You cancelled the sign-in.'
+      : 'Your wallet could not sign the message. Try again, or reconnect your wallet.',
+  )
+
 export const useNotifySignIn = () => {
   const queryClient = useQueryClient()
   const { address, chainId } = useAccount()
@@ -229,7 +263,11 @@ export const useNotifySignIn = () => {
         issuedAt: new Date(),
         expirationTime: new Date(Date.now() + 10 * 60 * 1000),
       })
-      const signature = await signMessageAsync({ message })
+      const signature = await signMessageAsync({ message }).catch(
+        (error: unknown) => {
+          throw signatureError(error)
+        },
+      )
       return api<NotifyProfile>('/auth/verify', {
         method: 'POST',
         json: { message, signature },

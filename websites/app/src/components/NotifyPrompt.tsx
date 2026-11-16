@@ -4,7 +4,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import NotificationsIcon from 'svgs/menu-icons/notifications.svg'
 import { StyledButton } from 'components/Button'
-import { useNotifyConfig, useNotifyProfile } from 'hooks/useNotifications'
+import {
+  offeredChannels,
+  useNotifyConfig,
+  useNotifyProfile,
+} from 'hooks/useNotifications'
 
 const Card = styled.div`
   display: flex;
@@ -72,14 +76,17 @@ const NotifyPrompt: React.FC<{ context: string; sender: string }> = ({
       </Card>
     )
   }
+  // Promise only what this deployment can send.
+  const channels = offeredChannels(config.data.channels)
   return (
     <Card>
       <NotificationsIcon aria-hidden />
       <Text>
         <strong>Don't miss what happens next.</strong>
         <Muted>
-          Get an email, Telegram message or browser alert if {context} is
-          challenged, when evidence is posted, and before any appeal deadline.
+          Get alerted {channels ? `by ${channels}` : "in Scout's bell"} if{' '}
+          {context} is challenged, when evidence is posted, and before any
+          appeal deadline.
         </Muted>
       </Text>
       <StyledButton

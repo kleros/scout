@@ -3,6 +3,7 @@ import styled from 'styled-components'
 import { useAccount } from 'wagmi'
 import NotificationsIcon from 'svgs/menu-icons/notifications.svg'
 import {
+  offeredChannels,
   useFollow,
   useNotifyConfig,
   useNotifyProfile,
@@ -61,6 +62,8 @@ const FollowButton: React.FC<{ itemId: string }> = ({ itemId }) => {
   if (!config.isSuccess || !address) return null
 
   const busy = signIn.isPending || toggle.isPending
+  // Promise only what this deployment can send.
+  const channels = offeredChannels(config.data.channels)
   const onClick = async () => {
     try {
       if (!signedIn) await signIn.mutateAsync()
@@ -68,7 +71,9 @@ const FollowButton: React.FC<{ itemId: string }> = ({ itemId }) => {
       successToast(
         following
           ? 'Unfollowed.'
-          : 'Following. Set up email, Telegram or browser alerts in Settings → Notifications.',
+          : channels
+            ? `Following. Set up ${channels} in Settings → Notifications.`
+            : "Following. Its activity will show in Scout's bell.",
       )
     } catch (error) {
       errorToast(

@@ -66,9 +66,10 @@ export const startDevServer = async (
       res.end(JSON.stringify({ error: 'Internal error.' }))
     }
   })
-  await new Promise<void>((resolve) => server.listen(port, resolve))
+  // This machine only: with channel credentials it is a working sender.
+  await new Promise<void>((resolve) => server.listen(port, '127.0.0.1', resolve))
   console.log(
-    `[notify-dev] API on http://localhost:${port}/api/notify (channels: ${
+    `[notify-dev] API on http://127.0.0.1:${port}/api/notify (channels: ${
       [env.email && 'email', env.telegram && 'telegram', env.push && 'push']
         .filter(Boolean)
         .join(', ') || 'in-app only'

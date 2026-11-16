@@ -188,8 +188,12 @@ yarn notify:dev    # API on 127.0.0.1:8788, in-memory Postgres (PGlite)
 REACT_APP_NOTIFY_ENABLED=true NOTIFY_API_URL=http://127.0.0.1:8788 yarn start   # app, proxying /api/notify
 ```
 
+The local API listens on 127.0.0.1 only. From `.env` it reads only `NOTIFY_*`
+settings and `REACT_APP_SUBGRAPH_GNOSIS_ENDPOINT`; channel credentials
+(`RESEND_*`, `TELEGRAM_*`, `VAPID_*`) must be set in the command's own
+environment, and it warns when they are: with them it sends real messages.
 Set `NOTIFY_DEV_WATCH=1` to also run the watcher and delivery loops against
-the live indexer. Channel credentials in `.env` are used if present.
+the live indexer.
 
 `yarn test` runs the unit tests, including this service against PGlite.
 
