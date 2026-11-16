@@ -937,6 +937,18 @@ describe('payout acceptance', () => {
     const read = await readPayoutAcceptance(REGISTRY, `0x${'d4'.repeat(20)}`)
     assert.equal(read.status, 'unavailable')
   })
+
+  it('rejects a cancelled probe instead of answering "unavailable"', async () => {
+    mockRpc(() => '0x', { hangs: () => true })
+    const caller = new AbortController()
+    const pending = readPayoutAcceptance(
+      REGISTRY,
+      `0x${'e5'.repeat(20)}`,
+      caller.signal,
+    )
+    caller.abort()
+    await assert.rejects(pending, { name: 'AbortError' })
+  })
 })
 
 describe('cancellation', () => {
