@@ -3,6 +3,7 @@ import {
   appealDeadlines,
   appealObligations,
   currentRound,
+  fundedSide,
   isRemoval,
   itemSubmitters,
   otherSide,
@@ -38,8 +39,16 @@ export type AttentionKind =
   | 'appeal-funded'
   /** The ruling favors you; the other side can still appeal. */
   | 'ruling-won'
-  /** The appeal window is over: the ruling will be enforced. */
+  /**
+   * No appeal can happen any more: the ruling stands (or, when jurors could
+   * not decide, the request is rejected).
+   */
   | 'ruling-final'
+  /**
+   * No appeal can happen any more and only one side was fully funded: it
+   * wins whatever the jurors ruled.
+   */
+  | 'funded-side-wins'
   /** Your request is in a dispute (evidence, then voting). */
   | 'challenged'
   /** A dispute you take part in is in progress. */
@@ -66,6 +75,11 @@ export interface Attention {
   required?: AppealObligation['required']
   /** Already raised for your side in the current round, in wei. */
   raised?: bigint
+  /**
+   * For a case no appeal can change any more, the side that wins (null:
+   * jurors could not decide and neither side was funded).
+   */
+  winner?: Side | null
 }
 
 const LEVEL_ORDER: Record<AttentionLevel, number> = {
@@ -81,6 +95,7 @@ const WAITING_ORDER: Partial<Record<AttentionKind, number>> = {
   'ruling-won': 1,
   dispute: 2,
   'ruling-final': 3,
+  'funded-side-wins': 3,
 }
 
 const norm = (address: string | null | undefined) =>
@@ -90,14 +105,18 @@ const norm = (address: string | null | undefined) =>
  * Everything `address` should keep an eye on, most pressing first.
  * `challengePeriodOf` gives a registry's challenge period in seconds, to date
  * unchallenged requests; `disputePeriodOf` gives a dispute's court period
- * (evidence, commit, vote...), since evidence only helps before voting.
+ * (evidence, commit, vote...) at the request's arbitrator, since evidence
+ * only helps before voting.
  */
 export const attentionFor = (
   items: IndexedItem[],
   address: string,
   now: number,
   challengePeriodOf: (registry: string) => number | undefined = () => undefined,
-  disputePeriodOf: (disputeId: string) => string | undefined = () => undefined,
+  disputePeriodOf: (
+    disputeId: string,
+    arbitrator: string,
+  ) => string | undefined = () => undefined,
 ): Attention[] => {
   const me = norm(address)
   const entries: Attention[] = []
@@ -106,18 +125,23 @@ export const attentionFor = (
     const request = item.requests[requestIndex]
     if (!request || request.resolved) continue
     const sides = requestSides(request)
-    const side: Side | undefined = sides.requester.has(me)
-      ? 'requester'
-      : sides.challenger.has(me)
-        ? 'challenger'
-        : undefined
+    // Someone on both sides, like a submitter who challenged their own
+    // request, wins whichever way it goes: they get no side to defend.
+    const bothSides = sides.requester.has(me) && sides.challenger.has(me)
+    const side: Side | undefined = bothSides
+      ? undefined
+      : sides.requester.has(me)
+        ? 'requester'
+        : sides.challenger.has(me)
+          ? 'challenger'
+          : undefined
     const party =
       norm(request.requester) === me ||
       (request.disputed && norm(request.challenger) === me)
-    // Whoever submitted an item has a stake in requests to remove it.
+    // The submitter of a listed item has a stake in requests to remove it.
     const submitter =
       isRemoval(request) && itemSubmitters(item, requestIndex).has(me)
-    if (!side && !submitter) continue
+    if (!side && !bothSides && !submitter) continue
     const base = { item, request, side, party }
     const push = (entry: Omit<Attention, keyof typeof base | 'key'>) =>
       entries.push({ ...base, ...entry, key: `${request.id}:${entry.kind}` })
@@ -135,7 +159,7 @@ export const attentionFor = (
           kind: open ? 'challenge-period' : 'executable',
           deadline: open ? deadline : undefined,
         })
-      else if (open)
+      else if (submitter && open)
         push({ level: 'action', kind: 'removal-requested', deadline })
       continue
     }
@@ -144,7 +168,7 @@ export const attentionFor = (
     if (!round || round.appealPeriodStart === '0' || round.appealed) {
       // Evidence, commit or vote period: no ruling to act on yet. Evidence
       // matters until voting starts (assumed while the period is unknown).
-      const period = disputePeriodOf(request.disputeID)
+      const period = disputePeriodOf(request.disputeID, request.arbitrator)
       push(
         side === 'requester' &&
           party &&
@@ -156,16 +180,26 @@ export const attentionFor = (
     }
 
     const d = appealDeadlines(round)
-    if (now >= d.end || !side) {
+    const open = appealObligations(round).filter((o) => o.deadline > now)
+    if (open.length === 0) {
+      // No appeal can happen any more (the loser's half or the whole appeal
+      // period is over). As the contract's `rule` does, a side funded alone
+      // wins whatever the jurors ruled; otherwise the ruling stands. Either
+      // way it takes effect when the appeal period ends.
+      const funded = fundedSide(round)
       push({
         level: 'waiting',
-        kind: now >= d.end ? 'ruling-final' : 'dispute',
+        kind: funded ? 'funded-side-wins' : 'ruling-final',
+        winner: funded ?? rulingWinner(round.ruling),
+        deadline: now < d.end ? d.end : undefined,
       })
       continue
     }
-    const mine = appealObligations(round).find(
-      (o) => o.side === side && o.deadline > now,
-    )
+    if (!side) {
+      push({ level: 'waiting', kind: 'dispute' })
+      continue
+    }
+    const mine = open.find((o) => o.side === side)
     if (mine) {
       const theirsFunded = sideFunded(round, otherSide(side))
       push({
@@ -184,17 +218,15 @@ export const attentionFor = (
         required: mine.required,
         raised: sidePaid(round, side),
       })
-    } else if (sideFunded(round, side)) {
-      const theirs = appealObligations(round).find((o) => o.deadline > now)
+    } else {
+      // Nothing for your side to fund: either it is funded and the other
+      // side still can be, or you won the ruling and the loser can still
+      // appeal (the only other open obligation).
       push({
         level: 'waiting',
-        kind: 'appeal-funded',
-        deadline: theirs?.deadline,
+        kind: sideFunded(round, side) ? 'appeal-funded' : 'ruling-won',
+        deadline: open[0].deadline,
       })
-    } else if (rulingWinner(round.ruling) === side && now < d.loser) {
-      push({ level: 'waiting', kind: 'ruling-won', deadline: d.loser })
-    } else {
-      push({ level: 'waiting', kind: 'ruling-final' })
     }
   }
   return sortAttention(entries)

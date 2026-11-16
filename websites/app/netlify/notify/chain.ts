@@ -8,11 +8,10 @@ import {
 import {
   createCaseChain,
   gnosisClient,
-  KLEROS_LIQUID,
   PERIODS,
 } from '../../src/utils/cases/chain'
 
-export { KLEROS_LIQUID, PERIODS } from '../../src/utils/cases/chain'
+export { PERIODS } from '../../src/utils/cases/chain'
 
 const NEW_PERIOD = parseAbiItem(
   'event NewPeriod(uint256 indexed _disputeID, uint8 _period)',
@@ -23,6 +22,8 @@ const REWARD_WITHDRAWN = parseAbiItem(
 
 export interface PeriodChange {
   key: string
+  /** The court (arbitrator) the dispute is at, lowercase: dispute ids are per court. */
+  arbitrator: string
   disputeId: string
   period: (typeof PERIODS)[number]
   blockNumber: number
@@ -73,13 +74,16 @@ export const createChain = (rpcUrls: string[]) => {
       return { number, timestamp: Number(block.timestamp) }
     },
 
+    /** Court period changes at `arbitrators` (the courts Scout's open disputes are at). */
     periodChanges: async (
+      arbitrators: string[],
       fromBlock: number,
       toBlock: number,
     ): Promise<PeriodChange[]> => {
+      if (arbitrators.length === 0) return []
       const logs = await chunkedLogs(fromBlock, toBlock, (from, to) =>
         client.getLogs({
-          address: KLEROS_LIQUID,
+          address: arbitrators as Address[],
           event: NEW_PERIOD,
           fromBlock: from,
           toBlock: to,
@@ -87,6 +91,7 @@ export const createChain = (rpcUrls: string[]) => {
       )
       return logs.map((log) => ({
         key: `${log.transactionHash}:${log.logIndex}`,
+        arbitrator: log.address.toLowerCase(),
         disputeId: String(log.args._disputeID),
         period: PERIODS[Number(log.args._period)] ?? 'evidence',
         blockNumber: Number(log.blockNumber),

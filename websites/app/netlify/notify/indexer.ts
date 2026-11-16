@@ -111,20 +111,38 @@ export const createIndexer = (url: string) => {
       return [...new Set(data.LRound.map((r) => r.request.item_id))]
     },
 
-    /** Items whose requests are the given KlerosLiquid disputes. */
+    /** The courts (arbitrators) Scout's open disputes are at, lowercase. */
+    openDisputeArbitrators: async (): Promise<string[]> => {
+      const data = await query<{ LRequest: { arbitrator: string }[] }>(
+        `query Courts($registries: [String!]!) {
+          LRequest(where: { registry_id: { _in: $registries }, disputed: { _eq: true }, resolved: { _eq: false } }, limit: 500) { arbitrator }
+        }`,
+        { registries: REGISTRY_ADDRESSES },
+      )
+      return [...new Set(data.LRequest.map((r) => r.arbitrator.toLowerCase()))]
+    },
+
+    /** Items whose requests are the given disputes, each at its own court. */
     itemIdsForDisputes: async (
-      arbitrator: string,
-      disputeIds: string[],
+      disputes: { arbitrator: string; disputeId: string }[],
     ): Promise<string[]> => {
-      if (disputeIds.length === 0) return []
+      if (disputes.length === 0) return []
+      const byCourt = new Map<string, string[]>()
+      for (const { arbitrator, disputeId } of disputes)
+        byCourt.set(arbitrator.toLowerCase(), [
+          ...(byCourt.get(arbitrator.toLowerCase()) ?? []),
+          disputeId,
+        ])
       const data = await query<{ LRequest: { item_id: string }[] }>(
-        `query Disputes($registries: [String!]!, $arbitrator: String!, $ids: [numeric!]!) {
-          LRequest(where: { registry_id: { _in: $registries }, arbitrator: { _eq: $arbitrator }, disputed: { _eq: true }, disputeID: { _in: $ids } }) { item_id }
+        `query Disputes($registries: [String!]!, $courts: [LRequest_bool_exp!]!) {
+          LRequest(where: { registry_id: { _in: $registries }, disputed: { _eq: true }, _or: $courts }) { item_id }
         }`,
         {
           registries: REGISTRY_ADDRESSES,
-          arbitrator: arbitrator.toLowerCase(),
-          ids: disputeIds,
+          courts: [...byCourt].map(([arbitrator, ids]) => ({
+            arbitrator: { _eq: arbitrator },
+            disputeID: { _in: ids },
+          })),
         },
       )
       return [...new Set(data.LRequest.map((r) => r.item_id))]

@@ -8,12 +8,16 @@ import {
 } from 'viem'
 import { gnosis } from 'viem/chains'
 
-/** Reads about Scout's disputes on Gnosis: challenge periods, appeal costs and court periods. */
+/**
+ * Reads about Scout's disputes on Gnosis: challenge periods, appeal costs and
+ * court periods. Court reads go to each request's own arbitrator, as the
+ * registries record it.
+ */
 
-export const KLEROS_LIQUID: Address =
-  '0x9C1dA9A04925bDfDedf0f6421bC7EEa8305F9002'
-
-const KLEROS_LIQUID_ABI = parseAbi([
+// `appealCost` is part of every arbitrator's interface; `disputes` and
+// `getSubcourt` are Kleros Liquid's (the registries' arbitrator), so another
+// arbitrator just leaves the court period unknown.
+const ARBITRATOR_ABI = parseAbi([
   'function appealCost(uint256 _disputeID, bytes _extraData) view returns (uint256)',
   'function disputes(uint256) view returns (uint96 subcourtID, address arbitrated, uint256 numberOfChoices, uint8 period, uint256 lastPeriodChange, uint256 drawsInRound, uint256 commitsInRound, bool ruled)',
   'function getSubcourt(uint96 _subcourtID) view returns (uint256[] children, uint256[4] timesPerPeriod)',
@@ -58,6 +62,7 @@ export const createCaseChain = (rpcUrls: string[]) => {
     /** What each side must pay to fund the current appeal round. */
     appealFunding: async (
       registry: string,
+      arbitrator: string,
       disputeId: string,
       extraData: string,
     ) => {
@@ -92,8 +97,8 @@ export const createCaseChain = (rpcUrls: string[]) => {
       const [m, cost] = await Promise.all([
         multipliers.get(key)!,
         client.readContract({
-          address: KLEROS_LIQUID,
-          abi: KLEROS_LIQUID_ABI,
+          address: arbitrator as Address,
+          abi: ARBITRATOR_ABI,
           functionName: 'appealCost',
           args: [BigInt(disputeId), extraData as Hex],
         }),
@@ -123,21 +128,24 @@ export const createCaseChain = (rpcUrls: string[]) => {
       return challengePeriods.get(key)!
     },
 
-    /** The dispute's court period and when it can end (keepers pass it ~10 minutes later). */
-    disputePeriod: async (disputeId: string) => {
+    /**
+     * The dispute's court period at `arbitrator`, and when its set time runs
+     * out (keepers pass it ~10 minutes later).
+     */
+    disputePeriod: async (arbitrator: string, disputeId: string) => {
       const dispute = await client.readContract({
-        address: KLEROS_LIQUID,
-        abi: KLEROS_LIQUID_ABI,
+        address: arbitrator as Address,
+        abi: ARBITRATOR_ABI,
         functionName: 'disputes',
         args: [BigInt(disputeId)],
       })
       const [subcourt, , , period, lastPeriodChange] = dispute
-      const court = String(subcourt)
+      const court = `${arbitrator.toLowerCase()}:${subcourt}`
       if (!courtTimes.has(court)) {
         const loaded = client
           .readContract({
-            address: KLEROS_LIQUID,
-            abi: KLEROS_LIQUID_ABI,
+            address: arbitrator as Address,
+            abi: ARBITRATOR_ABI,
             functionName: 'getSubcourt',
             args: [subcourt],
           })

@@ -2,6 +2,7 @@ import {
   appealDeadlines,
   appealObligations,
   currentRound,
+  fundedSide,
   isRemoval,
   itemParticipants,
   itemSubmitters,
@@ -55,8 +56,10 @@ export interface PlanContext {
   followersOf(itemIds: string[]): Promise<Map<string, UserRow[]>>
   /** Channels each user has connected and can receive on. */
   connectedChannels(userIds: number[]): Promise<Map<number, Channel[]>>
+  /** What each side must pay to fund the current appeal round, at the request's arbitrator. */
   appealFunding(
     registry: string,
+    arbitrator: string,
     disputeId: string,
     extraData: string,
   ): Promise<Record<'winner' | 'loser' | 'shared', bigint>>
@@ -66,7 +69,8 @@ export interface PlanContext {
     userIds: number[],
     itemId: string,
   ): Promise<Map<number, number>>
-  periodDeadline(disputeId: string): Promise<number>
+  /** When the dispute's current court period can end, at the request's arbitrator. */
+  periodDeadline(arbitrator: string, disputeId: string): Promise<number>
 }
 
 const quote = (text: string | null | undefined, max = 160) => {
@@ -146,10 +150,37 @@ const rulingMeaning = (winner: Side, request: IndexedRequest) =>
       ? 'Jurors currently favor accepting it'
       : 'Jurors currently favor rejecting it'
 
+/** A side of the request as the recipient sees it. */
+const sideName = (side: Side, mySide: Side | null, request: IndexedRequest) =>
+  mySide === side
+    ? 'your side'
+    : mySide
+      ? 'the other side'
+      : side === 'challenger'
+        ? 'the challenger'
+        : isRemoval(request)
+          ? 'the removal requester'
+          : 'the submitter'
+
+/**
+ * The side that won by being fully funded alone in the last appeal round,
+ * if that is how the case ended: the contract's `rule` then gives it the
+ * case whatever the jurors ruled (the indexer's outcome is that final ruling).
+ */
+const fundedWinner = (request: IndexedRequest) => {
+  const last = currentRound(request)
+  const alone = last && !last.appealed ? fundedSide(last) : undefined
+  return alone && alone === rulingWinner(request.disputeOutcome)
+    ? alone
+    : undefined
+}
+
 const finalOutcome = (request: IndexedRequest) => {
   const winner = rulingWinner(request.disputeOutcome)
   if (!winner)
-    return 'Neither side won: the request was reverted and the deposits were split.'
+    return isRemoval(request)
+      ? 'Jurors could not decide and neither side funded an appeal, so the removal request was rejected: the entry stays in the registry, and the deposits were split between both sides.'
+      : 'Jurors could not decide and neither side funded an appeal, so the submission was rejected and the deposits were split between both sides.'
   if (isRemoval(request))
     return winner === 'requester'
       ? 'The entry was removed from the registry.'
@@ -287,7 +318,7 @@ export const draftFor = async (
         ),
       )
       const evidenceEnd = await ctx
-        .periodDeadline(request.disputeID)
+        .periodDeadline(request.arbitrator, request.disputeID)
         .catch(() => undefined)
       const until = evidenceEnd
         ? ` The evidence period can end ${formatDeadline(evidenceEnd, ctx.now)}.`
@@ -369,6 +400,7 @@ export const draftFor = async (
       const d = appealDeadlines(event.round)
       const cost = await ctx.appealFunding(
         item.registryAddress,
+        request.arbitrator,
         request.disputeID,
         request.arbitratorExtraData,
       )
@@ -386,7 +418,7 @@ export const draftFor = async (
           kind: 'ruling_undecided',
           urgency: 'urgent',
           title: `Jurors couldn't decide on ${label}`,
-          body: `They refused to rule or tied. Either side can fund an appeal (${xdai(cost.shared)}) until ${formatDeadline(d.end, ctx.now)}. If only one side is fully funded by then, that side wins; if neither is, the request is reverted and deposits are split.`,
+          body: `They refused to rule or tied. Either side can fund an appeal (${xdai(cost.shared)}) until ${formatDeadline(d.end, ctx.now)}. If only one side is fully funded by then, it wins; if neither is, the request is rejected and the deposits are split between both sides.`,
           deadline: d.end,
         }
       }
@@ -423,6 +455,7 @@ export const draftFor = async (
       const d = appealDeadlines(event.round)
       const cost = await ctx.appealFunding(
         item.registryAddress,
+        request.arbitrator,
         request.disputeID,
         request.arbitratorExtraData,
       )
@@ -480,6 +513,7 @@ export const draftFor = async (
       const d = appealDeadlines(event.round)
       const cost = await ctx.appealFunding(
         item.registryAddress,
+        request.arbitrator,
         request.disputeID,
         request.arbitratorExtraData,
       )
@@ -512,26 +546,33 @@ export const draftFor = async (
       if (request.disputed) {
         const winner = rulingWinner(request.disputeOutcome)
         const outcome = `${finalOutcome(request)} Payouts and appeal rewards are sent automatically.`
+        // Won by being the only side fully funded, whatever the jurors ruled:
+        // said as the app's My Profile says it.
+        const funded = fundedWinner(request)
+        const title = (fallback: string) =>
+          funded
+            ? `Only ${sideName(funded, mySide, request)} was fully funded, so it wins: ${label}`
+            : fallback
         if (!mySide || !winner)
           return {
             kind: 'resolved',
             urgency: 'important',
             category: mySide ? undefined : followerCategory,
-            title: `Case closed: ${label}`,
+            title: title(`Case closed: ${label}`),
             body: outcome,
           }
         return mySide === winner
           ? {
               kind: 'case_won',
               urgency: 'important',
-              title: `You won the case on ${label}`,
-              body: outcome,
+              title: title(`You won the case on ${label}`),
+              body: funded ? `You won the case. ${outcome}` : outcome,
             }
           : {
               kind: 'case_lost',
               urgency: 'important',
-              title: `You lost the case on ${label}`,
-              body: outcome,
+              title: title(`You lost the case on ${label}`),
+              body: funded ? `You lost the case. ${outcome}` : outcome,
             }
       }
       if (role === 'requester') {
@@ -575,7 +616,7 @@ export const draftFor = async (
     case 'period': {
       if (!mySide) return null
       const deadline = await ctx
-        .periodDeadline(request.disputeID)
+        .periodDeadline(request.arbitrator, request.disputeID)
         .catch(() => undefined)
       return {
         kind: 'period',
@@ -647,6 +688,7 @@ export const reminderEvents = async (
         if (!hours) continue
         const cost = await ctx.appealFunding(
           item.registryAddress,
+          request.arbitrator,
           request.disputeID,
           request.arbitratorExtraData,
         )

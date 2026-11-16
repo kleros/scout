@@ -34,6 +34,29 @@ const parse = (raw: string): Record<string, number> => {
   }
 }
 
+// Read marks are dropped once this old: by then their requests are long
+// resolved, and only open requests count unread evidence.
+const KEEP_SECONDS = 180 * 24 * 60 * 60
+
+/**
+ * The read marks worth keeping at `now` (unix seconds): those for evidence
+ * from the last 180 days, and `keep`, the one being written. A request still
+ * open 180 days after its latest evidence (rare: appeal rounds take weeks)
+ * may show that evidence as new again.
+ */
+export const pruneSeen = (
+  seen: Record<string, number>,
+  now: number,
+  keep?: string,
+): Record<string, number> =>
+  Object.fromEntries(
+    Object.entries(seen).filter(
+      ([id, until]) =>
+        id === keep ||
+        (typeof until === 'number' && until >= now - KEEP_SECONDS),
+    ),
+  )
+
 /** Records in this browser that `viewer` has read the item's evidence up to `until`. */
 export const markEvidenceSeen = (
   viewer: string,
@@ -43,9 +66,13 @@ export const markEvidenceSeen = (
   const seen = parse(readRaw(viewer))
   const id = itemId.toLowerCase()
   if ((seen[id] ?? 0) >= until) return
-  seen[id] = until
+  const next = pruneSeen(
+    { ...seen, [id]: until },
+    Math.floor(Date.now() / 1000),
+    id,
+  )
   try {
-    window.localStorage.setItem(keyOf(viewer), JSON.stringify(seen))
+    window.localStorage.setItem(keyOf(viewer), JSON.stringify(next))
   } catch {
     // Private mode or full storage: counts just won't persist here.
   }

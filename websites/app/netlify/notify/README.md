@@ -23,7 +23,8 @@ block up to the latest one that is both **finalized** and **indexed**:
   source): new requests, challenges, evidence, rulings, appeal funding,
   appeals and resolutions, found by their timestamps.
 - Court period changes (`NewPeriod`) and paid rewards (`RewardWithdrawn`) come
-  from Gnosis logs.
+  from Gnosis logs: period changes from the courts Scout's open disputes are
+  at (each request names its arbitrator), matched by court and dispute id.
 - Light Curate has no "side fully funded" event, so funding is derived from
   each round's `hasPaid*` flags and last funding time.
 
@@ -49,7 +50,7 @@ its parties get a reminder.
 | Appeal deadline reminders                                             | side that still has to fund                           | urgent                 |
 | New evidence from the other side (one alert per burst, see below)     | the submitter and challenger themselves, while disputed | urgent               |
 | Any other new evidence (a stranger's, their own side's)               | everyone involved in the item, except the author      | important              |
-| Appealed, final outcome                                               | both sides and participants                           | important              |
+| Appealed, final outcome (see below)                                   | both sides and participants                           | important              |
 | Court moved to commit / vote                                          | both sides                                            | soft                   |
 | Crowdfunding progress, receipts, rewards paid                         | the relevant party                                    | soft                   |
 | Anything on an item you follow                                        | followers                                             | as above, never urgent |
@@ -57,6 +58,12 @@ its parties get a reminder.
 Channel levels ("urgent only", "important and urgent", "everything", "off")
 apply per channel; soft categories can be silenced entirely. Everything also
 lands in the in-app inbox.
+
+The final outcome follows the contract's `rule`: when only one side was fully
+funded in the last appeal round, it wins whatever the jurors ruled, and the
+alert says so as My Profile does ("Only your side was fully funded, so it
+wins"). When jurors could not decide and neither side funded an appeal, the
+request is rejected and the deposits are split between both sides.
 
 **Nobody else's words leave the app.** Anyone can post evidence on any item,
 for the price of gas. So emails, Telegram messages and push notifications

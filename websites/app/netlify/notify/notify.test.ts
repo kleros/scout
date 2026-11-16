@@ -13,7 +13,7 @@ import {
 import type { Chain } from './chain'
 import type { Db } from './db'
 import type { NotifyEnv } from './env'
-import { detectItemEvents } from './events'
+import { detectItemEvents, periodEvents } from './events'
 import { formatDeadline } from './items'
 import type {
   IndexedItem,
@@ -63,6 +63,7 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 const REGISTRY = '0x66260c69d03837016d88c9877e61e08ef74c59f2'
+const ARBITRATOR = '0x9c1da9a04925bdfdedf0f6421bc7eea8305f9002'
 const ITEM_ID = `0x${'ab'.repeat(32)}`
 const ALICE = `0x${'11'.repeat(20)}` // submitter
 const BOB = `0x${'22'.repeat(20)}` // challenger
@@ -532,6 +533,88 @@ describe('notification planning', () => {
     assert.deepEqual(
       again.find((n) => n.userId === users.alice.id)?.channels,
       [],
+    )
+  })
+
+  it("reads appeal costs and court periods at the request's own arbitrator", async () => {
+    await seedUsers()
+    const asked: string[] = []
+    const svc = service({
+      chain: {
+        appealFunding: async (
+          _registry: string,
+          arbitrator: string,
+          disputeId: string,
+        ) => {
+          asked.push(`appealCost ${arbitrator} ${disputeId}`)
+          return { winner: 1n, loser: 2n, shared: 1n }
+        },
+        disputePeriod: async (arbitrator: string, disputeId: string) => {
+          asked.push(`disputes ${arbitrator} ${disputeId}`)
+          return { period: 'evidence', deadline: 150_000 }
+        },
+      } as Partial<Chain>,
+    })
+    const court = `0x${'c0'.repeat(20)}`
+    const snapshot = item(request({ arbitrator: court }))
+    for (const [from, to] of [
+      [1500, 2500], // challenged: the evidence period's end
+      [9500, 10_500], // appealable: the appeal costs
+    ])
+      await plan(
+        detectItemEvents(snapshot, from, to),
+        [],
+        planContext(svc, to),
+      )
+    assert.ok(asked.length > 0)
+    assert.ok(asked.every((call) => call.includes(`${court} 1013`)), asked.join())
+  })
+
+  it('says when a side won by being the only one fully funded, as My Profile does', async () => {
+    const users = await seedUsers()
+    // Jurors ruled Reject, but only Alice's side funded the appeal: she wins.
+    const settled = item(
+      request({
+        resolved: true,
+        resolutionTime: '200000',
+        disputeOutcome: 'Accept',
+      }),
+    )
+    const notes = await plan(
+      detectItemEvents(settled, 199_000, 201_000),
+      [],
+      planContext(service(), 201_000),
+    )
+    const of = (userId: number) => notes.find((n) => n.userId === userId)
+    assert.match(
+      of(users.alice.id)?.title ?? '',
+      /^Only your side was fully funded, so it wins: “Router”/,
+    )
+    assert.match(of(users.alice.id)?.body ?? '', /^You won the case\. The entry is now in the registry\./)
+    assert.equal(of(users.alice.id)?.kind, 'case_won')
+    assert.match(of(users.bob.id)?.title ?? '', /^Only the other side was fully funded, so it wins: /)
+    assert.match(of(users.bob.id)?.body ?? '', /^You lost the case\./)
+    assert.match(of(users.dave.id)?.title ?? '', /^Only the submitter was fully funded, so it wins: /)
+
+    // Neither side funded and no ruling: rejected, deposits split.
+    const undecided = item(
+      request({
+        resolved: true,
+        resolutionTime: '200000',
+        disputeOutcome: 'None',
+        rounds: [round(0), round(1, { ruling: 'None', appealPeriodStart: '10000', appealPeriodEnd: '204400' })],
+      }),
+    )
+    const plain = await plan(
+      detectItemEvents(undecided, 199_000, 201_000),
+      [],
+      planContext(service(), 201_000),
+    )
+    const alice = plain.find((n) => n.userId === users.alice.id)
+    assert.match(alice?.title ?? '', /^Case closed: /)
+    assert.equal(
+      alice?.body,
+      'Jurors could not decide and neither side funded an appeal, so the submission was rejected and the deposits were split between both sides. Payouts and appeal rewards are sent automatically.',
     )
   })
 
@@ -1206,6 +1289,7 @@ describe('watcher', () => {
   it('starts at the head, then processes each new window exactly once', async () => {
     await seedUsers()
     let head = { number: 100, timestamp: 1_500 }
+    const courts: string[][] = []
     const indexer: Partial<Indexer> = {
       headBlock: async () => head.number,
       changesBetween: async () => ({
@@ -1213,6 +1297,7 @@ describe('watcher', () => {
         truncated: false,
       }),
       openAppealItemIds: async () => [],
+      openDisputeArbitrators: async () => [ARBITRATOR],
       itemIdsForDisputes: async () => [],
       items: async () => [item()],
     }
@@ -1222,7 +1307,11 @@ describe('watcher', () => {
         number,
         timestamp: head.timestamp,
       }),
-      periodChanges: async () => [],
+      // Period changes are read from the courts of Scout's open disputes.
+      periodChanges: async (arbitrators: string[]) => {
+        courts.push(arbitrators)
+        return []
+      },
       rewardsPaid: async () => [],
     }
     const svc = service({ indexer, chain })
@@ -1243,6 +1332,26 @@ describe('watcher', () => {
     assert.equal(
       ((await runWatcherTick(svc, 2_800)) as { created: number }).created,
       0,
+    )
+    assert.deepEqual(courts, [[ARBITRATOR], [ARBITRATOR]])
+  })
+
+  it("matches court period changes to disputes at the request's own court", () => {
+    const change = (arbitrator: string) => ({
+      key: 'tx:0',
+      arbitrator,
+      disputeId: '1013',
+      period: 'vote' as const,
+      blockNumber: 1,
+    })
+    assert.deepEqual(
+      periodEvents([item()], [change(ARBITRATOR)]).map((e) => e.kind),
+      ['period'],
+    )
+    // The same dispute number at another court is another dispute.
+    assert.deepEqual(
+      periodEvents([item()], [change(`0x${'99'.repeat(20)}`)]),
+      [],
     )
   })
 })

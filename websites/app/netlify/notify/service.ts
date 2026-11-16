@@ -1,4 +1,4 @@
-import { createChain, KLEROS_LIQUID, type Chain } from './chain'
+import { createChain, type Chain } from './chain'
 import { sendEmail } from './channels/email'
 import { sendPush } from './channels/push'
 import { sendTelegram } from './channels/telegram'
@@ -85,11 +85,11 @@ export const planContext = (service: Service, now: number): PlanContext => ({
   usersByAddress: (addresses) => usersByAddress(service.db, addresses),
   followersOf: (itemIds) => followersOf(service.db, itemIds),
   connectedChannels: (userIds) => connectedChannels(service, userIds),
-  appealFunding: (registry, disputeId, extraData) =>
-    service.chain.appealFunding(registry, disputeId, extraData),
+  appealFunding: (registry, arbitrator, disputeId, extraData) =>
+    service.chain.appealFunding(registry, arbitrator, disputeId, extraData),
   challengePeriod: (registry) => service.chain.challengePeriod(registry),
-  periodDeadline: async (disputeId) =>
-    (await service.chain.disputePeriod(disputeId)).deadline,
+  periodDeadline: async (arbitrator, disputeId) =>
+    (await service.chain.disputePeriod(arbitrator, disputeId)).deadline,
   evidenceReadUntil: (userIds, itemId) =>
     evidenceReadUntil(service.db, userIds, itemId),
 })
@@ -131,6 +131,8 @@ export const runWatcherTick = async (
   if (head.number <= state.cursorBlock)
     return { idle: true, block: state.cursorBlock }
 
+  // The courts whose period changes are worth reading: those of Scout's open disputes.
+  const courts = await indexer.openDisputeArbitrators()
   let toNumber = Math.min(head.number, state.cursorBlock + MAX_BLOCKS_PER_TICK)
   for (;;) {
     const to = toNumber === head.number ? head : await chain.blockAt(toNumber)
@@ -141,14 +143,11 @@ export const runWatcherTick = async (
       continue
     }
     const [periodChanges, rewards, openAppeals] = await Promise.all([
-      chain.periodChanges(state.cursorBlock + 1, to.number),
+      chain.periodChanges(courts, state.cursorBlock + 1, to.number),
       chain.rewardsPaid(REGISTRY_ADDRESSES, state.cursorBlock + 1, to.number),
       indexer.openAppealItemIds(now),
     ])
-    const disputeItems = await indexer.itemIdsForDisputes(
-      KLEROS_LIQUID,
-      periodChanges.map((change) => change.disputeId),
-    )
+    const disputeItems = await indexer.itemIdsForDisputes(periodChanges)
     const ids = new Set([
       ...changes.itemIds,
       ...disputeItems,

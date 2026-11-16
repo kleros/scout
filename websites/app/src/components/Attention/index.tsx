@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -11,6 +11,7 @@ import {
   useAttention,
   useDisputePeriod,
   useNow,
+  useRefetchOnChange,
 } from 'hooks/useAttention'
 import { localDeadline, timeLeft } from 'utils/timeLeft'
 import type {
@@ -20,7 +21,13 @@ import type {
 } from 'utils/cases/attention'
 import { registryKeyOf } from 'utils/cases/indexer'
 import { itemLabel, xdai } from 'utils/cases/labels'
-import { describeAttention, evidenceAuthor, evidenceSnippet } from './describe'
+import { CountText, DotText } from './AttentionCount'
+import {
+  courtDeadline,
+  describeAttention,
+  evidenceAuthor,
+  evidenceSnippet,
+} from './describe'
 
 const levelColor = css<{ $level: AttentionLevel }>`
   color: ${({ theme, $level }) =>
@@ -228,11 +235,10 @@ const CTA: Partial<Record<Attention['kind'], string>> = {
   'removal-requested': 'Review the removal',
 }
 
-const PERIOD_ENDS: Record<string, string> = {
-  evidence: 'Evidence period ends',
-  commit: 'Commit period ends',
-  vote: 'Voting ends',
-  appeal: 'Appeal period ends',
+// Settled cases: their deadline is when the result takes effect.
+const DEADLINE_LABEL: Partial<Record<Attention['kind'], string>> = {
+  'ruling-final': 'Appeal period ends',
+  'funded-side-wins': 'Appeal period ends',
 }
 
 const TAG: Record<AttentionLevel, string> = {
@@ -255,14 +261,18 @@ const useDescription = (entry: Attention) => {
     total !== undefined
       ? xdai(total > (entry.raised ?? 0n) ? total - (entry.raised ?? 0n) : 0n)
       : undefined
+  // Before a ruling, the deadline that matters is the court period's, when
+  // it has one.
+  const court =
+    entry.deadline === undefined && periodData
+      ? courtDeadline(entry.request, periodData)
+      : undefined
   return {
     ...describeAttention(entry, { missing, period: periodData?.period }),
-    // Before a ruling, the deadline that matters is the court period's.
-    deadline: entry.deadline ?? periodData?.deadline,
-    deadlineLabel:
-      entry.deadline === undefined && periodData
-        ? (PERIOD_ENDS[periodData.period] ?? 'Period ends')
-        : 'Deadline',
+    deadline: entry.deadline ?? court?.at,
+    deadlineLabel: court?.label ?? DEADLINE_LABEL[entry.kind] ?? 'Deadline',
+    /** The date is the latest the period can end; it may end sooner. */
+    atTheLatest: court?.latest ?? false,
   }
 }
 
@@ -275,7 +285,8 @@ const AttentionCard: React.FC<{
   onItemPage?: boolean
 }> = ({ entry, onItemPage = false }) => {
   const now = useNow()
-  const { title, body, deadline, deadlineLabel } = useDescription(entry)
+  const { title, body, deadline, deadlineLabel, atTheLatest } =
+    useDescription(entry)
   const left = deadline ? timeLeft(deadline, now) : null
   const href = itemPath(entry)
   const evidenceHref = onItemPage
@@ -317,7 +328,9 @@ const AttentionCard: React.FC<{
       ) : null}
       {deadline && left ? (
         <Deadline $level={entry.level}>
-          {deadlineLabel} {localDeadline(deadline)} · {left} left
+          {atTheLatest
+            ? `${deadlineLabel} ${localDeadline(deadline)} at the latest · up to ${left} left`
+            : `${deadlineLabel} ${localDeadline(deadline)} · ${left} left`}
         </Deadline>
       ) : null}
       {showCta ? <Cta to={toEvidence ? evidenceHref : href}>{cta}</Cta> : null}
@@ -329,7 +342,7 @@ const WaitingEntry: React.FC<{ entry: AttentionWithEvidence }> = ({
   entry,
 }) => {
   const now = useNow()
-  const { title, deadline } = useDescription(entry)
+  const { title, deadline, atTheLatest } = useDescription(entry)
   const left = deadline ? timeLeft(deadline, now) : null
   return (
     <WaitingRow>
@@ -337,7 +350,7 @@ const WaitingEntry: React.FC<{ entry: AttentionWithEvidence }> = ({
         {title} ·{' '}
         <ItemLink to={itemPath(entry)}>{itemLabel(entry.item)}</ItemLink>
       </span>
-      <span>{left ? `${left} left` : ''}</span>
+      <span>{left ? `${atTheLatest ? 'up to ' : ''}${left} left` : ''}</span>
     </WaitingRow>
   )
 }
@@ -371,7 +384,9 @@ const WAITING_PREVIEW = 3
  * until it is resolved, however long ago the alert about it was.
  */
 export const AttentionPanel: React.FC<{ address: string }> = ({ address }) => {
-  const { entries, isLoading, error, refetch } = useAttention(address)
+  const { entries, isLoading, error, refetch } = useAttention(address, {
+    live: true,
+  })
   const [showAll, setShowAll] = useState(false)
   const pressing = entries.filter((e) => e.level !== 'waiting')
   const waiting = entries.filter((e) => e.level === 'waiting')
@@ -434,18 +449,16 @@ export const AttentionPanel: React.FC<{ address: string }> = ({ address }) => {
 /**
  * On an item page: what the connected wallet has to do about this item.
  * `refreshKey` changes with the page's own (faster) data, so the banner
- * clears as soon as, say, the appeal gets funded.
+ * clears as soon as, say, the appeal gets funded; it is undefined until
+ * that data loads.
  */
 export const AttentionBanner: React.FC<{
   itemId: string
   refreshKey?: string
 }> = ({ itemId, refreshKey }) => {
   const { address } = useAccount()
-  const { entries, refetch } = useAttention(address)
-  const enabled = Boolean(address)
-  useEffect(() => {
-    if (enabled && refreshKey !== undefined) refetch()
-  }, [enabled, refreshKey, refetch])
+  const { entries, refetch } = useAttention(address, { live: true })
+  useRefetchOnChange(refreshKey, refetch, Boolean(address))
   const mine = entries.filter(
     (e) =>
       e.level !== 'waiting' && e.item.id.toLowerCase() === itemId.toLowerCase(),
@@ -477,6 +490,18 @@ const Badge = styled.span<{ $urgent: boolean }>`
   line-height: 1;
 `
 
+const Dot = styled.span<{ $urgent: boolean }>`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: ${({ theme, $urgent }) =>
+    $urgent ? theme.error : theme.warning};
+  pointer-events: none;
+`
+
 /** Count of cases the connected wallet has to act on, for navigation links. */
 export const useAttentionCount = () => {
   const { address } = useAccount()
@@ -492,30 +517,19 @@ export const AttentionBadge: React.FC = () => {
   const { count, urgent } = useAttentionCount()
   if (count === 0) return null
   return (
-    <Badge
-      $urgent={urgent}
-      aria-label={`${count} case${count === 1 ? '' : 's'} need${count === 1 ? 's' : ''} your attention`}
-    >
-      {count > 9 ? '9+' : count}
+    <Badge $urgent={urgent}>
+      <CountText count={count} />
     </Badge>
   )
 }
-
-const Dot = styled.span<{ $urgent: boolean }>`
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: ${({ theme, $urgent }) =>
-    $urgent ? theme.error : theme.warning};
-  pointer-events: none;
-`
 
 /** A dot for places without room for a count, like the mobile menu button. */
 export const AttentionDot: React.FC = () => {
   const { count, urgent } = useAttentionCount()
   if (count === 0) return null
-  return <Dot $urgent={urgent} aria-hidden />
+  return (
+    <Dot $urgent={urgent}>
+      <DotText count={count} />
+    </Dot>
+  )
 }

@@ -201,7 +201,8 @@ export const periodEvents = (
         if (
           !request.disputed ||
           request.resolved ||
-          request.disputeID !== change.disputeId
+          request.disputeID !== change.disputeId ||
+          request.arbitrator.toLowerCase() !== change.arbitrator
         )
           return
         events.push({

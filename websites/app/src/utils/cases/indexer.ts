@@ -130,42 +130,26 @@ export const createCaseIndexer = (url: string) => {
   const query = indexerQuery(url)
   return {
     /**
-     * Items with an open request that `address` takes part in: as requester,
-     * challenger or crowdfunder, or as the submitter of an item someone asked
-     * to remove.
+     * Items with an open request that `address` takes part in, with their
+     * full context: as requester, challenger or crowdfunder, or as a
+     * submitter of an item someone asked to remove. One request, since the
+     * indexer's rate limit is shared by every visitor (newest 200 items).
      */
-    involvedItemIds: async (address: string): Promise<string[]> => {
-      const data = await query<{
-        parties: { item_id: string }[]
-        crowdfunded: { round: { request: { item_id: string } } }[]
-        submitted: { item_id: string }[]
-      }>(
-        `query Involved($address: String!, $registries: [String!]!) {
-          parties: LRequest(where: {
-            registry_id: { _in: $registries }
-            resolved: { _eq: false }
-            _or: [{ requester: { _eq: $address } }, { challenger: { _eq: $address } }]
-          }, limit: 200) { item_id }
-          crowdfunded: LContribution(where: {
-            contributor: { _eq: $address }
-            round: { request: { registry_id: { _in: $registries }, resolved: { _eq: false } } }
-          }, limit: 200) { round { request { item_id } } }
-          submitted: LRequest(where: {
-            registry_id: { _in: $registries }
-            requester: { _eq: $address }
-            requestType: { _eq: "RegistrationRequested" }
-            item: { status: { _in: ["ClearingRequested"] } }
-          }, limit: 200) { item_id }
+    openCases: async (address: string): Promise<IndexedItem[]> => {
+      const data = await query<{ LItem: IndexedItem[] }>(
+        `query OpenCases($address: String!, $registries: [String!]!) {
+          LItem(where: {
+            registryAddress: { _in: $registries }
+            _or: [
+              { requests: { resolved: { _eq: false }, _or: [{ requester: { _eq: $address } }, { challenger: { _eq: $address } }] } }
+              { requests: { resolved: { _eq: false }, rounds: { contributions: { contributor: { _eq: $address } } } } }
+              { status: { _eq: "ClearingRequested" }, requests: { requestType: { _eq: "RegistrationRequested" }, requester: { _eq: $address } } }
+            ]
+          }, order_by: { latestRequestSubmissionTime: desc }, limit: 200) { ${ITEM_FIELDS} }
         }`,
         { address: address.toLowerCase(), registries: REGISTRY_ADDRESSES },
       )
-      return [
-        ...new Set([
-          ...data.parties.map((r) => r.item_id),
-          ...data.crowdfunded.map((c) => c.round.request.item_id),
-          ...data.submitted.map((r) => r.item_id),
-        ]),
-      ]
+      return data.LItem
     },
 
     /** Full context for a set of items: every request, round, contribution and evidence. */
