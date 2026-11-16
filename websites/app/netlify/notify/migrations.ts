@@ -148,6 +148,26 @@ export const MIGRATIONS: { version: string; sql: string }[] = [
       alter table users add column session_version int not null default 0;
     `,
   },
+  {
+    version: '004_abuse_limits',
+    sql: `
+      -- Verification email limits per domain and per network. Both are
+      -- hashes: the network one keyed with the session secret, so IP
+      -- addresses are never stored.
+      alter table email_sends add column domain_hash text, add column ip_hash text;
+      create index email_sends_domain on email_sends(domain_hash, sent_at);
+      create index email_sends_ip on email_sends(ip_hash, sent_at);
+
+      -- New accounts, for daily limits per network and overall. Pruned after 2 days.
+      create table signups (
+        id bigserial primary key,
+        ip_hash text,
+        created_at timestamptz not null default now()
+      );
+      create index signups_ip on signups(ip_hash, created_at);
+      create index signups_time on signups(created_at);
+    `,
+  },
 ]
 
 let ensured: Promise<void> | undefined

@@ -1,3 +1,4 @@
+import { READS_KEPT } from '../../src/utils/cases/reads'
 import type { Db } from './db'
 import { sha256Hex } from './tokens'
 import {
@@ -28,7 +29,7 @@ const toUser = (row: {
 })
 
 export const MAX_WATCHED_ADDRESSES = 10
-export const MAX_FOLLOWS = 200
+export const MAX_FOLLOWS = 50
 
 // ---------------------------------------------------------------------------
 // Users, watched addresses and follows
@@ -105,6 +106,43 @@ export const setPreferences = async (
 export const deleteUser = async (db: Db, userId: number) => {
   await db.query(`delete from users where id = $1`, [userId])
 }
+
+export const userExists = async (db: Db, address: string) =>
+  (
+    await db.query(`select 1 from users where address = $1`, [
+      address.toLowerCase(),
+    ])
+  ).length > 0
+
+/**
+ * New accounts a day, per network and overall. Each is free to make (any
+ * wallet can sign in), so these bound how fast anyone can fill the database.
+ */
+export const SIGNUP_LIMITS = { perIpPerDay: 5, perDay: 100 }
+
+/**
+ * Records a new account, unless the network's or the service's daily limit
+ * is reached; then says which.
+ */
+export const recordSignup = async (
+  db: Db,
+  ipHash: string | null,
+  limits = SIGNUP_LIMITS,
+): Promise<'ok' | 'network' | 'service'> =>
+  db.transaction(async (tx) => {
+    // Serializes sign-ups so concurrent requests cannot overshoot the limits.
+    await tx.query(`select pg_advisory_xact_lock(7426161)`)
+    const [counts] = await tx.query<{ network: string; total: string }>(
+      `select count(*) filter (where $1::text is not null and ip_hash = $1) as network,
+              count(*) as total
+         from signups where created_at > now() - interval '1 day'`,
+      [ipHash],
+    )
+    if (Number(counts.network) >= limits.perIpPerDay) return 'network'
+    if (Number(counts.total) >= limits.perDay) return 'service'
+    await tx.query(`insert into signups (ip_hash) values ($1)`, [ipHash])
+    return 'ok'
+  })
 
 export const listWatchedAddresses = async (db: Db, userId: number) =>
   (
@@ -262,14 +300,42 @@ const EMAIL_RESEND_SECONDS = 60
 
 /**
  * Verification email limits that hold however many wallets ask (anyone can
- * create wallets): per recipient, and for the whole service.
+ * create wallets).
  */
-export const EMAIL_SEND_LIMITS = { perRecipientPerDay: 3, perHour: 200 }
+export const EMAIL_SEND_LIMITS = {
+  /** Per inbox, however its address is spelled (see canonicalEmail). */
+  perRecipientPerDay: 3,
+  /** Per email domain, so that no provider or organisation gets a flood. */
+  perDomainPerHour: 20,
+  /** Per network (IPv4 address or IPv6 /64) asking. */
+  perIpPerDay: 10,
+  /** For the whole service. */
+  perHour: 50,
+}
+
+const GMAIL = new Set(['gmail.com', 'googlemail.com'])
+
+/**
+ * The inbox an address delivers to, for counting: lowercase, without a
+ * "+tag", and for Gmail without dots (a.b+x@gmail.com is ab@gmail.com).
+ * Mail still goes to the address as entered.
+ */
+export const canonicalEmail = (email: string) => {
+  const address = email.trim().toLowerCase()
+  const at = address.lastIndexOf('@')
+  let local = address.slice(0, at).split('+')[0]
+  let domain = address.slice(at + 1)
+  if (GMAIL.has(domain)) {
+    local = local.replace(/\./g, '')
+    domain = 'gmail.com'
+  }
+  return { address: `${local}@${domain}`, domain }
+}
 
 /**
  * Stores an unverified address with a hashed verification token. Returns
- * 'rate-limited' when the user's, the recipient's or the service's
- * verification email limit would be exceeded.
+ * 'rate-limited' when the user's, the inbox's, the domain's, the network's
+ * or the service's verification email limit would be exceeded.
  */
 export const setPendingEmail = async (
   db: Db,
@@ -277,7 +343,10 @@ export const setPendingEmail = async (
   email: string,
   tokenHash: string,
   expiresAt: Date,
-  limits = EMAIL_SEND_LIMITS,
+  {
+    ipHash = null,
+    limits = EMAIL_SEND_LIMITS,
+  }: { ipHash?: string | null; limits?: typeof EMAIL_SEND_LIMITS } = {},
 ): Promise<'ok' | 'rate-limited'> =>
   db.transaction(async (tx) => {
     const [current] = await tx.query<{
@@ -301,21 +370,39 @@ export const setPendingEmail = async (
     if (sends >= EMAIL_SENDS_PER_DAY) return 'rate-limited'
     // Serializes sends so concurrent requests cannot overshoot the shared limits.
     await tx.query(`select pg_advisory_xact_lock(7426160)`)
-    const recipient = sha256Hex(email.toLowerCase())
-    const [counts] = await tx.query<{ recipient: string; recent: string }>(
+    const canonical = canonicalEmail(email)
+    const recipient = sha256Hex(canonical.address)
+    const domain = sha256Hex(canonical.domain)
+    const [counts] = await tx.query<{
+      recipient: string
+      domain: string
+      network: string
+      recent: string
+    }>(
       `select count(*) filter (where email_hash = $1) as recipient,
+              count(*) filter (where domain_hash = $2 and sent_at > now() - interval '1 hour') as domain,
+              count(*) filter (where $3::text is not null and ip_hash = $3) as network,
               count(*) filter (where sent_at > now() - interval '1 hour') as recent
          from email_sends where sent_at > now() - interval '1 day'`,
-      [recipient],
+      [recipient, domain, ipHash],
     )
+    if (Number(counts.recent) >= limits.perHour) {
+      // Worth an alert: real sign-ups are refused until the hour passes.
+      console.warn(
+        `[notify] Verification emails are at the service-wide limit (${limits.perHour} an hour).`,
+      )
+      return 'rate-limited'
+    }
     if (
       Number(counts.recipient) >= limits.perRecipientPerDay ||
-      Number(counts.recent) >= limits.perHour
+      Number(counts.domain) >= limits.perDomainPerHour ||
+      Number(counts.network) >= limits.perIpPerDay
     )
       return 'rate-limited'
-    await tx.query(`insert into email_sends (email_hash) values ($1)`, [
-      recipient,
-    ])
+    await tx.query(
+      `insert into email_sends (email_hash, domain_hash, ip_hash) values ($1, $2, $3)`,
+      [recipient, domain, ipHash],
+    )
     await tx.query(
       `insert into emails (user_id, email, token_hash, token_expires_at, sent_at, sends_in_window, window_started_at)
        values ($1, $2, $3, $4, now(), $5, $6)
@@ -335,6 +422,19 @@ export const setPendingEmail = async (
     return 'ok'
   })
 
+/** The address and wallet a verification token is for, while it is valid. */
+export const pendingEmail = async (
+  db: Db,
+  tokenHash: string,
+): Promise<{ email: string; address: string } | null> => {
+  const [row] = await db.query<{ email: string; address: string }>(
+    `select e.email, u.address from emails e join users u on u.id = e.user_id
+      where e.token_hash = $1 and e.token_expires_at > now()`,
+    [tokenHash],
+  )
+  return row ?? null
+}
+
 export const verifyEmailToken = async (
   db: Db,
   tokenHash: string,
@@ -352,12 +452,19 @@ export const removeEmail = async (db: Db, userId: number) => {
   await db.query(`delete from emails where user_id = $1`, [userId])
 }
 
-export const unsubscribeEmail = async (db: Db, userId: number) => {
-  await db.query(
-    `update emails set unsubscribed_at = now() where user_id = $1`,
-    [userId],
-  )
-}
+/** Unsubscribes the user's address, if it still is `email`; false otherwise. */
+export const unsubscribeEmail = async (
+  db: Db,
+  userId: number,
+  email: string,
+) =>
+  (
+    await db.query(
+      `update emails set unsubscribed_at = coalesce(unsubscribed_at, now())
+        where user_id = $1 and email = $2 returning 1`,
+      [userId, email],
+    )
+  ).length > 0
 
 export interface TelegramRow {
   chatId: string | null
@@ -753,6 +860,12 @@ export const finishDelivery = async (
   }
 }
 
+/**
+ * Deletes what is no longer needed: notifications after `days`, rate-limit
+ * records after 2 days, used sign-in nonces once expired, email addresses
+ * never confirmed once their link expired (anyone can enter anyone's
+ * address), and Telegram links never completed once their link expired.
+ */
 export const pruneOldNotifications = async (db: Db, days = 90) => {
   await db.query(
     `delete from notifications where created_at < now() - make_interval(days => $1)`,
@@ -761,7 +874,16 @@ export const pruneOldNotifications = async (db: Db, days = 90) => {
   await db.query(
     `delete from email_sends where sent_at < now() - interval '2 days'`,
   )
+  await db.query(
+    `delete from signups where created_at < now() - interval '2 days'`,
+  )
   await db.query(`delete from used_nonces where expires_at < now()`)
+  await db.query(
+    `delete from emails where verified_at is null and (token_expires_at is null or token_expires_at < now())`,
+  )
+  await db.query(
+    `delete from telegram_links where chat_id is null and (token_expires_at is null or token_expires_at < now())`,
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -772,28 +894,31 @@ export const pruneOldNotifications = async (db: Db, days = 90) => {
 const EVIDENCE_ALERT_KINDS = ['evidence', 'challenged']
 
 /** Items whose reads a user keeps; older ones are dropped. */
-export const MAX_EVIDENCE_READS = 2000
+export const MAX_EVIDENCE_READS = READS_KEPT
 
 /**
  * Records how far a user has read items' evidence (never moving back), and
  * marks the alerts about evidence up to there as read. Alerts about newer
- * evidence, or with no evidence time, stay unread. Returns how many alerts
- * it read.
+ * evidence, or with no evidence time, stay unread. With `keep: false` only
+ * the alerts are read and nothing is stored. Returns how many alerts it
+ * read.
  */
 export const setEvidenceReads = async (
   db: Db,
   userId: number,
   reads: Record<string, number>,
+  { keep = true }: { keep?: boolean } = {},
 ): Promise<number> =>
   db.transaction(async (tx) => {
     let alerts = 0
     for (const [itemId, until] of Object.entries(reads)) {
-      await tx.query(
-        `insert into evidence_reads (user_id, item_id, seen_until) values ($1, $2, $3)
-         on conflict (user_id, item_id) do update set
-           seen_until = greatest(evidence_reads.seen_until, excluded.seen_until), updated_at = now()`,
-        [userId, itemId, until],
-      )
+      if (keep)
+        await tx.query(
+          `insert into evidence_reads (user_id, item_id, seen_until) values ($1, $2, $3)
+           on conflict (user_id, item_id) do update set
+             seen_until = greatest(evidence_reads.seen_until, excluded.seen_until), updated_at = now()`,
+          [userId, itemId, until],
+        )
       alerts += (
         await tx.query(
           `update notifications set read_at = now()
@@ -804,12 +929,13 @@ export const setEvidenceReads = async (
         )
       ).length
     }
-    await tx.query(
-      `delete from evidence_reads where user_id = $1 and item_id not in (
-         select item_id from evidence_reads where user_id = $1
-          order by updated_at desc, item_id limit $2)`,
-      [userId, MAX_EVIDENCE_READS],
-    )
+    if (keep)
+      await tx.query(
+        `delete from evidence_reads where user_id = $1 and item_id not in (
+           select item_id from evidence_reads where user_id = $1
+            order by updated_at desc, item_id limit $2)`,
+        [userId, MAX_EVIDENCE_READS],
+      )
     return alerts
   })
 

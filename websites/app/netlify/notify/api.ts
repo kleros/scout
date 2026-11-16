@@ -18,8 +18,10 @@ import {
   html,
   HttpError,
   json,
+  readForm,
   readJson,
   redirect,
+  type ClientInfo,
 } from './http'
 import { itemLabel, itemUrl } from './items'
 import { renderVerificationEmail, settingsUrl } from './messages'
@@ -29,7 +31,11 @@ import {
   normalizePreferences,
   type Preferences,
 } from './preferences'
-import type { Service } from './service'
+import {
+  connectedChannels,
+  emailTag,
+  type Service,
+} from './service'
 import {
   addPushSubscription,
   addWatchedAddress,
@@ -47,6 +53,8 @@ import {
   listPushSubscriptions,
   listEvidenceReads,
   MAX_EVIDENCE_READS,
+  pendingEmail,
+  recordSignup,
   setEvidenceReads,
   listWatchedAddresses,
   markRead,
@@ -60,10 +68,17 @@ import {
   unreadCount,
   unsubscribeEmail,
   upsertUser,
+  userExists,
   verifyEmailToken,
   MAX_WATCHED_ADDRESSES,
 } from './store'
-import { randomToken, safeEqual, sha256Hex, verifyToken } from './tokens'
+import {
+  ipKey,
+  randomToken,
+  safeEqual,
+  sha256Hex,
+  verifyToken,
+} from './tokens'
 import {
   ITEM_ID,
   READS_PER_REQUEST,
@@ -143,6 +158,33 @@ export const createApi = (service: Service) => {
     return user
   }
 
+  /** Where an unsubscribe link applies: its user, while their address is still the one it was sent to. */
+  const unsubscribeTarget = async (token: string) => {
+    const payload = verifyToken<{ userId: number; e: string }>(
+      token,
+      env.sessionSecret,
+      'unsubscribe',
+    )
+    const email = payload ? await getEmail(db, payload.userId) : null
+    return payload && email && emailTag(email.email) === payload.e
+      ? { userId: payload.userId, email: email.email }
+      : null
+  }
+
+  // Reads are kept only for users with somewhere to deliver to: there they
+  // hold back alerts already read in the app. For anyone else they would
+  // only be free storage.
+  const keepsReads = async (userId: number) =>
+    ((await connectedChannels(service, [userId])).get(userId)?.length ?? 0) > 0
+
+  const page = (title: string, content: string) =>
+    html(`<!doctype html><meta name="viewport" content="width=device-width"><title>${escapeHtml(title)}</title>
+<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:48px auto;padding:0 16px;line-height:1.5">
+${content}</body>`)
+  const button = (label: string, token: string) =>
+    `<form method="post"><input type="hidden" name="token" value="${escapeHtml(token)}"><button style="padding:10px 18px;border-radius:999px;border:0;background:#1c1c1e;color:#fff;font-size:15px">${escapeHtml(label)}</button></form>`
+  const settingsLink = `<p><a href="${escapeHtml(settingsUrl(env.siteUrl))}">Notification settings</a></p>`
+
   const profile = async (userId: number) => {
     const [user, email, telegram, push, watched, unread] = await Promise.all([
       getUser(db, userId),
@@ -198,13 +240,32 @@ export const createApi = (service: Service) => {
     [
       'POST',
       '/api/notify/auth/verify',
-      async (request) => {
+      async (request, _, client) => {
         const address = await verifySignIn(
           env,
           request,
           await readJson(request),
           (nonce, validFor) => consumeNonce(db, nonce, validFor),
         )
+        if (!(await userExists(db, address))) {
+          const signup = await recordSignup(
+            db,
+            ipKey(env.sessionSecret, client.ip),
+          )
+          if (signup === 'network')
+            throw new HttpError(
+              429,
+              'Too many new accounts from your network today. Try again tomorrow.',
+            )
+          if (signup === 'service') {
+            // Worth an alert: real sign-ups are refused until tomorrow.
+            console.warn('[notify-api] New accounts are at the daily limit.')
+            throw new HttpError(
+              429,
+              'Notifications are not taking new accounts for the rest of the day. Try again tomorrow.',
+            )
+          }
+        }
         const user = await upsertUser(db, address)
         return json(await profile(user.id), {
           cookies: [
@@ -278,7 +339,7 @@ export const createApi = (service: Service) => {
     [
       'PUT',
       '/api/notify/me/email',
-      async (request) => {
+      async (request, _, client) => {
         const user = await currentUser(request)
         if (!env.email)
           throw new HttpError(503, 'Email notifications are not configured.')
@@ -293,6 +354,7 @@ export const createApi = (service: Service) => {
           address,
           sha256Hex(token),
           new Date(Date.now() + EMAIL_TOKEN_TTL_MS),
+          { ipHash: ipKey(env.sessionSecret, client.ip) },
         )
         if (status === 'rate-limited')
           throw new HttpError(
@@ -327,7 +389,29 @@ export const createApi = (service: Service) => {
       'GET',
       '/api/notify/email/verify',
       async (request) => {
+        // Mail scanners open links, so the link only shows a button; pressing
+        // it (a POST from this page) confirms the address.
         const token = new URL(request.url).searchParams.get('token') ?? ''
+        const pending = token ? await pendingEmail(db, sha256Hex(token)) : null
+        return page(
+          'Confirm your email',
+          pending
+            ? `<h1 style="font-size:20px">Confirm your email?</h1>
+<p>Kleros Scout will send notifications about wallet ${escapeHtml(pending.address)} to <b>${escapeHtml(pending.email)}</b>.</p>
+${button('Confirm email', token)}
+<p style="font-size:13px;color:#6e6e73">If you didn't ask for this, close this page and nothing happens.</p>`
+            : `<h1 style="font-size:20px">This confirmation link is invalid or expired.</h1>${settingsLink}`,
+        )
+      },
+    ],
+    [
+      'POST',
+      '/api/notify/email/verify',
+      async (request) => {
+        const token =
+          (await readForm(request)).get('token') ??
+          new URL(request.url).searchParams.get('token') ??
+          ''
         const userId = token
           ? await verifyEmailToken(db, sha256Hex(token))
           : null
@@ -342,16 +426,12 @@ export const createApi = (service: Service) => {
       async (request) => {
         // Link scanners follow GET links, so GET only shows a confirmation form.
         const token = new URL(request.url).searchParams.get('token') ?? ''
-        const valid = Boolean(
-          verifyToken(token, env.sessionSecret, 'unsubscribe'),
+        return page(
+          'Unsubscribe',
+          (await unsubscribeTarget(token))
+            ? `<h1 style="font-size:20px">Stop Scout emails?</h1>${button('Unsubscribe', token)}${settingsLink}`
+            : `<h1 style="font-size:20px">This unsubscribe link is invalid or expired.</h1>${settingsLink}`,
         )
-        return html(`<!doctype html><meta name="viewport" content="width=device-width"><title>Unsubscribe</title>
-<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:48px auto;padding:0 16px">
-${
-  valid
-    ? `<h1 style="font-size:20px">Stop Scout emails?</h1><form method="post"><input type="hidden" name="token" value="${escapeHtml(token)}"><button style="padding:10px 18px;border-radius:999px;border:0;background:#1c1c1e;color:#fff;font-size:15px">Unsubscribe</button></form>`
-    : '<h1 style="font-size:20px">This unsubscribe link is invalid or expired.</h1>'
-}<p><a href="${escapeHtml(settingsUrl(env.siteUrl))}">Notification settings</a></p></body>`)
       },
     ],
     [
@@ -360,20 +440,19 @@ ${
       async (request) => {
         // RFC 8058 one-click (token in the URL) or the confirmation form (token in the body).
         const url = new URL(request.url)
-        let token = url.searchParams.get('token') ?? ''
-        if (!token)
-          token = new URLSearchParams(await request.text()).get('token') ?? ''
-        const payload = verifyToken<{ userId: number }>(
-          token,
-          env.sessionSecret,
-          'unsubscribe',
+        const token =
+          url.searchParams.get('token') ??
+          (await readForm(request)).get('token') ??
+          ''
+        const target = await unsubscribeTarget(token)
+        if (!target)
+          throw new HttpError(400, 'This unsubscribe link is invalid or expired.')
+        await unsubscribeEmail(db, target.userId, target.email)
+        return page(
+          'Unsubscribed',
+          `<h1 style="font-size:20px">You won't get Scout emails anymore.</h1>
+<p>Other channels (Telegram, browser) are unchanged. <a href="${escapeHtml(settingsUrl(env.siteUrl))}">Notification settings</a></p>`,
         )
-        if (!payload) throw new HttpError(400, 'Invalid unsubscribe link.')
-        await unsubscribeEmail(db, payload.userId)
-        return html(`<!doctype html><meta name="viewport" content="width=device-width"><title>Unsubscribed</title>
-<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:48px auto;padding:0 16px">
-<h1 style="font-size:20px">You won't get Scout emails anymore.</h1>
-<p>Other channels (Telegram, browser) are unchanged. <a href="${escapeHtml(settingsUrl(env.siteUrl))}">Notification settings</a></p></body>`)
       },
     ],
 
@@ -551,7 +630,10 @@ ${
       '/api/notify/me/reads',
       async (request) => {
         const user = await currentUser(request)
-        return json({ reads: await listEvidenceReads(db, user.id) })
+        return json({
+          reads: await listEvidenceReads(db, user.id),
+          synced: await keepsReads(user.id),
+        })
       },
     ],
     [
@@ -567,15 +649,18 @@ ${
         )
         if (valid.length !== entries.length || valid.length > READS_PER_REQUEST)
           throw new HttpError(400, 'Invalid evidence reads.')
+        const synced = await keepsReads(user.id)
         const alerts = await setEvidenceReads(
           db,
           user.id,
           Object.fromEntries(valid),
+          { keep: synced },
         )
         return json({
           reads: await listEvidenceReads(db, user.id),
           alertsRead: alerts,
           max: MAX_EVIDENCE_READS,
+          synced,
         })
       },
     ],
@@ -657,7 +742,10 @@ ${
     ],
   ])
 
-  return async (request: Request): Promise<Response> => {
+  return async (
+    request: Request,
+    client: ClientInfo = {},
+  ): Promise<Response> => {
     try {
       const { pathname } = new URL(request.url)
       if (!CROSS_ORIGIN_ROUTES.some((route) => route.test(pathname)))
@@ -669,6 +757,6 @@ ${
       console.error('[notify-api]', error)
       return json({ error: 'Service unavailable.' }, { status: 503 })
     }
-    return router(request)
+    return router(request, client)
   }
 }

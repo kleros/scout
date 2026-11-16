@@ -13,6 +13,9 @@ export const ITEM_ID = /^0x[0-9a-f]{64}@0x[0-9a-f]{40}$/
  */
 export const READS_PER_REQUEST = 100
 
+/** Items whose reads the server keeps per account: the most recent ones. */
+export const READS_KEPT = 300
+
 /** Whether the API accepts a read: a known item id and a past time (an hour of clock skew allowed). */
 export const isValidRead = (
   itemId: string,
@@ -26,18 +29,22 @@ export const isValidRead = (
 
 /**
  * The reads kept in this browser that the server lacks (or has older), in
- * uploads of at most READS_PER_REQUEST.
+ * uploads of at most READS_PER_REQUEST. Only the READS_KEPT most recent
+ * count: the server would drop older ones, and they would go up again on
+ * every visit.
  */
 export const readsAhead = (
   local: Record<string, unknown>,
   remote: Record<string, number>,
   now?: number,
 ): Record<string, number>[] => {
-  const ahead = Object.entries(local).filter(
-    (entry): entry is [string, number] =>
-      isValidRead(entry[0], entry[1], now) &&
-      entry[1] > (remote[entry[0]] ?? 0),
-  )
+  const ahead = Object.entries(local)
+    .filter((entry): entry is [string, number] =>
+      isValidRead(entry[0], entry[1], now),
+    )
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, READS_KEPT)
+    .filter(([id, until]) => until > (remote[id] ?? 0))
   const uploads: Record<string, number>[] = []
   for (let i = 0; i < ahead.length; i += READS_PER_REQUEST)
     uploads.push(Object.fromEntries(ahead.slice(i, i + READS_PER_REQUEST)))

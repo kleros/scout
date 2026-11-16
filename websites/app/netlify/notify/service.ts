@@ -29,7 +29,7 @@ import {
   usersByAddress,
   type DueDelivery,
 } from './store'
-import { signToken } from './tokens'
+import { sha256Hex, signToken } from './tokens'
 
 export interface Service {
   env: NotifyEnv
@@ -190,9 +190,25 @@ export const runWatcherTick = async (
 
 const UNSUBSCRIBE_TTL = 365 * 24 * 3600
 
-export const unsubscribeUrl = (env: NotifyEnv, userId: number) =>
+/**
+ * Ties an unsubscribe link to the address it was sent to, so it does
+ * nothing to the address the user has since moved to.
+ */
+export const emailTag = (email: string) =>
+  sha256Hex(email.trim().toLowerCase()).slice(0, 16)
+
+export const unsubscribeUrl = (
+  env: NotifyEnv,
+  userId: number,
+  email: string,
+) =>
   `${env.siteUrl}/api/notify/email/unsubscribe?token=${encodeURIComponent(
-    signToken({ userId }, env.sessionSecret, 'unsubscribe', UNSUBSCRIBE_TTL),
+    signToken(
+      { userId, e: emailTag(email) },
+      env.sessionSecret,
+      'unsubscribe',
+      UNSUBSCRIBE_TTL,
+    ),
   )}`
 
 type DeliveryOutcome =
@@ -217,7 +233,7 @@ const deliverOne = async (
     ])
     if (!env.email || !user || !email?.verified || email.unsubscribed)
       return { status: 'skipped' }
-    const unsubscribe = unsubscribeUrl(env, delivery.userId)
+    const unsubscribe = unsubscribeUrl(env, delivery.userId, email.email)
     const rendered = renderEmail(message, {
       siteUrl: env.siteUrl,
       unsubscribeUrl: unsubscribe,

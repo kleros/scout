@@ -438,13 +438,17 @@ export const useFollow = (
   return { following, toggle, isLoading: follows.isLoading }
 }
 
-/** How far the signed-in account has read each item's evidence, on any device. */
+/**
+ * How far the signed-in account has read each item's evidence, on any
+ * device. `synced` is false while the account has nowhere to be notified:
+ * the server then keeps no reads, and this browser's are not uploaded.
+ */
 export const useEvidenceReads = (account: string | undefined) => {
   const queryClient = useQueryClient()
   return useQuery({
     queryKey: accountKey(account ?? '', 'reads'),
     queryFn: () =>
-      accountApi<{ reads: Record<string, number> }>(
+      accountApi<{ reads: Record<string, number>; synced?: boolean }>(
         queryClient,
         account,
         '/me/reads',
@@ -463,10 +467,15 @@ export const useEvidenceReads = (account: string | undefined) => {
 export const readsSaved = (
   queryClient: QueryClient,
   account: string,
-  data: { reads: Record<string, number>; alertsRead: number },
+  data: { reads: Record<string, number>; alertsRead: number; synced?: boolean },
 ) => {
   if (signedInAccount(queryClient) !== account.toLowerCase()) return
-  queryClient.setQueryData(accountKey(account, 'reads'), { reads: data.reads })
+  queryClient.setQueryData(
+    accountKey(account, 'reads'),
+    data.synced === undefined
+      ? { reads: data.reads }
+      : { reads: data.reads, synced: data.synced },
+  )
   if (data.alertsRead > 0) {
     queryClient.invalidateQueries({ queryKey: accountKey(account, 'inbox') })
     queryClient.invalidateQueries({ queryKey: KEYS.me })
@@ -496,12 +505,14 @@ export const useSaveEvidenceReads = () => {
       account: string
       reads: Record<string, number>
     }) =>
-      accountApi<{ reads: Record<string, number>; alertsRead: number }>(
-        queryClient,
-        account,
-        '/me/reads',
-        { method: 'POST', json: { reads } },
-      ),
+      accountApi<{
+        reads: Record<string, number>
+        alertsRead: number
+        synced?: boolean
+      }>(queryClient, account, '/me/reads', {
+        method: 'POST',
+        json: { reads },
+      }),
     retry: retryTransient,
     onSuccess: (data, { account }) => readsSaved(queryClient, account, data),
   })

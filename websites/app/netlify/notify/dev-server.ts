@@ -50,7 +50,7 @@ export const startDevServer = async (
             ? undefined
             : Buffer.concat(chunks),
       })
-      const response = await handle(request)
+      const response = await handle(request, { ip: req.socket.remoteAddress })
       const outgoing: Record<string, string | string[]> = {}
       response.headers.forEach((value, key) => {
         if (key !== 'set-cookie') outgoing[key] = value

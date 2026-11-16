@@ -163,10 +163,23 @@ Channels are enabled only when all of their variables are set:
 
 Scheduled functions only run on the published production deploy.
 
-Abuse limits: 120 API requests per minute per IP; verification emails at most
-once a minute and 5 a day per wallet, 3 a day per recipient address and 200
-an hour overall; 10 browsers per user; push endpoints only at the browsers'
-push services.
+Abuse limits (anyone can make wallets, so none of these is per wallet only):
+
+- 120 API requests per minute per IP (Netlify's rate limit).
+- New accounts: 5 a day per network and 100 a day overall. A network is an
+  IPv4 address or an IPv6 /64, stored only as a hash keyed with
+  `NOTIFY_SESSION_SECRET`.
+- Verification emails: at most once a minute and 5 a day per wallet, 3 a day
+  per inbox (`a.b+x@gmail.com` counts as `ab@gmail.com`), 20 an hour per
+  email domain, 10 a day per network and 50 an hour overall. Reaching the
+  overall limit logs a warning worth alerting on.
+- Per account: 50 followed items, 10 watched addresses, 10 browsers, and
+  evidence reads for the 300 most recent items (kept only for accounts that
+  can be notified somewhere: a confirmed email, Telegram or a browser).
+- Push endpoints only at the browsers' push services.
+
+The numbers are constants in `store.ts` (`SIGNUP_LIMITS`, `EMAIL_SEND_LIMITS`,
+`MAX_FOLLOWS`, …) and `src/utils/cases/reads.ts` (`READS_KEPT`).
 
 ## Local development
 
@@ -182,8 +195,29 @@ the live indexer. Channel credentials in `.env` are used if present.
 
 ## Data and privacy
 
-Stored per user: wallet address, optional watched addresses, followed items,
-email (with verification state), Telegram chat id, push endpoints,
-preferences, how far they read each item's evidence (the 2,000 most recent
-items), and notifications (pruned after 90 days). "Delete my
-notification data" in the app removes all of it.
+Stored per account, until the user deletes it ("Delete my notification
+data" in the app removes all of it at once):
+
+- wallet address, preferences, and when it last signed in;
+- optional watched addresses and followed items;
+- email address (with its confirmation state), Telegram chat id and
+  username, browser push endpoints;
+- for accounts that can be notified somewhere, how far they read each item's
+  evidence (the 300 most recent items), uploaded from the browser on sign-in.
+
+Pruned automatically (hourly, by the watcher):
+
+- notifications and their delivery records: after 90 days;
+- an email address never confirmed: once its 24-hour link expires;
+- a Telegram link never completed: once its 15-minute link expires;
+- verification email and new-account rate-limit records: after 2 days;
+- used sign-in nonces: once they could no longer be used.
+
+Accounts themselves are not deleted for inactivity. Signing out ends every
+session of the account.
+
+Third parties: Netlify (functions), the Postgres host, Resend (recipient
+address and message), Telegram (chat id and message), the browsers' push
+services (encrypted payloads), Scout's indexer and Gnosis RPC providers
+(public chain data; a smart-account sign-in sends the address and the signed
+message's hash to the first `NOTIFY_GNOSIS_RPC_URLS` endpoint).

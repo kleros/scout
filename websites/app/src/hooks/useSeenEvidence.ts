@@ -104,17 +104,19 @@ export const useSeenEvidenceState = (viewer: string | undefined) => {
   const { account, known } = useSyncedAccount(viewer)
   const server = useEvidenceReads(account)
   const remote = account ? server.data?.reads : undefined
+  // The server keeps reads only for accounts with somewhere to be notified.
+  const synced = server.data?.synced !== false
   const ready = known && (!account || server.isSuccess || server.isError)
   const { mutateAsync: save } = useSaveEvidenceReads()
 
   useEffect(() => {
-    if (!account || !remote || syncing.has(account)) return
+    if (!account || !remote || !synced || syncing.has(account)) return
     syncing.add(account)
     const uploads = readsAhead(parse(readRaw(account)), remote)
     uploadReads(uploads, (reads) => save({ account, reads })).catch(() =>
       syncing.delete(account),
     )
-  }, [account, remote, save])
+  }, [account, remote, synced, save])
 
   const seen = useMemo(() => {
     const merged = parse(raw)

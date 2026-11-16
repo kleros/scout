@@ -61,6 +61,12 @@ describe('notification caches', () => {
     assert.deepEqual(queryClient.getQueryData(accountKey(B, 'reads')), {
       reads: { y: 2 },
     })
+    // Whether the server keeps the account's reads comes along.
+    readsSaved(queryClient, B, { reads: {}, alertsRead: 0, synced: false })
+    assert.deepEqual(queryClient.getQueryData(accountKey(B, 'reads')), {
+      reads: {},
+      synced: false,
+    })
   })
 
   it('forgets every account once signed out or deleted', () => {

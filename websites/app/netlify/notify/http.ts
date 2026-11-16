@@ -106,6 +106,14 @@ export const readJson = async <T extends object>(
   return body as T
 }
 
+/** The request's form fields (a confirmation page's POST). */
+export const readForm = async (request: Request) => {
+  const text = await request.text()
+  if (text.length > MAX_BODY_BYTES)
+    throw new HttpError(413, 'Request body too large.')
+  return new URLSearchParams(text)
+}
+
 /**
  * Cross-site request guard for state-changing requests: the browser always
  * sends Origin on fetch/XHR POST, PUT and DELETE. Cookies are also SameSite=Lax.
@@ -125,7 +133,17 @@ export const assertSameOrigin = (request: Request) => {
 }
 
 export type Params = Record<string, string>
-export type Handler = (request: Request, params: Params) => Promise<Response>
+
+/** What the platform knows about who is asking (Netlify: context.ip). */
+export interface ClientInfo {
+  ip?: string
+}
+
+export type Handler = (
+  request: Request,
+  params: Params,
+  client: ClientInfo,
+) => Promise<Response>
 
 interface Route {
   method: string
@@ -148,7 +166,10 @@ export const createRouter = (
     )
     return { method, pattern, keys, handler }
   })
-  return async (request: Request): Promise<Response> => {
+  return async (
+    request: Request,
+    client: ClientInfo = {},
+  ): Promise<Response> => {
     const { pathname } = new URL(request.url)
     const matches = compiled.filter((route) => route.pattern.test(pathname))
     if (matches.length === 0)
@@ -168,7 +189,7 @@ export const createRouter = (
       return json({ error: 'Invalid path.' }, { status: 400 })
     }
     try {
-      return await route.handler(request, params)
+      return await route.handler(request, params, client)
     } catch (error) {
       if (error instanceof HttpError)
         return json({ error: error.message }, { status: error.status })

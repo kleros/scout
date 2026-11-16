@@ -16,6 +16,45 @@ export const randomNonce = () => randomBytes(16).toString('hex')
 export const sha256Hex = (value: string) =>
   createHash('sha256').update(value).digest('hex')
 
+/**
+ * The part of an IP address that one client controls: an IPv4 address, or
+ * the /64 prefix of an IPv6 one (a single connection usually gets a whole
+ * /64, so counting full IPv6 addresses would limit nothing).
+ */
+export const ipBucket = (ip: string) => {
+  const address = ip
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/%.*$/, '')
+  const v4 = /^(?:::ffff:)?(\d{1,3}(?:\.\d{1,3}){3})$/.exec(address)
+  if (v4) return v4[1]
+  if (!address.includes(':')) return address
+  const [head, tail] = address.split('::')
+  const left = head ? head.split(':') : []
+  const right = tail ? tail.split(':') : []
+  const groups =
+    tail === undefined
+      ? left
+      : [...left, ...Array(Math.max(0, 8 - left.length - right.length)).fill('0'), ...right]
+  return `${groups
+    .slice(0, 4)
+    .map((group) => group.replace(/^0+(?=.)/, ''))
+    .join(':')}::/64`
+}
+
+/**
+ * A keyed hash of the client's network (see ipBucket), for per-network
+ * limits. Addresses themselves are never stored.
+ */
+export const ipKey = (secret: string, ip: string | undefined) =>
+  ip
+    ? createHmac('sha256', secret)
+        .update(`ip.${ipBucket(ip)}`)
+        .digest('hex')
+        .slice(0, 32)
+    : null
+
 /** Compares two secrets in constant time (their digests, so lengths don't leak either). */
 export const safeEqual = (given: string, expected: string) =>
   timingSafeEqual(

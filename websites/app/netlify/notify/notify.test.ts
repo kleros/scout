@@ -1,10 +1,11 @@
 import { after, afterEach, before, beforeEach, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { PGlite } from '@electric-sql/pglite'
-import { privateKeyToAccount } from 'viem/accounts'
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { createSiweMessage } from 'viem/siwe'
 import { createApi } from './api'
 import {
+  READS_KEPT,
   READS_PER_REQUEST,
   readsAhead,
   uploadReads,
@@ -31,7 +32,7 @@ import {
   runWatcherTick,
 } from './service'
 import * as store from './store'
-import { sha256Hex } from './tokens'
+import { ipBucket, ipKey, sha256Hex } from './tokens'
 
 // ---------------------------------------------------------------------------
 // Test database (PGlite: Postgres compiled to WASM)
@@ -48,7 +49,7 @@ before(async () => {
 after(async () => pg.close())
 beforeEach(async () => {
   await db.query(
-    `truncate users, watched_addresses, follows, emails, email_sends, telegram_links, push_subscriptions, notifications, deliveries, watcher_state, evidence_reads, used_nonces restart identity cascade`,
+    `truncate users, watched_addresses, follows, emails, email_sends, telegram_links, push_subscriptions, notifications, deliveries, watcher_state, evidence_reads, used_nonces, signups restart identity cascade`,
   )
 })
 
@@ -871,35 +872,123 @@ describe('store', () => {
     assert.equal((await store.getEmail(db, carol.id))?.verified, true)
   })
 
-  it('limits verification emails per recipient and overall, whichever wallets ask', async () => {
+  it('limits verification emails per inbox, domain, network and overall, whichever wallets ask', async () => {
     const users = await seedUsers()
+    const { alice, bob, carol, dave } = users
     const expires = new Date(Date.now() + 60_000)
-    const results: string[] = []
-    for (const [i, user] of Object.values(users).entries())
-      results.push(
-        await store.setPendingEmail(
-          db,
-          user.id,
-          'Victim@test',
-          `v${i}`,
-          expires,
-        ),
-      )
-    assert.deepEqual(results, ['ok', 'ok', 'ok', 'rate-limited'])
+    const send = (
+      user: { id: number },
+      address: string,
+      options: Parameters<typeof store.setPendingEmail>[5] = {},
+    ) =>
+      store.setPendingEmail(db, user.id, address, `t${Math.random()}`, expires, options)
+    // One Gmail inbox, however its address is spelled.
+    assert.deepEqual(
+      [
+        await send(alice, 'Victim+1@Gmail.com'),
+        await send(bob, 'v.i.c.t.i.m@googlemail.com'),
+        await send(carol, 'victim+scout@gmail.com'),
+        await send(dave, 'VICTIM@gmail.com'),
+      ],
+      ['ok', 'ok', 'ok', 'rate-limited'],
+    )
+    // Each limit on its own (fresh per-wallet state every time).
+    const each = async (
+      limits: Partial<typeof store.EMAIL_SEND_LIMITS>,
+      sends: [{ id: number }, string, string | null][],
+    ) => {
+      await db.query(`truncate email_sends, emails`)
+      const results: string[] = []
+      for (const [user, address, ipHash] of sends)
+        results.push(
+          await send(user, address, {
+            ipHash,
+            limits: { ...store.EMAIL_SEND_LIMITS, ...limits },
+          }),
+        )
+      return results
+    }
+    assert.deepEqual(
+      await each({ perDomainPerHour: 2 }, [
+        [alice, 'a@corp.test', null],
+        [bob, 'b@corp.test', null],
+        [carol, 'c@corp.test', null],
+        [dave, 'd@other.test', null],
+      ]),
+      ['ok', 'ok', 'rate-limited', 'ok'],
+    )
+    assert.deepEqual(
+      await each({ perIpPerDay: 2 }, [
+        [alice, 'a@one.test', 'net-1'],
+        [bob, 'b@two.test', 'net-1'],
+        [carol, 'c@three.test', 'net-1'],
+        [dave, 'd@four.test', 'net-2'],
+      ]),
+      ['ok', 'ok', 'rate-limited', 'ok'],
+    )
+    assert.deepEqual(
+      await each({ perHour: 2 }, [
+        [alice, 'a@one.test', 'net-1'],
+        [bob, 'b@two.test', 'net-2'],
+        [carol, 'c@three.test', 'net-3'],
+      ]),
+      ['ok', 'ok', 'rate-limited'],
+    )
+  })
 
-    // Fresh per-user state, so only the service-wide limit applies.
-    await db.query(`truncate email_sends, emails`)
-    const limits = { perRecipientPerDay: 3, perHour: 2 }
-    const { alice, bob, carol } = users
-    for (const [user, address, expected] of [
-      [alice, 'a@test', 'ok'],
-      [bob, 'b@test', 'ok'],
-      [carol, 'c@test', 'rate-limited'],
-    ] as const)
-      assert.equal(
-        await store.setPendingEmail(db, user.id, address, 'x', expires, limits),
-        expected,
-      )
+  it('counts addresses by inbox, and networks by IPv4 address or IPv6 /64', () => {
+    assert.deepEqual(store.canonicalEmail(' A.B+tag@GoogleMail.com '), {
+      address: 'ab@gmail.com',
+      domain: 'gmail.com',
+    })
+    assert.equal(
+      store.canonicalEmail('a.b+tag@example.com').address,
+      'a.b@example.com',
+    )
+    assert.equal(ipBucket('203.0.113.7'), '203.0.113.7')
+    assert.equal(ipBucket('::ffff:203.0.113.7'), '203.0.113.7')
+    assert.equal(ipBucket('2001:db8:1:2:3:4:5:6'), '2001:db8:1:2::/64')
+    assert.equal(ipBucket('2001:0db8:0001:0002::9'), '2001:db8:1:2::/64')
+    assert.equal(ipBucket('2001:db8::1'), '2001:db8:0:0::/64')
+    assert.equal(ipKey('s', '2001:db8:1:2::1'), ipKey('s', '2001:db8:1:2:ffff::'))
+    assert.notEqual(ipKey('s', '203.0.113.7'), ipKey('s', '203.0.113.8'))
+    assert.notEqual(ipKey('s', '203.0.113.7'), ipKey('other', '203.0.113.7'))
+    assert.equal(ipKey('s', undefined), null)
+  })
+
+  it('prunes what is no longer needed', async () => {
+    const { alice, bob, carol, dave } = await seedUsers()
+    await db.query(`truncate emails, telegram_links`)
+    await db.query(
+      `insert into emails (user_id, email, verified_at, token_hash, token_expires_at) values
+         ($1, 'expired@test', null, 'h1', now() - interval '1 hour'),
+         ($2, 'pending@test', null, 'h2', now() + interval '1 hour'),
+         ($3, 'confirmed@test', now(), null, null)`,
+      [alice.id, bob.id, carol.id],
+    )
+    await db.query(
+      `insert into telegram_links (user_id, chat_id, token_hash, token_expires_at) values
+         ($1, null, 't1', now() - interval '1 hour'),
+         ($2, null, 't2', now() + interval '1 hour'),
+         ($3, '42', null, null),
+         ($4, null, null, null)`,
+      [alice.id, bob.id, carol.id, dave.id],
+    )
+    await db.query(
+      `insert into signups (ip_hash, created_at) values ('old', now() - interval '3 days'), ('new', now())`,
+    )
+    await store.pruneOldNotifications(db)
+    const left = async (sql: string) =>
+      (await db.query<{ v: string }>(sql)).map((row) => row.v).sort()
+    assert.deepEqual(await left(`select email as v from emails`), [
+      'confirmed@test',
+      'pending@test',
+    ])
+    assert.deepEqual(
+      await left(`select coalesce(chat_id, token_hash) as v from telegram_links`),
+      ['42', 't2'],
+    )
+    assert.deepEqual(await left(`select ip_hash as v from signups`), ['new'])
   })
 
   it("keeps each user's most recent browsers only", async () => {
@@ -1181,24 +1270,35 @@ describe('API', () => {
       }),
     )
 
+  type Handle = (r: Request, client?: { ip?: string }) => Promise<Response>
   const call = async (
-    handle: (r: Request) => Promise<Response>,
+    handle: Handle,
     method: string,
     path: string,
     {
       body,
+      form,
       cookie,
       origin = 'https://scout.test',
       account: meant,
+      ip,
     }: {
       body?: unknown
+      /** A form post's fields, instead of a JSON body. */
+      form?: Record<string, string>
       cookie?: string
       origin?: string
       /** The account the app means the request for. */
       account?: string
+      /** The client's IP, as Netlify gives it. */
+      ip?: string
     } = {},
   ) => {
-    const headers = new Headers({ 'Content-Type': 'application/json' })
+    const headers = new Headers({
+      'Content-Type': form
+        ? 'application/x-www-form-urlencoded'
+        : 'application/json',
+    })
     if (cookie) headers.set('Cookie', cookie)
     if (meant) headers.set('X-Notify-Account', meant)
     if (origin && method !== 'GET') headers.set('Origin', origin)
@@ -1206,8 +1306,13 @@ describe('API', () => {
       new Request(`https://scout.test${path}`, {
         method,
         headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: form
+          ? new URLSearchParams(form).toString()
+          : body === undefined
+            ? undefined
+            : JSON.stringify(body),
       }),
+      { ip },
     )
     const setCookies = response.headers.getSetCookie?.() ?? []
     return {
@@ -1221,11 +1326,14 @@ describe('API', () => {
   const cookieJar = (setCookies: string[]) =>
     setCookies.map((c) => c.split(';')[0]).join('; ')
 
-  const signIn = async (handle: (r: Request) => Promise<Response>) => {
+  const signIn = async (
+    handle: Handle,
+    { as = account, ip }: { as?: typeof account; ip?: string } = {},
+  ) => {
     const nonce = await call(handle, 'GET', '/api/notify/auth/nonce')
     const message = createSiweMessage({
       domain: 'scout.test',
-      address: account.address,
+      address: as.address,
       uri: 'https://scout.test',
       version: '1',
       chainId: 100,
@@ -1233,12 +1341,24 @@ describe('API', () => {
       issuedAt: new Date(),
       statement: 'Sign in to manage Scout notifications.',
     })
-    const signature = await account.signMessage({ message })
+    const signature = await as.signMessage({ message })
     const verified = await call(handle, 'POST', '/api/notify/auth/verify', {
       body: { message, signature },
       cookie: cookieJar(nonce.setCookies),
+      ip,
     })
     return { verified, cookie: cookieJar(verified.setCookies) }
+  }
+
+  /** Gives the signed-in account a confirmed email: somewhere to be notified. */
+  const confirmEmail = async (email = 'me@test') => {
+    const me = await store.upsertUser(db, account.address)
+    await db.query(
+      `insert into emails (user_id, email, verified_at) values ($1, $2, now())
+       on conflict (user_id) do update set email = excluded.email, verified_at = now(), unsubscribed_at = null`,
+      [me.id, email],
+    )
+    return me
   }
 
   it('signs in with Ethereum and manages preferences, follows and the inbox', async () => {
@@ -1320,7 +1440,7 @@ describe('API', () => {
   it('syncs evidence reads across devices and reads the matching alerts', async () => {
     const handle = api()
     const { cookie } = await signIn(handle)
-    const me = await store.upsertUser(db, account.address)
+    const me = await confirmEmail()
     const itemId = `${ITEM_ID}@${REGISTRY}`
     await store.insertNotifications(db, [
       {
@@ -1376,6 +1496,7 @@ describe('API', () => {
   it('refuses requests the app meant for another account than the signed-in one', async () => {
     const handle = api()
     const { cookie } = await signIn(handle)
+    await confirmEmail()
     const itemId = `${ITEM_ID}@${REGISTRY}`
     const reads = { [itemId]: 3_000 }
     const elsewhere = await call(handle, 'POST', '/api/notify/me/reads', {
@@ -1408,6 +1529,7 @@ describe('API', () => {
   it('takes reads in uploads within the body limit, and a failed upload loses nothing', async () => {
     const handle = api()
     const { cookie } = await signIn(handle)
+    await confirmEmail()
     const local = Object.fromEntries(
       Array.from({ length: 250 }, (_, i) => [
         `0x${i.toString(16).padStart(64, '0')}@${REGISTRY}`,
@@ -1452,6 +1574,21 @@ describe('API', () => {
     await uploadReads(rest, flaky)
     assert.deepEqual(await remote(), local)
     assert.deepEqual(readsAhead(local, await remote()), [])
+  })
+
+  it('uploads only the reads the server keeps, so none go up again on every visit', () => {
+    const local = Object.fromEntries(
+      Array.from({ length: READS_KEPT + 100 }, (_, i) => [
+        `0x${i.toString(16).padStart(64, '0')}@${REGISTRY}`,
+        1_700_000_000 + i,
+      ]),
+    )
+    const uploads = readsAhead(local, {})
+    const sent = Object.assign({}, ...uploads)
+    assert.equal(Object.keys(sent).length, READS_KEPT)
+    // The most recent ones.
+    assert.equal(Math.min(...Object.values<number>(sent)), 1_700_000_100)
+    assert.deepEqual(readsAhead(local, sent), [])
   })
 
   it('never resolves a session to another user, even if ids are reused', async () => {
@@ -1685,20 +1822,40 @@ describe('API', () => {
       body: { email: 'me@example.com' },
     })
     assert.equal(put.data.email.verified, false)
-    const verify = await call(
-      handle,
-      'GET',
-      verifyUrl.replace('https://scout.test', ''),
+    const verified = async () =>
+      (await call(handle, 'GET', '/api/notify/me', { cookie })).data.email
+        .verified
+    // Opening the link (as a mail scanner would) only shows a button.
+    const path = verifyUrl.replace('https://scout.test', '')
+    const page = await call(handle, 'GET', path)
+    assert.equal(page.response.status, 200)
+    assert.match(page.data, /<form method="post">/)
+    assert.match(page.data, /me@example\.com/)
+    assert.equal(await verified(), false)
+    // Pressing it, from another site, does nothing.
+    const token = new URL(verifyUrl).searchParams.get('token') ?? ''
+    assert.equal(
+      (
+        await call(handle, 'POST', path, {
+          form: { token },
+          origin: 'https://evil.test',
+        })
+      ).response.status,
+      403,
     )
+    assert.equal(await verified(), false)
+    // Pressing it on the page confirms.
+    const verify = await call(handle, 'POST', path, { form: { token } })
     assert.equal(verify.response.status, 303)
     assert.match(
       verify.response.headers.get('location') ?? '',
       /notify=email-verified#notifications/,
     )
-    assert.equal(
-      (await call(handle, 'GET', '/api/notify/me', { cookie })).data.email
-        .verified,
-      true,
+    assert.equal(await verified(), true)
+    // The link is single-use.
+    assert.match(
+      (await call(handle, 'GET', path)).data,
+      /invalid or expired/,
     )
 
     const user = (await store.usersByAddress(db, [account.address])).get(
@@ -1708,11 +1865,105 @@ describe('API', () => {
     const oneClick = await call(
       handle,
       'POST',
-      unsubscribeUrl(env, user.id).replace('https://scout.test', ''),
+      unsubscribeUrl(env, user.id, 'me@example.com').replace(
+        'https://scout.test',
+        '',
+      ),
       { origin: 'https://mail.example' },
     )
     assert.equal(oneClick.response.status, 200)
     assert.equal((await store.getEmail(db, user.id))?.unsubscribed, true)
+  })
+
+  it('applies an unsubscribe link only to the address it was sent to', async () => {
+    const handle = api()
+    await signIn(handle)
+    const me = await confirmEmail('old@example.com')
+    const { unsubscribeUrl } = await import('./service')
+    const old = unsubscribeUrl(env, me.id, 'old@example.com').replace(
+      'https://scout.test',
+      '',
+    )
+    await confirmEmail('new@example.com')
+    assert.match((await call(handle, 'GET', old)).data, /invalid or expired/)
+    const stale = await call(handle, 'POST', old, {
+      origin: 'https://mail.example',
+    })
+    assert.equal(stale.response.status, 400)
+    assert.equal((await store.getEmail(db, me.id))?.unsubscribed, false)
+    const current = unsubscribeUrl(env, me.id, 'New@Example.com').replace(
+      'https://scout.test',
+      '',
+    )
+    assert.match((await call(handle, 'GET', current)).data, /Stop Scout emails/)
+    assert.equal(
+      (await call(handle, 'POST', current, { origin: 'https://mail.example' }))
+        .response.status,
+      200,
+    )
+    assert.equal((await store.getEmail(db, me.id))?.unsubscribed, true)
+  })
+
+  it('keeps evidence reads only for accounts with somewhere to be notified', async () => {
+    const handle = api()
+    const { cookie } = await signIn(handle)
+    const me = await store.upsertUser(db, account.address)
+    const itemId = `${ITEM_ID}@${REGISTRY}`
+    await store.insertNotifications(db, [
+      {
+        userId: me.id,
+        dedupKey: 'ev',
+        kind: 'evidence',
+        urgency: 'important',
+        title: 'New evidence',
+        body: '…',
+        itemId,
+        evidenceAt: 2_500,
+        channels: [],
+      },
+    ])
+    const save = () =>
+      call(handle, 'POST', '/api/notify/me/reads', {
+        cookie,
+        body: { reads: { [itemId]: 3_000 } },
+      })
+    // The bell alone: the alert is read, nothing is stored.
+    const bellOnly = await save()
+    assert.equal(bellOnly.response.status, 200)
+    assert.deepEqual(
+      [bellOnly.data.reads, bellOnly.data.alertsRead, bellOnly.data.synced],
+      [{}, 1, false],
+    )
+    assert.equal(await store.unreadCount(db, me.id), 0)
+    assert.deepEqual(
+      (await call(handle, 'GET', '/api/notify/me/reads', { cookie })).data,
+      { reads: {}, synced: false },
+    )
+    // With a confirmed email, reads are kept.
+    await confirmEmail()
+    const kept = await save()
+    assert.deepEqual([kept.data.reads, kept.data.synced], [{ [itemId]: 3_000 }, true])
+  })
+
+  it('limits new accounts per network and overall, never existing ones', async () => {
+    const handle = api()
+    const status = async (as: typeof account, ip: string) =>
+      (await signIn(handle, { as, ip })).verified.response.status
+    const fresh = () => privateKeyToAccount(generatePrivateKey())
+    // An account made earlier, elsewhere.
+    assert.equal(await status(account, '198.51.100.1'), 200)
+    // New wallets from one IPv6 /64, each from its own address in it.
+    const statuses: number[] = []
+    for (let i = 1; i <= store.SIGNUP_LIMITS.perIpPerDay + 1; i++)
+      statuses.push(await status(fresh(), `2001:db8:1:2::${i}`))
+    assert.deepEqual(statuses, [200, 200, 200, 200, 200, 429])
+    // The existing account still signs in from there; other networks are fine.
+    assert.equal(await status(account, '2001:db8:1:2::99'), 200)
+    assert.equal(await status(fresh(), '198.51.100.7'), 200)
+    // The service-wide limit: 7 accounts so far.
+    const limits = { perIpPerDay: 5, perDay: 8 }
+    assert.equal(await store.recordSignup(db, 'net-a', limits), 'ok')
+    assert.equal(await store.recordSignup(db, 'net-b', limits), 'service')
   })
 
   it('links Telegram through a one-time deep link', async () => {

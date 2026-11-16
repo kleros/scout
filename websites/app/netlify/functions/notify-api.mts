@@ -1,12 +1,12 @@
-import type { Config } from '@netlify/functions'
+import type { Config, Context } from '@netlify/functions'
 import { createApi } from '../notify/api'
 import { connect } from '../notify/db'
 import { readEnv } from '../notify/env'
 import { createService } from '../notify/service'
 
-let handle: ((request: Request) => Promise<Response>) | undefined
+let handle: ReturnType<typeof createApi> | undefined
 
-const notifyApi = async (request: Request) => {
+const notifyApi = async (request: Request, context: Context) => {
   if (!handle) {
     try {
       const env = readEnv()
@@ -30,7 +30,8 @@ const notifyApi = async (request: Request) => {
       )
     }
   }
-  return handle(request)
+  // The client's IP, for per-network limits (stored only as a keyed hash).
+  return handle(request, { ip: context.ip })
 }
 
 export default notifyApi
