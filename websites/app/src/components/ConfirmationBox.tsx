@@ -445,6 +445,7 @@ const ConfirmationBox: React.FC<IConfirmationBox> = ({
           </FileUploadContainer>
           <PayoutWarning
             address={connectedAddress}
+            registry={detailsData.registryAddress}
             stake="Your deposit refund and any reward"
           />
           <PolicyAcknowledgement

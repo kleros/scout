@@ -1,12 +1,13 @@
 /**
  * Byte-level PNG inspection (no pixel decoding).
  *
- * `structure` follows the automated checks' parser exactly, so a file it
- * rejects here would be challenged automatically as "not a structurally
- * valid PNG". `integrityWarnings` lists extra problems those checks do not
- * test (bad CRCs, impossible header values) that still make decoders,
- * explorers or wallets choke on the file. `imageData` tells whether there is
- * any pixel data (IDAT) at all; without it nothing can display the file.
+ * `structure` rejects files that are not PNGs at all: no signature, a first
+ * chunk that is not IHDR, a truncated chunk or no end marker (IEND). Such a
+ * file breaks the policy's "PNG" requirement. `integrityWarnings` lists
+ * problems that browsers tolerate but that can still make decoders, explorers
+ * or wallets choke on the file (bad CRCs, impossible header values, data
+ * after IEND). `imageData` tells whether there is any pixel data (IDAT) at
+ * all; without it nothing can display the file.
  */
 
 const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
@@ -145,18 +146,25 @@ export const inspectPng = (bytes: Uint8Array): PngInspection => {
     }
   }
 
-  if (!sawIend || offset !== byteLength) {
+  if (!sawIend) {
     return {
       structure: {
         valid: false,
-        reason: sawIend
-          ? 'Extra bytes follow the end of the PNG (IEND chunk).'
-          : 'The PNG end marker (IEND) is missing; the file looks truncated.',
+        reason:
+          'The PNG end marker (IEND) is missing; the file looks truncated.',
         byteLength,
       },
       integrityWarnings,
       imageData: sawIdat,
     }
+  }
+  // Decoders stop at IEND, so trailing data doesn't change what is displayed
+  // (the Tokens policy accepts file variations without visual impact).
+  if (offset !== byteLength) {
+    const extra = byteLength - offset
+    integrityWarnings.push(
+      `${extra.toLocaleString()} extra byte${extra === 1 ? ' follows' : 's follow'} the end of the PNG (IEND chunk). Browsers ignore ${extra === 1 ? 'it' : 'them'}; re-exporting the logo removes ${extra === 1 ? 'it' : 'them'}.`,
+    )
   }
   return {
     structure: { valid: true, width, height, byteLength },

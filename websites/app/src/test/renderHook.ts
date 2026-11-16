@@ -24,8 +24,14 @@ export const renderHook = async <T>(
     return null
   }
   const root = createRoot(document.createElement('div'))
-  await act(async () => root.render(wrap(createElement(Probe))))
-  return { result, unmount: () => act(async () => root.unmount()) }
+  const render = () => act(async () => root.render(wrap(createElement(Probe))))
+  await render()
+  return {
+    result,
+    /** Renders again, e.g. after the test changed what the hook reads. */
+    rerender: render,
+    unmount: () => act(async () => root.unmount()),
+  }
 }
 
 /** Lets pending promises, queries and React updates settle. */

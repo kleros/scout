@@ -1,10 +1,10 @@
 /**
  * Character counting for the policy length limits.
  *
- * Automated challenges only target a value that is over the limit
- * both in Unicode code points and in user-perceived characters (grapheme
- * clusters), so emoji and combining marks never make a compliant value look
- * too long. It does not trim or normalize: spaces count.
+ * A value only counts as over the limit when it is over both in Unicode
+ * code points and in user-perceived characters (grapheme clusters), so emoji
+ * and combining marks never make a compliant value look too long. It does not
+ * trim or normalize: spaces count.
  */
 
 interface GraphemeSegmenter {
@@ -38,7 +38,7 @@ export const countCharacters = (value: string): CharacterCount => {
 export type LengthVerdict = 'within' | 'ambiguous' | 'over'
 
 /**
- * `over`: both counts exceed the limit (this gets challenged automatically).
+ * `over`: both counts exceed the limit (clearly too long).
  * `ambiguous`: only one count exceeds it, so a reviewer counting differently
  * could still call it too long.
  */

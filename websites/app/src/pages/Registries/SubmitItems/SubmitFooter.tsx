@@ -8,6 +8,7 @@ import PolicyAcknowledgement from 'components/PolicyAcknowledgement'
 import PayoutWarning from 'components/PayoutWarning'
 import type { DepositParams } from 'utils/fetchRegistryDeposits'
 import { formatValue } from 'utils/formatValue'
+import { registryMap } from 'utils/items'
 import useNativeBalance from 'hooks/useNativeBalance'
 import {
   SubmitButton,
@@ -62,7 +63,11 @@ const SubmitFooter: React.FC<Props> = ({
 
   return (
     <Wrapper>
-      <PayoutWarning address={address} stake="Your deposit refund" />
+      <PayoutWarning
+        address={address}
+        registry={registryName ? registryMap[registryName] : undefined}
+        stake="Your deposit refund"
+      />
       <PolicyAcknowledgement
         registryName={registryName}
         warningText={SUBMIT_WARNING}

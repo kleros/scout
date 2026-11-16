@@ -461,6 +461,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
             </ContributionInfo>
             <PayoutWarning
               address={connectedAddress}
+              registry={registryAddress}
               stake="Refunds and rewards for this contribution"
             />
             <EnsureChain>
