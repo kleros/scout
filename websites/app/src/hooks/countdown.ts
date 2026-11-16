@@ -1,49 +1,20 @@
 import { useEffect, useState } from 'react'
 import humanizeDuration from 'humanize-duration'
 import { registryMap } from 'utils/items';
-import { JsonRpcProvider, Contract } from 'ethers';
-import { GNOSIS_RPC_URL } from 'consts/index';
+import { useRegistryParameters } from './useRegistryParameters';
 
-export const useChallengePeriodDuration = (registryAddress: string) => {
-  const [duration, setDuration] = useState<number | null>(null);
+const KNOWN_REGISTRIES = new Set(Object.values(registryMap));
 
-  useEffect(() => {
-    const fetchDuration = async () => {
-      const provider = new JsonRpcProvider(GNOSIS_RPC_URL)
-      const abi = ['function challengePeriodDuration() view returns (uint256)']
-      let contractAddress
-
-      switch (registryAddress) {
-        case registryMap['single-tags']:
-          contractAddress = registryMap['single-tags']
-          break
-        case registryMap['tags-queries']:
-          contractAddress = registryMap['tags-queries']
-          break
-        case registryMap['tokens']:
-          contractAddress = registryMap['tokens']
-          break
-        case registryMap['cdn']:
-          contractAddress = registryMap['cdn']
-          break
-        default:
-          console.error('Unknown registry')
-          return
-      }
-
-      try {
-        const contract = new Contract(contractAddress, abi, provider)
-        const result = await contract.challengePeriodDuration()
-        setDuration(Number(result))
-      } catch (error) {
-        console.error('Error fetching challenge period duration:', error)
-      }
-    }
-
-    fetchDuration()
-  }, [registryAddress])
-
-  return duration
+/**
+ * A registry's challenge period in seconds, or null until it is known (and for an address that is
+ * not one of Scout's registries). It comes from the shared registry parameters
+ * (hooks/useRegistryParameters: one read per registry, kept in memory and in localStorage for a
+ * day), so every row of a list shares one read instead of opening its own RPC connection.
+ */
+export const useChallengePeriodDuration = (registryAddress: string): number | null => {
+  const known = KNOWN_REGISTRIES.has(registryAddress);
+  const { data } = useRegistryParameters(known ? registryAddress : '');
+  return known && data ? Number(data.challengePeriodDuration) : null;
 }
 
 export const useChallengeRemainingTime = (
@@ -78,16 +49,19 @@ const useHumanizedCountdown = (duration: number | null, largest: number): string
   useEffect(() => {
     if (duration === null) return;
 
+    // The moment the duration runs out. Each tick reads the clock against it, so a throttled
+    // background tab or a computer waking from sleep shows the real time left (no drift).
+    const deadline = Date.now() + duration;
     setRemainingTime(duration);
 
     const id = setInterval(() => {
-      setRemainingTime((prevTime) => {
-        if (prevTime === null || prevTime <= 0) {
-          clearInterval(id);
-          return 0;
-        }
-        return prevTime - 1000;
-      });
+      const left = deadline - Date.now();
+      if (left <= 0) {
+        clearInterval(id);
+        setRemainingTime(0);
+        return;
+      }
+      setRemainingTime(left);
     }, 1000);
 
     return () => clearInterval(id);

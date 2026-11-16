@@ -121,7 +121,11 @@ export const useExportItems = (filters: ExportFilters) => {
           )
         }
         if (toDate) {
-          const toTimestamp = Math.floor(new Date(toDate).getTime() / 1000)
+          // End of the selected day (23:59:59), so the last day of the range is included, as in
+          // the list's own date filter (getCustomDateTimestamps).
+          const toTimestamp = Math.floor(
+            (new Date(toDate).getTime() + 86400000 - 1000) / 1000,
+          )
           conditions.push(
             `{${orderField}: {_lte: "${toTimestamp}"}}`,
           )

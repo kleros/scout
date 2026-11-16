@@ -4,8 +4,21 @@ import { simulateContract } from '@wagmi/core';
 import { wagmiAdapter } from '../../context/Web3Provider';
 import { wrapWithToast } from '../../utils/wrapWithToast';
 import { Address } from 'viem';
+import { gnosis } from 'viem/chains';
 import { klerosCurateAbi } from './generated';
 import { DepositParams } from '../../utils/fetchRegistryDeposits';
+import { DEFAULT_CHAIN } from '../../consts/chains';
+
+export const WRONG_NETWORK_MESSAGE = 'Your wallet is on another network. Switch it to Gnosis, then try again.';
+
+/**
+ * Scout's registries only exist on Gnosis. Refuse to prepare or send anything while the wallet is
+ * on another network, instead of sending a transaction to an address that is empty there.
+ */
+const assertWalletOnGnosis = async (walletClient: { getChainId: () => Promise<number> }) => {
+  const chainId = await walletClient.getChainId();
+  if (chainId !== DEFAULT_CHAIN) throw new Error(WRONG_NETWORK_MESSAGE);
+};
 
 export const useCurateInteractions = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,10 +37,12 @@ export const useCurateInteractions = () => {
 
     setIsLoading(true);
     try {
+      await assertWalletOnGnosis(walletClient);
       const value = BigInt(depositParams.arbitrationCost + depositParams.submissionBaseDeposit);
       
       // Simulate the contract call first
       const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        chainId: DEFAULT_CHAIN,
         address: registryAddress,
         abi: klerosCurateAbi,
         functionName: 'addItem',
@@ -38,7 +53,7 @@ export const useCurateInteractions = () => {
 
       // Execute with toast wrapper
       const result = await wrapWithToast(
-        async () => await walletClient.writeContract(request),
+        async () => await walletClient.writeContract({ ...request, chain: gnosis }),
         publicClient
       );
 
@@ -64,9 +79,11 @@ export const useCurateInteractions = () => {
 
     setIsLoading(true);
     try {
+      await assertWalletOnGnosis(walletClient);
       const value = arbitrationCost + BigInt(depositParams.removalBaseDeposit);
       
       const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        chainId: DEFAULT_CHAIN,
         address: registryAddress,
         abi: klerosCurateAbi,
         functionName: 'removeItem',
@@ -76,7 +93,7 @@ export const useCurateInteractions = () => {
       });
 
       const result = await wrapWithToast(
-        async () => await walletClient.writeContract(request),
+        async () => await walletClient.writeContract({ ...request, chain: gnosis }),
         publicClient
       );
 
@@ -102,9 +119,11 @@ export const useCurateInteractions = () => {
 
     setIsLoading(true);
     try {
+      await assertWalletOnGnosis(walletClient);
       const value = arbitrationCost + challengeDeposit;
       
       const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        chainId: DEFAULT_CHAIN,
         address: registryAddress,
         abi: klerosCurateAbi,
         functionName: 'challengeRequest',
@@ -114,7 +133,7 @@ export const useCurateInteractions = () => {
       });
 
       const result = await wrapWithToast(
-        async () => await walletClient.writeContract(request),
+        async () => await walletClient.writeContract({ ...request, chain: gnosis }),
         publicClient
       );
 
@@ -138,7 +157,9 @@ export const useCurateInteractions = () => {
 
     setIsLoading(true);
     try {
+      await assertWalletOnGnosis(walletClient);
       const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        chainId: DEFAULT_CHAIN,
         address: registryAddress,
         abi: klerosCurateAbi,
         functionName: 'submitEvidence',
@@ -147,7 +168,7 @@ export const useCurateInteractions = () => {
       });
 
       const result = await wrapWithToast(
-        async () => await walletClient.writeContract(request),
+        async () => await walletClient.writeContract({ ...request, chain: gnosis }),
         publicClient
       );
 
@@ -172,7 +193,9 @@ export const useCurateInteractions = () => {
 
     setIsLoading(true);
     try {
+      await assertWalletOnGnosis(walletClient);
       const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        chainId: DEFAULT_CHAIN,
         address: registryAddress,
         abi: klerosCurateAbi,
         functionName: 'fundAppeal',
@@ -182,7 +205,7 @@ export const useCurateInteractions = () => {
       });
 
       const result = await wrapWithToast(
-        async () => await walletClient.writeContract(request),
+        async () => await walletClient.writeContract({ ...request, chain: gnosis }),
         publicClient
       );
 
@@ -205,7 +228,9 @@ export const useCurateInteractions = () => {
 
     setIsLoading(true);
     try {
+      await assertWalletOnGnosis(walletClient);
       const { request } = await simulateContract(wagmiAdapter.wagmiConfig, {
+        chainId: DEFAULT_CHAIN,
         address: registryAddress,
         abi: klerosCurateAbi,
         functionName: 'executeRequest',
@@ -214,7 +239,7 @@ export const useCurateInteractions = () => {
       });
 
       const result = await wrapWithToast(
-        async () => await walletClient.writeContract(request),
+        async () => await walletClient.writeContract({ ...request, chain: gnosis }),
         publicClient
       );
 

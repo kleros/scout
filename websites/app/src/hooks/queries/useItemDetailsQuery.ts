@@ -1,10 +1,45 @@
+import { useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { gql } from 'graphql-request'
-import { queryKeys, REFETCH_INTERVAL, STALE_TIME } from './consts'
+import { ITEM_REFETCH, queryKeys, STALE_TIME } from './consts'
 import { useGraphqlBatcher } from './useGraphqlBatcher'
 import { fetchItemPropsFromIpfs } from 'utils/items'
 import { KLEROS_CDN_BASE } from 'consts/index'
 import { GraphItemDetails } from '../../utils/itemDetails'
+import { itemToStatusCode, STATUS_CODE } from '../../utils/itemStatus'
+
+/** An item that is still not indexed after this long is checked less often. */
+const NOT_INDEXED_FAST_FOR_MS = 2 * 60_000
+/** The slower check for an item still not indexed, and for a read that failed with nothing to show. */
+const SLOW_RECHECK_MS = 30_000
+
+/**
+ * How often the item page asks the indexer again, by what can happen to the item next (the
+ * indexer's limit is shared by every visitor of Scout and Curate):
+ * - not indexed yet (just submitted): every 5 s for two minutes, then every 30 s;
+ * - no open request (Included, Removed, Rejected): never, only on returning to the tab;
+ * - an open request nobody challenged (in its challenge period, or waiting to be executed): 30 s;
+ * - a dispute whose appeal can be funded: 20 s;
+ * - a dispute waiting for the jurors or for the ruling to be enforced: 60 s.
+ * The state is read the way the page reads it for display (itemToStatusCode).
+ */
+export const itemRefetchInterval = (
+  item: GraphItemDetails | null | undefined,
+  { nowSec, missingForMs, failed }: { nowSec: number; missingForMs: number; failed: boolean },
+): number | false => {
+  if (item === undefined) return failed ? SLOW_RECHECK_MS : false
+  if (item === null) {
+    return missingForMs < NOT_INDEXED_FAST_FOR_MS ? ITEM_REFETCH.notIndexedYet : SLOW_RECHECK_MS
+  }
+  const latest = item.requests?.[0]
+  if (!latest || latest.resolved || item.status === 'Registered' || item.status === 'Absent') return false
+  if (!latest.disputed) return ITEM_REFETCH.challengePeriod
+  // A dispute's state does not depend on the challenge period.
+  const statusCode = itemToStatusCode(item as any, nowSec, 0)
+  return statusCode === STATUS_CODE.CROWDFUNDING || statusCode === STATUS_CODE.CROWDFUNDING_WINNER
+    ? ITEM_REFETCH.appealPeriod
+    : ITEM_REFETCH.awaitingRuling
+}
 
 const FETCH_ITEM_DETAILS_QUERY = gql`
   query FetchItemDetails($id: String!) {
@@ -90,6 +125,8 @@ export const useItemDetailsQuery = ({
 }: UseItemDetailsQueryParams) => {
   const graphqlBatcher = useGraphqlBatcher()
   const queryClient = useQueryClient()
+  // Since when this page has found no item with this ID (it may have been submitted a moment ago).
+  const missingSince = useRef<{ itemId: string; since: number } | null>(null)
 
   return useQuery({
     queryKey: queryKeys.itemDetails(itemId),
@@ -136,7 +173,19 @@ export const useItemDetailsQuery = ({
       return item
     },
     enabled: enabled && itemId != null && itemId !== '',
-    refetchInterval: REFETCH_INTERVAL,
+    refetchInterval: (query) => {
+      // null: the indexer has no item with this ID (yet); undefined: nothing read so far.
+      const data = query.state.data as GraphItemDetails | null | undefined
+      if (data !== null) missingSince.current = null
+      else if (missingSince.current?.itemId !== itemId) missingSince.current = { itemId, since: Date.now() }
+      return itemRefetchInterval(data, {
+        nowSec: Math.floor(Date.now() / 1000),
+        missingForMs: missingSince.current ? Date.now() - missingSince.current.since : 0,
+        failed: query.state.status === 'error',
+      })
+    },
+    // Coming back to the tab shows what changed meanwhile (an item with no open request is not polled).
+    refetchOnWindowFocus: true,
     staleTime: STALE_TIME,
   })
 }

@@ -177,7 +177,9 @@ export function useRegistryParameters(registryAddress: string) {
   const query = useQuery({
     queryKey: ['registryParameters', registryAddress],
     queryFn: async (): Promise<RegistryParameters> => {
-      const provider = new JsonRpcProvider(GNOSIS_RPC_URL, 100)
+      // staticNetwork: the chain is known, so ethers skips network detection, which otherwise
+      // retries every second for ever when the RPC is unreachable. The call and values are unchanged.
+      const provider = new JsonRpcProvider(GNOSIS_RPC_URL, 100, { staticNetwork: true })
       const lgtcrViewContract = new Contract(LGTCRViewAddress, LGTCRViewABI, provider)
 
       try {
