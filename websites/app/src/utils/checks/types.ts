@@ -19,10 +19,10 @@ export type CheckOutcome =
   | 'skipped'
 
 /**
- * `violation`: a deterministic policy breach that gets the submission
- * challenged (and the deposit lost); blocks submission when it fails.
- * `warning`: surfaced but does not block (rules a human reviewer may apply,
- * or rules the automated checks can only flag for review).
+ * `violation`: a mechanical policy breach that makes a challenge (and the
+ * loss of the deposit) very likely; blocks submission when it fails.
+ * `warning`: surfaced but does not block (judgment calls a reviewer may
+ * make, or verdicts this form cannot confirm, e.g. from a single provider).
  */
 export type CheckSeverity = 'violation' | 'warning'
 
@@ -41,6 +41,8 @@ export interface CheckResult {
   fix?: string
   /** How to show `fix` when it differs from what the user types (e.g. the account part of a CAIP-10 value). */
   fixLabel?: string
+  /** Running the check again can't change this answer (e.g. no public RPC for the chain). */
+  final?: boolean
 }
 
 /** The values a submission form is about to publish, keyed by column label. */

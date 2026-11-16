@@ -1,15 +1,20 @@
 import React, { useState } from 'react'
 import styled, { css, keyframes } from 'styled-components'
 import type { CheckResult } from 'utils/checks'
+import { statusLabel, summarize, toneOf, type Tone } from './status'
 
-type Tone = 'error' | 'warning' | 'muted' | 'success'
-
-const toneOf = (result: CheckResult): Tone => {
-  if (result.outcome === 'pass') return 'success'
-  if (result.outcome === 'fail')
-    return result.severity === 'violation' ? 'error' : 'warning'
-  return 'muted'
-}
+/** Read by screen readers, not shown. */
+const VisuallyHidden = styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+`
 
 const toneColor = css<{ $tone: Tone }>`
   color: ${({ theme, $tone }) =>
@@ -101,9 +106,14 @@ export const FieldChecks: React.FC<{
         <FieldMessage
           key={result.id}
           $tone={toneOf(result)}
-          role={result.outcome === 'fail' ? 'alert' : undefined}
+          // Polite: these change while the person types.
+          role={result.outcome === 'fail' ? 'status' : undefined}
         >
-          {result.outcome === 'inconclusive' ? "Couldn't verify: " : null}
+          {result.outcome === 'inconclusive' ? (
+            "Couldn't verify: "
+          ) : result.outcome === 'fail' ? (
+            <VisuallyHidden>{statusLabel(result)}</VisuallyHidden>
+          ) : null}
           {result.message ?? result.title}
           <Fix result={result} onApplyFix={onApplyFix} />
         </FieldMessage>
@@ -230,6 +240,7 @@ const CheckRow: React.FC<{
         )}
       </Icon>
       <div>
+        <VisuallyHidden>{statusLabel(result)}</VisuallyHidden>
         {result.title}
         {result.outcome !== 'pass' && result.message ? (
           <Detail $tone={tone}>
@@ -253,13 +264,14 @@ const rank = (result: CheckResult) => {
 interface ChecksPanelProps {
   results: CheckResult[]
   checking: boolean
+  /** Re-runs the network checks that failed or could not run; omit when none did. */
   onRetry?: () => void
   onApplyFix?: (field: string, value: string) => void
 }
 
 /**
- * Summary of every pre-submission check. Failing `violation` rules mirror the
- * automated checks that challenge new submissions, so they block submission.
+ * Summary of every pre-submission check. Failing `violation` rules break the
+ * registry policy's mechanical rules, so they block submission.
  */
 export const ChecksPanel: React.FC<ChecksPanelProps> = ({
   results,
@@ -271,51 +283,28 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
   const sorted = [...results].sort((a, b) => rank(a) - rank(b))
   const open = sorted.filter((r) => r.outcome !== 'pass')
   const passed = sorted.filter((r) => r.outcome === 'pass')
-  const violations = results.filter(
-    (r) => r.outcome === 'fail' && r.severity === 'violation',
-  ).length
-  const warnings = results.filter(
-    (r) => r.outcome === 'fail' && r.severity === 'warning',
-  ).length
-  const inconclusive = results.filter(
-    (r) => r.outcome === 'inconclusive',
-  ).length
-
-  let summary: { tone: Tone; text: string }
-  if (violations > 0) {
-    summary = {
-      tone: 'error',
-      text: `${violations} problem${violations === 1 ? '' : 's'} would get this challenged`,
-    }
-  } else if (checking) summary = { tone: 'muted', text: 'Checking…' }
-  else if (warnings > 0)
-    summary = {
-      tone: 'warning',
-      text: `${warnings} warning${warnings === 1 ? '' : 's'} to review`,
-    }
-  else if (inconclusive > 0)
-    summary = {
-      tone: 'muted',
-      text: `${inconclusive} check${inconclusive === 1 ? '' : 's'} could not run`,
-    }
-  else if (open.some((r) => r.outcome === 'pending'))
-    summary = { tone: 'muted', text: 'Waiting for input' }
-  else summary = { tone: 'success', text: `All ${passed.length} checks passed` }
+  const summary = summarize(results, checking)
 
   return (
-    <Panel aria-live="polite">
+    <Panel aria-labelledby="submission-checks-title">
       <PanelHeader>
-        <PanelTitle>Pre-submission checks</PanelTitle>
-        <Summary $tone={summary.tone}>
-          {checking && violations === 0 ? <Spinner /> : null}
+        <PanelTitle id="submission-checks-title">
+          Pre-submission checks
+        </PanelTitle>
+        {/* Only the summary is announced, not every row as it changes. */}
+        <Summary $tone={summary.tone} role="status">
+          {checking && summary.tone !== 'error' ? (
+            <Spinner aria-hidden />
+          ) : null}
           {summary.text}
         </Summary>
       </PanelHeader>
       <Explainer>
-        These are the mechanical policy checks run on every new submission.
-        Items that fail them get challenged and lose their deposit, so you can’t
-        submit until the red ones are fixed. Passing them doesn’t guarantee
-        acceptance: jurors still review the item against the full policy.
+        These checks apply the registry policy’s mechanical rules. Items that
+        break them are very likely to be challenged and lose their deposit, so
+        you can’t submit until the red ones are fixed. Passing them doesn’t
+        guarantee acceptance: jurors still review the item against the full
+        policy.
       </Explainer>
       {open.length > 0 ? (
         <List>
@@ -324,9 +313,9 @@ export const ChecksPanel: React.FC<ChecksPanelProps> = ({
           ))}
         </List>
       ) : null}
-      {inconclusive > 0 && onRetry ? (
+      {onRetry ? (
         <TextButton type="button" onClick={onRetry}>
-          Retry checks that could not run
+          Check again
         </TextButton>
       ) : null}
       {passed.length > 0 ? (
