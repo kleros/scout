@@ -149,7 +149,7 @@ const Menu: React.FC<ISettings & IHelp & IMenu> = ({
         <NotificationsButton {...{ toggleIsNotificationsOpen, isMobileNavbar }} />
       ) : null}
       {buttons.map(({ text, Icon, onClick }) => (
-        <ButtonContainer key={Icon}>
+        <ButtonContainer key={text}>
           <LightButton {...{ text, onClick, Icon, isMobileNavbar }} />
         </ButtonContainer>
       ))}

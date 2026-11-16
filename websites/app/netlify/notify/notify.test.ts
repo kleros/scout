@@ -21,7 +21,7 @@ import type {
   IndexedRound,
   Indexer,
 } from './indexer'
-import { renderEmail, renderPush, renderTelegram } from './messages'
+import { defang, renderEmail, renderPush, renderTelegram } from './messages'
 import { migrate } from './migrations'
 import { pgliteDb } from './pglite'
 import { plan, reminderEvents } from './plan'
@@ -2257,6 +2257,39 @@ describe('message rendering', () => {
     const line = 'Deadline: Sun, Sep 27, 2026, 18:27 UTC'
     assert.match(email(message).text, new RegExp(line))
     assert.match(renderTelegram(message), new RegExp(`<i>${line}</i>`))
+  })
+
+  it("writes links in an item's name inertly by email, Telegram and push", () => {
+    const named = {
+      ...message,
+      title: 'Your token was challenged: Claim at https://kleros-refund.example',
+      body: 'A removal request was filed for app.uniswap.org → 0x1f98…f984 on Ethereum Mainnet.',
+    }
+    // The subject is the title alone; the rest carry title and body.
+    assert.equal(
+      email(named).subject,
+      'Action needed: Your token was challenged: Claim at hxxps://kleros-refund[.]example',
+    )
+    for (const text of [
+      email(named).text,
+      email(named).html,
+      renderTelegram(named),
+      JSON.stringify(renderPush(named)),
+    ]) {
+      assert.doesNotMatch(text, /https:\/\/kleros-refund|kleros-refund\.example|app\.uniswap\.org/)
+      assert.match(text, /hxxps:\/\/kleros-refund\[\.\]example/)
+      assert.match(text, /app\[\.\]uniswap\[\.\]org/)
+    }
+    // Scout's own links are left alone.
+    assert.match(email(named).text, /Open in Scout: https:\/\/scout\.test\/single-tags\/0x1/)
+    assert.equal(renderPush(named).url, 'https://scout.test/single-tags/0x1')
+    // Fixed wording is unchanged.
+    for (const text of [
+      'The entry is now in the registry. Payouts and appeal rewards are sent automatically.',
+      'Fund 100.8 xDAI by Sep 27, 14:05 UTC (in 26 h), or you lose the case.',
+      '“Router” (0x5555…5555 on Ethereum Mainnet)',
+    ])
+      assert.equal(defang(text), text)
   })
 
   it('rounds the time left down', () => {

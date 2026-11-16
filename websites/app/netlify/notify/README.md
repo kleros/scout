@@ -73,7 +73,12 @@ app's bell. "The other side" means the requester or challenger of the
 dispute, or someone who crowdfunded their side: evidence from anyone else is
 never urgent. Evidence posted on a request that is already resolved is not
 announced at all, and each recipient gets at most 3 evidence alerts a day
-per item by email, Telegram or push; later ones stay in the bell.
+per item by email, Telegram or push; later ones stay in the bell. The one
+piece of submitter text that does go out is the item's name (a token's name
+and symbol, a CDN domain, a tag, a repository: at most 90 characters, which
+cost a deposit to submit and reach only that item's parties, crowdfunders
+and followers); outgoing messages write any link or domain in it inertly
+("hxxps://", "evil[.]com") so mail and chat apps don't turn it into a link.
 
 Evidence is posted one piece per transaction, often several in a row. Each
 author's burst is announced once, 10 minutes after its last piece, with all
@@ -213,23 +218,27 @@ The service is merged dark. Before setting the two flags in Production:
    with `scripts/notify-telegram-webhook.mjs`.
 6. **Push.** Generate the VAPID keys once and never rotate them silently:
    new keys break every existing subscription.
-7. **Privacy policy.** Name the processors (Netlify, the Postgres host,
+7. **Item names.** Outgoing titles and bodies still carry the item's name,
+   the submitter's own text; links and domains in it are written inertly
+   (`defang` in `messages.ts`, tested). Before enabling email, decide whether
+   that is enough or names should be stripped further for outgoing channels.
+8. **Privacy policy.** Name the processors (Netlify, the Postgres host,
    Resend, Telegram, the browsers' push services, the RPC providers), what
    is stored, the retention ([Data and privacy](#data-and-privacy)), and
    the upload of which items' evidence a wallet has read.
-8. **Monitoring.** Alert on function errors, send volumes and failure
+9. **Monitoring.** Alert on function errors, send volumes and failure
    rates, database size, and the warnings logged when verification emails
    or new accounts reach their service-wide limits.
-9. **Try it first** on a branch deploy (both flags, its own database and
+10. **Try it first** on a branch deploy (both flags, its own database and
    bot, secrets scoped to that branch) and check what could not be checked
    locally: that Netlify enforces the API's `rateLimit`, that
    `/api/notify/*` reaches the function before the SPA's `/*` redirect,
    what an unhandled function error returns, that the scheduled runs stay
    within 30 s, and real email, Telegram and push delivery (iPhone
    included).
-10. **Roll out one channel at a time:** the in-app bell first (no channel
+11. **Roll out one channel at a time:** the in-app bell first (no channel
     variables set), then push, Telegram and email.
-11. **Switch on:** `NOTIFY_ENABLED=true` and `REACT_APP_NOTIFY_ENABLED=true`
+12. **Switch on:** `NOTIFY_ENABLED=true` and `REACT_APP_NOTIFY_ENABLED=true`
     for Production (Builds scope), then redeploy. To switch off, remove both
     and redeploy: the functions and their schedules go away, and the app
     stops calling them.

@@ -18,6 +18,18 @@ export interface Message {
 
 export const settingsUrl = (siteUrl: string) => `${siteUrl}/home#notifications`
 
+/**
+ * An item's name is its submitter's own text (a token's name, a domain, a
+ * tag, a repository), and mail and chat apps turn whatever looks like a
+ * link into one. So email, Telegram and push write links and domains in a
+ * title or body inertly ("hxxps://", "evil[.]com"); the app's bell shows
+ * them as they are, as plain text. Scout's own links are not touched.
+ */
+export const defang = (text: string) =>
+  text
+    .replace(/\b(h)tt(ps?):\/\//gi, '$1xx$2://')
+    .replace(/(?<=[a-z0-9])\.(?=[a-z])/gi, '[.]')
+
 /** "Deadline: Sun, Sep 27, 2026, 18:27 UTC" (seconds dropped, so never later than the real one). */
 const deadlineLine = (deadline: string | null) => {
   if (!deadline) return ''
@@ -26,13 +38,18 @@ const deadlineLine = (deadline: string | null) => {
 }
 
 export const renderEmail = (
-  message: Message,
+  original: Message,
   {
     siteUrl,
     unsubscribeUrl,
     address,
   }: { siteUrl: string; unsubscribeUrl: string; address: string },
 ) => {
+  const message = {
+    ...original,
+    title: defang(original.title),
+    body: defang(original.body),
+  }
   const subject = (
     message.urgency === 'urgent' && !/^action needed\b/i.test(message.title)
       ? `Action needed: ${message.title}`
@@ -90,19 +107,21 @@ export const renderVerificationEmail = (
 export const renderTelegram = (message: Message) => {
   const deadline = deadlineLine(message.deadline)
   return [
-    `<b>${escapeHtml(message.title)}</b>`,
-    escapeHtml(message.body),
+    `<b>${escapeHtml(defang(message.title))}</b>`,
+    escapeHtml(defang(message.body)),
     deadline && `<i>${escapeHtml(deadline)}</i>`,
   ]
     .filter(Boolean)
     .join('\n\n')
 }
 
-export const renderPush = (message: Message) => ({
-  title: message.title,
-  body:
-    message.body.length > 180 ? `${message.body.slice(0, 179)}…` : message.body,
-  url: message.url,
-  tag: `scout-${message.id}`,
-  urgency: message.urgency,
-})
+export const renderPush = (message: Message) => {
+  const body = defang(message.body)
+  return {
+    title: defang(message.title),
+    body: body.length > 180 ? `${body.slice(0, 179)}…` : body,
+    url: message.url,
+    tag: `scout-${message.id}`,
+    urgency: message.urgency,
+  }
+}
