@@ -1,9 +1,17 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { NOTIFY_ENABLED } from 'consts/notify'
+import { isValidRead, readsAhead, uploadReads } from 'utils/cases/reads'
+import {
+  useEvidenceReads,
+  useNotifyConfig,
+  useNotifyProfile,
+  useSaveEvidenceReads,
+} from './useNotifications'
 
 /**
  * Which evidence a wallet has read, per item: the time up to which it has
- * seen the item's Evidence tab. Kept in this browser; every view that shows
- * "new" counts updates as soon as the tab is opened anywhere.
+ * seen the item's Evidence tab. Kept in this browser, and on the server for
+ * a wallet signed in to notifications, so it follows it across devices.
  */
 
 const keyOf = (viewer: string) => `scout:evidence-seen:${viewer.toLowerCase()}`
@@ -72,9 +80,34 @@ export const markEvidenceSeen = (
 }
 
 /**
+ * The account signed in to notifications when it is `viewer` (the server
+ * then keeps its reads), and whether that is known yet.
+ */
+const useSyncedAccount = (viewer: string | undefined) => {
+  const config = useNotifyConfig()
+  const profile = useNotifyProfile()
+  // Without the service in this build, this browser is the only source.
+  const known =
+    !NOTIFY_ENABLED ||
+    ((config.isError || config.isSuccess) &&
+      (!config.isSuccess || profile.isError || profile.isSuccess))
+  const account =
+    viewer &&
+    profile.data?.signedIn &&
+    profile.data.address === viewer.toLowerCase()
+      ? profile.data.address
+      : undefined
+  return { account, known }
+}
+
+// Reads made in this browser before signing in are uploaded once per
+// account and page session. A failed upload ends the run; the next time
+// evidence is shown, a new run sends what the server still lacks.
+const syncing = new Set<string>()
+
+/**
  * Per item id (lowercase), the time up to which `viewer` has read its
- * evidence, and whether every source of reads has loaded (with this
- * browser as the only source, right away).
+ * evidence, and whether the server's copy (if any) is merged in yet.
  */
 export const useSeenEvidenceState = (viewer: string | undefined) => {
   const subscribe = useCallback(
@@ -95,19 +128,50 @@ export const useSeenEvidenceState = (viewer: string | undefined) => {
   const raw = useSyncExternalStore(subscribe, () =>
     viewer ? readRaw(viewer) : '{}',
   )
-  const seen = useMemo(() => parse(raw), [raw])
-  return { seen, ready: true }
+  const { account, known } = useSyncedAccount(viewer)
+  const server = useEvidenceReads(account)
+  const remote = account ? server.data?.reads : undefined
+  // The server keeps reads only for accounts with somewhere to be notified.
+  const synced = server.data?.synced !== false
+  const ready = known && (!account || server.isSuccess || server.isError)
+  const { mutateAsync: save } = useSaveEvidenceReads()
+
+  useEffect(() => {
+    if (!account || !remote || !synced || syncing.has(account)) return
+    syncing.add(account)
+    const uploads = readsAhead(parse(readRaw(account)), remote)
+    uploadReads(uploads, (reads) => save({ account, reads })).catch(() =>
+      syncing.delete(account),
+    )
+  }, [account, remote, synced, save])
+
+  const seen = useMemo(() => {
+    const merged = parse(raw)
+    for (const [id, until] of Object.entries(remote ?? {}))
+      merged[id] = Math.max(merged[id] ?? 0, until)
+    return merged
+  }, [raw, remote])
+  return { seen, ready }
 }
 
 /** Per item id (lowercase), the time up to which `viewer` has read its evidence. */
 export const useSeenEvidence = (viewer: string | undefined) =>
   useSeenEvidenceState(viewer).seen
 
-/** Marks an item's evidence read. */
-export const useMarkEvidenceSeen = (viewer: string | undefined) =>
-  useCallback(
+/** Marks an item's evidence read here and, when signed in, on every device. */
+export const useMarkEvidenceSeen = (viewer: string | undefined) => {
+  const { account } = useSyncedAccount(viewer)
+  const remote = useEvidenceReads(account).data?.reads
+  const { mutate: save } = useSaveEvidenceReads()
+  return useCallback(
     (itemId: string, until: number) => {
-      if (viewer) markEvidenceSeen(viewer, itemId, until)
+      if (!viewer) return
+      markEvidenceSeen(viewer, itemId, until)
+      const id = itemId.toLowerCase()
+      // Saving also reads the alerts about evidence up to there, on every device.
+      if (account && isValidRead(id, until) && until > (remote?.[id] ?? 0))
+        save({ account, reads: { [id]: until } })
     },
-    [viewer],
+    [viewer, account, remote, save],
   )
+}

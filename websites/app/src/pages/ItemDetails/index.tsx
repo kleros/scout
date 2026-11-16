@@ -24,6 +24,8 @@ import { formatTimestamp } from 'utils/formatTimestamp'
 import ArrowIcon from 'assets/svgs/icons/arrow.svg'
 import { errorToast } from 'utils/wrapWithToast'
 import { useCurateInteractions } from 'hooks/contracts/useCurateInteractions'
+import FollowButton from 'components/FollowButton'
+import { NOTIFY_ENABLED } from 'consts/notify'
 import { AttentionBanner } from 'components/Attention'
 
 const Container = styled.div`
@@ -52,6 +54,12 @@ const TopBar = styled.div`
   margin-bottom: 16px;
   gap: 16px;
   flex-wrap: wrap;
+`
+
+const TopActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `
 
 const ReturnButton = styled(Link)`
@@ -461,6 +469,13 @@ const ItemDetails: React.FC = () => {
     )
   }
 
+  const returnButton = (
+    <ReturnButton to={registryUrl} onClick={handleBackClick}>
+      <ArrowLeftIcon />
+      Return
+    </ReturnButton>
+  )
+
   return (
     <Container>
       <ScrollTop />
@@ -484,10 +499,14 @@ const ItemDetails: React.FC = () => {
 
           <TopBar>
             <Breadcrumb registryName={breadcrumbName} itemName={displayName} registryUrl={registryUrl} useHistoryBack={cameFromApp} />
-            <ReturnButton to={registryUrl} onClick={handleBackClick}>
-              <ArrowLeftIcon />
-              Return
-            </ReturnButton>
+            {NOTIFY_ENABLED ? (
+              <TopActions>
+                <FollowButton itemId={itemId} />
+                {returnButton}
+              </TopActions>
+            ) : (
+              returnButton
+            )}
           </TopBar>
 
           <AttentionSlot>

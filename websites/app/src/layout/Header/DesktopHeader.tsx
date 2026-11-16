@@ -6,6 +6,7 @@ import { useToggle } from "react-use";
 import { useAccount } from "wagmi";
 
 import { DEFAULT_CHAIN } from "consts/chains";
+import { NOTIFY_ENABLED } from "consts/notify";
 import { useLockOverlayScroll } from "hooks/useLockOverlayScroll";
 
 import { BREAKPOINT_HEADER_DESKTOP } from "styles/landscapeStyle";
@@ -20,6 +21,7 @@ import HeaderNav from "./HeaderNav";
 import DappList from "./navbar/DappList";
 import Menu from "./navbar/Menu";
 import Help from "./navbar/Menu/Help";
+import NotificationsPanel from "./navbar/Menu/NotificationsPanel";
 import Settings from "./navbar/Menu/Settings";
 
 const Container = styled.div`
@@ -72,7 +74,13 @@ const DesktopHeader: React.FC = () => {
   const [isDappListOpen, toggleIsDappListOpen] = useToggle(false);
   const [isHelpOpen, toggleIsHelpOpen] = useToggle(false);
   const [isSettingsOpen, toggleIsSettingsOpen] = useToggle(false);
+  const [isNotificationsOpen, toggleIsNotificationsOpen] = useToggle(false);
   const [initialTab, setInitialTab] = useState<number>(0);
+  const openNotificationSettings = useCallback(() => {
+    toggleIsNotificationsOpen(false);
+    setInitialTab(1);
+    toggleIsSettingsOpen(true);
+  }, [toggleIsNotificationsOpen, toggleIsSettingsOpen]);
   const location = useLocation();
   const { isConnected, chainId } = useAccount();
   const isDefaultChain = chainId === DEFAULT_CHAIN;
@@ -88,7 +96,7 @@ const DesktopHeader: React.FC = () => {
 
   useEffect(initializeFragmentURL, [initializeFragmentURL]);
 
-  useLockOverlayScroll(isDappListOpen || isHelpOpen || isSettingsOpen);
+  useLockOverlayScroll(isDappListOpen || isHelpOpen || isSettingsOpen || isNotificationsOpen);
 
   return (
     <>
@@ -104,18 +112,37 @@ const DesktopHeader: React.FC = () => {
         <RightSide>
           <ConnectWalletContainer
             {...{ isConnected, isDefaultChain }}
-            onClick={isConnected && isDefaultChain ? toggleIsSettingsOpen : undefined}
+            onClick={
+              isConnected && isDefaultChain
+                ? () => {
+                    setInitialTab(0);
+                    toggleIsSettingsOpen();
+                  }
+                : undefined
+            }
           >
             <ConnectWallet />
           </ConnectWalletContainer>
-          <Menu {...{ toggleIsHelpOpen, toggleIsSettingsOpen }} />
+          <Menu
+            {...{ toggleIsHelpOpen, toggleIsNotificationsOpen }}
+            toggleIsSettingsOpen={() => {
+              setInitialTab(0);
+              toggleIsSettingsOpen();
+            }}
+          />
         </RightSide>
       </Container>
-      {(isDappListOpen || isHelpOpen || isSettingsOpen) && (
+      {(isDappListOpen || isHelpOpen || isSettingsOpen || isNotificationsOpen) && (
         <OverlayPortal>
           <Overlay>
             {isDappListOpen && <DappList {...{ toggleIsDappListOpen, isDappListOpen }} />}
             {isHelpOpen && <Help {...{ toggleIsHelpOpen, isHelpOpen }} />}
+            {NOTIFY_ENABLED && isNotificationsOpen && (
+              <NotificationsPanel
+                toggleIsNotificationsOpen={toggleIsNotificationsOpen}
+                openSettings={openNotificationSettings}
+              />
+            )}
             {isSettingsOpen && <Settings {...{ toggleIsSettingsOpen, isSettingsOpen, initialTab }} />}
           </Overlay>
         </OverlayPortal>

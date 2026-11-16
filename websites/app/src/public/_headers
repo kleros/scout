@@ -25,3 +25,6 @@
 /scout-agent-context.md
   Content-Type: text/markdown; charset=utf-8
   X-Robots-Tag: index, follow
+
+/notify-sw.js
+  Cache-Control: no-cache
