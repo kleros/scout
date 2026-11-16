@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useLocalStorage } from 'hooks/useLocalStorage'
-import { useValidationIssues } from 'hooks/useValidationIssues'
+import { useSubmissionChecks } from 'hooks/useSubmissionChecks'
 import { useCurateSubmit } from 'hooks/useCurateSubmit'
 import FormHeader from './FormHeader'
 import SubmitFooter from './SubmitFooter'
 import {
   AddContainer,
-  ErrorMessage,
   StyledTextInput,
   FieldLabel,
 } from './index'
 import Tooltip from 'components/Tooltip'
+import { ChecksPanel, FieldChecks } from 'components/SubmissionChecks'
 
 const columns = [
   {
@@ -61,12 +61,22 @@ const AddTagsQueries: React.FC = () => {
     setFormData({ githubRepository, commitHash, evmChainId, description })
   }, [githubRepository, commitHash, evmChainId, description, setFormData])
 
-  const { data: issues, isLoading: issuesLoading } = useValidationIssues({
-    chainId: evmChainId,
-    registry: 'tags-queries',
-    link: githubRepository,
-    commitHash,
-  })
+  const values = useMemo(
+    () => ({
+      'Github Repository URL': githubRepository,
+      'Commit hash': commitHash,
+      'EVM Chain ID': evmChainId,
+      Description: description,
+    }),
+    [githubRepository, commitHash, evmChainId, description],
+  )
+  const draft = useMemo(() => ({ registry: 'tags-queries' as const, values }), [values])
+  const checks = useSubmissionChecks(draft)
+  const applyFix = useCallback((field: string, value: string) => {
+    if (field === 'Github Repository URL') setGithubRepository(value)
+    else if (field === 'Commit hash') setCommitHash(value)
+    else if (field === 'EVM Chain ID') setEvmChainId(value)
+  }, [])
 
   const { submit, isSubmitting, deposits } = useCurateSubmit({
     registryKey: 'tags-queries',
@@ -85,17 +95,11 @@ const AddTagsQueries: React.FC = () => {
     !commitHash ||
     !evmChainId ||
     !description ||
-    !!issues ||
-    issuesLoading ||
+    checks.blocking ||
+    checks.checking ||
     isSubmitting
 
-  const handleSubmit = () =>
-    submit({
-      'Github Repository URL': githubRepository,
-      'Commit hash': commitHash,
-      'EVM Chain ID': evmChainId,
-      Description: description,
-    })
+  const handleSubmit = () => submit(values)
 
   return (
     <AddContainer>
@@ -108,7 +112,7 @@ const AddTagsQueries: React.FC = () => {
         value={githubRepository}
         onChange={(e) => setGithubRepository(e.target.value)}
       />
-      {issues?.link && <ErrorMessage>{issues.link.message}</ErrorMessage>}
+      <FieldChecks results={checks.results} field="Github Repository URL" onApplyFix={applyFix} />
       <FieldLabel>
         <Tooltip data-tooltip={columns[1].description}>Commit Hash</Tooltip>
       </FieldLabel>
@@ -117,9 +121,7 @@ const AddTagsQueries: React.FC = () => {
         value={commitHash}
         onChange={(e) => setCommitHash(e.target.value)}
       />
-      {issues?.commitHash && (
-        <ErrorMessage>{issues.commitHash.message}</ErrorMessage>
-      )}
+      <FieldChecks results={checks.results} field="Commit hash" onApplyFix={applyFix} />
       <FieldLabel>
         <Tooltip data-tooltip={columns[2].description}>EVM Chain ID</Tooltip>
       </FieldLabel>
@@ -128,12 +130,7 @@ const AddTagsQueries: React.FC = () => {
         value={evmChainId}
         onChange={(e) => setEvmChainId(e.target.value)}
       />
-      {issues?.chainId && (
-        <ErrorMessage>{issues.chainId.message}</ErrorMessage>
-      )}
-      {issues?.duplicate && (
-        <ErrorMessage>{issues.duplicate.message}</ErrorMessage>
-      )}
+      <FieldChecks results={checks.results} field="EVM Chain ID" onApplyFix={applyFix} />
       <FieldLabel>
         <Tooltip data-tooltip={columns[3].description}>Description</Tooltip>
       </FieldLabel>
@@ -141,6 +138,13 @@ const AddTagsQueries: React.FC = () => {
         placeholder="e.g. An item for retrieving SushiSwap v3 tags on..."
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+      />
+      <FieldChecks results={checks.results} field="Description" onApplyFix={applyFix} />
+      <ChecksPanel
+        results={checks.results}
+        checking={checks.checking}
+        onRetry={checks.retry}
+        onApplyFix={applyFix}
       />
       <SubmitFooter
         deposits={deposits}
