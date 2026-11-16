@@ -1,11 +1,20 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  decodeFunctionData,
+  encodeFunctionResult,
+  parseAbi,
+  type Abi,
+  type Hex,
+} from 'viem'
+import {
   attentionFor,
   evidenceStatus,
   withEvidence,
   type Attention,
 } from './attention'
+import { createCaseChain } from './chain'
+import { createCaseIndexer, REGISTRY_ADDRESSES } from './indexer'
 import type { IndexedItem, IndexedRequest, IndexedRound } from './indexer'
 
 // An Address Tags item that gets challenged and appealed.
@@ -330,5 +339,88 @@ describe('attention', () => {
       waiting.map((e) => e.kind),
       ['dispute', 'challenge-period'],
     )
+  })
+})
+
+describe('reads', () => {
+  const json = (body: unknown) =>
+    new Response(JSON.stringify(body), {
+      headers: { 'content-type': 'application/json' },
+    })
+
+  it("reads a wallet's open cases in one request to the indexer", async (t) => {
+    const bodies: { query: string; variables: Record<string, unknown> }[] = []
+    t.mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+      bodies.push(JSON.parse(String(init.body)))
+      return json({ data: { LItem: [item()] } })
+    })
+    const items = await createCaseIndexer('https://indexer.test/graphql').openCases(
+      ALICE.toUpperCase().replace('0X', '0x'),
+    )
+    assert.deepEqual(items, [item()])
+    assert.equal(bodies.length, 1)
+    assert.deepEqual(bodies[0].variables, {
+      address: ALICE,
+      registries: REGISTRY_ADDRESSES,
+    })
+    // Requester or challenger, crowdfunder, or submitter of an item under removal.
+    for (const part of [
+      '{ requester: { _eq: $address } }, { challenger: { _eq: $address } }',
+      'rounds: { contributions: { contributor: { _eq: $address } } }',
+      'status: { _eq: "ClearingRequested" }',
+    ])
+      assert.ok(bodies[0].query.includes(part), part)
+  })
+
+  it("reads the court and appeal costs from the request's arbitrator", async (t) => {
+    const OTHER_ARBITRATOR = `0x${'9a'.repeat(20)}`
+    const abi: Abi = parseAbi([
+      'function appealCost(uint256 _disputeID, bytes _extraData) view returns (uint256)',
+      'function disputes(uint256) view returns (uint96 subcourtID, address arbitrated, uint256 numberOfChoices, uint8 period, uint256 lastPeriodChange, uint256 drawsInRound, uint256 commitsInRound, bool ruled)',
+      'function getSubcourt(uint96 _subcourtID) view returns (uint256[] children, uint256[4] timesPerPeriod)',
+      'function winnerStakeMultiplier() view returns (uint256)',
+      'function loserStakeMultiplier() view returns (uint256)',
+      'function sharedStakeMultiplier() view returns (uint256)',
+      'function MULTIPLIER_DIVISOR() view returns (uint256)',
+    ])
+    const results: Record<string, unknown> = {
+      appealCost: 10n ** 18n,
+      disputes: [3n, REGISTRY, 2n, 2, 1_000n, 3n, 0n, false],
+      getSubcourt: [[], [100n, 200n, 600n, 900n]],
+      winnerStakeMultiplier: 5_000n,
+      loserStakeMultiplier: 10_000n,
+      sharedStakeMultiplier: 5_000n,
+      MULTIPLIER_DIVISOR: 10_000n,
+    }
+    const calls: string[] = []
+    t.mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body))
+      const { to, data } = body.params[0] as { to: string; data: Hex }
+      const { functionName } = decodeFunctionData({ abi, data })
+      calls.push(`${functionName} ${to.toLowerCase()}`)
+      return json({
+        jsonrpc: '2.0',
+        id: body.id,
+        result: encodeFunctionResult({
+          abi,
+          functionName,
+          result: results[functionName],
+        }),
+      })
+    })
+    const chain = createCaseChain(['https://rpc.test'])
+    assert.deepEqual(await chain.disputePeriod(OTHER_ARBITRATOR, '7'), {
+      period: 'vote',
+      deadline: 1_000 + 600,
+    })
+    assert.deepEqual(
+      await chain.appealFunding(REGISTRY, OTHER_ARBITRATOR, '7', '0x'),
+      { winner: 15n * 10n ** 17n, loser: 2n * 10n ** 18n, shared: 15n * 10n ** 17n },
+    )
+    assert.deepEqual(calls.filter((c) => !c.includes(REGISTRY)).sort(), [
+      `appealCost ${OTHER_ARBITRATOR}`,
+      `disputes ${OTHER_ARBITRATOR}`,
+      `getSubcourt ${OTHER_ARBITRATOR}`,
+    ])
   })
 })

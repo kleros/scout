@@ -493,7 +493,11 @@ const ItemDetails: React.FC = () => {
           <AttentionSlot>
             <AttentionBanner
               itemId={itemId}
-              refreshKey={JSON.stringify(detailsData?.requests?.[0]?.rounds?.[0] ?? null)}
+              refreshKey={
+                detailsData
+                  ? JSON.stringify(detailsData.requests?.[0]?.rounds?.[0] ?? null)
+                  : undefined
+              }
             />
           </AttentionSlot>
 

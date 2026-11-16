@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -27,9 +28,21 @@ export const AttentionSources = createContext({
   chain: createCaseChain([...PUBLIC_RPC_URLS[100]]),
 })
 
-// Items and court periods are both read again every minute while shown: a
-// dispute moves from evidence to voting without any change to its item.
-const REFRESH_MS = 60_000
+/**
+ * How often cases are read. The indexer's rate limit is shared by every
+ * visitor of Scout and Curate, so only the views that show cases in full
+ * (the profile panel, the item page banner) read again every minute: items
+ * and court periods both, since a dispute moves from evidence to voting
+ * without any change to its item. Elsewhere (the header badge) cases are
+ * read once per page load, and again on focus once five minutes old.
+ */
+const LIVE = { staleTime: 30_000, refetchInterval: 60_000 } as const
+const IDLE = { staleTime: 5 * 60_000, refetchInterval: false } as const
+
+export interface AttentionOptions {
+  /** Keep reading every minute while shown (see LIVE). */
+  live?: boolean
+}
 
 /** Unix seconds, refreshed every `every` ms so deadlines move on screen. */
 export const useNow = (every = 30_000) => {
@@ -41,7 +54,8 @@ export const useNow = (every = 30_000) => {
   return now
 }
 
-const useChallengePeriods = () => {
+/** Challenge periods of the registries, read once, and only for a wallet. */
+const useChallengePeriods = (enabled: boolean) => {
   const { chain } = useContext(AttentionSources)
   return useQuery({
     queryKey: ['attention', 'challenge-periods'],
@@ -54,53 +68,58 @@ const useChallengePeriods = () => {
           ),
         ),
       ),
+    enabled,
     staleTime: Infinity,
     retry: 2,
   })
 }
 
+/** Dispute ids are per arbitrator. */
+const disputeKey = (arbitrator: string, disputeId: string) =>
+  `${arbitrator.toLowerCase()}:${disputeId}`
+
 /**
  * Everything `address` has at stake in open requests, most pressing first,
- * from the current state of the registries and the court. Refreshes every
- * minute.
+ * from the current state of the registries and the court. With `live`, it
+ * reads again every minute while shown; otherwise once per page load.
  */
-export const useAttention = (address: string | undefined) => {
+export const useAttention = (
+  address: string | undefined,
+  { live = false }: AttentionOptions = {},
+) => {
   const { indexer, chain } = useContext(AttentionSources)
   const queryClient = useQueryClient()
   const key = address?.toLowerCase()
-  const periods = useChallengePeriods()
+  const timing = live ? LIVE : IDLE
+  const periods = useChallengePeriods(Boolean(key))
   const items = useQuery({
     queryKey: ['attention', 'items', key],
-    queryFn: async () =>
-      indexer.items(await indexer.involvedItemIds(key as string)),
+    queryFn: () => indexer.openCases(key as string),
     enabled: Boolean(key),
-    staleTime: 30_000,
-    refetchInterval: REFRESH_MS,
+    ...timing,
     refetchOnWindowFocus: true,
     retry: 1,
   })
   // Court periods of disputes still before a ruling (evidence vs voting).
-  const disputeIds = useMemo(
-    () => [
-      ...new Set(
-        (items.data ?? []).flatMap((item) => {
-          const request = item.requests.at(-1)
-          if (!request?.disputed || request.resolved) return []
-          const round = currentRound(request)
-          return !round || round.appealPeriodStart === '0' || round.appealed
-            ? [request.disputeID]
-            : []
-        }),
-      ),
-    ],
-    [items.data],
-  )
+  const disputes = useMemo(() => {
+    const byKey = new Map<string, { arbitrator: string; id: string }>()
+    for (const item of items.data ?? []) {
+      const request = item.requests.at(-1)
+      if (!request?.disputed || request.resolved) continue
+      const round = currentRound(request)
+      if (round && round.appealPeriodStart !== '0' && !round.appealed) continue
+      byKey.set(disputeKey(request.arbitrator, request.disputeID), {
+        arbitrator: request.arbitrator.toLowerCase(),
+        id: request.disputeID,
+      })
+    }
+    return [...byKey.values()]
+  }, [items.data])
   const disputePeriods = useQueries({
-    queries: disputeIds.map((id) => ({
-      queryKey: ['attention', 'dispute-period', id],
-      queryFn: () => chain.disputePeriod(id),
-      staleTime: 30_000,
-      refetchInterval: REFRESH_MS,
+    queries: disputes.map(({ arbitrator, id }) => ({
+      queryKey: ['attention', 'dispute-period', arbitrator, id],
+      queryFn: () => chain.disputePeriod(arbitrator, id),
+      ...timing,
       retry: 1,
     })),
   })
@@ -109,23 +128,28 @@ export const useAttention = (address: string | undefined) => {
   const now = useNow()
   const seen = useSeenEvidence(key)
   const entries = useMemo(
-    () =>
-      key && items.data
+    () => {
+      const index = new Map(
+        disputes.map((d, i) => [disputeKey(d.arbitrator, d.id), i]),
+      )
+      return key && items.data
         ? withEvidence(
             attentionFor(
               items.data,
               key,
               now,
               (registry) => periods.data?.[registry.toLowerCase()],
-              (id) => periodOf[disputeIds.indexOf(id)],
+              (id, arbitrator) =>
+                periodOf[index.get(disputeKey(arbitrator, id)) ?? -1],
             ),
             key,
             (itemId) => seen[itemId.toLowerCase()] ?? 0,
           )
-        : [],
+        : []
+    },
     // periodOf is a fresh array each render; periodKey tracks its content.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [key, items.data, now, periods.data, periodKey, disputeIds, seen],
+    [key, items.data, now, periods.data, periodKey, disputes, seen],
   )
   const refetchItems = items.refetch
   /** Reads the items and their court periods again. */
@@ -148,6 +172,24 @@ export const useAttention = (address: string | undefined) => {
   }
 }
 
+/**
+ * Calls `refetch` when `key` (some data the page already polls) changes from
+ * one value to another: not on mount, nor when the data first loads.
+ */
+export const useRefetchOnChange = (
+  key: string | undefined,
+  refetch: () => unknown,
+  enabled = true,
+) => {
+  const last = useRef(key)
+  useEffect(() => {
+    const previous = last.current
+    last.current = key
+    if (enabled && previous !== undefined && key !== undefined && key !== previous)
+      refetch()
+  }, [key, refetch, enabled])
+}
+
 /** Total each side must raise in the entry's current appeal round, in wei. */
 export const useAppealFunding = (entry: Attention) => {
   const { chain } = useContext(AttentionSources)
@@ -161,6 +203,7 @@ export const useAppealFunding = (entry: Attention) => {
     queryFn: () =>
       chain.appealFunding(
         entry.item.registryAddress,
+        entry.request.arbitrator,
         entry.request.disputeID,
         entry.request.arbitratorExtraData,
       ),
@@ -170,17 +213,20 @@ export const useAppealFunding = (entry: Attention) => {
   })
 }
 
-/** The court period of the entry's dispute and when it can end. */
+/**
+ * The court period of the entry's dispute and when it can end. Only cards in
+ * the live views (profile panel, item page banner) use it.
+ */
 export const useDisputePeriod = (entry: Attention) => {
   const { chain } = useContext(AttentionSources)
+  const arbitrator = entry.request.arbitrator.toLowerCase()
   return useQuery({
-    queryKey: ['attention', 'dispute-period', entry.request.disputeID],
-    queryFn: () => chain.disputePeriod(entry.request.disputeID),
+    queryKey: ['attention', 'dispute-period', arbitrator, entry.request.disputeID],
+    queryFn: () => chain.disputePeriod(arbitrator, entry.request.disputeID),
     enabled:
       entry.request.disputed &&
       (entry.kind === 'challenged' || entry.kind === 'dispute'),
-    staleTime: 30_000,
-    refetchInterval: REFRESH_MS,
+    ...LIVE,
     retry: 1,
   })
 }

@@ -90,14 +90,18 @@ const norm = (address: string | null | undefined) =>
  * Everything `address` should keep an eye on, most pressing first.
  * `challengePeriodOf` gives a registry's challenge period in seconds, to date
  * unchallenged requests; `disputePeriodOf` gives a dispute's court period
- * (evidence, commit, vote...), since evidence only helps before voting.
+ * (evidence, commit, vote...) at the request's arbitrator, since evidence
+ * only helps before voting.
  */
 export const attentionFor = (
   items: IndexedItem[],
   address: string,
   now: number,
   challengePeriodOf: (registry: string) => number | undefined = () => undefined,
-  disputePeriodOf: (disputeId: string) => string | undefined = () => undefined,
+  disputePeriodOf: (
+    disputeId: string,
+    arbitrator: string,
+  ) => string | undefined = () => undefined,
 ): Attention[] => {
   const me = norm(address)
   const entries: Attention[] = []
@@ -144,7 +148,7 @@ export const attentionFor = (
     if (!round || round.appealPeriodStart === '0' || round.appealed) {
       // Evidence, commit or vote period: no ruling to act on yet. Evidence
       // matters until voting starts (assumed while the period is unknown).
-      const period = disputePeriodOf(request.disputeID)
+      const period = disputePeriodOf(request.disputeID, request.arbitrator)
       push(
         side === 'requester' &&
           party &&

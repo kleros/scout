@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { Link } from 'react-router-dom'
@@ -9,6 +9,7 @@ import {
   useAttention,
   useDisputePeriod,
   useNow,
+  useRefetchOnChange,
 } from 'hooks/useAttention'
 import { localDeadline, timeLeft } from 'utils/timeLeft'
 import type {
@@ -349,7 +350,9 @@ const WAITING_PREVIEW = 3
  * until it is resolved, however long ago the alert about it was.
  */
 export const AttentionPanel: React.FC<{ address: string }> = ({ address }) => {
-  const { entries, isLoading, error, refetch } = useAttention(address)
+  const { entries, isLoading, error, refetch } = useAttention(address, {
+    live: true,
+  })
   const [showAll, setShowAll] = useState(false)
   const pressing = entries.filter((e) => e.level !== 'waiting')
   const waiting = entries.filter((e) => e.level === 'waiting')
@@ -411,18 +414,16 @@ export const AttentionPanel: React.FC<{ address: string }> = ({ address }) => {
 /**
  * On an item page: what the connected wallet has to do about this item.
  * `refreshKey` changes with the page's own (faster) data, so the banner
- * clears as soon as, say, the appeal gets funded.
+ * clears as soon as, say, the appeal gets funded; it is undefined until
+ * that data loads.
  */
 export const AttentionBanner: React.FC<{
   itemId: string
   refreshKey?: string
 }> = ({ itemId, refreshKey }) => {
   const { address } = useAccount()
-  const { entries, refetch } = useAttention(address)
-  const enabled = Boolean(address)
-  useEffect(() => {
-    if (enabled && refreshKey !== undefined) refetch()
-  }, [enabled, refreshKey, refetch])
+  const { entries, refetch } = useAttention(address, { live: true })
+  useRefetchOnChange(refreshKey, refetch, Boolean(address))
   const mine = entries.filter(
     (e) =>
       e.level !== 'waiting' && e.item.id.toLowerCase() === itemId.toLowerCase(),
