@@ -47,7 +47,7 @@ const isBip122Address = (value: string): boolean => {
 /**
  * Chain-specific address validation. Stricter than CAIP-10 parsing: EVM
  * mixed-case addresses must carry a valid EIP-55 checksum, which catches
- * typos the automated checks would not notice.
+ * typos that CAIP-10 parsing alone would not notice.
  *
  * Returns `null` when valid, otherwise the reason.
  */

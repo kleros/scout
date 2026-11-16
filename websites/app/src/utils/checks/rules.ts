@@ -21,8 +21,9 @@ import {
   lookupPinnedSource,
   parseGithubRepository,
   GithubRateLimitError,
+  MIN_LOOKUP_COMMIT_LENGTH,
 } from './github'
-import { analyzeAtqSource } from './atqSource'
+import { analyzeAtqSyntax, checkAtqSourceSize } from './atqSource'
 import { inspectPng } from './png'
 import { lengthVerdict, countCharacters } from './text'
 import type { CheckResult, SubmissionDraft } from './types'
@@ -30,12 +31,12 @@ import type { CheckResult, SubmissionDraft } from './types'
 /**
  * Pre-submission checks for the four Scout registries.
  *
- * Rules marked `violation` mirror the deterministic checks run automatically
- * on every new registration request: an item failing one of them gets
- * challenged and the deposit is lost. Mandatory fields, CAIP-10 parsing,
- * length limits, the CDN domain pattern and the ATQ static analysis follow
- * those checks' exact semantics. The remaining
- * `violation` rules are guardrails the submission form already enforced.
+ * Rules marked `violation` are the registry policies' mechanical rules: an
+ * item that breaks one is very likely to be challenged and lose its deposit,
+ * so the form blocks submission until it is fixed. Mandatory fields, CAIP-10
+ * parsing, length limits, the CDN domain pattern and the ATQ static analysis
+ * apply the policies literally. The remaining `violation` rules are
+ * guardrails the submission form already enforced.
  */
 
 export const MANDATORY_FIELDS: Record<RegistryKey, readonly string[]> = {
@@ -64,7 +65,7 @@ export const ADDRESS_FIELD: Partial<Record<RegistryKey, string>> = {
 const IMAGE_FIELDS = new Set(['Logo', 'Visual proof'])
 
 const LOGO_MIN_PIXELS = 128
-const LOGO_MAX_BYTES = 1_048_576 // the automated checks' threshold (1 MiB)
+const LOGO_MAX_BYTES = 1_048_576 // 1 MiB: larger is over "1MB" under any reading
 const LOGO_POLICY_BYTES = 1_000_000 // "1MB" read as decimal megabytes
 
 const WEBSITE_REGEX = /^https?:\/\/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/\S*)?$/
@@ -81,9 +82,6 @@ export const parseSubmittedDecimals = (value: string): number | null => {
 }
 
 const isPositiveChainId = (value: string) => /^[1-9][0-9]*$/.test(value)
-
-const pluralize = (count: number, word: string) =>
-  `${count} ${word}${count === 1 ? '' : 's'}`
 
 // ---------------------------------------------------------------------------
 // Local checks: synchronous, run on every keystroke.
@@ -303,7 +301,7 @@ const checkAddressFormat = ({
       outcome: 'fail',
       title: 'Address is not a precompile or system address',
       message:
-        'Addresses below 0x10000 are precompiles or system addresses, not deployed project contracts. Automated checks send these to manual review.',
+        'Addresses below 0x10000 are precompiles or system addresses, not contracts a project deployed. Make sure this is the address you mean.',
     })
   }
   return results
@@ -354,19 +352,41 @@ const checkTokenFields = ({ values }: SubmissionDraft): CheckResult[] => {
   return results
 }
 
-/** Exactly the automated checks' forbidden-pattern predicate. */
+/**
+ * Anything but a (sub)domain: the bare `*`, a scheme (`https:`), a path,
+ * query, fragment or whitespace, or a `:port` suffix.
+ */
 export const cdnDomainHasForbiddenPattern = (domain: string) =>
   domain === '*' ||
   /^[A-Za-z][A-Za-z0-9+.-]*:/.test(domain) ||
-  /[\s/?#]/.test(domain)
+  /[\s/?#]/.test(domain) ||
+  /:\d+$/.test(domain)
 
-/** Best-effort bare (sub)domain for a pasted URL, e.g. `https://app.x.org/swap` → `app.x.org`. */
+/**
+ * IPFS, IPNS and Arweave links: the dApp is the content or the path, and the
+ * host is a shared gateway, so the host is not the dApp's domain.
+ */
+const isGatewayLink = (value: string) =>
+  /^(?:ipfs|ipns|ar):/i.test(value) ||
+  /^(?:https?:\/\/)?[^/?#]+\/(?:ipfs|ipns)\//i.test(value) ||
+  /^(?:https?:\/\/)?(?:[^/?#@]*\.)?arweave\.net\/[^/?#]/i.test(value)
+
+/**
+ * Best-effort bare (sub)domain for a pasted URL, e.g.
+ * `https://app.x.org/swap` → `app.x.org`. No guess for gateway links or
+ * schemes other than http(s), whose host is not the dApp's domain.
+ */
 export const suggestCdnDomain = (value: string): string | undefined => {
-  const host = value
-    .trim()
-    .replace(/^[A-Za-z][A-Za-z0-9+.-]*:\/\//, '')
+  const trimmed = value.trim()
+  if (isGatewayLink(trimmed)) return undefined
+  const scheme = /^([A-Za-z][A-Za-z0-9+.-]*):\/\//.exec(trimmed)?.[1]
+  if (scheme && !/^https?$/i.test(scheme)) return undefined
+  const authority = trimmed
+    .slice(scheme ? scheme.length + 3 : 0)
     .split(/[/?#]/)[0]
-    .replace(/:\d+$/, '')
+  const host = authority
+    .slice(authority.lastIndexOf('@') + 1) // user:password@
+    .replace(/:\d*$/, '') // :port
     .toLowerCase()
   return host &&
     host !== '*' &&
@@ -402,7 +422,9 @@ const checkCdnFields = ({ values }: SubmissionDraft): CheckResult[] => {
         message:
           domain === '*'
             ? 'A contract cannot be listed under every domain. Use a specific (sub)domain, or a wildcard such as *.example.com if the contract is used across its subdomains.'
-            : 'Only the (sub)domain is allowed: no https://, port, path (/swap), query (?), fragment (#) or spaces.',
+            : isGatewayLink(domain.trim())
+              ? "This is a link to content on a shared gateway (IPFS, IPNS or Arweave), and the gateway's domain is not the dApp's. Enter the (sub)domain the dApp itself is served from."
+              : 'Only the (sub)domain is allowed: no https://, port, path (/swap), query (?), fragment (#) or spaces.',
         fix: suggestCdnDomain(domain),
       },
     ]
@@ -449,7 +471,8 @@ const suggestGithubUrl = (value: string): string | undefined => {
     /^(?:https?:\/\/)?(?:www\.)?github\.com\/([^/\s?#]+)\/([^/\s?#]+)/i.exec(
       value.trim(),
     )
-  if (!match) return undefined
+  // github.com/orgs/… and github.com/users/… are pages, not repositories.
+  if (!match || /^(?:orgs|users)$/i.test(match[1])) return undefined
   const suggestion = `https://github.com/${match[1]}/${match[2]}`
   return suggestion !== value && parseGithubRepository(suggestion)
     ? suggestion
@@ -487,6 +510,16 @@ const checkAtqFields = ({ values }: SubmissionDraft): CheckResult[] => {
         : 'A commit hash only contains 0-9 and a-f, up to 40 characters.',
       fix: !valid && isCommitHash(commit.trim()) ? commit.trim() : undefined,
     })
+    if (valid && commit.length < MIN_LOOKUP_COMMIT_LENGTH) {
+      results.push({
+        id: 'atq.commit-length',
+        field: 'Commit hash',
+        severity: 'warning',
+        outcome: 'fail',
+        title: `Commit hash has at least ${MIN_LOOKUP_COMMIT_LENGTH} characters`,
+        message: `Shorter hashes can match several commits, so the module is only looked up on GitHub once the hash has ${MIN_LOOKUP_COMMIT_LENGTH} or more characters (e.g. 3f4a02a). Enter at least ${MIN_LOOKUP_COMMIT_LENGTH}, or the full 40.`,
+      })
+    }
   }
   return results
 }
@@ -521,17 +554,52 @@ const passes = (results: CheckResult[], id: string) =>
 const describeFailure = (error: unknown) =>
   error instanceof Error ? error.message : String(error)
 
-/** Deployed bytecode (EVM), decimals() (Tokens) and Solana account checks. */
-export const checkAddressOnChain = async (
+/** What the chain reports about a token's decimals. */
+export interface ChainDecimals {
+  value: number
+  /** `contract`: an EVM token's decimals(); `mint`: a Solana SPL mint. */
+  source: 'contract' | 'mint'
+  /** Independent providers that agree on the value. */
+  providers: number
+}
+
+/**
+ * What the chain says about the draft's address. Nothing in it depends on
+ * the Decimals field: `compareDecimals` checks that in render, so editing
+ * Decimals never re-reads the chain.
+ */
+export interface AddressOnChain {
+  results: CheckResult[]
+  decimals?: ChainDecimals
+}
+
+const DECIMALS_TITLE = {
+  contract: 'Decimals match the token contract (decimals())',
+  mint: 'Decimals match the token mint',
+} as const
+
+/**
+ * How many providers answered. Only two independent providers that agree can
+ * block a submission; a single one (some chains have no second public RPC)
+ * could be lagging or wrong, so its verdict only warns.
+ */
+const providerNote = (providers: number) =>
+  providers >= 2
+    ? `${providers} independent providers agree`
+    : 'only 1 provider could be asked, so this is a warning, not a block'
+
+/** Deployed bytecode (EVM), decimals() (Tokens) and Solana account reads. */
+export const readAddressOnChain = async (
   draft: SubmissionDraft,
   signal?: AbortSignal,
-): Promise<CheckResult[]> => {
+): Promise<AddressOnChain> => {
+  const none: AddressOnChain = { results: [] }
   const field = ADDRESS_FIELD[draft.registry]
-  if (!field) return []
+  if (!field) return none
   const local = checkAddressFormat(draft)
-  if (!passes(local, 'address.format')) return []
+  if (!passes(local, 'address.format')) return none
   const caip = parseCaip10(draft.values[field])
-  if (!caip) return []
+  if (!caip) return none
   const network = `${caip.namespace}:${caip.reference}`
   const chain = chainName(network)
   const deployedTitle = `A contract is deployed at this address on ${chain}`
@@ -541,30 +609,36 @@ export const checkAddressOnChain = async (
     try {
       mint = await readSolanaMint(caip.account, signal)
     } catch (error) {
-      return [
-        {
-          id: 'address.deployed',
-          field,
-          severity: 'warning',
-          outcome: 'inconclusive',
-          title: deployedTitle,
-          message: `Couldn't reach Solana to verify the account: ${describeFailure(error)}`,
-        },
-      ]
+      if (signal?.aborted) throw error
+      return {
+        results: [
+          {
+            id: 'address.deployed',
+            field,
+            severity: 'warning',
+            outcome: 'inconclusive',
+            title: deployedTitle,
+            message: `Couldn't reach Solana to verify the account: ${describeFailure(error)}`,
+          },
+        ],
+      }
     }
     if (draft.registry !== 'tokens') {
-      return mint.kind === 'missing'
-        ? [
-            {
-              id: 'address.deployed',
-              field,
-              severity: 'warning',
-              outcome: 'fail',
-              title: deployedTitle,
-              message: 'No account exists at this address on Solana.',
-            },
-          ]
-        : []
+      return {
+        results:
+          mint.kind === 'missing'
+            ? [
+                {
+                  id: 'address.deployed',
+                  field,
+                  severity: 'warning',
+                  outcome: 'fail',
+                  title: deployedTitle,
+                  message: 'No account exists at this address on Solana.',
+                },
+              ]
+            : [],
+      }
     }
     const mintTitle = 'Address is an SPL token mint'
     if (mint.kind !== 'mint') {
@@ -574,61 +648,49 @@ export const checkAddressOnChain = async (
           : mint.kind === 'not-token-program'
             ? 'This account is not owned by the SPL Token or Token-2022 program, so it is not a token mint.'
             : `This is an SPL ${mint.type} account, not the token's mint address.`
-      return [
+      return {
+        results: [
+          {
+            id: 'tokens.solana-mint',
+            field,
+            severity: 'warning',
+            outcome: 'fail',
+            title: mintTitle,
+            message,
+          },
+        ],
+      }
+    }
+    return {
+      results: [
         {
           id: 'tokens.solana-mint',
           field,
           severity: 'warning',
-          outcome: 'fail',
+          outcome: 'pass',
           title: mintTitle,
-          message,
         },
-      ]
+      ],
+      // One public Solana RPC: a mismatch can only warn.
+      decimals: { value: mint.decimals, source: 'mint', providers: 1 },
     }
-    const results: CheckResult[] = [
-      {
-        id: 'tokens.solana-mint',
-        field,
-        severity: 'warning',
-        outcome: 'pass',
-        title: mintTitle,
-      },
-    ]
-    const submitted = parseSubmittedDecimals(draft.values.Decimals ?? '')
-    results.push({
-      id: 'tokens.decimals-onchain',
-      field: 'Decimals',
-      severity: 'warning',
-      outcome:
-        submitted === null
-          ? 'pending'
-          : submitted === mint.decimals
-            ? 'pass'
-            : 'fail',
-      title: 'Decimals match the token mint',
-      message:
-        submitted === null
-          ? `The mint reports ${mint.decimals} decimals.`
-          : submitted === mint.decimals
-            ? undefined
-            : `The mint reports ${mint.decimals} decimals, but you entered ${submitted}.`,
-      fix: submitted === mint.decimals ? undefined : String(mint.decimals),
-    })
-    return results
   }
 
   if (caip.namespace !== 'eip155') {
-    return [
-      {
-        id: 'address.deployed',
-        field,
-        severity: 'warning',
-        outcome: 'inconclusive',
-        title: deployedTitle,
-        message:
-          'Automated checks can only verify EVM and Solana addresses. Make sure this is a contract, not a regular wallet.',
-      },
-    ]
+    return {
+      results: [
+        {
+          id: 'address.deployed',
+          field,
+          severity: 'warning',
+          outcome: 'inconclusive',
+          title: deployedTitle,
+          message:
+            'This form can only verify EVM and Solana addresses. Make sure this is a contract, not a regular wallet.',
+          final: true,
+        },
+      ],
+    }
   }
 
   const chainId = Number(caip.reference)
@@ -637,51 +699,57 @@ export const checkAddressOnChain = async (
     chainId <= 0 ||
     BigInt(caip.account) < 0x10000n
   )
-    return []
+    return none
   if (!hasPublicRpc(chainId)) {
-    return [
-      {
-        id: 'address.deployed',
-        field,
-        severity: 'violation',
-        outcome: 'inconclusive',
-        title: deployedTitle,
-        message: `There is no public RPC for ${chain} to check this automatically.`,
-      },
-    ]
+    return {
+      results: [
+        {
+          id: 'address.deployed',
+          field,
+          severity: 'violation',
+          outcome: 'inconclusive',
+          title: deployedTitle,
+          message: `This form has no public RPC for ${chain}, so it can't check the address. Make sure it is a deployed contract.`,
+          final: true,
+        },
+      ],
+    }
   }
 
   const address = getAddress(caip.account.toLowerCase())
   const code = await readCodeSnapshot(chainId, address, signal)
   if (code.status !== 'agreed') {
-    return [
-      {
-        id: 'address.deployed',
-        field,
-        severity: 'violation',
-        outcome: 'inconclusive',
-        title: deployedTitle,
-        message:
-          code.status === 'disagreed'
-            ? `RPC providers for ${chain} disagree about this address. Try again in a minute.`
-            : `Couldn't reach ${chain} to verify the contract. ${code.reason}`,
-      },
-    ]
+    return {
+      results: [
+        {
+          id: 'address.deployed',
+          field,
+          severity: 'violation',
+          outcome: 'inconclusive',
+          title: deployedTitle,
+          message:
+            code.status === 'disagreed'
+              ? `RPC providers for ${chain} disagree about this address. Try again in a minute.`
+              : `Couldn't reach ${chain} to verify the contract. ${code.reason}`,
+        },
+      ],
+    }
   }
   const finalized =
     code.values.map((v) => v.finalized).find((v) => v !== null) ?? null
   const latest = code.value.latest
+  const providers = code.providers.length
   const results: CheckResult[] = []
   if (!latest && !finalized) {
     results.push({
       id: 'address.deployed',
       field,
-      severity: 'violation',
+      severity: providers >= 2 ? 'violation' : 'warning',
       outcome: 'fail',
       title: deployedTitle,
-      message: `There is no contract code at this address on ${chain} (checked with ${pluralize(code.providers.length, 'independent provider')}). The policy only accepts deployed contracts, not wallets (EOAs) or undeployed addresses. Check the address and the selected chain.`,
+      message: `There is no contract code at this address on ${chain} (${providerNote(providers)}). The policy only accepts deployed contracts, not wallets (EOAs) or undeployed addresses. Check the address and the selected chain.`,
     })
-    return results
+    return { results }
   }
   if (code.value.delegatedEoa) {
     results.push({
@@ -690,9 +758,9 @@ export const checkAddressOnChain = async (
       severity: 'warning',
       outcome: 'fail',
       title: deployedTitle,
-      message: `This is a wallet (EOA) that delegates to smart-account code through EIP-7702, not a contract. The policy excludes EOAs, so a reviewer may challenge it even though automated checks see code here.`,
+      message: `This is a wallet (EOA) that delegates to smart-account code through EIP-7702, not a contract. The policy excludes EOAs, so it may be challenged even though there is code at this address.`,
     })
-    return results
+    return { results }
   }
   if (latest && finalized === false) {
     results.push({
@@ -701,7 +769,7 @@ export const checkAddressOnChain = async (
       severity: 'warning',
       outcome: 'fail',
       title: deployedTitle,
-      message: `The contract exists but its deployment is not finalized on ${chain} yet. Wait until it is final before submitting; checks that read finalized state would otherwise see no contract.`,
+      message: `The contract exists but its deployment is not finalized on ${chain} yet. Wait until it is final before submitting: until then, anyone reading finalized state sees no contract here.`,
     })
   } else {
     results.push({
@@ -713,55 +781,84 @@ export const checkAddressOnChain = async (
     })
   }
 
-  if (draft.registry === 'tokens') {
-    const decimalsTitle = 'Decimals match the token contract (decimals())'
-    const read = await readTokenDecimals(chainId, address, signal)
-    const submitted = parseSubmittedDecimals(draft.values.Decimals ?? '')
-    if (read.status !== 'agreed') {
-      results.push({
-        id: 'tokens.decimals-onchain',
-        field: 'Decimals',
-        severity: 'violation',
-        outcome: 'inconclusive',
-        title: decimalsTitle,
-        message:
-          read.status === 'disagreed'
-            ? 'RPC providers disagree about decimals(). Try again in a minute.'
-            : `Couldn't read decimals(). ${read.reason}`,
-      })
-    } else if (read.value.kind === 'unreadable') {
-      results.push({
-        id: 'tokens.decimals-onchain',
-        field: 'Decimals',
-        severity: 'warning',
-        outcome: 'fail',
-        title: decimalsTitle,
-        message: `${read.value.reason[0].toUpperCase()}${read.value.reason.slice(1)}. The policy requires EVM tokens to follow ERC-20; make sure this is the token contract.`,
-      })
-    } else {
-      const onchain = read.value.decimals
-      results.push({
-        id: 'tokens.decimals-onchain',
-        field: 'Decimals',
-        severity: 'violation',
-        outcome:
-          submitted === null
-            ? 'pending'
-            : submitted === onchain
-              ? 'pass'
-              : 'fail',
-        title: decimalsTitle,
-        message:
-          submitted === null
-            ? `The contract reports ${onchain} decimals.`
-            : submitted === onchain
-              ? undefined
-              : `The contract's decimals() returns ${onchain}, but you entered ${submitted}.`,
-        fix: submitted === onchain ? undefined : String(onchain),
-      })
-    }
+  if (draft.registry !== 'tokens') return { results }
+  const read = await readTokenDecimals(chainId, address, signal)
+  if (read.status !== 'agreed') {
+    results.push({
+      id: 'tokens.decimals-onchain',
+      field: 'Decimals',
+      severity: 'violation',
+      outcome: 'inconclusive',
+      title: DECIMALS_TITLE.contract,
+      message:
+        read.status === 'disagreed'
+          ? 'RPC providers disagree about decimals(). Try again in a minute.'
+          : `Couldn't read decimals(). ${read.reason}`,
+    })
+    return { results }
   }
-  return results
+  if (read.value.kind === 'unreadable') {
+    results.push({
+      id: 'tokens.decimals-onchain',
+      field: 'Decimals',
+      severity: 'warning',
+      outcome: 'fail',
+      title: DECIMALS_TITLE.contract,
+      message: `${read.value.reason[0].toUpperCase()}${read.value.reason.slice(1)}. The policy requires EVM tokens to follow ERC-20; make sure this is the token contract.`,
+    })
+    return { results }
+  }
+  return {
+    results,
+    decimals: {
+      value: read.value.decimals,
+      source: 'contract',
+      providers: read.providers.length,
+    },
+  }
+}
+
+/**
+ * The form's Decimals against what the chain reported. Cheap, so it runs on
+ * every render instead of being part of the (cached) on-chain read.
+ */
+export const compareDecimals = (
+  onchain: ChainDecimals | undefined,
+  entered: string,
+): CheckResult[] => {
+  if (!onchain) return []
+  const { value, source, providers } = onchain
+  const submitted = parseSubmittedDecimals(entered)
+  const reported =
+    source === 'contract'
+      ? `The contract's decimals() returns ${value}`
+      : `The mint reports ${value} decimals`
+  return [
+    {
+      id: 'tokens.decimals-onchain',
+      field: 'Decimals',
+      severity: providers >= 2 ? 'violation' : 'warning',
+      outcome:
+        submitted === null ? 'pending' : submitted === value ? 'pass' : 'fail',
+      title: DECIMALS_TITLE[source],
+      message:
+        submitted === null
+          ? `${reported}.`
+          : submitted === value
+            ? undefined
+            : `${reported}, but you entered ${submitted} (${providerNote(providers)}).`,
+      fix: submitted === value ? undefined : String(value),
+    },
+  ]
+}
+
+/** The on-chain read and the decimals comparison together, for one draft. */
+export const checkAddressOnChain = async (
+  draft: SubmissionDraft,
+  signal?: AbortSignal,
+): Promise<CheckResult[]> => {
+  const { results, decimals } = await readAddressOnChain(draft, signal)
+  return [...results, ...compareDecimals(decimals, draft.values.Decimals ?? '')]
 }
 
 /** Registry occupancy, using the same indexer queries as before. */
@@ -1004,7 +1101,6 @@ export const checkTokenLogo = async (file: File): Promise<CheckResult[]> => {
         : undefined,
   })
   const sizeTitle = 'Logo file is at most 1 MB'
-  const kb = (byteLength / 1024).toFixed(0)
   if (byteLength > LOGO_MAX_BYTES) {
     results.push({
       id: 'tokens.logo-size',
@@ -1012,7 +1108,7 @@ export const checkTokenLogo = async (file: File): Promise<CheckResult[]> => {
       severity: 'violation',
       outcome: 'fail',
       title: sizeTitle,
-      message: `The logo is ${kb} KB. The policy allows at most 1 MB.`,
+      message: `The logo is ${byteLength.toLocaleString()} bytes. The policy allows at most 1 MB, and this is over it whether 1 MB means ${LOGO_POLICY_BYTES.toLocaleString()} or ${LOGO_MAX_BYTES.toLocaleString()} bytes.`,
     })
   } else if (byteLength > LOGO_POLICY_BYTES) {
     results.push({
@@ -1054,6 +1150,8 @@ export const checkAtqSource = async (
   try {
     lookup = await lookupPinnedSource(repository, commit, signal)
   } catch (error) {
+    // A cancelled check says nothing about GitHub; let the query see it.
+    if (signal?.aborted) throw error
     return [
       {
         id: 'atq.source-resolves',
@@ -1137,6 +1235,12 @@ export const checkAtqSource = async (
       : `GitHub reports the repository name as "${name}". It must be kebab-case: lowercase letters and digits separated by single hyphens (e.g. my-protocol-tags).`,
   })
 
+  // The line limit first: a file far over it isn't parsed (or the parser even
+  // downloaded), since parsing a huge file would freeze the page.
+  const size = checkAtqSourceSize(lookup.source, lookup.sourceTruncated)
+  results.push(...size.results)
+  if (!size.parse) return results
+
   let ts
   try {
     const loaded = await loadTypeScript()
@@ -1153,6 +1257,6 @@ export const checkAtqSource = async (
     })
     return results
   }
-  results.push(...analyzeAtqSource(ts, lookup.source))
+  results.push(...analyzeAtqSyntax(ts, lookup.source))
   return results
 }

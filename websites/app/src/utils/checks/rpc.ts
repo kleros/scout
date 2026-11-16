@@ -1,11 +1,15 @@
 /**
  * Public JSON-RPC endpoints used by the in-browser pre-submission checks.
  *
- * Every endpoint below was probed from a browser origin on 2026-09-25: it
- * answers the CORS preflight, serves the requests below, reports the expected
- * `eth_chainId` and returns Multicall3 bytecode. Endpoints from different
- * operators are listed so a "no bytecode" or decimals verdict can require two
- * independent providers to agree before a submission is blocked.
+ * Every endpoint below was last probed on 2026-11-16: it answers the CORS
+ * preflight, serves batched `eth_getCode` and a plain `eth_call`, reports the
+ * expected `eth_chainId` and returns Multicall3 bytecode. Endpoints from
+ * different operators are listed so a "no bytecode" or decimals verdict can
+ * require two independent providers to agree before a submission is blocked;
+ * a chain with a single working operator (Fantom, Moonbeam, Polygon zkEVM)
+ * can only warn. Polygon zkEVM's own endpoint answers intermittently (the
+ * network is being retired), and Blast and Harmony are left out: none of
+ * their public endpoints served these calls.
  * Order matters: earlier endpoints are tried first.
  */
 export const PUBLIC_RPC_URLS: Record<number, readonly string[]> = {
@@ -38,7 +42,10 @@ export const PUBLIC_RPC_URLS: Record<number, readonly string[]> = {
     'https://sonic.drpc.org',
   ],
   199: ['https://rpc.bt.io', 'https://bittorrent.drpc.org'],
-  250: ['https://fantom.drpc.org'],
+  // fantom.drpc.org no longer serves eth_call, and no other public operator
+  // answered reliably (1rpc.io, OnFinality). Both nodes are the Fantom
+  // Foundation's, so they count as one operator; the second is a fallback.
+  250: ['https://rpcapi.fantom.network', 'https://rpc.fantom.network'],
   288: ['https://mainnet.boba.network', 'https://boba-eth.drpc.org'],
   324: ['https://mainnet.era.zksync.io', 'https://zksync.drpc.org'],
   369: ['https://rpc.pulsechain.com', 'https://pulsechain-rpc.publicnode.com'],
@@ -47,11 +54,16 @@ export const PUBLIC_RPC_URLS: Record<number, readonly string[]> = {
     'https://hyperliquid.drpc.org',
     'https://hyperliquid-json-rpc.stakely.io',
   ],
-  1101: ['https://zkevm-rpc.com', 'https://polygon-zkevm.drpc.org'],
-  1111: ['https://api.wemix.com'],
-  1284: ['https://moonbeam.drpc.org'],
-  1285: ['https://moonriver.drpc.org'],
-  4326: ['https://mainnet.megaeth.com/rpc'],
+  // polygon-zkevm.drpc.org fails most calls on its free plan.
+  1101: ['https://zkevm-rpc.com'],
+  1111: ['https://api.wemix.com', 'https://wemix.drpc.org'],
+  // moonbeam.drpc.org has no eth_getCode or eth_call.
+  1284: ['https://moonbeam.api.onfinality.io/public'],
+  1285: [
+    'https://moonriver.drpc.org',
+    'https://moonriver.api.onfinality.io/public',
+  ],
+  4326: ['https://mainnet.megaeth.com/rpc', 'https://megaeth.drpc.org'],
   4663: [
     'https://rpc.mainnet.chain.robinhood.com',
     'https://robinhood-rpc.publicnode.com',
@@ -83,22 +95,12 @@ export const PUBLIC_RPC_URLS: Record<number, readonly string[]> = {
     'https://linea-rpc.publicnode.com',
     'https://linea.drpc.org',
   ],
-  81457: [
-    'https://rpc.blast.io',
-    'https://blast-rpc.publicnode.com',
-    'https://blast.drpc.org',
-  ],
   534352: [
     'https://rpc.scroll.io',
     'https://scroll-rpc.publicnode.com',
     'https://scroll.drpc.org',
   ],
   1313161554: ['https://mainnet.aurora.dev', 'https://aurora.drpc.org'],
-  1666600000: [
-    'https://api.harmony.one',
-    'https://harmony-0.drpc.org',
-    'https://1rpc.io/one',
-  ],
 }
 
 const hostOf = (url: string): string => {
@@ -130,6 +132,14 @@ export type QuorumRead<T> =
   | { status: 'disagreed'; values: { value: T; provider: string }[] }
   | { status: 'unavailable'; reason: string }
 
+export interface QuorumOptions<T> {
+  equals?: (a: T, b: T) => boolean
+  /** Distinct operators that must answer (fewer when the chain has fewer). */
+  needed?: number
+  /** The caller's cancellation, which `read` should also honour. */
+  signal?: AbortSignal
+}
+
 /**
  * Reads the same value from independent providers until `needed` of them
  * (distinct operators) agree. Transport failures move on to the next
@@ -137,13 +147,18 @@ export type QuorumRead<T> =
  * resolved by majority, so callers can surface it as inconclusive.
  *
  * `read` may throw to signal that a provider could not produce a value.
+ * Cancelling `signal` rejects with its reason instead: a cancelled read says
+ * nothing about the providers, so it must not come back as "unavailable".
  */
 export const readWithQuorum = async <T>(
   chainId: number,
   read: (url: string) => Promise<T>,
-  equals: (a: T, b: T) => boolean = Object.is,
-  needed = 2,
+  { equals = Object.is, needed = 2, signal }: QuorumOptions<T> = {},
 ): Promise<QuorumRead<T>> => {
+  const throwIfCancelled = (error?: unknown) => {
+    if (signal?.aborted) throw signal.reason ?? error
+  }
+  throwIfCancelled()
   const urls = PUBLIC_RPC_URLS[chainId]
   if (!urls?.length) {
     return {
@@ -163,9 +178,11 @@ export const readWithQuorum = async <T>(
     if (seenOperators.has(operator)) continue
     try {
       const value = await read(url)
+      throwIfCancelled()
       seenOperators.add(operator)
       answers.push({ value, provider: hostOf(url) })
     } catch (error) {
+      throwIfCancelled(error)
       errors.push(error instanceof Error ? error.message : String(error))
       continue
     }

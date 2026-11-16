@@ -5,9 +5,9 @@ export interface Caip10 {
 }
 
 /**
- * CAIP-10 parsing exactly as the automated checks apply it: no trimming,
- * lowercase namespace, and for `eip155` a canonical decimal chain reference
- * and a 20-byte hex account. EIP-55 checksum casing is not enforced here.
+ * Strict CAIP-10 parsing: no trimming, lowercase namespace, and for `eip155`
+ * a canonical decimal chain reference and a 20-byte hex account. EIP-55
+ * checksum casing is not enforced here.
  */
 export const parseCaip10 = (value: unknown): Caip10 | null => {
   if (typeof value !== 'string') return null

@@ -4,19 +4,41 @@ import { SUBGRAPH_GNOSIS_ENDPOINT } from 'consts/index'
 // Duplicate lookups against the Scout indexer. An item is only a duplicate of
 // an entry that currently occupies the registry (registered or pending).
 
+// Escape Postgres LIKE wildcards (% _ \) so a value matched with `_ilike`
+// behaves as a literal, case-insensitive equality check rather than a pattern.
+// Github repo names legitimately contain underscores, which `_ilike` would
+// otherwise treat as "any single character" and over-match.
+const escapeLike = (value: string): string =>
+  value.replace(/[\\%_]/g, (char) => `\\${char}`)
+
+/**
+ * `_ilike` patterns for a CDN domain: the same (sub)domain, case-insensitively,
+ * or an entry that kept a path after it. Not every domain that merely starts
+ * with it: sushi.com is not sushi.com.au.
+ */
+export const cdnDomainPatterns = (domain: string) => ({
+  domain: escapeLike(domain),
+  domainPath: `${escapeLike(domain)}/%`,
+})
+
 export const getDupesInRegistry = async (
   richAddress: string,
   registryAddress: string,
   domain?: string,
 ): Promise<number> => {
   const query = gql`
-    query ($registry: String!, $richAddress: String!, $domain: String) {
+    query (
+      $registry: String!
+      $richAddress: String!
+      $domain: String
+      $domainPath: String
+    ) {
       litems: LItem(
         where: {
           registry_id: { _eq: $registry }
           status: { _in: [ "Registered", "ClearingRequested", "RegistrationRequested"] }
           key0: { _ilike: $richAddress }
-          ${domain ? `key1: { _ilike: $domain }` : ''}
+          ${domain ? `_or: [{ key1: { _ilike: $domain } }, { key1: { _ilike: $domainPath } }]` : ''}
         }
       ) {
         id
@@ -28,9 +50,7 @@ export const getDupesInRegistry = async (
     registry: registryAddress,
     richAddress: `%${richAddress}%`, // contains
   }
-  if (domain) {
-    variables.domain = `${domain}%` // starts with
-  }
+  if (domain) Object.assign(variables, cdnDomainPatterns(domain))
 
   const result = (await request({
     url: SUBGRAPH_GNOSIS_ENDPOINT,
@@ -78,13 +98,6 @@ export const getTokenDupesWithWebsiteCheck = async (
 
   return duplicatesWithWebsite.length
 }
-
-// Escape Postgres LIKE wildcards (% _ \) so a value matched with `_ilike`
-// behaves as a literal, case-insensitive equality check rather than a pattern.
-// Github repo names legitimately contain underscores, which `_ilike` would
-// otherwise treat as "any single character" and over-match.
-const escapeLike = (value: string): string =>
-  value.replace(/[\\%_]/g, (char) => `\\${char}`)
 
 // For the Address Tags Query (tags-queries) registry, an entry is uniquely
 // identified by the combination of Github Repository, Commit hash and EVM Chain
