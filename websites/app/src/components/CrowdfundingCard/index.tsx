@@ -15,6 +15,18 @@ import useNativeBalance from '../../hooks/useNativeBalance'
 import { EnsureChain } from 'components/EnsureChain'
 import PayoutWarning from 'components/PayoutWarning'
 
+/** A typed amount in wei, read from the text (never through a float), or null if it is not an amount. */
+const parseTypedAmount = (text: string): bigint | null => {
+  const trimmed = text.trim()
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(trimmed)) return null
+  try {
+    return parseEther(trimmed)
+  } catch {
+    // More than 18 decimals.
+    return null
+  }
+}
+
 const Card = styled.div`
   background: ${({ theme }) => theme.backgroundThree};
   border: 1px solid ${({ theme }) => theme.lightGrey};
@@ -303,6 +315,8 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const theme = useTheme()
   const [selectedSide, setSelectedSide] = useState<PARTY>(PARTY.NONE)
   const [contributionShare, setContributionShare] = useState(1)
+  // What was typed in the amount field, shown as typed. Undefined while the slider sets the amount.
+  const [amountText, setAmountText] = useState<string>()
   const { balance: nativeBalance } = useNativeBalance()
   const { address: connectedAddress } = useAccount()
   const nativeCurrency = useNativeCurrency()
@@ -362,13 +376,32 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
   const selectedFees = selectedSide === PARTY.REQUESTER ? requesterFees :
                        selectedSide === PARTY.CHALLENGER ? challengerFees : null
 
+  // A typed amount is read as wei from the text and sent as typed, capped at what is still needed
+  // (zero or an invalid amount sends nothing). The slider sets a share of what is still needed.
+  const typedWei = amountText !== undefined ? parseTypedAmount(amountText) : null
+
   const contributionAmount = selectedFees && selectedFees.amountStillRequired > 0n
-    ? (selectedFees.amountStillRequired * BigInt(Math.ceil(contributionShare * Number(MULTIPLIER_DIVISOR)))) / MULTIPLIER_DIVISOR
+    ? amountText !== undefined
+      ? typedWei === null
+        ? 0n
+        : typedWei > selectedFees.amountStillRequired
+          ? selectedFees.amountStillRequired
+          : typedWei
+      : (selectedFees.amountStillRequired * BigInt(Math.ceil(contributionShare * Number(MULTIPLIER_DIVISOR)))) / MULTIPLIER_DIVISOR
     : 0n
 
   const potentialRewardForContribution = selectedFees && selectedFees.potentialReward > 0n
-    ? (selectedFees.potentialReward * BigInt(Math.ceil(contributionShare * Number(MULTIPLIER_DIVISOR)))) / MULTIPLIER_DIVISOR
+    ? amountText !== undefined
+      ? selectedFees.amountStillRequired > 0n
+        ? (selectedFees.potentialReward * contributionAmount) / selectedFees.amountStillRequired
+        : 0n
+      : (selectedFees.potentialReward * BigInt(Math.ceil(contributionShare * Number(MULTIPLIER_DIVISOR)))) / MULTIPLIER_DIVISOR
     : 0n
+
+  const selectSide = (side: PARTY) => {
+    setSelectedSide(side)
+    setAmountText(undefined)
+  }
 
   const handleFundAppeal = async () => {
     if (!item || selectedSide === PARTY.NONE || contributionAmount === 0n) return
@@ -381,7 +414,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
         contributionAmount,
       )
       if (result?.status) {
-        setSelectedSide(PARTY.NONE)
+        selectSide(PARTY.NONE)
         setContributionShare(1)
         if (result.result) {
           navigate(`/tx/${result.result.transactionHash}`)
@@ -403,7 +436,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
     return (
       <ContributionSection>
         {!isSelected ? (
-          <ContributeButton onClick={() => setSelectedSide(side)}>
+          <ContributeButton onClick={() => selectSide(side)}>
             Contribute to {side === PARTY.REQUESTER ? 'Submitter' : 'Challenger'}
           </ContributeButton>
         ) : (
@@ -416,7 +449,10 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                 max="1"
                 step="0.001"
                 value={contributionShare}
-                onChange={(e) => setContributionShare(parseFloat(e.target.value))}
+                onChange={(e) => {
+                  setAmountText(undefined)
+                  setContributionShare(parseFloat(e.target.value))
+                }}
               />
             </SliderContainer>
             <InputGroup>
@@ -426,14 +462,18 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
                 max={Number(formatEther(fees.amountStillRequired))}
                 step="0.01"
                 value={
-                  fees.amountStillRequired > 0n
-                    ? (contributionShare * Number(formatEther(fees.amountStillRequired))).toFixed(4)
-                    : '0'
+                  amountText ?? (
+                    fees.amountStillRequired > 0n
+                      ? (contributionShare * Number(formatEther(fees.amountStillRequired))).toFixed(4)
+                      : '0'
+                  )
                 }
                 onChange={(e) => {
-                  const value = parseFloat(e.target.value) || 0
+                  // Shown as typed; the amount sent is read from this text (see contributionAmount).
+                  setAmountText(e.target.value)
+                  const weiAmount = parseTypedAmount(e.target.value) ?? 0n
                   if (fees.amountStillRequired > 0n) {
-                    const weiAmount = parseEther(value.toString())
+                    // The share only moves the slider.
                     const share = Number((weiAmount * MULTIPLIER_DIVISOR) / fees.amountStillRequired) / Number(MULTIPLIER_DIVISOR)
                     setContributionShare(Math.min(Math.max(share, 0), 1))
                   }
@@ -483,7 +523,7 @@ const CrowdfundingCard: React.FC<CrowdfundingCardProps> = ({
             )}
             {selectedSide !== PARTY.NONE && (
               <ContributeButton
-                onClick={() => setSelectedSide(PARTY.NONE)}
+                onClick={() => selectSide(PARTY.NONE)}
                 style={{ marginTop: '8px', background: 'transparent', border: `1px solid ${theme.borderSubtle}`, color: 'inherit' }}
               >
                 Cancel

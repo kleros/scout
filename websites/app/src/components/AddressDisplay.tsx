@@ -87,7 +87,8 @@ const AddressDisplay: React.FC<IAddressDisplay> = ({ address }) => {
       )}
       {parts?.[2] && (
         <StyledCopyable
-          copyableContent={parts[2].toLowerCase()}
+          // Keep the original case: Solana and Bitcoin addresses are case-sensitive.
+          copyableContent={parts[2]}
           info="Copy Address"
         >
           <StyledExternalLink

@@ -160,7 +160,9 @@ const EvidenceAttachmentDisplay: React.FC = () => {
   const registryAddress = registryName
     ? registryAddresses[registryName as RegistryType]
     : undefined;
-  const { data: historyData } = usePolicyHistory(registryAddress);
+  // The full history is a scan of the chain (dozens of public RPC calls). Only the past-policy
+  // banner needs it here, for a past policy (policyTx); the current policy and evidence files do not.
+  const { data: historyData } = usePolicyHistory(policyTx ? registryAddress : undefined);
 
   const pastPolicyInfo = useMemo(() => {
     if (!url || !policyTx || !historyData) return null;

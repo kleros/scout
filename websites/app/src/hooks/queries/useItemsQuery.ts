@@ -50,6 +50,10 @@ export const useItemsQuery = ({
 
   const registry = registryNames ?? (registryName ? [registryName] : [])
   const network = chainFilters
+  // A pasted address often carries a space or a line break: the query searches the trimmed text
+  // (the field keeps what was typed, and the key keeps it too, so the list's loading state, which
+  // waits for a fetch after each change of the typed text, still sees one).
+  const searchText = text.trim()
 
   const shouldFetch =
     enabled &&
@@ -142,7 +146,7 @@ export const useItemsQuery = ({
         if (ts > 0) dateFilterObject = `{${orderField}: {_gte: "${ts}"}}`
       }
 
-      const textFilterObject = text
+      const textFilterObject = searchText
         ? `{_or: [
         {key0: {_ilike: $text}},
         {key1: {_ilike: $text}},
@@ -246,8 +250,8 @@ export const useItemsQuery = ({
         orderDirection,
       }
 
-      if (text) {
-        variables.text = `%${text}%`
+      if (searchText) {
+        variables.text = `%${searchText}%`
       }
 
       if (includeUnknown && isTagsQueriesRegistry) {
